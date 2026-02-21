@@ -41,9 +41,9 @@ The site is not a showcase of process — it's a design artifact that demonstrat
   - 4 themes: `table`, `portrait`, `sky`, `pizza`
   - Each theme defines: `--bg`, `--fg`, `--accent`, `--accent-subtle`, `--surface`, `--border`
   - Light and dark variants for each theme
+  - **Token values to be provided by Ben** — the Framer-generated token IDs (`--token-6e011c17-...`) in the originals need to be replaced with semantic variable names and actual color values
 - [ ] Use `[data-theme="light"]` and `[data-theme="dark"]` selectors on `<html>`
 - [ ] Use `[data-color-theme="table|portrait|sky|pizza"]` for color theme selection
-- [ ] Extract the original Framer token values from `Theme_Overrides.tsx` as reference
 
 ### 1.2 — ThemeContext
 
@@ -89,9 +89,11 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 - [ ] Single-page layout with clear visual sections
 - [ ] Responsive: desktop (primary), tablet, mobile
 - [ ] Max-width container with generous whitespace
-- [ ] Typography system: define font stack, scale, and weights
-  - Prioritize a clean sans-serif (Inter, or similar)
-  - Establish hierarchy: display, heading, body, caption sizes
+- [ ] Typography system:
+  - **Font**: Manrope (Google Fonts)
+  - **Body**: 18px, regular (400) weight, 120% line height
+  - **Headings**: 36px, regular (400) weight, 120% line height
+  - Secondary sizes, weights, and full scale to be refined later
 
 ### 2.2 — Navigation / Link List
 
@@ -130,29 +132,37 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 
 ### 3.3 — GlassHighlight Component
 
+Only `GlassHighlight.tsx` is needed. `SectionHighlight.tsx` was an earlier iteration and is superseded.
+
+Implementation approach: raw DOM manipulation via `useEffect`-based hook or vanilla JS module with React wrapper (the pill element is created/managed outside React's render cycle).
+
 - [ ] Absolute-positioned frosted glass pill
 - [ ] Tracks position of hovered/focused `[data-link-card]` elements
-- [ ] Smooth position/size transition using Framer Motion or Web Animations API
-- [ ] Visual properties:
-  - Frosted glass: `backdrop-filter: blur()`, semi-transparent background
-  - Border: subtle, theme-aware
-  - Box shadow: soft, layered
-  - Border radius: configurable
-- [ ] Animation physics:
-  - **Stretch/squash**: Deform on slide, recover on settle
-  - **Overshoot**: Bounce past target, settle back
-  - **Gravitational pull**: When cursor nears edge, pill stretches toward adjacent item
-  - **Volume preservation**: Stretch one axis → squash the other proportionally
-- [ ] Use `requestAnimationFrame` lerp loop for smooth interpolation (as in originals)
-- [ ] Fade in/out on enter/leave the card area
-- [ ] Theme-aware fill color (derive from current theme accent)
-
-### 3.4 — Unify GlassHighlight + SectionHighlight
-
-- [ ] The originals have two near-identical implementations. Build one component with config props:
-  - `pullMode`: `"edge"` (GlassHighlight behavior) | `"neighbor"` (SectionHighlight behavior)
-  - `pullBalance`: 0–1 slider between translate vs. stretch displacement
-  - `pullStrength`, `pullRange`, `pullCurve`
+- [ ] Smooth position/size transition using CSS transitions + Web Animations API for deformation
+- [ ] Visual properties (defaults from GlassHighlightControls, to be refined through testing):
+  - Border radius: `16px`
+  - Fill: theme-aware (inherits hue from theme background, saturation: `0.1`, brightness: `0.45`, opacity: `0.05`)
+  - Background: radial gradient overlay for subtle highlight
+  - Surface blur: `backdrop-filter: blur(1px) saturate(1.2)`
+  - Inner glow intensity: `0.8` (inset box-shadow top/bottom)
+  - Border: `0.1px` transparent with inset shadow simulation (glass edge light)
+  - Drop shadow: off by default (x: 0, y: 0, blur: 0, opacity: 0)
+- [ ] Animation physics (defaults, to be refined):
+  - Move duration: `200ms`, easing: `cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+  - Fade duration: `200ms`
+  - **Stretch**: `0.05` — deformation in direction of movement
+  - **Squash**: `0.01` — perpendicular compression
+  - **Overshoot**: `0.05` — bounce past target on recovery
+  - Recovery duration: `150ms`
+  - **Volume preservation**: stretch one axis → squash the other proportionally
+- [ ] Edge pull physics (defaults, to be refined):
+  - Pull strength: `0.15` — how far pill trails cursor at card edges
+  - Edge zone: `0.2` — outer 20% of card responds to pull
+  - Pull lerp: `0.12` — interpolation smoothing speed
+  - Uses `requestAnimationFrame` lerp loop (stops when settled, delta < 0.3px)
+- [ ] Fade in on first appearance, CSS transition on subsequent slides
+- [ ] Theme-aware fill: extract hue from theme background via RGB→HSL, apply custom saturation/brightness/opacity
+- [ ] Color helpers needed: `parseColorToRGB`, `rgbToHSL`, `hslToRGB`, `getFillColor` (see `GlassHighlight.tsx` and `GlassHighlightControls.tsx` for reference implementations)
 
 ---
 
@@ -171,7 +181,7 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 
 - [ ] Displays a theme-variant image when no project is hovered
 - [ ] Hides (fades out) when any project is hovered
-- [ ] Supports different images per color theme
+- [ ] 4 variant slots (one per theme) — the original's 5th slot is vestigial and should be dropped
 - [ ] Smooth crossfade on theme change
 
 ### 4.3 — Integration
@@ -200,11 +210,11 @@ The site is not a showcase of process — it's a design artifact that demonstrat
   }
   ```
 - [ ] Create project data file (`src/data/projects.ts`)
-- [ ] Populate with real projects (content TBD with Ben)
+- [ ] Populate with real projects (content to be provided by Ben)
 
 ### 5.2 — Typography & Spacing Polish
 
-- [ ] Audit all text for consistent sizing, weight, and leading
+- [ ] Audit all text against Manrope baseline: body 18px/120%, headings 36px/120%, regular weight
 - [ ] Verify spacing rhythm (4px or 8px base grid)
 - [ ] Ensure color contrast meets WCAG AA for all theme/appearance combinations
 
@@ -292,15 +302,15 @@ Each phase should produce a working, visually coherent state. No phase should le
 
 The original Framer components are in the repo root:
 
-| File | Maps To |
-|------|---------|
-| `Theme_Overrides.tsx` | ThemeContext, ThemeSelector |
-| `ThemeToggle.tsx` | ThemeToggle |
-| `ThemeBackgroundLayer.tsx` | ThemeBackgroundLayer |
-| `Theme_Image.tsx` | ThemeImage |
-| `GlassHighlight.tsx` | GlassHighlight (edge pull mode) |
-| `SectionHighlight.tsx` | GlassHighlight (neighbor pull mode) |
-| `GlassHighlightControls.tsx` | Dev tooling (not migrated — extract config values only) |
-| `HighlightControls.tsx` | Dev tooling (not migrated — extract config values only) |
-| `LinkCard.tsx` | LinkCard |
-| `Hover_Preview.tsx` | HoverPreview |
+| File | Maps To | Notes |
+|------|---------|-------|
+| `Theme_Overrides.tsx` | ThemeContext, ThemeSelector | Central state hub — global state patterns migrate to React Context |
+| `ThemeToggle.tsx` | ThemeToggle | Appearance mode toggle (system/light/dark) |
+| `ThemeBackgroundLayer.tsx` | ThemeBackgroundLayer | Simple CSS variable consumer |
+| `Theme_Image.tsx` | ThemeImage | 4 variants only (5th is vestigial) |
+| `GlassHighlight.tsx` | GlassHighlight | Primary reference — edge-pull glass pill with theme-aware fill |
+| `SectionHighlight.tsx` | ~~Not migrated~~ | Superseded by GlassHighlight — ignore |
+| `GlassHighlightControls.tsx` | Dev tooling (not migrated) | Default config values used as starting spec for GlassHighlight |
+| `HighlightControls.tsx` | ~~Not migrated~~ | Dev panel for SectionHighlight — ignore |
+| `LinkCard.tsx` | LinkCard | Emits hover/focus to HoverContext |
+| `Hover_Preview.tsx` | HoverPreview | Conditional display based on hover ID match |

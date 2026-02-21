@@ -22,11 +22,18 @@ This is a React migration of a Framer-based portfolio site. The original Framer 
 
 ### Key systems to replicate:
 
-- **Theme system**: 4 named themes (table, portrait, sky, pizza) with light/dark/system appearance modes. CSS custom properties drive color, background, and accent changes. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables.
-- **Glass highlight**: Frosted-glass pill that slides between navigation items with physics-based animation (stretch/squash, gravitational pull to adjacent items, volume preservation). Two variants exist (GlassHighlight, SectionHighlight) — unify into one configurable component.
-- **Hover preview**: LinkCard emits hover state globally; Hover_Preview conditionally renders content when matched. Theme_Image hides on any hover. Migrate from `window.__hoverState` to React Context.
+- **Theme system**: 4 named themes (table, portrait, sky, pizza) with light/dark/system appearance modes. CSS custom properties drive color, background, and accent changes. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables. Token values for each theme (light + dark) to be provided separately.
+- **Glass highlight**: Frosted-glass pill that slides between navigation items with physics-based animation (stretch/squash, edge-pull deformation, volume preservation). Only `GlassHighlight.tsx` is needed — `SectionHighlight.tsx` was an earlier iteration and is superseded. The pill uses raw DOM manipulation (`createElement`, `element.style`, Web Animations API, `requestAnimationFrame` lerp loop) — integrate via `useEffect`-based hook or vanilla JS module with React wrapper. Default config values are captured in `GlassHighlightControls.tsx` and will be refined through testing.
+- **Hover preview**: LinkCard emits hover state globally; Hover_Preview conditionally renders content when matched. Theme_Image hides on any hover (supports 4 theme variants, one per theme — the 5th variant slot in the original is vestigial). Migrate from `window.__hoverState` to React Context.
 - **Appearance toggle**: 3-mode toggle (system/light/dark) with localStorage persistence, system preference detection, and browser meta theme-color integration.
 - **Theme background layer**: Non-wrapping background that syncs with theme — straightforward CSS variable consumer.
+
+### Typography:
+
+- **Font**: Manrope (Google Fonts)
+- **Body**: 18px, regular weight, 120% line height
+- **Headings**: 36px, regular weight, 120% line height
+- Nuances (scale, secondary sizes, weights) to be refined later
 
 ### Architecture principles:
 
@@ -50,7 +57,7 @@ See `workflow.md` for the full development workflow. Key points:
 ## Project Structure (Target)
 
 ```
-islamabad/
+sofia/
 ├── CLAUDE.md                 # This file
 ├── workflow.md               # Development workflow
 ├── feedback.md               # Recorded feedback and lessons
