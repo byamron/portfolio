@@ -27,6 +27,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 | `core-docs/workflow.md` | Development process (plan → build → review → feedback loop) | When the process itself needs refinement |
 | `core-docs/feedback.md` | Negative feedback and lessons learned | After any rejected implementation or mistake |
 | `core-docs/history.md` | Completed work and decision log (reverse chronological) | After every successful implementation |
+| `core-docs/initial-implementation.md` | React component architecture: Framer→React mapping, contexts, decisions | When architectural approach changes |
 | `tokens.md` | Design tokens: all theme colors (text, background, swatch) with HSL values | When color values change or new tokens are added |
 
 ### Rules for core docs:
