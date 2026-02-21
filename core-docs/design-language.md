@@ -2,6 +2,8 @@
 
 The visual and interaction rules that govern every detail of the site. This document is the source of truth for how things should look, feel, and behave — not just what values to use, but why. Reference this before making any design or implementation decision.
 
+> **Implementation values**: For exact HSL token values and a draft CSS implementation, see `tokens.md`. This document provides the principles and rules; `tokens.md` provides the numbers.
+
 ---
 
 ## Core Principles
@@ -41,43 +43,73 @@ Color has two independent dimensions:
 - **Appearance** (light / dark / system): Controls the overall luminance and contrast. Dark mode is the default and the "home" state — a warm, low-light environment that lets the content and imagery lead. Light mode inverts the hierarchy but preserves the warmth.
 - **Accent** (table / portrait / sky / pizza): Controls the hue that tints everything. Each accent is a full environment — a background tone, an associated portrait image, and a derived glass fill color. Changing the accent doesn't just swap a highlight color; it changes what the room feels like.
 
-### Dark mode (default)
+### The three-tier token architecture
+
+Tokens are organized by what controls them. This is a structural rule, not just an implementation detail — it defines which things feel "ambient" vs "thematic."
+
+1. **Text colors** — change with appearance mode only (light/dark). They are **independent of accent theme**. Switching from table to sky does not change any text color. This means text remains stable and readable as the environment shifts around it.
+2. **Background colors** — change with both appearance mode AND accent theme. This is what creates the "room" feeling — each combination of accent + mode produces a distinct atmospheric tone.
+3. **Swatch colors** — constant across everything. The accent dot in the picker is always the same color regardless of light/dark mode. These are the "identity" colors for each theme.
+
+> For exact HSL values, see `tokens.md`. The values below describe the design intent; `tokens.md` is the implementation reference.
+
+### Text colors
+
+| Token | Dark Mode | Light Mode | Role |
+|-------|-----------|-----------|------|
+| `--text-dark` | Near-white (99% L) | Near-black (7% L) | Primary: headings, project link text |
+| `--text-medium` | Light gray (90% L) | Dark gray (20% L) | Secondary: body paragraphs, descriptions |
+| `--text-grey` | Medium gray (75% L) | Medium gray (45% L) | Tertiary: captions, de-emphasized content |
+| `--text-light-grey` | Dark gray (40% L) | Light gray (70% L) | Disabled or deeply muted text |
+| `--text-light` | Near-black (7% L) | White (100% L) | Inverse: text on opposite-mode surfaces |
+| `--text-link` | Soft blue (81% L) | Medium blue (53% L) | Inline links within body text |
+| `--text-underline` | White at 20% alpha | Black at 20% alpha | Barely-visible link underline decoration |
+
+**Design notes:**
+- `--text-grey` carries a subtle blue tint (`hue: 240, saturation: 2%`) — not pure gray. This prevents it from feeling "dead" against the warm backgrounds.
+- `--text-link` is the only non-neutral text color. Its blue hue (219-220) is distinct from all accent themes, ensuring links are identifiable regardless of the active accent.
+- The underline token uses the *opposite* end of the luminance scale at 20% opacity — white-on-dark, black-on-light — keeping the underline barely perceptible in both modes.
+
+### Background colors (per accent + per appearance)
+
+| Accent | Dark Mode | Light Mode | Character |
+|--------|-----------|-----------|-----------|
+| table | `hsl(33, 18%, 12%)` | `hsl(30, 17%, 91%)` | Warm gold. Default. Grounded, natural, confident. |
+| portrait | `hsl(47, 18%, 10%)` | `hsl(42, 22%, 91%)` | Warm ochre. Earthy, slightly warmer than table. |
+| sky | `hsl(200, 22%, 8%)` | `hsl(200, 23%, 95%)` | Cool blue. Calm, open, expansive. The counterpoint. |
+| pizza | `hsl(8, 22%, 7%)` | `hsl(10, 30%, 96%)` | Warm coral. Playful, human, approachable. |
+
+**Pattern:** In dark mode, backgrounds are very dark (L: 7-12%) with low saturation (18-22%). In light mode, backgrounds are near-white (L: 91-96%) with similar saturation. The hue stays roughly the same between modes — the room "dims" rather than changing color. Pizza has the highest light-mode saturation (30%), giving it a slightly more tinted feel.
+
+### Swatch colors (constant across modes)
+
+| Accent | HSL | Character |
+|--------|-----|-----------|
+| table | `hsl(34, 50%, 60%)` | Warm gold at medium brightness and saturation |
+| portrait | `hsl(47, 34%, 64%)` | Muted ochre — the most desaturated swatch |
+| sky | `hsl(204, 50%, 70%)` | Soft blue — the lightest swatch |
+| pizza | `hsl(15, 53%, 64%)` | Terra cotta — the most saturated swatch |
+
+These are the dots in the accent picker. They don't adapt to appearance mode because they represent the theme's identity — a fixed reference point as the environment shifts.
+
+### Panel chrome (glass configurator)
 
 | Role | Value | Intent |
 |------|-------|--------|
-| Background | `rgb(36, 31, 25)` | Warm dark brown, not cold gray. Feels like a lit room at night, not a terminal. |
-| Heading text | `rgb(252, 252, 252)` | Near-white. High contrast against the warm background. |
-| Body text | `rgb(190, 190, 193)` | Muted gray. Clearly secondary to headings without being hard to read. |
-| Link underline | `rgba(238, 238, 238, 0.2)` | Barely visible. Signals "this is a link" without visual noise. |
-| Panel surface | `rgb(26, 26, 26)` | Darker than the background. Surfaces sit behind the page, not on top of it. |
-| Panel border | `rgb(51, 51, 51)` | Subtle structural edge. Defines without decorating. |
+| Surface | `#1a1a1a` | Darker than any page background. The panel sits "behind" the page. |
+| Border | `#333` | Subtle structural edge. |
 
-### Light mode
-
-| Role | Value | Intent |
-|------|-------|--------|
-| Background | `rgb(236, 232, 228)` | Warm cream, not clinical white. Same warmth as dark mode, inverted. |
-| Heading text | `rgb(17, 17, 17)` | Near-black. |
-| Body text | `rgb(112, 112, 117)` | Medium gray. Same relative contrast relationship as dark mode. |
-
-### Accent colors
-
-| Name | RGB | Character |
-|------|-----|-----------|
-| table | `rgb(194, 180, 130)` | Warm gold. Default. Grounded, natural, confident. |
-| portrait | TBD | Similar warm tone, subtly distinct. |
-| sky | `rgb(140, 186, 217)` | Cool blue. Calm, open, expansive. The counterpoint. |
-| pizza | `rgb(212, 139, 115)` | Warm coral/terra cotta. Playful, human, approachable. |
+Panel colors are hardcoded, not tokenized — the panel is a developer tool, not themed content.
 
 ### What changes per accent, and what doesn't
 
-**Changes**: Background hue, glass fill hue (derived from background via HSL extraction), default portrait image, browser chrome color. The entire atmospheric envelope shifts.
+**Changes**: Background hue/tone, glass fill hue (derived from background via HSL extraction), default portrait image, browser chrome color. The entire atmospheric envelope shifts.
 
-**Stays constant**: All structural properties (spacing, radii, shadows), all animation timings, all typography, the glass effect's saturation/brightness/opacity recipe, the interaction model. The skeleton is permanent; the skin is variable.
+**Stays constant**: All text colors, all structural properties (spacing, radii, shadows), all animation timings, all typography, the glass effect's saturation/brightness/opacity recipe, the interaction model. The skeleton is permanent; the skin is variable.
 
 ### Transition behavior
 
-Theme transitions take `500ms ease-in-out` — slow enough to register as intentional, fast enough to not feel sluggish. Background, imagery, and glass fill all transition simultaneously so the change feels atomic rather than sequenced. The browser meta theme-color updates in sync (with a 10ms remove-and-recreate to defeat browser caching).
+Theme transitions take `500ms ease-in-out` — slow enough to register as intentional, fast enough to not feel sluggish. Background, imagery, and glass fill all transition simultaneously so the change feels atomic rather than sequenced. The browser meta theme-color updates in sync (with a 10ms remove-and-recreate to defeat browser caching). Text colors do not transition — they snap immediately, since they're subtle enough that a gradual change would look like a rendering glitch rather than an intentional effect.
 
 ---
 
@@ -278,8 +310,11 @@ The right-column image is not a headshot in the traditional portfolio sense. It'
 
 Each accent theme has an associated portrait that shares its color temperature:
 - **table**: A foggy, muted outdoor scene. Greens and browns. Grounded.
+- **portrait**: Warm, earthy tones. Similar to table but shifted toward ochre. The most neutral of the four.
 - **sky**: Bright daylight, blue sky, sunglasses. Open and expansive.
 - **pizza**: Night scene, warm artificial light, neon. Energetic and human.
+
+There are exactly 4 image variants — one per accent theme. (The original Framer component had a vestigial 5th variant slot; it is not used.)
 
 ### Image rules
 
@@ -307,7 +342,7 @@ Three icon buttons in a row: System (monitor), Light (sun), Dark (moon). Phospho
 
 Four circular swatches, 24px diameter, `border-radius: 12px` (perfect circle). Container is 144x24px.
 
-- Each swatch is filled with its accent's RGB color
+- Each swatch is filled with its accent's swatch color (from `tokens.md` — constant across light/dark)
 - Active swatch shows an outline ring (the only use of an outline/ring treatment on the site)
 - Clicking a swatch triggers the full environmental shift (background + image + glass + browser chrome)
 
@@ -375,6 +410,8 @@ When implementing or modifying any part of the site, verify:
 - [ ] Does it use the spacing hierarchy (80/64/40/24)?
 - [ ] Is the only border-radius either 16px (glass) or 32px (image)?
 - [ ] Does color come from CSS custom properties, not hardcoded values?
+- [ ] Do text colors use appearance-only tokens (`--text-*`), not theme-dependent values?
+- [ ] Do background colors use the correct theme+appearance combination from `tokens.md`?
 - [ ] Is the element visually identical across all four accent themes (with only hue shifting)?
 - [ ] Does any animation use one of the four timing tiers (150/200/300/500ms)?
 - [ ] Does the Smooth easing curve feel right, or does this interaction need a specific curve?
