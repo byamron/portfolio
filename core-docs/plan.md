@@ -6,6 +6,8 @@ Recreate Ben's Framer-based design portfolio as a standalone React application. 
 
 The site is not a showcase of process — it's a design artifact that demonstrates taste, judgment, and the ability to make complex things feel simple.
 
+> **Design language reference**: All visual and interaction rules are codified in `core-docs/design-language.md`. That document is the source of truth for how things should look, feel, and behave. The visual spec below provides implementation-ready values; the design language provides the principles and rules that govern those values.
+
 ---
 
 ## Visual Spec (from live site)
