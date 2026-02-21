@@ -489,15 +489,17 @@ Each phase produces a working, visually coherent state. No phase leaves the site
 
 The original Framer components are in the repo root:
 
-| File | Maps To |
-|------|---------|
-| `Theme_Overrides.tsx` | ThemeContext, AccentPicker |
-| `ThemeToggle.tsx` | ModeSwitcher |
-| `ThemeBackgroundLayer.tsx` | Background via CSS custom properties |
-| `Theme_Image.tsx` | ImageDisplay (accent-variant portraits) |
-| `GlassHighlight.tsx` | GlassHighlight / ProjectLink hover |
-| `SectionHighlight.tsx` | GlassHighlight / ProjectLink hover |
-| `GlassHighlightControls.tsx` | GlassPanel |
-| `HighlightControls.tsx` | GlassPanel |
-| `LinkCard.tsx` | ProjectLink |
-| `Hover_Preview.tsx` | ImageDisplay (hover-triggered swap) |
+| File | Maps To | Notes |
+|------|---------|-------|
+| `Theme_Overrides.tsx` | ThemeContext, AccentPicker | Central state hub — global state patterns migrate to React Context |
+| `ThemeToggle.tsx` | ModeSwitcher | Appearance mode toggle (system/light/dark) |
+| `ThemeBackgroundLayer.tsx` | Background via CSS custom properties | Simple CSS variable consumer |
+| `Theme_Image.tsx` | ImageDisplay (accent-variant portraits) | 4 variants only (5th is vestigial) |
+| `GlassHighlight.tsx` | GlassHighlight / ProjectLink hover | Primary reference — edge-pull glass pill with theme-aware fill |
+| `SectionHighlight.tsx` | ~~Not migrated~~ | Superseded by GlassHighlight — ignore |
+| `GlassHighlightControls.tsx` | GlassPanel | Default config values used as starting spec |
+| `HighlightControls.tsx` | ~~Not migrated~~ | Dev panel for SectionHighlight — ignore |
+| `LinkCard.tsx` | ProjectLink | Emits hover/focus to HoverContext |
+| `Hover_Preview.tsx` | ImageDisplay (hover-triggered swap) | Conditional display based on hover ID match |
+
+See also: `tokens.md` in the repo root for all extracted color token values (HSL).

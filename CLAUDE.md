@@ -26,6 +26,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 | `core-docs/workflow.md` | Development process (plan → build → review → feedback loop) | When the process itself needs refinement |
 | `core-docs/feedback.md` | Negative feedback and lessons learned | After any rejected implementation or mistake |
 | `core-docs/history.md` | Completed work and decision log (reverse chronological) | After every successful implementation |
+| `tokens.md` | Design tokens: all theme colors (text, background, swatch) with HSL values | When color values change or new tokens are added |
 
 ### Rules for core docs:
 
@@ -43,11 +44,19 @@ This is a React migration of a Framer-based portfolio site. The original Framer 
 
 ### Key systems to replicate:
 
-- **Theme system**: 4 accent colors (table, portrait, sky, pizza) × 3 appearance modes (system/light/dark). CSS custom properties drive all color changes. Dark mode default with warm brown background `rgb(36, 31, 25)`. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables.
-- **Glass highlight on hover**: Project links get a frosted-glass background on hover — `backdrop-filter: blur(1px)`, semi-transparent accent-hued fill, inner glow, subtle border, `border-radius: 16px`. CSS-first implementation, with optional physics-based animated pill as enhancement.
-- **Image swap on hover**: Hovering a project link cross-fades the right-column image to a project-specific preview. Leaving resets to the accent-color default portrait. Both transitions (glass + image) happen simultaneously. Migrate from `window.__hoverState` to React Context.
+- **Theme system**: 4 accent colors (table, portrait, sky, pizza) × 3 appearance modes (system/light/dark). CSS custom properties drive all color changes. Dark mode default. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables. All token values (text, background, swatch) are documented in `tokens.md`.
+- **Glass highlight on hover**: Project links get a frosted-glass background on hover — `backdrop-filter: blur(1px)`, semi-transparent accent-hued fill, inner glow, subtle border, `border-radius: 16px`. CSS-first implementation, with optional physics-based animated pill as enhancement. Only `GlassHighlight.tsx` is needed as reference — `SectionHighlight.tsx` was an earlier iteration and is superseded. Default config values from `GlassHighlightControls.tsx` will be refined through testing.
+- **Image swap on hover**: Hovering a project link cross-fades the right-column image to a project-specific preview. Leaving resets to the accent-color default portrait. Both transitions (glass + image) happen simultaneously. Supports 4 image variants (one per theme — the 5th variant slot in `Theme_Image.tsx` is vestigial). Migrate from `window.__hoverState` to React Context.
 - **Appearance toggle**: 3-mode toggle (system/light/dark) with Phosphor Icons (monitor/sun/moon), localStorage persistence, system preference detection, and browser meta theme-color integration.
 - **Glass configurator panel**: Floating demo panel that tunes the glass hover effect in real-time with sliders. 3 tabs (Fill/Shadow/Motion). Showcase feature.
+
+### Typography:
+
+- **Font**: Manrope (Google Fonts), weight 400 throughout, sans-serif fallback
+- **Title/Headings**: 36px, weight 400, line-height 1.2
+- **Body/description**: 18px, weight 400, line-height 1.2
+- **Project links**: 18px, weight 400, line-height 1.4
+- Nuances (scale, secondary sizes, weights) to be refined later
 
 ### Architecture principles:
 
@@ -61,7 +70,6 @@ This is a React migration of a Framer-based portfolio site. The original Framer 
 
 ### Visual reference:
 
-- **Font**: Manrope (Google Fonts), weight 400, sans-serif fallback
 - **Layout**: Two-column flex — left 50% scrollable (`padding: 64px 40px`), right 50% fixed (`padding: 64px 16px`)
 - **Image container**: 528×720px, `border-radius: 32px`, `object-fit: cover`
 - **Spacing hierarchy**: 80px (content↔footer) → 64px (title↔sections) → 40px (between sections) → 24px (between links)
@@ -70,8 +78,9 @@ This is a React migration of a Framer-based portfolio site. The original Framer 
 ## Project Structure (Target)
 
 ```
-islamabad/
+sofia/
 ├── CLAUDE.md                 # This file
+├── tokens.md                 # Design tokens (HSL values for all themes)
 ├── core-docs/
 │   ├── plan.md               # Migration plan (living document)
 │   ├── workflow.md            # Development process
