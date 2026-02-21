@@ -22,6 +22,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 | File | Purpose | When to update |
 |------|---------|----------------|
+| `core-docs/design-language.md` | Visual & interaction rules, principles, anti-patterns | When design decisions are made, patterns are established, or visual rules change |
 | `core-docs/plan.md` | Migration plan, visual spec, phase breakdown | When scope changes, phases complete, or new info emerges |
 | `core-docs/workflow.md` | Development process (plan → build → review → feedback loop) | When the process itself needs refinement |
 | `core-docs/feedback.md` | Negative feedback and lessons learned | After any rejected implementation or mistake |
@@ -30,6 +31,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 ### Rules for core docs:
 
 - **Before starting any work**: Read `core-docs/feedback.md` and `core-docs/history.md` to avoid repeating mistakes and understand prior decisions.
+- **Before any design/implementation work**: Read `core-docs/design-language.md` to ensure consistency with the site's visual and interaction rules. Use the coherence checklist before considering work complete.
 - **Before planning**: Read `core-docs/plan.md` to understand the current state and what's next.
 - **Follow the workflow**: Read and follow `core-docs/workflow.md` for the full development process.
 - **After completing work**: Update `core-docs/history.md` with what was done, decisions made, and technical details (branch, date).
