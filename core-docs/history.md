@@ -2,6 +2,46 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-21 — Subframe component library, Tailwind v4, and theme integration
+
+**Branch:** `main`
+
+**Summary:** Installed Subframe UI component library (44 components), Tailwind CSS v4, and wired up the portfolio's design token system so Subframe components visually match the portfolio's "table" accent theme.
+
+**What was added:**
+- **Subframe CLI + components**: `npx @subframe/cli init` with project ID `b82957b2b077`, synced 44 components to `src/ui/` (Button, Dialog, TextField, Accordion, Charts, etc.) plus 3 layouts (DefaultPageLayout, DialogLayout, DrawerLayout)
+- **Tailwind CSS v4**: Installed `tailwindcss` + `@tailwindcss/vite` plugin; CSS-first configuration via `@import "tailwindcss"` in globals.css
+- **Portfolio design tokens**: Populated `src/styles/theme.css` with all 15 tokens from `tokens.md` — 7 text colors (appearance-only), 8 background colors (4 accents × 2 modes), 4 constant swatches, plus `--accent-hue`
+- **Subframe theme overrides**: Added CSS variable overrides in `src/styles/theme.css` that load after Subframe's `src/ui/theme.css` and win via cascade — maps Subframe's `--font-*`, `--color-*`, and `--text-*--font-weight` tokens to portfolio values
+- **Font configuration**: Google Fonts link updated for Manrope (wght 300–700) + Newsreader (wght 300–700)
+
+**Key decisions:**
+- **CSS cascade override strategy** (not `edit_theme`): The Subframe `edit_theme` MCP tool is AI-driven and interprets descriptions loosely — 3 attempts produced wrong fonts (Plus Jakarta Sans, Lora, Inter) and wrong colors. Instead, all Subframe variable overrides live in `src/styles/theme.css` which loads after `src/ui/theme.css` and wins via CSS specificity. This means `npx @subframe/cli sync` can safely overwrite `src/ui/theme.css` without losing our customizations.
+- **"Table" accent as Subframe base theme**: The portfolio has 4 switchable accent themes but Subframe expects a single brand color. Chose "table" (warm gold, `hsl(34, 50%, 60%)`) as the Subframe default. Subframe's `--color-brand-primary` and `--color-default-background` reference portfolio CSS variables (`var(--swatch)`, `var(--bg)`) so they respond to `data-accent` attribute changes.
+- **Newsreader for Subframe headings**: Subframe's `--font-heading-*` tokens are set to Newsreader (serif) while body/caption remain Manrope. This applies only to Subframe components; the portfolio's own components follow the single-typeface rule (Manrope 400 throughout) per `design-language.md`.
+- **Tailwind v4 (not v3)**: CSS-first config with `@tailwindcss/vite` plugin — no `tailwind.config.js` needed. Theme variables defined in CSS, not JS.
+
+**CSS import order** (in `src/styles/globals.css`):
+```
+@import "tailwindcss";         → Tailwind base + utilities
+@import "../ui/theme.css";     → Subframe theme (synced, do not edit)
+@import "./theme.css";         → Portfolio tokens + Subframe overrides (wins via cascade)
+```
+
+**New files:**
+- `.subframe/sync.json` — Subframe project config (projectId, directory, cssType)
+- `src/ui/` — 44 synced components, theme.css, utils.ts, index.ts, 3 layouts
+
+**Modified files:**
+- `vite.config.ts` — added `@tailwindcss/vite` plugin
+- `src/styles/globals.css` — added 3 `@import` lines
+- `src/styles/theme.css` — populated with all tokens + Subframe overrides
+- `index.html` — expanded Google Fonts link (added Newsreader, expanded Manrope weights)
+- `package.json` — added `@subframe/core`, `tailwindcss`, `@tailwindcss/vite`
+- `.gitignore` — added `.vite/`
+
+**Updated docs:** CLAUDE.md, plan.md, history.md
+
 ## 2026-02-21 — Extracted all Framer reference data, deleted reference files
 
 **Branch:** `byamron/cleanup-file-structure`

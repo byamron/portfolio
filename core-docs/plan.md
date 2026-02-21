@@ -146,16 +146,18 @@ Row with `gap: 64px`, `padding: 0 16px`:
 
 ### Tasks
 
-- [ ] Initialize a Vite + React + TypeScript project
-- [ ] Configure path aliases (`@/components`, `@/context`, etc.)
-- [ ] Set up Tailwind CSS v4 (utility-first, CSS custom properties for theming)
+- [x] Initialize a Vite + React + TypeScript project
+- [x] Configure path aliases (`@/components`, `@/context`, etc.)
+- [x] Set up Tailwind CSS v4 (utility-first, CSS custom properties for theming) — `@tailwindcss/vite` plugin, CSS-first config
 - [ ] Install Framer Motion for animations
 - [ ] Install Phosphor Icons (`@phosphor-icons/react`)
-- [ ] Import Manrope from Google Fonts
-- [ ] Set up ESLint + Prettier
-- [ ] Create folder structure (see below)
-- [ ] Add `index.html` with proper meta tags (viewport, charset, theme-color)
-- [ ] Confirm dev server runs cleanly
+- [x] Import Manrope from Google Fonts — also added Newsreader for Subframe headings
+- [x] Set up ESLint + Prettier
+- [x] Create folder structure (see below)
+- [x] Add `index.html` with proper meta tags (viewport, charset, theme-color)
+- [x] Confirm dev server runs cleanly
+- [x] Install Subframe component library — 44 components synced to `src/ui/`, theme overrides in `src/styles/theme.css`
+- [x] Populate `src/styles/theme.css` with all design tokens from `tokens.md`
 
 ### Project Structure
 
@@ -195,7 +197,8 @@ src/
 ### Decisions
 
 - **Vite over Next.js**: Single-page portfolio, no SSR needs. Vite is faster and simpler.
-- **Tailwind v4**: Utility-first for layout, CSS custom properties for theme tokens.
+- **Tailwind v4**: Installed via `@tailwindcss/vite` plugin. CSS-first config — no `tailwind.config.js`. Theme tokens defined in `src/styles/theme.css`.
+- **Subframe**: Component library (44 components in `src/ui/`). Synced via CLI, theme overridden via CSS cascade. See `history.md` for full integration details.
 - **Framer Motion**: Already used in originals. Best-in-class React animation library.
 - **Phosphor Icons**: Original uses Phosphor SVGs for mode switcher.
 
@@ -207,12 +210,12 @@ src/
 
 ### 1.1 — CSS Custom Properties
 
-- [ ] Define all theme tokens in `theme.css`:
+- [x] Define all theme tokens in `theme.css`:
   - Dark mode values as `:root` defaults (dark is the default)
-  - Light mode values under `[data-theme="light"]`
-  - 4 accent color sets under `[data-accent="table|portrait|sky|pizza"]`
-  - Each accent defines: `--accent`, `--accent-hue` (for glass effect HSL math)
-- [ ] Exact color values per the Visual Spec above
+  - Light mode values under `[data-theme="dark"]` (dark is default in `:root`, light values override per accent)
+  - 4 accent color sets under `[data-accent="table|portrait|sky|pizza"]` for both light and dark modes
+  - Each accent defines: `--bg`, `--swatch`, `--accent-hue` (for glass effect HSL math)
+- [x] Exact color values per `tokens.md` — all 15 tokens populated
 - [ ] Smooth transitions: `transition: background-color 0.3s, color 0.3s` on body
 
 ### 1.2 — ThemeContext
