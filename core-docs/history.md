@@ -54,6 +54,26 @@ Decision log and completed work, in reverse chronological order.
 
 **Updated docs:** CLAUDE.md project structure, plan.md reference file paths
 
+## 2026-02-21 — React Component Architecture Analysis
+
+**Branch:** byamron/react-component-plan
+**Summary:** Deep analysis of all 10 Framer components and their interactions. Designed the React architecture that delivers identical interactive behavior with dramatically less complexity.
+
+**Key decisions:**
+- **Two React Contexts replace all globals**: `ThemeContext` (accent + appearance) and `HoverContext` (hovered project ID). No `window.__themeState`, no `window.__hoverState`, no custom events.
+- **ImageDisplay merges Theme_Image + Hover_Preview**: A single component reads both contexts to determine which image to show. Eliminates N separate Hover_Preview instances.
+- **GlassHighlight stays imperative, wrapped in a hook**: `useGlassHighlight(containerRef, config)` wraps the same RAF-based pill animation. The DOM manipulation approach is correct for 60fps animation — React state would cause excessive re-renders.
+- **Theme color for glass pill**: Read `--swatch` from computed style on `:root` instead of the 50-line `getTokenColor()` → `findFramerTokenElement()` chain. Use `MutationObserver` on `data-accent` attribute instead of `window.__themeState.listeners`.
+- **ThemeBackgroundLayer eliminated entirely**: Replaced by `body { background-color: var(--bg) }` in CSS.
+- **No timing hacks**: All `setTimeout(50-100ms)` delays are Framer-specific. React state updates + CSS variable resolution are synchronous.
+- **`data-link-card` attribute preserved**: GlassHighlight's DOM queries use it to find hoverable cards — this stays the same.
+
+**Component line count reduction estimate:**
+- Framer total: ~3,370 lines across 10 files
+- React equivalent: ~950 lines across ~15 files (smaller, focused modules)
+
+**Full architecture plan:** `core-docs/initial-implementation.md`
+
 ## 2026-02-20 — Created design-language.md, integrated token system
 
 **Branch:** `byamron/design-language-doc`

@@ -53,6 +53,8 @@ These are the theme accent/swatch colors. They appear **identical in light and d
 
 ## CSS Implementation (Draft)
 
+Canonical attribute names: `data-theme` (light/dark), `data-accent` (table/portrait/sky/pizza), both on `<html>`.
+
 ```css
 /* Appearance mode: light */
 [data-theme="light"] {
@@ -63,9 +65,11 @@ These are the theme accent/swatch colors. They appear **identical in light and d
   --text-light: hsl(0, 0%, 100%);
   --text-link: hsl(219, 49%, 53%);
   --text-underline: hsla(0, 0%, 7%, 0.2);
+  --surface: hsl(0, 0%, 96%);
+  --border: hsl(0, 0%, 85%);
 }
 
-/* Appearance mode: dark */
+/* Appearance mode: dark (default) */
 [data-theme="dark"] {
   --text-dark: hsl(0, 0%, 99%);
   --text-medium: hsl(0, 0%, 90%);
@@ -74,42 +78,52 @@ These are the theme accent/swatch colors. They appear **identical in light and d
   --text-light: hsl(0, 0%, 7%);
   --text-link: hsl(220, 54%, 81%);
   --text-underline: hsla(0, 0%, 93%, 0.2);
+  --surface: hsl(0, 0%, 10%);
+  --border: hsl(0, 0%, 20%);
 }
 
-/* Theme backgrounds + swatches (light) */
-[data-theme="light"][data-color-theme="sky"] {
+/* Theme backgrounds + swatches + accent-hue (light) */
+[data-theme="light"][data-accent="sky"] {
   --bg: hsl(200, 23%, 95%);
   --swatch: hsl(204, 50%, 70%);
+  --accent-hue: 204;
 }
-[data-theme="light"][data-color-theme="table"] {
+[data-theme="light"][data-accent="table"] {
   --bg: hsl(30, 17%, 91%);
   --swatch: hsl(34, 50%, 60%);
+  --accent-hue: 34;
 }
-[data-theme="light"][data-color-theme="portrait"] {
+[data-theme="light"][data-accent="portrait"] {
   --bg: hsl(42, 22%, 91%);
   --swatch: hsl(47, 34%, 64%);
+  --accent-hue: 47;
 }
-[data-theme="light"][data-color-theme="pizza"] {
+[data-theme="light"][data-accent="pizza"] {
   --bg: hsl(10, 30%, 96%);
   --swatch: hsl(15, 53%, 64%);
+  --accent-hue: 15;
 }
 
-/* Theme backgrounds + swatches (dark) */
-[data-theme="dark"][data-color-theme="sky"] {
+/* Theme backgrounds + swatches + accent-hue (dark) */
+[data-theme="dark"][data-accent="sky"] {
   --bg: hsl(200, 22%, 8%);
   --swatch: hsl(204, 50%, 70%);
+  --accent-hue: 204;
 }
-[data-theme="dark"][data-color-theme="table"] {
+[data-theme="dark"][data-accent="table"] {
   --bg: hsl(33, 18%, 12%);
   --swatch: hsl(34, 50%, 60%);
+  --accent-hue: 34;
 }
-[data-theme="dark"][data-color-theme="portrait"] {
+[data-theme="dark"][data-accent="portrait"] {
   --bg: hsl(47, 18%, 10%);
   --swatch: hsl(47, 34%, 64%);
+  --accent-hue: 47;
 }
-[data-theme="dark"][data-color-theme="pizza"] {
+[data-theme="dark"][data-accent="pizza"] {
   --bg: hsl(8, 22%, 7%);
   --swatch: hsl(15, 53%, 64%);
+  --accent-hue: 15;
 }
 ```
 
