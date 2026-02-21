@@ -22,6 +22,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 | File | Purpose | When to update |
 |------|---------|----------------|
+| `core-docs/design-language.md` | Visual & interaction rules, principles, anti-patterns | When design decisions are made, patterns are established, or visual rules change |
 | `core-docs/plan.md` | Migration plan, visual spec, phase breakdown | When scope changes, phases complete, or new info emerges |
 | `core-docs/workflow.md` | Development process (plan → build → review → feedback loop) | When the process itself needs refinement |
 | `core-docs/feedback.md` | Negative feedback and lessons learned | After any rejected implementation or mistake |
@@ -32,6 +33,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 ### Rules for core docs:
 
 - **Before starting any work**: Read `core-docs/feedback.md` and `core-docs/history.md` to avoid repeating mistakes and understand prior decisions.
+- **Before any design/implementation work**: Read `core-docs/design-language.md` to ensure consistency with the site's visual and interaction rules. Use the coherence checklist before considering work complete.
 - **Before planning**: Read `core-docs/plan.md` to understand the current state and what's next.
 - **Follow the workflow**: Read and follow `core-docs/workflow.md` for the full development process.
 - **After completing work**: Update `core-docs/history.md` with what was done, decisions made, and technical details (branch, date).
@@ -67,7 +69,21 @@ This is a React migration of a Framer-based portfolio site. The original Framer 
 - Keep components small and composable
 - No unnecessary abstractions — only extract when reuse is real
 - Mobile-first responsive design
-- Accessible by default (semantic HTML, keyboard navigation, ARIA where needed)
+- Accessible by default — see **Accessibility Standards** below
+
+### Accessibility Standards
+
+All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish phase concern — it is a default requirement from the first line of code.
+
+- **Semantic HTML**: Use correct landmark elements (`<main>`, `<nav>`, `<header>`, `<footer>`, `<section>`) and heading hierarchy (`<h1>` through `<h3>`). Never use `<div>` where a semantic element exists.
+- **Keyboard navigation**: All interactive elements must be reachable and operable via keyboard. Focus order must follow visual reading order. Custom interactive elements need explicit `tabindex`, `role`, and keyboard event handlers.
+- **Focus visibility**: All focusable elements must show a visible focus indicator. Glass hover effects must not suppress or obscure focus rings. Use `:focus-visible` to avoid showing focus rings on mouse click.
+- **Color contrast**: All text must meet WCAG AA contrast ratios (4.5:1 for body text, 3:1 for large text) across every theme × mode combination (4 accents × 2 appearances = 8 states). Verify contrast when choosing or changing colors.
+- **ARIA**: Use `aria-label` on icon-only buttons (mode switcher, accent picker). Use `aria-live="polite"` regions to announce dynamic changes (theme switches, image swaps). Use `aria-current` or `aria-pressed` for active toggle states.
+- **Reduced motion**: Respect `prefers-reduced-motion: reduce`. Disable physics-based animations, cross-fade transitions, and glass pill motion. Fall back to instant or minimal opacity changes.
+- **Image accessibility**: All images must have meaningful `alt` text (hero portraits, project previews). Decorative images use `alt=""`. Image cross-fades should not cause accessibility tree churn.
+- **Link semantics**: All project links must be `<a>` elements with descriptive text. "Coming soon" non-link items must not be focusable as links.
+- **Touch targets**: Interactive elements must be at least 44×44px for touch (mode switcher buttons, accent swatches).
 
 ### Visual reference:
 
