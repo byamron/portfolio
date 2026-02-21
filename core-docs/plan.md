@@ -102,7 +102,7 @@ transition: opacity 0.4s ease;
 
 **Subsection A — Current role (Mochi Health):**
 - "I focus on making complex information actionable within products and organizations."
-- "Currently leading patient experience design at Mochi Health." (inline link)
+- "Currently leading patient experience design at [Mochi Health](https://joinmochi.com/)." (inline link)
 - Project links:
   1. "Building a competitive top of funnel experience →" (`projectId: uw`)
   2. "Boosting engagement with our in-app weight tracker →" (`projectId: sony`)
@@ -128,7 +128,7 @@ transition: opacity 0.4s ease;
 
 - "I like working through ambiguous problems, leading 0-to-1 efforts, doing product strategy work, and getting in the weeds with engineers."
 - "I feel fulfilled working on experiences related to health, community, and other human stuff."
-- "You can say hi if you see me running around SF, or you can contact me."
+- "You can say hi if you see me running around SF, or you can [contact me](mailto:ben.yamron@icloud.com)."
 
 ### Section 4: Footer Controls
 
