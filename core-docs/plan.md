@@ -320,8 +320,8 @@ src/
 - [ ] On hover/focus: sets `hoveredProjectId` in context
 - [ ] On blur/leave: clears `hoveredProjectId`
 - [ ] Styling:
-  - `padding: 24px 16px`
-  - `border-radius: 16px`
+  - Link card padding: `8px 12px` (vertical, horizontal); glass pill sizes to the card's bounding box
+  - `border-radius: 16px` (on the glass pill, not the link element)
   - 18px Manrope, line-height 1.4, heading color
   - Subtle underline: `text-decoration: underline`, `text-decoration-color: rgba(238, 238, 238, 0.2)`
   - Arrow `→` appended for link items
@@ -371,14 +371,7 @@ src/
 - [ ] Shadow: `rgba(0, 0, 0, 0.5) 0px 8px 40px`
 - [ ] Close button (×) at top right
 - [ ] 3 tabs: **Fill**, **Shadow**, **Motion**
-- [ ] Fill tab sliders:
-  - Saturation: 0–1, step 0.01, default 0.10
-  - Brightness: 0–1, step 0.01, default 0.45
-  - Opacity: 0–0.5, step 0.01, default 0.05
-  - Blur: 0–4px, step 0.1, default 1.00
-  - Inner Glow: 0–1, step 0.01, default 0.80
-  - Border Width: 0–2px, step 0.1, default 0.10
-  - Border Radius: 0–40px, step 1, default 16
+- [ ] All slider ranges, defaults, and parameter descriptions are documented in `core-docs/design-language.md` under "Complete default configuration"
 - [ ] Sliders update the glass effect on project links in real time
 - [ ] "Copy Config" button at bottom — copies current config as code snippet
 - [ ] State is local to the panel, passed to ProjectLink via context or CSS variables
@@ -487,21 +480,9 @@ Each phase produces a working, visually coherent state. No phase leaves the site
 
 ---
 
-## Reference Files
+## Reference
 
-The original Framer components are in the repo root:
+The original Framer components have been removed. All visual and interaction specifications are now fully documented in:
 
-| File | Maps To | Notes |
-|------|---------|-------|
-| `Theme_Overrides.tsx` | ThemeContext, AccentPicker | Central state hub — global state patterns migrate to React Context |
-| `ThemeToggle.tsx` | ModeSwitcher | Appearance mode toggle (system/light/dark) |
-| `ThemeBackgroundLayer.tsx` | Background via CSS custom properties | Simple CSS variable consumer |
-| `Theme_Image.tsx` | ImageDisplay (accent-variant portraits) | 4 variants only (5th is vestigial) |
-| `GlassHighlight.tsx` | GlassHighlight / ProjectLink hover | Primary reference — edge-pull glass pill with theme-aware fill |
-| `SectionHighlight.tsx` | ~~Not migrated~~ | Superseded by GlassHighlight — ignore |
-| `GlassHighlightControls.tsx` | GlassPanel | Default config values used as starting spec |
-| `HighlightControls.tsx` | ~~Not migrated~~ | Dev panel for SectionHighlight — ignore |
-| `LinkCard.tsx` | ProjectLink | Emits hover/focus to HoverContext |
-| `Hover_Preview.tsx` | ImageDisplay (hover-triggered swap) | Conditional display based on hover ID match |
-
-See also: `tokens.md` in the repo root for all extracted color token values (HSL).
+- `core-docs/design-language.md` — glass formulas, animation physics, config defaults, theme-to-image mapping, easing presets
+- `tokens.md` — all HSL color token values

@@ -2,6 +2,58 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-21 — Extracted all Framer reference data, deleted reference files
+
+**Branch:** `byamron/cleanup-file-structure`
+
+**Summary:** Audited all 10 Framer `.tsx` reference files, extracted every implementation-critical detail into `core-docs/design-language.md` and `core-docs/plan.md`, then deleted the `reference/` directory entirely. The project no longer depends on any Framer code.
+
+**What was extracted:**
+- Glass fill color computation algorithm (hue extraction, saturation/brightness recipe, fallback color)
+- Dynamic radial highlight gradient formula (intensity scaling with fill brightness)
+- Border light simulation (directional `baseIntensity` formula with 1.2x/1.0x/0.8x multipliers)
+- Inner glow multipliers (top `0.4`, bottom `0.15`)
+- Complete glass config defaults for all 3 panel tabs: Fill (7 params), Shadow (5 params), Motion (10 params) with ranges and steps
+- Stretch/squash deformation formulas (`peakSx`/`peakSy` computation, distance normalization, 3-keyframe structure)
+- Gravitational pull physics (volume preservation formula, max stretch/translate calculations, layout detection)
+- Theme-to-image mapping (table→portrait-table.jpeg, etc.)
+- Z-index stacking order (pill: 10, link content: 1)
+- Link card padding clarification (card: 8px 12px, glass pill: 0 padding, sizes to bounding box)
+- Mode switcher details (localStorage key `"appearanceMode"`, button gap 8px, padding 8px, ARIA labels)
+- 6 named easing curve presets (Smooth, Material, Expo Out, Quint Out, Snap, Spring)
+
+**What was deleted:** All 10 files in `reference/`
+
+**Updated docs:** CLAUDE.md, plan.md, design-language.md
+
+## 2026-02-21 — Project scaffolding and file structure cleanup
+
+**Branch:** `byamron/cleanup-file-structure`
+
+**Summary:** Reorganized the repo from a loose collection of Framer reference files into a proper Vite + React + TypeScript project structure, ready for development.
+
+**What changed:**
+- Moved all 10 Framer `.tsx` reference files from repo root into `reference/` directory — they remain in git for consultation but are excluded from the build and linting
+- Initialized Vite + React + TypeScript project with `package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`
+- Installed core dependencies: React 19, Framer Motion, Phosphor Icons
+- Created full `src/` directory structure: `contexts/`, `components/`, `hooks/`, `styles/`, plus entry files (`main.tsx`, `App.tsx`, `globals.css`, `theme.css`)
+- Added `.gitignore` (node_modules, dist, .env, .DS_Store, .context)
+- Added ESLint config with TypeScript and React hooks plugins (ignores `reference/`)
+- Set up `@/` path alias for clean imports
+- Configured Manrope font via Google Fonts in `index.html`
+- Set default `data-theme="dark"` and `data-accent="table"` on `<html>`
+- Verified clean build (432ms, ~61KB gzipped JS)
+
+**Key decisions:**
+- `reference/` at project root (not inside `src/`) — these files are not part of the build, just documentation
+- Manual Vite setup rather than `create-vite` scaffold — gives full control over what's included
+- React 19 — latest stable, no reason to pin older
+- ESLint 9 flat config — modern standard
+- Path alias `@/` → `src/` for clean imports from any depth
+- No Tailwind yet — the plan lists it for Phase 0 but it can be added when actual layout work begins
+
+**Updated docs:** CLAUDE.md project structure, plan.md reference file paths
+
 ## 2026-02-20 — Created design-language.md, integrated token system
 
 **Branch:** `byamron/design-language-doc`

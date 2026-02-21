@@ -196,6 +196,9 @@ The glass is built from layered optical effects, each barely perceptible alone b
 - The accent background color is parsed to HSL; the hue is extracted.
 - Saturation is reduced to `0.1`, brightness set to `0.45` — a desaturated mid-tone version of the accent.
 - Applied at `0.05` opacity — functionally invisible, but it connects the surface to the environment.
+- **Computation**: `getFillColor(themeColor, saturation=0.1, brightness=0.45, opacity=0.05)` — parse theme background to RGB, convert RGB → HSL, keep hue, replace S and L, convert back to RGB, apply as `rgba(r, g, b, opacity)`.
+- **Fallback** (no theme color available): `rgba(gray, gray, gray, opacity)` where `gray = round(brightness * 255)` — a neutral mid-tone.
+- **Static fallback tint** (hardcoded in DEFAULTS): `rgba(133, 88, 71, 0.05)` — warm brown, used before the dynamic computation initializes.
 
 **2. Radial highlight** — A top-lit gradient that simulates overhead light hitting curved glass.
 ```
@@ -207,7 +210,7 @@ radial-gradient(
   transparent at 120%                  /* Overshoot: fully transparent */
 )
 ```
-The gradient intensity adapts to the fill brightness: `intensity = 0.15 + brightness * 0.1`. Brighter fills get subtly stronger highlights.
+The gradient intensity adapts to the fill brightness: `intensity = 0.15 + brightness * 0.1`. Brighter fills get subtly stronger highlights. The four gradient stops use `intensity`, `intensity * 0.4`, `intensity * 0.1`, and `transparent` — so the peak-to-fade ratio is always 1 : 0.4 : 0.1 regardless of overall brightness.
 
 **3. Backdrop blur** — `blur(1px) saturate(1.2)`. Barely visible. On dark backgrounds with text behind, it creates the faintest frosted-glass depth. The saturation boost prevents the blur from looking "dead."
 
@@ -222,9 +225,26 @@ inset 0 -0.1px 0 0  rgba(255,255,255, 0.144)   /* Bottom hairline */
 ```
 The `0.1px` hairlines are sub-pixel — they won't render as crisp lines on most screens, but they add a collective luminosity around the border that reads as "lit from within."
 
+**Dynamic inner glow formula** (when controlled by the configurator):
+- Top highlight: `inset 0 1px 0 0 rgba(255, 255, 255, innerGlow * 0.4)`
+- Bottom shadow: `inset 0 -1px 0 0 rgba(0, 0, 0, innerGlow * 0.15)`
+
+The default `innerGlow = 0.8` produces the static values above (0.32 top, 0.12 bottom).
+
+**Dynamic border light simulation** (directional lighting):
+```
+baseIntensity = 0.12 + fillBrightness * 0.15
+top:    rgba(255, 255, 255, baseIntensity * 1.2)   // Lit from above
+sides:  rgba(255, 255, 255, baseIntensity * 1.0)   // Neutral
+bottom: rgba(255, 255, 255, baseIntensity * 0.8)   // Shadow side
+```
+Each edge is rendered as an inset shadow at the current `borderWidth` (default 0.1px). This creates the illusion of a light source above the glass — the top edge catches more light, sides are neutral, bottom falls into shadow. The formula scales with fill brightness: darker fills get subtler borders.
+
 **5. Border** — `0.1px solid` with accent-derived color at low opacity. Structurally almost nothing, but it gives the glass a defined edge. Without it, the surface bleeds into the background.
 
-**6. Shape** — `border-radius: 16px`, `padding: 24px 16px`. Half the image container's radius, creating visual kinship without matching it. The padding gives content room inside the glass without creating a separate "card" feel.
+**6. Shape** — `border-radius: 16px`. Half the image container's radius, creating visual kinship without matching it.
+
+**Padding note**: The glass pill itself has `padding: 0` — it sizes to the card element's bounding box. The `24px 16px` padding visible in the layout comes from the **glass highlight's extra padding config** (default 0), not from the link element. The link card's own padding is `8px 12px` (vertical, horizontal). The larger `24px 16px` padding specified in the visual spec refers to the combined effect of the card's content padding plus any glass padding adjustment — in practice, the glass pill wraps the full card element.
 
 ### The glass rules
 
@@ -233,6 +253,14 @@ The `0.1px` hairlines are sub-pixel — they won't render as crisp lines on most
 - Glass **never** appears on elements that aren't project links. It is not a general-purpose surface treatment.
 - The fill opacity must stay at or below `0.05`. Higher values make it look like a card background rather than a momentary surface.
 - The backdrop blur must stay at `1px` or below. Higher values create a heavy frosted-glass look that fights the site's lightness.
+
+### Stacking and DOM structure
+
+- The glass pill is an `aria-hidden="true"` div with `data-glass-highlight="true"`, absolutely positioned inside the link container.
+- **Z-index**: pill is `z-index: 10`, link card content is `z-index: 1` with `position: relative`. This ensures the pill renders behind the text — the pill is inserted as the first child of the container, before link elements in DOM order.
+- Link cards are identified by the `[data-link-card]` selector, with `data-project-id` for hover state matching.
+- Link card layout: `display: flex`, `align-items: center`, `gap: 4px`, padding `8px 12px` (vertical, horizontal).
+- Arrow character `→` in a `flex-shrink: 0` span, same font size as link text.
 
 ---
 
@@ -265,10 +293,19 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 **Sliding between cards**:
 1. CSS transition on `transform`, `width`, `height` — 200ms, Smooth easing
 2. If `overshoot > 0`: easing becomes `cubic-bezier(0.34, [1 + overshoot], 0.64, 1)` — a subtle bounce past the target
-3. Simultaneously: stretch/squash deformation via Web Animation API (350ms total, ease-out)
-   - Peak deformation at 30% of the timeline
-   - Stretch in the direction of movement, squash perpendicular
-   - Volume preservation: `newWidth = baseWidth * (baseHeight / newHeight)`
+3. Simultaneously: stretch/squash deformation via Web Animation API (350ms total = `duration + recoveryDuration`, ease-out)
+   - 3 keyframes at offsets 0, 0.3, 1: `scale(1,1)` → `scale(peakSx, peakSy)` → `scale(1,1)`
+   - Peak deformation at 30% of the timeline, then recovery to normal
+   - Deformation formula:
+     ```
+     f = min(distance / 150, 1)        // Normalize by distance (caps at 150px)
+     hr = abs(dx) / distance            // Horizontal ratio of movement
+     vr = abs(dy) / distance            // Vertical ratio of movement
+     peakSx = (1 + stretchAmount * f * hr) * (1 - squashAmount * f * vr)
+     peakSy = (1 + stretchAmount * f * vr) * (1 - squashAmount * f * hr)
+     ```
+   - Stretch is applied in the direction of movement, squash perpendicular
+   - Only triggered when `distance > 5px` (prevents micro-jitter deformations)
 
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
@@ -278,13 +315,20 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 
 When the cursor drifts toward the edge of a hovered card, the glass pill stretches and shifts toward that edge, as if drawn toward the neighboring card. This is the site's most physically expressive behavior.
 
-- **Activation zone**: Outer 20% of the card
-- **Ramp curve**: `pow(t, 1.5)` — imperceptible near the boundary, strong near the edge
-- **Max stretch**: 25% of card height at full pull strength
-- **Max translate**: 15% of card height at full pull strength
-- **Volume preservation**: Width narrows as height increases
-- **Lerp rate**: 0.12 per frame — creates a "chasing" feel where the pill accelerates into the pull and decelerates as it approaches
-- **Settle threshold**: 0.3px — prevents sub-pixel jitter
+- **Activation zone**: Outer 20% (`edgeZone: 0.2`) of the card. Cursor position within the card is computed as a 0–1 ratio; if `ratio > 1 - edgeZone` → pulling toward bottom/right; if `ratio < edgeZone` → pulling toward top/left.
+- **Ramp curve**: `t = pow(clamp(t, 0, 1), 1.5)` — imperceptible near the boundary, strong near the edge
+- **Max stretch/translate formulas**:
+  ```
+  maxStretch = dimension * 0.25 * pullStrength
+  maxMove    = dimension * 0.15 * pullStrength
+  stretchPx  = t * maxStretch
+  movePx     = t * maxMove
+  ```
+  Where `dimension` is the card's height (vertical layout) or width (horizontal layout).
+- **Volume preservation**: `newWidth = baseWidth * (baseHeight / newHeight)` — as the pill stretches taller, it narrows proportionally. The inverse applies for horizontal stretching.
+- **Layout detection**: Vertical vs horizontal is determined by comparing the first two `[data-link-card]` elements — if `abs(b.top - a.top) > abs(b.left - a.left)`, it's vertical.
+- **Lerp rate**: 0.12 per frame — creates a "chasing" feel where the pill accelerates into the pull and decelerates as it approaches. Animated via `requestAnimationFrame` loop, not CSS transitions.
+- **Settle threshold**: 0.3px — when all four dimensions (x, y, width, height) are within 0.3px of target, the loop snaps to exact values and stops.
 
 ### Image transitions
 
@@ -316,6 +360,17 @@ Each accent theme has an associated portrait that shares its color temperature:
 
 There are exactly 4 image variants — one per accent theme. (The original Framer component had a vestigial 5th variant slot; it is not used.)
 
+### Theme-to-image mapping
+
+| Accent | Image file | Framer variant (legacy) |
+|--------|-----------|------------------------|
+| table | `portrait-table.jpeg` | variant1 |
+| portrait | `portrait-portrait.jpeg` | variant2 |
+| sky | `portrait-sky.jpeg` | variant3 |
+| pizza | `portrait-pizza.jpeg` | variant4 |
+
+In the React implementation, map `accentColor` directly to the image filename. The Framer variant numbering is preserved here only for reference.
+
 ### Image rules
 
 - All images use the same container: `528 x 720px`, `border-radius: 32px`, `object-fit: cover`
@@ -330,13 +385,16 @@ There are exactly 4 image variants — one per accent theme. (The original Frame
 
 ### Mode switcher
 
-Three icon buttons in a row: System (monitor), Light (sun), Dark (moon). Phosphor Icons at 24px. Buttons are 40px square, container is 120x40px.
+Three icon buttons in a row: System (monitor), Light (sun), Dark (moon). Phosphor Icons at 24px. Buttons are 40px square (24px icon + 8px padding each side), container is 120x40px, `gap: 8px`.
 
 - Active button: full opacity, accent-derived color
 - Inactive buttons: 0.5 opacity, muted color
 - Hover on inactive: `scale(1.1)` over 200ms ease-in-out
 - Active button does NOT scale on hover — it's already "selected"
 - All transitions: 200ms ease-in-out
+- ARIA labels: `"System theme"`, `"Light theme"`, `"Dark theme"`
+- Persistence: `localStorage.setItem("appearanceMode", mode)` — key is `"appearanceMode"`, values are `"system" | "light" | "dark"`
+- System mode detection: `window.matchMedia("(prefers-color-scheme: dark)").matches`
 
 ### Accent picker
 
@@ -373,8 +431,65 @@ The glass configurator is a showcase feature — a floating panel that lets visi
 - Toggled by a small "Glass" button near the image area
 - 3 tabs: Fill, Shadow, Motion
 - Sliders update the glass effect on project links in real time
-- "Copy Config" button exports current values as code
+- "Copy Config" button exports current values as code (blue `#3b82f6`, turns green `#22c55e` on success for 2s)
 - State is local to the panel — closing it resets to defaults
+- Slider values are click-to-edit (clicking the numeric value opens a text input; Enter commits, Escape cancels)
+- Tab transition: `all 120ms ease`
+- Active tab: `#2a2a2a` background, `2px solid #3b82f6` bottom border
+
+### Complete default configuration
+
+All values from the glass highlight system. These serve as the starting spec for the React implementation.
+
+**Shape & Fill (Fill tab)**
+
+| Parameter | Default | Range | Step | Description |
+|-----------|---------|-------|------|-------------|
+| fillSaturation | 0.10 | 0–1 | 0.01 | Color intensity (0 = gray) |
+| fillBrightness | 0.45 | 0–1 | 0.01 | Lightness (0 = black, 1 = white) |
+| fillOpacity | 0.05 | 0–0.5 | 0.01 | Overall fill opacity |
+| surfaceBlur | 1.00 | 0–4 | 0.1 | Backdrop blur in px |
+| innerGlow | 0.80 | 0–1 | 0.01 | Inner highlight intensity |
+| borderWidth | 0.10 | 0–2 | 0.1 | Glass edge width in px |
+| borderRadius | 16 | 0–40 | 1 | Corner radius in px |
+
+**Shadow (Shadow tab)**
+
+| Parameter | Default | Range | Step | Description |
+|-----------|---------|-------|------|-------------|
+| shadowX | 0 | -20–20 | 1 | Horizontal offset in px |
+| shadowY | 0 | -20–20 | 1 | Vertical offset in px |
+| shadowBlur | 0 | 0–40 | 1 | Blur radius in px |
+| shadowOpacity | 0 | 0–0.3 | 0.01 | Shadow opacity |
+| shadowColor | #000000 | — | — | Shadow color (hex) |
+
+**Motion (Motion tab)**
+
+| Parameter | Default | Range | Step | Description |
+|-----------|---------|-------|------|-------------|
+| duration | 200 | 60–400 | 10 | Slide duration in ms |
+| fadeDuration | 200 | 0–300 | 10 | Appear/disappear fade in ms |
+| easing | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | — | — | Slide easing curve ("Smooth") |
+| stretchAmount | 0.05 | 0–1 | 0.01 | Deformation in movement direction |
+| squashAmount | 0.01 | 0–0.5 | 0.01 | Perpendicular compression |
+| overshoot | 0.05 | 0–1 | 0.01 | Bounce past target (0 = none) |
+| recoveryDuration | 150 | — | — | Deformation recovery in ms |
+| pullStrength | 0.15 | 0–1 | 0.01 | Edge gravitational pull intensity |
+| edgeZone | 0.20 | 0.1–1 | 0.05 | Responsive area (1 = entire card) |
+| pullLerp | 0.12 | — | — | Pull animation smoothing speed |
+
+### Easing curve presets
+
+Named curves available for reference and potential use in the configurator:
+
+| Name | Value | Character |
+|------|-------|-----------|
+| Smooth | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | Default. Measured deceleration. |
+| Material | `cubic-bezier(0.4, 0, 0.2, 1)` | Google Material standard. |
+| Expo Out | `cubic-bezier(0.16, 1, 0.3, 1)` | Fast start, very gentle settle. |
+| Quint Out | `cubic-bezier(0.22, 1, 0.36, 1)` | Similar to Expo but slightly less aggressive. |
+| Snap | `cubic-bezier(0.2, 0, 0, 1)` | Fast start for pull release. |
+| Spring | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Overshoots target. |
 
 The panel's visual language (dark surface, system font, blue accent, technical labels) is deliberately different from the page's language. It reads as a tool or inspector, not as page content.
 
