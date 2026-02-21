@@ -22,11 +22,11 @@ This is a React migration of a Framer-based portfolio site. The original Framer 
 
 ### Key systems to replicate:
 
-- **Theme system**: 4 named themes (table, portrait, sky, pizza) with light/dark/system appearance modes. CSS custom properties drive color, background, and accent changes. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables.
-- **Glass highlight**: Frosted-glass pill that slides between navigation items with physics-based animation (stretch/squash, gravitational pull to adjacent items, volume preservation). Two variants exist (GlassHighlight, SectionHighlight) — unify into one configurable component.
-- **Hover preview**: LinkCard emits hover state globally; Hover_Preview conditionally renders content when matched. Theme_Image hides on any hover. Migrate from `window.__hoverState` to React Context.
-- **Appearance toggle**: 3-mode toggle (system/light/dark) with localStorage persistence, system preference detection, and browser meta theme-color integration.
-- **Theme background layer**: Non-wrapping background that syncs with theme — straightforward CSS variable consumer.
+- **Theme system**: 4 accent colors (table, portrait, sky, pizza) × 3 appearance modes (system/light/dark). CSS custom properties drive all color changes. Dark mode default with warm brown background `rgb(36, 31, 25)`. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables.
+- **Glass highlight on hover**: Project links get a frosted-glass background on hover — `backdrop-filter: blur(1px)`, semi-transparent accent-hued fill, inner glow, subtle border, `border-radius: 16px`. CSS-first implementation, with optional physics-based animated pill as enhancement.
+- **Image swap on hover**: Hovering a project link cross-fades the right-column image to a project-specific preview. Leaving resets to the accent-color default portrait. Both transitions (glass + image) happen simultaneously. Migrate from `window.__hoverState` to React Context.
+- **Appearance toggle**: 3-mode toggle (system/light/dark) with Phosphor Icons (monitor/sun/moon), localStorage persistence, system preference detection, and browser meta theme-color integration.
+- **Glass configurator panel**: Floating demo panel that tunes the glass hover effect in real-time with sliders. 3 tabs (Fill/Shadow/Motion). Showcase feature.
 
 ### Architecture principles:
 
@@ -47,6 +47,14 @@ See `workflow.md` for the full development workflow. Key points:
 - Plan before building, review before shipping
 - Commit to the working branch and push to remote
 
+### Visual reference:
+
+- **Font**: Manrope (Google Fonts), weight 400, sans-serif fallback
+- **Layout**: Two-column flex — left 50% scrollable (`padding: 64px 40px`), right 50% fixed (`padding: 64px 16px`)
+- **Image container**: 528×720px, `border-radius: 32px`, `object-fit: cover`
+- **Spacing hierarchy**: 80px (content↔footer) → 64px (title↔sections) → 40px (between sections) → 24px (between links)
+- **Responsive**: Right column hidden below 1200px
+
 ## Project Structure (Target)
 
 ```
@@ -57,22 +65,37 @@ islamabad/
 ├── history.md                # Decision log (reverse chronological)
 ├── PLAN.md                   # Migration plan
 ├── src/
-│   ├── app/                  # Next.js or Vite app entry
-│   ├── components/           # UI components
-│   │   ├── GlassHighlight/
-│   │   ├── LinkCard/
-│   │   ├── HoverPreview/
-│   │   ├── ThemeToggle/
-│   │   ├── ThemeImage/
-│   │   └── ThemeBackground/
-│   ├── context/              # React Context providers
-│   │   ├── ThemeContext.tsx
-│   │   └── HoverContext.tsx
-│   ├── hooks/                # Custom hooks
-│   ├── styles/               # Global styles + CSS variables
-│   └── lib/                  # Utilities (color conversion, etc.)
-├── public/                   # Static assets
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── contexts/
+│   │   ├── ThemeContext.tsx   # Mode + accent color state
+│   │   └── HoverContext.tsx   # Hovered project ID
+│   ├── components/
+│   │   ├── Layout.tsx         # Two-column flex
+│   │   ├── LeftColumn.tsx     # Scrollable content
+│   │   ├── RightColumn.tsx    # Fixed image display
+│   │   ├── HeroTitle.tsx
+│   │   ├── Section.tsx
+│   │   ├── ProjectLink.tsx    # Hoverable link with glass effect
+│   │   ├── AboutSection.tsx
+│   │   ├── ThemeControls.tsx  # Footer: mode + accent
+│   │   ├── ModeSwitcher.tsx
+│   │   ├── AccentPicker.tsx
+│   │   ├── ImageDisplay.tsx   # Cross-fading images
+│   │   ├── GlassPanel.tsx     # Config panel (demo)
+│   │   └── GlassButton.tsx
+│   ├── hooks/
+│   │   ├── useTheme.ts
+│   │   └── useHoveredProject.ts
+│   ├── data/
+│   │   └── projects.ts
+│   ├── assets/
+│   │   └── images/
+│   └── styles/
+│       ├── globals.css
+│       └── theme.css
+├── public/
 ├── package.json
 ├── tsconfig.json
-└── (original Framer files)   # Reference only
+└── (original Framer .tsx files — reference only)
 ```
