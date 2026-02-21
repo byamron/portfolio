@@ -1,2 +1,145 @@
-/* Theme tokens — populated in Phase 1 */
-/* See tokens.md for all HSL values */
+/* Portfolio Design Tokens
+ * Source: tokens.md
+ * Three-tier system: text (appearance-only), backgrounds (accent+appearance), swatches (constant)
+ * Attributes: data-theme="light|dark" on <html>, data-accent="table|portrait|sky|pizza" on <html>
+ */
+
+/* ============================================================================
+ * DEFAULT: light mode text + table accent
+ * ============================================================================ */
+
+:root {
+  /* Text colors (light mode defaults) */
+  --text-dark: hsl(0, 0%, 7%);
+  --text-medium: hsl(0, 0%, 20%);
+  --text-grey: hsl(240, 2%, 45%);
+  --text-light-grey: hsl(0, 0%, 70%);
+  --text-light: hsl(0, 0%, 100%);
+  --text-link: hsl(219, 49%, 53%);
+  --text-underline: hsla(0, 0%, 7%, 0.2);
+
+  /* Background (default: table light) */
+  --bg: hsl(30, 17%, 91%);
+
+  /* Active swatch (default: table) */
+  --swatch: hsl(34, 50%, 60%);
+
+  /* All swatches (constant across modes) */
+  --swatch-sky: hsl(204, 50%, 70%);
+  --swatch-table: hsl(34, 50%, 60%);
+  --swatch-portrait: hsl(47, 34%, 64%);
+  --swatch-pizza: hsl(15, 53%, 64%);
+
+  /* Accent hue for derived calculations (glass fill, etc.) */
+  --accent-hue: 34;
+}
+
+/* ============================================================================
+ * APPEARANCE MODE: dark
+ * Text colors only — backgrounds handled per accent below
+ * ============================================================================ */
+
+[data-theme="dark"] {
+  --text-dark: hsl(0, 0%, 99%);
+  --text-medium: hsl(0, 0%, 90%);
+  --text-grey: hsl(240, 2%, 75%);
+  --text-light-grey: hsl(0, 0%, 40%);
+  --text-light: hsl(0, 0%, 7%);
+  --text-link: hsl(220, 54%, 81%);
+  --text-underline: hsla(0, 0%, 93%, 0.2);
+}
+
+/* ============================================================================
+ * ACCENT THEMES: light mode backgrounds
+ * ============================================================================ */
+
+[data-theme="light"][data-accent="table"],
+[data-accent="table"] {
+  --bg: hsl(30, 17%, 91%);
+  --swatch: hsl(34, 50%, 60%);
+  --accent-hue: 34;
+}
+
+[data-theme="light"][data-accent="portrait"],
+[data-accent="portrait"] {
+  --bg: hsl(42, 22%, 91%);
+  --swatch: hsl(47, 34%, 64%);
+  --accent-hue: 47;
+}
+
+[data-theme="light"][data-accent="sky"],
+[data-accent="sky"] {
+  --bg: hsl(200, 23%, 95%);
+  --swatch: hsl(204, 50%, 70%);
+  --accent-hue: 204;
+}
+
+[data-theme="light"][data-accent="pizza"],
+[data-accent="pizza"] {
+  --bg: hsl(10, 30%, 96%);
+  --swatch: hsl(15, 53%, 64%);
+  --accent-hue: 15;
+}
+
+/* ============================================================================
+ * ACCENT THEMES: dark mode backgrounds
+ * ============================================================================ */
+
+[data-theme="dark"][data-accent="table"] {
+  --bg: hsl(33, 18%, 12%);
+  --swatch: hsl(34, 50%, 60%);
+  --accent-hue: 34;
+}
+
+[data-theme="dark"][data-accent="portrait"] {
+  --bg: hsl(47, 18%, 10%);
+  --swatch: hsl(47, 34%, 64%);
+  --accent-hue: 47;
+}
+
+[data-theme="dark"][data-accent="sky"] {
+  --bg: hsl(200, 22%, 8%);
+  --swatch: hsl(204, 50%, 70%);
+  --accent-hue: 204;
+}
+
+[data-theme="dark"][data-accent="pizza"] {
+  --bg: hsl(8, 22%, 7%);
+  --swatch: hsl(15, 53%, 64%);
+  --accent-hue: 15;
+}
+
+/* ============================================================================
+ * SUBFRAME THEME OVERRIDES
+ * Maps Subframe's semantic tokens to portfolio values so Subframe components
+ * (Button, Badge, etc.) match the portfolio's visual language.
+ * Loaded AFTER src/ui/theme.css so these win via cascade.
+ * ============================================================================ */
+
+:root {
+  /* Fonts — Manrope for body, Newsreader for headings */
+  --font-caption: Manrope, sans-serif;
+  --font-caption-bold: Manrope, sans-serif;
+  --font-body: Manrope, sans-serif;
+  --font-body-bold: Manrope, sans-serif;
+  --font-heading-3: Newsreader, serif;
+  --font-heading-2: Newsreader, serif;
+  --font-heading-1: Newsreader, serif;
+  --font-monospace-body: monospace;
+
+  /* Font weights — 400 throughout per design language */
+  --text-caption--font-weight: 400;
+  --text-caption-bold--font-weight: 500;
+  --text-body--font-weight: 400;
+  --text-body-bold--font-weight: 500;
+  --text-heading-3--font-weight: 300;
+  --text-heading-2--font-weight: 300;
+  --text-heading-1--font-weight: 300;
+
+  /* Colors — mapped from portfolio "table" accent (light mode defaults) */
+  --color-brand-primary: hsl(34, 50%, 60%);
+  --color-default-font: var(--text-dark);
+  --color-subtext-color: var(--text-grey);
+  --color-neutral-border: var(--text-light-grey);
+  --color-default-background: var(--bg);
+}
