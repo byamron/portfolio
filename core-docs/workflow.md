@@ -26,8 +26,8 @@ Search for current best practices if needed. Don't assume — verify.
 ### 3. Consult Previous Feedback
 
 Before planning or implementing, review:
-- `feedback.md` — past mistakes, rejected approaches, and lessons learned
-- `history.md` — previous decisions and their rationale
+- `core-docs/feedback.md` — past mistakes, rejected approaches, and lessons learned
+- `core-docs/history.md` — previous decisions and their rationale
 
 Avoid repeating documented mistakes.
 
@@ -61,12 +61,12 @@ Present the work for feedback. Show what was built, why, and how.
 ### 8. Handle Feedback
 
 **If feedback is negative:**
-1. Record what went wrong in `feedback.md` — include the date, what was attempted, why it failed, and the lesson learned.
+1. Record what went wrong in `core-docs/feedback.md` — include the date, what was attempted, why it failed, and the lesson learned.
 2. Restart the workflow from Step 1, incorporating the feedback.
-3. Review `feedback.md` as part of Step 3 in the next iteration.
+3. Review `core-docs/feedback.md` as part of Step 3 in the next iteration.
 
 **If feedback is positive:**
-1. Document what was done in `history.md` in reverse chronological order, including:
+1. Document what was done in `core-docs/history.md` in reverse chronological order, including:
    - Date
    - Summary of work completed
    - Major decisions and reasoning
