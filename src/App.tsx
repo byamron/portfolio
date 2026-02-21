@@ -1,8 +1,14 @@
+import { ThemeProvider } from '@/contexts/ThemeContext'
+import { HoverProvider } from '@/contexts/HoverContext'
+import { Layout } from '@/components/Layout'
+
 function App() {
   return (
-    <main>
-      <h1>Ben Yamron is a product designer</h1>
-    </main>
+    <ThemeProvider>
+      <HoverProvider>
+        <Layout />
+      </HoverProvider>
+    </ThemeProvider>
   )
 }
 

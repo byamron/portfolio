@@ -19,6 +19,9 @@ body {
   font-family: 'Manrope', sans-serif;
   font-weight: 400;
   min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text-dark);
+  transition: background-color 500ms ease-in-out;
 }
 
 img {
@@ -28,4 +31,18 @@ img {
 
 a {
   color: inherit;
+}
+
+/* CSS-only glass hover fallback (before JS pill attaches) */
+[data-link-card]:hover {
+  background: hsla(var(--accent-hue), 10%, 45%, 0.05);
+  backdrop-filter: blur(1px);
+  border-radius: 16px;
+  transition: background 300ms ease;
+}
+
+/* Disable CSS fallback when animated pill is active */
+[data-glass-highlight-active] [data-link-card]:hover {
+  background: transparent;
+  backdrop-filter: none;
 }

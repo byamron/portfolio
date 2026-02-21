@@ -2,6 +2,30 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-21 — Glass hover highlight with gravitational pull
+
+**Branch:** `byamron/glass-hover-gravity`
+
+**Summary:** Built the full glass hover highlight system — the portfolio's signature interaction. A glass pill appears around project links on hover, slides between cards with stretch/squash deformation, and gravitationally pulls toward neighboring cards when the cursor drifts toward card edges. Also built all prerequisite scaffolding (contexts, layout, project data, components).
+
+**What was built:**
+- **`src/hooks/useGlassHighlight.ts`** (~330 lines) — The entire imperative physics system: pill creation with 6-layer glass visual recipe (fill, radial highlight, backdrop blur, inner glow, border, shape), mouse event delegation, card-to-card sliding with CSS transitions, stretch/squash deformation via Web Animations API, gravitational pull via `requestAnimationFrame` loop with volume preservation, theme reactivity via MutationObserver, scroll/resize tracking, keyboard focus support, reduced motion support.
+- **`src/data/projects.ts`** — All 11 projects across 3 content sections with types
+- **`src/contexts/HoverContext.tsx`** — Hovered project ID state
+- **`src/contexts/ThemeContext.tsx`** — Minimal: reads HTML attributes, exposes accent/appearance
+- **`src/components/`** — ProjectLink, Section, HeroTitle, AboutSection, LeftColumn, RightColumn, Layout
+- **`src/App.tsx`** — Wired providers + Layout
+- **`src/styles/globals.css`** — Body background, CSS hover fallback, `[data-glass-highlight-active]` override
+
+**Key decisions:**
+- **Fully imperative glass system** (no React state during interaction): The hook uses a single `useEffect([])` and stores all mutable state in closures. Config is read from a ref. Zero React re-renders happen during hover interactions.
+- **Event delegation**: 3 mouse + 2 focus listeners on the container, not per-card. Finds target via `closest('[data-link-card]')`.
+- **Smart RAF lifecycle**: Pull loop stops when pill settles (all dimensions within 0.3px of target), restarts on next `mousemove`. Zero wasted frames when cursor is stationary.
+- **Volume preservation in pull**: `newWidth = baseWidth * (baseHeight / newHeight)` keeps visual "mass" constant during stretch.
+- **Power ramp curve**: `pow(t, 1.5)` makes pull imperceptible near the activation boundary and strong near card edges.
+- **CSS hover fallback**: Before JS attaches, links get a simple CSS glass effect. Once `useGlassHighlight` runs, it sets `data-glass-highlight-active` on the container which disables the CSS fallback.
+- **RightColumn is a placeholder**: Shows static portrait-table.jpeg. Image swap on hover is not wired yet.
+
 ## 2026-02-21 — Subframe component library, Tailwind v4, and theme integration
 
 **Branch:** `main`
