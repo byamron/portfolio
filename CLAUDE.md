@@ -43,15 +43,15 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 ## Technical Context
 
-This is a React migration of a Framer-based portfolio site. The original Framer components are preserved in the repo root as reference (`.tsx` files). The React rebuild should replicate the visual and interactive behavior of the originals while using idiomatic React patterns.
+This is a React migration of a Framer-based portfolio site. All original Framer component behavior has been extracted into `core-docs/design-language.md` — the reference `.tsx` files have been removed. The React rebuild replicates the visual and interactive behavior using idiomatic React patterns.
 
 ### Key systems to replicate:
 
-- **Theme system**: 4 accent colors (table, portrait, sky, pizza) × 3 appearance modes (system/light/dark). CSS custom properties drive all color changes. Dark mode default. The original uses `window.__themeState` with a listener pattern — migrate to React Context + CSS variables. All token values (text, background, swatch) are documented in `tokens.md`.
-- **Glass highlight on hover**: Project links get a frosted-glass background on hover — `backdrop-filter: blur(1px)`, semi-transparent accent-hued fill, inner glow, subtle border, `border-radius: 16px`. CSS-first implementation, with optional physics-based animated pill as enhancement. Only `GlassHighlight.tsx` is needed as reference — `SectionHighlight.tsx` was an earlier iteration and is superseded. Default config values from `GlassHighlightControls.tsx` will be refined through testing.
-- **Image swap on hover**: Hovering a project link cross-fades the right-column image to a project-specific preview. Leaving resets to the accent-color default portrait. Both transitions (glass + image) happen simultaneously. Supports 4 image variants (one per theme — the 5th variant slot in `Theme_Image.tsx` is vestigial). Migrate from `window.__hoverState` to React Context.
-- **Appearance toggle**: 3-mode toggle (system/light/dark) with Phosphor Icons (monitor/sun/moon), localStorage persistence, system preference detection, and browser meta theme-color integration.
-- **Glass configurator panel**: Floating demo panel that tunes the glass hover effect in real-time with sliders. 3 tabs (Fill/Shadow/Motion). Showcase feature.
+- **Theme system**: 4 accent colors (table, portrait, sky, pizza) × 3 appearance modes (system/light/dark). CSS custom properties drive all color changes. Dark mode default. React Context + CSS variables replace Framer's `window.__themeState`. All token values (text, background, swatch) are documented in `tokens.md`.
+- **Glass highlight on hover**: Project links get a frosted-glass background on hover — `backdrop-filter: blur(1px)`, semi-transparent accent-hued fill, inner glow, subtle border, `border-radius: 16px`. CSS-first implementation, with optional physics-based animated pill as enhancement. All formulas, defaults, and slider ranges documented in `core-docs/design-language.md`.
+- **Image swap on hover**: Hovering a project link cross-fades the right-column image to a project-specific preview. Leaving resets to the accent-color default portrait. Both transitions (glass + image) happen simultaneously. Supports 4 image variants (one per theme). Theme-to-image mapping documented in `core-docs/design-language.md`.
+- **Appearance toggle**: 3-mode toggle (system/light/dark) with Phosphor Icons (monitor/sun/moon), localStorage persistence (`"appearanceMode"` key), system preference detection, and browser meta theme-color integration.
+- **Glass configurator panel**: Floating demo panel that tunes the glass hover effect in real-time with sliders. 3 tabs (Fill/Shadow/Motion). Complete config defaults and slider ranges in `core-docs/design-language.md`.
 
 ### Typography:
 
@@ -95,17 +95,23 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 ## Project Structure (Target)
 
 ```
-sofia/
 ├── CLAUDE.md                 # This file
 ├── tokens.md                 # Design tokens (HSL values for all themes)
+├── index.html                # Vite entry HTML
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── eslint.config.js
 ├── core-docs/
 │   ├── plan.md               # Migration plan (living document)
-│   ├── workflow.md            # Development process
-│   ├── feedback.md            # Lessons from negative feedback
-│   └── history.md             # Decision log (reverse chronological)
+│   ├── design-language.md    # Visual & interaction rules
+│   ├── workflow.md           # Development process
+│   ├── feedback.md           # Lessons from negative feedback
+│   └── history.md            # Decision log (reverse chronological)
 ├── src/
 │   ├── App.tsx
 │   ├── main.tsx
+│   ├── vite-env.d.ts
 │   ├── contexts/
 │   │   ├── ThemeContext.tsx   # Mode + accent color state
 │   │   └── HoverContext.tsx   # Hovered project ID
@@ -127,14 +133,12 @@ sofia/
 │   │   ├── useTheme.ts
 │   │   └── useHoveredProject.ts
 │   ├── data/
-│   │   └── projects.ts
+│   │   ├── projects.ts
+│   │   └── case-studies/      # Markdown content for case studies
 │   ├── assets/
 │   │   └── images/
 │   └── styles/
 │       ├── globals.css
 │       └── theme.css
-├── public/
-├── package.json
-├── tsconfig.json
-└── (original Framer .tsx files — reference only)
+└── public/
 ```
