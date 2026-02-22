@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Monitor, Sun, Moon } from '@phosphor-icons/react'
-import { useTheme, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
+import { useTheme, INTENSITY_LEVELS, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -212,9 +212,13 @@ function setupControlPill(container: HTMLElement): () => void {
 // Component
 // ---------------------------------------------------------------------------
 
+const STRIP_HEIGHT = 48
+const ZONE_HEIGHT = STRIP_HEIGHT / INTENSITY_LEVELS.length
+
 export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
-  const { appearanceMode, setAppearanceMode, accentColor, setAccentColor } = useTheme()
+  const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
+          bgIntensity, setBgIntensity, intensityVariant } = useTheme()
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
@@ -277,16 +281,41 @@ export function SidebarThemeControls() {
         }}
       >
         {/* Fixed trigger — always visible, rounded square */}
-        <div
-          style={{
-            width: 16,
-            height: 16,
-            borderRadius: 5,
-            background: activeSwatch.swatch,
-            transition: 'background 200ms ease-in-out',
-            flexShrink: 0,
-          }}
-        />
+        {/* In 'ring' variant: clickable, cycles intensity, ring encodes level */}
+        {intensityVariant === 'ring' ? (
+          <button
+            onClick={() => setBgIntensity((bgIntensity + 1) % INTENSITY_LEVELS.length)}
+            aria-label={`Background intensity: ${INTENSITY_LEVELS[bgIntensity].name}. Click to cycle.`}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 5,
+              background: activeSwatch.swatch,
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              flexShrink: 0,
+              outline: bgIntensity === 0 ? 'none'
+                : `${bgIntensity === 3 ? 1.5 : 1}px solid color-mix(in srgb, ${activeSwatch.swatch} ${15 + bgIntensity * 12}%, transparent)`,
+              outlineOffset: bgIntensity === 0 ? 0 : 3,
+              boxShadow: bgIntensity === 3
+                ? `0 0 6px color-mix(in srgb, ${activeSwatch.swatch} 20%, transparent)`
+                : 'none',
+              transition: 'background 200ms ease-in-out, outline 200ms ease-in-out, box-shadow 200ms ease-in-out',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 5,
+              background: activeSwatch.swatch,
+              transition: 'background 200ms ease-in-out',
+              flexShrink: 0,
+            }}
+          />
+        )}
 
         {/* Expandable toolbar with glass pill */}
         <div
@@ -436,6 +465,97 @@ export function SidebarThemeControls() {
               )
             })}
           </div>
+
+          {/* Option 3: Gradient strip for intensity */}
+          {intensityVariant === 'gradient' && (
+            <>
+              {/* Divider: modes ↔ intensity */}
+              <motion.div
+                animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
+                transition={{
+                  duration: 0.22,
+                  delay: hovered ? (2 + accents.length + modes.length) * 0.04 : 0,
+                  ease: motionEase,
+                }}
+                style={{
+                  width: 20,
+                  height: 1,
+                  background: 'var(--text-dark)',
+                  margin: '18px 0',
+                  pointerEvents: 'none',
+                }}
+              />
+
+              <motion.div
+                animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
+                transition={{
+                  duration: 0.22,
+                  delay: hovered ? (3 + accents.length + modes.length) * 0.04 : 0,
+                  ease: motionEase,
+                }}
+                style={{ pointerEvents: hovered ? 'auto' : 'none' }}
+              >
+                <div
+                  aria-label={`Background intensity: ${INTENSITY_LEVELS[bgIntensity].name}`}
+                  role="slider"
+                  aria-valuemin={0}
+                  aria-valuemax={INTENSITY_LEVELS.length - 1}
+                  aria-valuenow={bgIntensity}
+                  aria-valuetext={INTENSITY_LEVELS[bgIntensity].name}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                      e.preventDefault()
+                      setBgIntensity(Math.min(INTENSITY_LEVELS.length - 1, bgIntensity + 1))
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                      e.preventDefault()
+                      setBgIntensity(Math.max(0, bgIntensity - 1))
+                    }
+                  }}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const y = e.clientY - rect.top
+                    const level = Math.min(INTENSITY_LEVELS.length - 1, Math.floor(y / ZONE_HEIGHT))
+                    setBgIntensity(level)
+                  }}
+                  style={{
+                    position: 'relative',
+                    width: 24,
+                    height: STRIP_HEIGHT,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* The visual gradient strip */}
+                  <div
+                    style={{
+                      width: 5,
+                      height: STRIP_HEIGHT,
+                      borderRadius: 2.5,
+                      background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 10%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
+                      transition: 'background 500ms ease-in-out',
+                    }}
+                  />
+                  {/* Active level indicator — small dot on the strip */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: 'var(--swatch)',
+                      border: '1.5px solid color-mix(in srgb, var(--text-dark) 30%, transparent)',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      top: bgIntensity * ZONE_HEIGHT + ZONE_HEIGHT / 2 - 3.5,
+                      transition: 'top 200ms ease-in-out, background 500ms ease-in-out',
+                    }}
+                  />
+                </div>
+              </motion.div>
+            </>
+          )}
         </div>
       </div>
     </div>
