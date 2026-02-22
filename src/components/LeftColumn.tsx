@@ -1,22 +1,27 @@
 import { useRef } from 'react'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
-import { HeroTitle } from './HeroTitle'
-import { Section } from './Section'
-import { AboutSection } from './AboutSection'
-import { ThemeControls } from './ThemeControls'
+import { HeroTitle } from '@/components/HeroTitle'
+import { Section } from '@/components/Section'
+import { AboutSection } from '@/components/AboutSection'
 import { sections } from '@/data/projects'
 
-export function LeftColumn() {
+interface LeftColumnProps {
+  fullWidth?: boolean
+}
+
+export function LeftColumn({ fullWidth }: LeftColumnProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   useGlassHighlight(contentRef)
 
   return (
     <main
       ref={contentRef}
+      className="left-column"
       style={{
-        width: '50%',
+        width: fullWidth ? '100%' : '50%',
         overflowY: 'auto',
-        padding: '64px 40px',
+        padding:
+          'var(--layout-padding-top) var(--layout-margin)',
         position: 'relative',
         height: '100vh',
       }}
@@ -24,14 +29,11 @@ export function LeftColumn() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          {sections.map(section => (
-            <Section key={section.id} section={section} />
+          {sections.map((section, i) => (
+            <Section key={i} section={section} />
           ))}
+          <AboutSection />
         </div>
-        <AboutSection />
-      </div>
-      <div style={{ marginTop: 80 }}>
-        <ThemeControls />
       </div>
     </main>
   )

@@ -1,25 +1,24 @@
-import { ProjectLink } from './ProjectLink'
-import type { ContentSection } from '@/data/projects'
+import { ProjectLink } from '@/components/ProjectLink'
+import type { Section as SectionType } from '@/data/projects'
 
 interface SectionProps {
-  section: ContentSection
+  section: SectionType
 }
 
 export function Section({ section }: SectionProps) {
   return (
-    <section>
-      {section.contextParagraphs.map((p, i) => (
+    <section style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {section.context.map((text, i) => (
         <p
           key={i}
           style={{
             fontSize: 18,
+            fontWeight: 400,
             lineHeight: 1.2,
             color: 'var(--text-medium)',
-            marginBottom: i < section.contextParagraphs.length - 1 ? 8 : 24,
           }}
-        >
-          {p}
-        </p>
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
       ))}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {section.projects.map(project => (

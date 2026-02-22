@@ -9,12 +9,17 @@ const HoverContext = createContext<HoverContextValue | null>(null)
 
 export function HoverProvider({ children }: { children: ReactNode }) {
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
-  const value = useMemo(() => ({ hoveredProjectId, setHoveredProjectId }), [hoveredProjectId])
+
+  const value = useMemo<HoverContextValue>(() => ({
+    hoveredProjectId,
+    setHoveredProjectId,
+  }), [hoveredProjectId])
+
   return <HoverContext.Provider value={value}>{children}</HoverContext.Provider>
 }
 
-export function useHoverContext() {
+export function useHover() {
   const ctx = useContext(HoverContext)
-  if (!ctx) throw new Error('useHoverContext must be used within HoverProvider')
+  if (!ctx) throw new Error('useHover must be used within HoverProvider')
   return ctx
 }
