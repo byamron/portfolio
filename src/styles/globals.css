@@ -24,6 +24,33 @@ body {
   transition: background-color 500ms ease-in-out;
 }
 
+/* Layout spacing tokens — responsive */
+:root {
+  --layout-margin: 64px;
+  --layout-gap: 48px;
+  --layout-padding-top: 64px;
+}
+
+@media (max-width: 1439px) {
+  :root {
+    --layout-margin: 48px;
+    --layout-gap: 32px;
+  }
+}
+
+@media (max-width: 1199px) {
+  :root {
+    --layout-margin: 32px;
+    --layout-gap: 0px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --layout-margin: 20px;
+  }
+}
+
 img {
   display: block;
   max-width: 100%;
