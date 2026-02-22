@@ -5,7 +5,11 @@ import { Section } from '@/components/Section'
 import { AboutSection } from '@/components/AboutSection'
 import { sections } from '@/data/projects'
 
-export function LeftColumn() {
+interface LeftColumnProps {
+  fullWidth?: boolean
+}
+
+export function LeftColumn({ fullWidth }: LeftColumnProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   useGlassHighlight(contentRef)
 
@@ -14,9 +18,10 @@ export function LeftColumn() {
       ref={contentRef}
       className="left-column"
       style={{
-        width: '50%',
+        width: fullWidth ? '100%' : '50%',
         overflowY: 'auto',
-        padding: '64px 40px',
+        padding:
+          'var(--layout-padding-top) var(--layout-margin)',
         position: 'relative',
         height: '100vh',
       }}

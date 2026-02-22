@@ -123,11 +123,14 @@ Theme transitions take `500ms ease-in-out` — slow enough to register as intent
 
 | Element | Size | Line height | Color role |
 |---------|------|-------------|------------|
+| Display (case study hero h1) | 48px | 1.2 | Heading (high contrast) |
 | Title (h1) | 36px | 1.2 | Heading (high contrast) |
+| Section heading (case study h2) | 24px | 1.2 | Heading (high contrast) |
 | Body / descriptions | 18px | 1.2 | Body (muted) |
 | Project links | 18px | 1.4 | Heading (high contrast) |
+| Meta / captions | 14px | 1.4 | Grey (low contrast) |
 
-The scale is deliberately tight — only two sizes. The title is 2x the body, which is a clean ratio. Project links share the body size but use heading color and taller line-height, differentiating them through color and rhythm rather than scale.
+The main page scale is deliberately tight — only two sizes (36/18). The title is 2x the body, which is a clean ratio. Case study pages extend the scale with a 48px display size for the hero, 24px section headings for scannability, and 14px for captions and metadata. The full scale follows a roughly 1.33× progression: 14 → 18 → 24 → 36 → 48. Project links share the body size but use heading color and taller line-height, differentiating them through color and rhythm rather than scale.
 
 ### Link treatment
 

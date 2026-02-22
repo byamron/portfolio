@@ -10,7 +10,8 @@ export function RightColumn() {
         top: 0,
         right: 0,
         height: '100vh',
-        padding: '64px 16px',
+        padding:
+          'var(--layout-padding-top) var(--layout-margin)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

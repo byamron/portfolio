@@ -2,6 +2,36 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-22 — Case study layout prototype with sticky visuals and hero
+
+**Branch:** `byamron/case-study-layout`
+
+**Summary:** Designed, prototyped, and refined a case study page layout. Explored three directions (sticky companion, breakout visuals, Tufte-style sidebar), narrowed to the sticky companion column, and iterated through visual blocks grouping, responsive spacing, gallery section, and a 100vh hero with vertically centered text and visual.
+
+**What was built:**
+- **`src/data/case-study-content.ts`** — Typed data structure for case studies: `CaseStudy` (title, subtitle, timeline, heroVisual, sections, gallery), `CaseStudySection`, `CaseStudyVisual`, `GalleryItem`. Mochi Subscriptions fully populated with 5 sections (3 with visuals), 1 hero visual, and 6 gallery items.
+- **`src/components/CaseStudyLayoutA.tsx`** — Two-column case study layout. 100vh hero row with vertically centered title (48px display) and hero visual. Each content section gets its own 100vh row with text left, sticky visual right. Visual carry-forward: `resolveVisuals()` ensures sections without their own visual show the most recent one (seeded by hero visual). Gallery section after narrative with full-width and 2-up grid patterns. Responsive: collapses to single column below 1200px.
+- **`src/components/PlaceholderVisual.tsx`** — Gray rectangle placeholder (16:10, 32px radius, theme-adaptive) with optional caption.
+- **`src/components/CaseStudySectionText.tsx`** — Shared text component: 24px h2 + 18px/1.4 paragraphs.
+- **`src/components/CaseStudyPrototype.tsx`** — Wrapper with top/bottom fade gradients (20px linear fade).
+- **`src/components/ViewSwitcher.tsx`** — Floating dev toggle for Main/Case Study view switching.
+- **`src/hooks/useMediaQuery.ts`** — Shared responsive hook with `useIsWide()` (1200px breakpoint).
+
+**Modified files:**
+- **`src/App.tsx`** — View switching state between Layout and CaseStudyPrototype.
+- **`src/styles/globals.css`** — Responsive layout spacing tokens (`--layout-margin`, `--layout-gap`, `--layout-padding-top`) with breakpoints at 1440/1200/768px.
+- **`src/components/Layout.tsx`**, **`LeftColumn.tsx`**, **`RightColumn.tsx`** — Updated to use responsive spacing variables and `useIsWide()` hook.
+
+**Key decisions:**
+- **Dropped breakout layout (Direction B)**: IntersectionObserver-based layout transitions caused flickering and content reflow. Violated the design language anti-pattern against scroll-triggered animations. Structural problem, not fixable.
+- **Per-section rows over visual blocks**: Initially grouped sections into "visual blocks" (multiple sections per row). Switched to one section per row so each gets its own 100vh space with one heading and its paragraphs — cleaner rhythm.
+- **Visual carry-forward seeded by hero**: `resolveVisuals()` walks sections linearly, carrying the last visual forward. Hero visual seeds the initial value, so sections before the first visual still show the hero image.
+- **48px display title**: Extended the type scale (14 → 18 → 24 → 36 → 48) for the case study hero. Follows the ~1.33× progression. Main page h1 stays at 36px.
+- **50/50 column split**: Matches the main page. Text column achieves 50-70 char/line ideal at ~600px effective width.
+- **Responsive layout tokens shared with main page**: CSS custom properties (`--layout-margin`, `--layout-gap`) used by both main page and case study, ensuring consistent spacing.
+
+**Updated docs:** design-language.md (typography scale, case study layout rules), history.md
+
 ## 2026-02-21 — Sidebar theme controls with glass pill hover
 
 **Branch:** `byamron/react-portfolio-build`
@@ -25,6 +55,7 @@ Decision log and completed work, in reverse chronological order.
 **Iteration path:** 3 variants (A/B/C) → user testing → consolidated hybrid → size/spacing tuning → rounded squares everywhere → glass pill added → pill size normalized → blur fix (z-index) → selected state borders → border refinement (1.5px, lighter colors, smaller icons)
 
 **Files changed:** SidebarThemeControls.tsx (new), Layout.tsx, core-docs/design-language.md, core-docs/history.md, core-docs/feedback.md
+>>>>>>> origin/main
 
 ## 2026-02-21 — Accessibility fixes for glass highlight scaffolding
 

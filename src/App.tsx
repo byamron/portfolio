@@ -1,21 +1,20 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useState } from 'react'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { Layout } from '@/components/Layout'
-import { CaseStudy } from '@/components/CaseStudy'
+import { CaseStudyPrototype } from '@/components/CaseStudyPrototype'
+import { ViewSwitcher } from '@/components/ViewSwitcher'
 
 function App() {
+  const [view, setView] = useState<'main' | 'case-study'>('case-study')
+
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <HoverProvider>
-          <Routes>
-            <Route path="/" element={<Layout />} />
-            <Route path="/project/:slug" element={<CaseStudy />} />
-          </Routes>
-        </HoverProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <HoverProvider>
+        <ViewSwitcher view={view} onViewChange={setView} />
+        {view === 'main' ? <Layout /> : <CaseStudyPrototype />}
+      </HoverProvider>
+    </ThemeProvider>
   )
 }
 
