@@ -178,7 +178,21 @@ Below 1200px, the right column disappears entirely. It doesn't stack below or co
 - Border radius: `32px`
 - Object fit: `cover`
 
-The `32px` radius is the largest radius on the site and is reserved exclusively for the image container. It creates a distinctive, recognizable shape — almost a "card" but without borders or shadows. The `cover` fit means images are always full-bleed within this shape, never letterboxed.
+The `32px` radius is the largest radius on the site. It creates a distinctive, recognizable shape — almost a "card" but without borders or shadows. The `cover` fit means images are always full-bleed within this shape, never letterboxed.
+
+### The radius scale
+
+Radii follow a descending scale that maps to element role:
+
+| Radius | Element | Role |
+|--------|---------|------|
+| 32px | Image container | Content showcase — the largest, most prominent shape |
+| 16px | Glass hover surface | Interactive surface — half of image radius, creating visual kinship |
+| 8px | Mode buttons (40px) | Large controls — rounded rectangles |
+| 6px | Accent swatches (24px) | Small controls — rounded squares |
+| 5px | Sidebar trigger (16px) | Indicator — smallest rounded square, distinct from swatches by both size and proportion |
+
+**Shape language:** Rounded squares/rectangles are used for all interactive controls. Circles are not used. This creates a visual system where shape communicates role: rounded squares = controls, rounded rectangles = surfaces. The trigger's smaller size and tighter radius distinguish it from the selectable swatches it anchors.
 
 ---
 
@@ -385,12 +399,12 @@ In the React implementation, map `accentColor` directly to the image filename. T
 
 ### Mode switcher
 
-Three icon buttons in a row: System (monitor), Light (sun), Dark (moon). Phosphor Icons at 24px. Buttons are 40px square (24px icon + 8px padding each side), container is 120x40px, `gap: 8px`.
+Three icon buttons stacked vertically: System (monitor), Light (sun), Dark (moon). Phosphor Icons at **18px** inside a 24×24 span, within 40×40 tap target buttons. `border-radius: 8px` on button, `6px` on icon span. `gap: 6px`.
 
-- Active button: full opacity, accent-derived color
-- Inactive buttons: 0.5 opacity, muted color
-- Hover on inactive: `scale(1.1)` over 200ms ease-in-out
-- Active button does NOT scale on hover — it's already "selected"
+- Active button: full opacity + 1.5px outline ring on the 24×24 icon span
+- Inactive buttons: 0.4 opacity, no outline
+- **Selected indicator**: `1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)`, `outlineOffset: 3px` on the icon span. Uses `var(--text-dark)` so it adapts to theme: white @ 20% in dark mode, black @ 20% in light mode. Matches the swatch ring size (30×30 effective area).
+- **Hover**: Glass pill (36×36, r=12) slides to the hovered control. Shows on all items including the selected one — hover = spatial feedback, selection = state feedback.
 - All transitions: 200ms ease-in-out
 - ARIA labels: `"System theme"`, `"Light theme"`, `"Dark theme"`
 - Persistence: `localStorage.setItem("appearanceMode", mode)` — key is `"appearanceMode"`, values are `"system" | "light" | "dark"`
@@ -398,17 +412,34 @@ Three icon buttons in a row: System (monitor), Light (sun), Dark (moon). Phospho
 
 ### Accent picker
 
-Four circular swatches, 24px diameter, `border-radius: 12px` (perfect circle). Container is 144x24px.
+Four rounded-square swatches, 24×24px, `border-radius: 6px`. Stacked vertically with `gap: 14px`.
 
 - Each swatch is filled with its accent's swatch color (from `tokens.md` — constant across light/dark)
-- Active swatch shows an outline ring (the only use of an outline/ring treatment on the site)
+- Active swatch shows an outline ring: `1.5px solid color-mix(in srgb, <swatch-color> 50%, transparent)` at `outlineOffset: 3px`. Half-opacity of the swatch color keeps the ring subtle but visible.
+- **Hover**: Same glass pill as mode switcher (36×36, r=12). Concentric with swatch and outline ring.
 - Clicking a swatch triggers the full environmental shift (background + image + glass + browser chrome)
 
-### Control placement
+### Control placement — Sidebar
 
-Controls live in the footer of the left column, separated from content by 80px. They are tools, not content — deliberately placed at the bottom where they don't compete with the work.
+Controls live in a thin sidebar on the right edge of the viewport (`width: 56px`, `position: fixed`). They are tools, not content — deliberately placed outside the main layout where they don't compete with the work.
 
-Layout: `gap: 64px` between mode switcher and accent picker, `padding: 0 16px`.
+**Structure:**
+- **Trigger** (always visible): A 16×16px rounded square (`border-radius: 5px`) filled with the active accent color. Fixed at `top: 64px`, aligned with the image and heading. The trigger is an indicator, not a selectable control — its distinct shape (smaller, tighter radius) separates it from the swatch options below.
+- **Expandable toolbar** (visible on hover): Divider → swatches → divider → mode icons, staggered slide-in from the right (`x: 20 → 0`, 0.22s duration, 0.04s stagger per item). Uses the Smooth easing curve.
+- **Two dividers**: One between trigger and swatches, one between swatches and mode icons. Both are `width: 20px, height: 1px, var(--text-dark)` at 0.15 opacity, with `margin: 18px 0`. They animate in/out with the toolbar (only the trigger is visible at rest).
+- **Hover zone**: The full 56px-wide strip is the hover target, extending to the viewport's right edge. A 250ms close delay prevents flicker when the cursor drifts to the screen edge.
+- **Alignment**: The trigger's top edge aligns with the image container's top edge and the heading text's top edge (all at 64px from viewport top).
+
+### Sidebar glass pill
+
+A mini glass pill provides hover feedback for all sidebar controls. It uses the same visual recipe as the project card glass (from `useGlassHighlight`) but with fixed sizing.
+
+- **Size**: 36×36px, `border-radius: 12px` — concentric with swatches (24px, r=6) and selection outlines (30px, r≈9)
+- **z-index: 10** — sits ON TOP of controls so `backdrop-filter` blurs the content below (swatches, icons). `pointerEvents: none` ensures clicks pass through.
+- **Glass recipe**: accent-hued fill at 0.08 opacity, radial highlight, `blur(1px) saturate(1.2)`, inner glow (inset box-shadow), 0.5px accent-tinted border
+- **Motion**: RAF lerp at 0.2 speed between controls. Snaps to first hovered control, lerps to subsequent ones. Fades in/out at 150ms.
+- **Theme-reactive**: MutationObserver watches `data-accent` and `data-theme` attributes to re-skin the pill on theme change.
+- **Lifecycle**: Created when toolbar opens (120ms delay for framer-motion settlement), destroyed when toolbar closes.
 
 ---
 
@@ -523,7 +554,7 @@ When implementing or modifying any part of the site, verify:
 
 - [ ] Does it use Manrope weight 400?
 - [ ] Does it use the spacing hierarchy (80/64/40/24)?
-- [ ] Is the only border-radius either 16px (glass) or 32px (image)?
+- [ ] Does the border-radius come from the radius scale (32 / 16 / 8 / 6 / 5)?
 - [ ] Does color come from CSS custom properties, not hardcoded values?
 - [ ] Do text colors use appearance-only tokens (`--text-*`), not theme-dependent values?
 - [ ] Do background colors use the correct theme+appearance combination from `tokens.md`?

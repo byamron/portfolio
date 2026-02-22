@@ -1,8 +1,9 @@
-import portraitTable from '@/assets/images/portrait-table.jpeg'
+import { ImageDisplay } from '@/components/ImageDisplay'
 
 export function RightColumn() {
   return (
-    <aside
+    <div
+      className="right-column"
       style={{
         width: '50%',
         position: 'fixed',
@@ -11,17 +12,13 @@ export function RightColumn() {
         height: '100vh',
         padding: '64px 16px',
         display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: 24,
       }}
     >
-      <div style={{ width: 528, height: 720, borderRadius: 32, overflow: 'hidden' }}>
-        <img
-          src={portraitTable}
-          alt="Ben Yamron portrait"
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      </div>
-    </aside>
+      <ImageDisplay />
+    </div>
   )
 }

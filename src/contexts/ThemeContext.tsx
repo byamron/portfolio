@@ -1,67 +1,95 @@
-import { createContext, useContext, useState, useMemo, useCallback, useEffect, type ReactNode } from 'react'
-import type { AccentColor } from '@/data/projects'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 
-type AppearanceMode = 'system' | 'light' | 'dark'
+export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza'
+export type AppearanceMode = 'system' | 'light' | 'dark'
+type ResolvedAppearance = 'light' | 'dark'
 
 interface ThemeContextValue {
   accentColor: AccentColor
   setAccentColor: (color: AccentColor) => void
   appearanceMode: AppearanceMode
   setAppearanceMode: (mode: AppearanceMode) => void
-  resolvedAppearance: 'light' | 'dark'
+  resolvedAppearance: ResolvedAppearance
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function getSystemPreference(): 'light' | 'dark' {
+const ACCENT_KEY = 'accentColor'
+const APPEARANCE_KEY = 'appearanceMode'
+
+function getSystemPreference(): ResolvedAppearance {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [accentColor, setAccentColorState] = useState<AccentColor>(
-    () => (document.documentElement.getAttribute('data-accent') as AccentColor) || 'table'
-  )
-  const [appearanceMode, setAppearanceModeState] = useState<AppearanceMode>(
-    () => (localStorage.getItem('appearanceMode') as AppearanceMode) || 'system'
-  )
+  const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
+    const stored = localStorage.getItem(ACCENT_KEY)
+    return (stored as AccentColor) || 'table'
+  })
 
-  const resolvedAppearance = appearanceMode === 'system' ? getSystemPreference() : appearanceMode
+  const [appearanceMode, setAppearanceModeState] = useState<AppearanceMode>(() => {
+    const stored = localStorage.getItem(APPEARANCE_KEY)
+    return (stored as AppearanceMode) || 'system'
+  })
+
+  const [systemPref, setSystemPref] = useState<ResolvedAppearance>(getSystemPreference)
+  const resolvedAppearance = appearanceMode === 'system' ? systemPref : appearanceMode
+
+  // Listen for system preference changes
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent) => setSystemPref(e.matches ? 'dark' : 'light')
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  // Sync data-theme and data-accent attributes on <html>
+  useEffect(() => {
+    const html = document.documentElement
+    html.setAttribute('data-theme', resolvedAppearance)
+    html.setAttribute('data-accent', accentColor)
+  }, [resolvedAppearance, accentColor])
+
+  // Update <meta name="theme-color"> for browser chrome
+  // Deferred to next frame so CSS has recalculated after data-attribute changes
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+      const meta = document.querySelector('meta[name="theme-color"]')
+      if (meta) {
+        meta.remove()
+        const fresh = document.createElement('meta')
+        fresh.name = 'theme-color'
+        fresh.content = bg
+        document.head.appendChild(fresh)
+      }
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [resolvedAppearance, accentColor])
 
   const setAccentColor = useCallback((color: AccentColor) => {
     setAccentColorState(color)
-    document.documentElement.setAttribute('data-accent', color)
+    localStorage.setItem(ACCENT_KEY, color)
   }, [])
 
   const setAppearanceMode = useCallback((mode: AppearanceMode) => {
     setAppearanceModeState(mode)
-    localStorage.setItem('appearanceMode', mode)
+    localStorage.setItem(APPEARANCE_KEY, mode)
   }, [])
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', resolvedAppearance)
-  }, [resolvedAppearance])
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-accent', accentColor)
-  }, [accentColor])
-
-  useEffect(() => {
-    if (appearanceMode !== 'system') return
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = () => setAppearanceModeState(prev => prev === 'system' ? 'system' : prev)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [appearanceMode])
-
-  const value = useMemo(() => ({
-    accentColor, setAccentColor, appearanceMode, setAppearanceMode, resolvedAppearance,
+  const value = useMemo<ThemeContextValue>(() => ({
+    accentColor,
+    setAccentColor,
+    appearanceMode,
+    setAppearanceMode,
+    resolvedAppearance,
   }), [accentColor, setAccentColor, appearanceMode, setAppearanceMode, resolvedAppearance])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
-export function useThemeContext() {
+export function useTheme() {
   const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useThemeContext must be used within ThemeProvider')
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider')
   return ctx
 }
