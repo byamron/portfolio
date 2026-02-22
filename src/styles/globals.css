@@ -60,7 +60,15 @@ a {
   color: inherit;
 }
 
-/* Base transition for glass effect */
+/* Inline links in body text */
+p a {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-color: var(--text-underline);
+  text-underline-offset: 2px;
+}
+
+/* Glass hover effect on project links */
 [data-link-card] {
   transition:
     background 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
@@ -93,12 +101,17 @@ a {
   border-color: hsla(var(--accent-hue), 20%, 50%, 0.2);
 }
 
+/* Focus visible ring */
 [data-link-card]:focus-visible {
   outline: 2px solid var(--swatch);
   outline-offset: 2px;
 }
 
-/* Disable CSS fallback when animated pill is active */
+[data-link-card]:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Disable CSS hover when animated pill is active */
 [data-glass-highlight-active] [data-link-card]:hover,
 [data-glass-highlight-active] [data-link-card]:focus-visible {
   background: transparent;
@@ -106,4 +119,28 @@ a {
   -webkit-backdrop-filter: none;
   box-shadow: none;
   border-color: transparent;
+}
+
+/* Responsive: hide right column below 1200px */
+@media (max-width: 1199px) {
+  .layout-root {
+    flex-direction: column;
+  }
+  .left-column {
+    width: 100%;
+  }
+  .right-column {
+    display: none;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

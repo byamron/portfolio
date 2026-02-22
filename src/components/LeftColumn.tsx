@@ -1,8 +1,8 @@
 import { useRef } from 'react'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
-import { HeroTitle } from './HeroTitle'
-import { Section } from './Section'
-import { AboutSection } from './AboutSection'
+import { HeroTitle } from '@/components/HeroTitle'
+import { Section } from '@/components/Section'
+import { AboutSection } from '@/components/AboutSection'
 import { sections } from '@/data/projects'
 
 interface LeftColumnProps {
@@ -16,6 +16,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
   return (
     <main
       ref={contentRef}
+      className="left-column"
       style={{
         width: fullWidth ? '100%' : '50%',
         overflowY: 'auto',
@@ -28,11 +29,11 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          {sections.map(section => (
-            <Section key={section.id} section={section} />
+          {sections.map((section, i) => (
+            <Section key={i} section={section} />
           ))}
+          <AboutSection />
         </div>
-        <AboutSection />
       </div>
     </main>
   )

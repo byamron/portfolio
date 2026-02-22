@@ -32,6 +32,31 @@ Decision log and completed work, in reverse chronological order.
 
 **Updated docs:** design-language.md (typography scale, case study layout rules), history.md
 
+## 2026-02-21 — Sidebar theme controls with glass pill hover
+
+**Branch:** `byamron/react-portfolio-build`
+
+**Summary:** Built, iterated, and polished the right-edge sidebar for theme/accent controls. Explored three placement variants (below image, floating popover, right sidebar), consolidated into a single hybrid design, and added a mini glass pill hover system matching the project card glass language.
+
+**What was built:**
+- **`src/components/SidebarThemeControls.tsx`** — Consolidated sidebar: fixed trigger dot (16×16, r=5) + expandable toolbar with swatches, dividers, and mode icons. Staggered slide-in animation (0.22s, 0.04s stagger). 250ms close delay for edge tolerance.
+- **Mini glass pill** (`setupControlPill`) — Imperative pill system adapted from `useGlassHighlight`: 36×36 fixed size, r=12 (concentric with 24px swatches at r=6). RAF lerp at 0.2 speed. Theme-reactive via MutationObserver. z-index 10 with `contain: layout style` for proper backdrop-filter compositing.
+- **Removed:** `FloatingThemeControls.tsx`, `ThemeControls.tsx`, `ModeSwitcher.tsx`, `AccentPicker.tsx` (all consolidated into SidebarThemeControls)
+
+**Key decisions:**
+- **Pill sits ON TOP of controls (z-index 10):** backdrop-filter only creates visible blur when there's varied content behind the element. With z-index 0 (behind controls), the pill was blurring a uniform dark background — invisible. z-index 10 matches useGlassHighlight and blurs the swatch/icon content below.
+- **Fixed 36×36 pill size for all controls:** Both swatches (24px) and mode buttons (40px tap target, 24px icon) get the same pill. Position calculated from control center point, not element edges. Ensures visual consistency across control types.
+- **Concentric radius calculation:** Pill r=12 = swatch r(6) + padding((36-24)/2 = 6). Selection outline at outlineOffset 3 has effective r≈9. Three concentric rings: swatch (r=6) → outline (r≈9) → pill (r=12).
+- **Two dividers for structural clarity:** One between trigger and swatches, one between swatches and modes. Both animate in/out with the toolbar. Same style (width 20, height 1, var(--text-dark) at 0.15 opacity, margin 18px).
+- **Selected state indicators:** Swatches use 1.5px outline in swatch color at 50% opacity (via `color-mix`). Mode icons use 1.5px outline in `var(--text-dark)` at 20% opacity — adapts to theme (white in dark mode, black in light mode). Mode icons shrunk to 18px inside 24×24 span for breathing room. Both use outlineOffset 3.
+- **Hover on selected items preserved:** Glass pill shows on all items including the active one. Hover = spatial feedback, selection = state feedback — suppressing hover creates dead zones.
+- **Small trigger dot, not rounded square:** Tested both via dev toggle. The dot differentiates the trigger from the selectable swatches below without competing visually.
+
+**Iteration path:** 3 variants (A/B/C) → user testing → consolidated hybrid → size/spacing tuning → rounded squares everywhere → glass pill added → pill size normalized → blur fix (z-index) → selected state borders → border refinement (1.5px, lighter colors, smaller icons)
+
+**Files changed:** SidebarThemeControls.tsx (new), Layout.tsx, core-docs/design-language.md, core-docs/history.md, core-docs/feedback.md
+>>>>>>> origin/main
+
 ## 2026-02-21 — Accessibility fixes for glass highlight scaffolding
 
 **Branch:** `byamron/glass-hover-gravity` → pushed directly to `main`

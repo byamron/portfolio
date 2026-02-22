@@ -1,5 +1,5 @@
-import { useCallback } from 'react'
-import { useHoverContext } from '@/contexts/HoverContext'
+import { Link } from 'react-router-dom'
+import { useHover } from '@/contexts/HoverContext'
 import type { Project } from '@/data/projects'
 
 interface ProjectLinkProps {
@@ -7,61 +7,59 @@ interface ProjectLinkProps {
 }
 
 export function ProjectLink({ project }: ProjectLinkProps) {
-  const { setHoveredProjectId } = useHoverContext()
-
-  const handleEnter = useCallback(() => setHoveredProjectId(project.id), [project.id, setHoveredProjectId])
-  const handleLeave = useCallback(() => setHoveredProjectId(null), [setHoveredProjectId])
+  const { setHoveredProjectId } = useHover()
 
   if (!project.isLink) {
     return (
-      <span
+      <p
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          padding: '24px 16px',
-          margin: '0 -16px',
-          width: 'fit-content',
           fontSize: 18,
+          fontWeight: 400,
           lineHeight: 1.4,
           color: 'var(--text-grey)',
         }}
       >
         {project.title}
-      </span>
+      </p>
     )
   }
 
-  return (
-    <a
-      href={project.href}
-      data-link-card=""
-      data-project-id={project.id}
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-      onFocus={handleEnter}
-      onBlur={handleLeave}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '24px 16px',
-        margin: '0 -16px',
-        width: 'fit-content',
-        borderRadius: 16,
-        fontSize: 18,
-        lineHeight: 1.4,
-        color: 'var(--text-dark)',
-        textDecoration: 'underline',
-        textDecorationColor: 'var(--text-underline)',
-        textUnderlineOffset: 4,
-        border: '0.1px solid transparent',
-        position: 'relative',
-        zIndex: 1,
-      }}
-    >
+  const isInternal = project.href.startsWith('/')
+  const linkProps = {
+    'data-link-card': true as const,
+    'data-project-id': project.id,
+    onMouseEnter: () => setHoveredProjectId(project.id),
+    onMouseLeave: () => setHoveredProjectId(null),
+    onFocus: () => setHoveredProjectId(project.id),
+    onBlur: () => setHoveredProjectId(null),
+    style: {
+      display: 'flex' as const,
+      alignItems: 'center' as const,
+      gap: 4,
+      padding: '24px 16px',
+      margin: '0 -16px',
+      borderRadius: 16,
+      fontSize: 18,
+      fontWeight: 400,
+      lineHeight: 1.4,
+      color: 'var(--text-dark)',
+      textDecoration: 'underline' as const,
+      textDecorationColor: 'var(--text-underline)',
+      textUnderlineOffset: 4,
+      border: '0.1px solid transparent',
+    },
+  }
+
+  const children = (
+    <>
       <span>{project.title}</span>
-      <span style={{ flexShrink: 0 }}>{'\u2192'}</span>
-    </a>
+      <span style={{ flexShrink: 0 }} aria-hidden="true">{'\u2192'}</span>
+    </>
   )
+
+  if (isInternal) {
+    return <Link to={project.href} {...linkProps}>{children}</Link>
+  }
+
+  return <a href={project.href} {...linkProps}>{children}</a>
 }
