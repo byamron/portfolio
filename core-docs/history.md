@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-21 — Accessibility fixes for glass highlight scaffolding
+
+**Branch:** `byamron/glass-hover-gravity` → pushed directly to `main`
+
+**Summary:** Fixed three accessibility gaps identified post-merge: missing semantic landmarks, non-reactive reduced motion preference, and `dangerouslySetInnerHTML` in Section.tsx.
+
+**What changed:**
+- **Semantic landmarks**: LeftColumn now uses `<main>`, RightColumn uses `<aside>` (was `<div>` for both)
+- **Reactive reduced motion**: `prefers-reduced-motion` media query now has an `addEventListener('change', ...)` handler, so toggling the system preference mid-session immediately updates the glass config (previously only checked once at setup)
+- **Removed `dangerouslySetInnerHTML`**: Changed `contextParagraphs` from `string[]` to `ReactNode[]`, renamed `projects.ts` → `projects.tsx`, Section.tsx now renders children directly
+
+**Files changed:** Layout.tsx, LeftColumn.tsx, RightColumn.tsx, Section.tsx, projects.ts→projects.tsx, useGlassHighlight.ts
+
 ## 2026-02-21 — Glass hover highlight with gravitational pull
 
 **Branch:** `byamron/glass-hover-gravity`
