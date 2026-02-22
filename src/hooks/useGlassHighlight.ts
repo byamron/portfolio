@@ -114,6 +114,12 @@ function setupGlassHighlight(
     return parseFloat(raw) || 34
   }
 
+  function setBackdropFilter(el: HTMLElement, value: string): void {
+    el.style.backdropFilter = value
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(el.style as any).webkitBackdropFilter = value
+  }
+
   // -- Pill creation + styling --
 
   function createPill(): HTMLDivElement {
@@ -134,35 +140,65 @@ function setupGlassHighlight(
     return div
   }
 
+  function getGlassMode(): string {
+    return document.documentElement.dataset.glassMode || 'original'
+  }
+
   function skinPill(): void {
     if (!pill) return
     const cfg = configRef.current
     const hue = getAccentHue()
+    const mode = getGlassMode()
 
-    const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, ${cfg.fillOpacity})`
-
-    const intensity = 0.15 + cfg.fillBrightness * 0.1
-    const highlight = `radial-gradient(ellipse 150% 120% at 50% 10%, rgba(255,255,255,${intensity}), rgba(255,255,255,${intensity * 0.4}) 50%, rgba(255,255,255,${intensity * 0.1}) 85%, transparent 120%)`
-
-    const topHL = cfg.innerGlow * 0.4
-    const botSH = cfg.innerGlow * 0.15
-    const bi = 0.12 + cfg.fillBrightness * 0.15
-    const bw = cfg.borderWidth
-    const boxShadow = [
-      `inset 0 1px 0 0 rgba(255,255,255,${topHL})`,
-      `inset 0 -1px 0 0 rgba(0,0,0,${botSH})`,
-      `inset 0 ${bw}px 0 0 rgba(255,255,255,${bi * 1.2})`,
-      `inset ${bw}px 0 0 0 rgba(255,255,255,${bi})`,
-      `inset -${bw}px 0 0 0 rgba(255,255,255,${bi})`,
-      `inset 0 -${bw}px 0 0 rgba(255,255,255,${bi * 0.8})`,
-    ].join(', ')
-
-    pill.style.background = `${highlight}, ${fill}`
-    pill.style.backdropFilter = `blur(${cfg.surfaceBlur}px) saturate(1.2)`
-    pill.style.webkitBackdropFilter = `blur(${cfg.surfaceBlur}px) saturate(1.2)`
-    pill.style.boxShadow = boxShadow
-    pill.style.border = `${bw}px solid hsla(${hue}, 20%, 50%, 0.2)`
     pill.style.borderRadius = `${cfg.borderRadius}px`
+
+    if (mode === 'frost') {
+      // Option A: Blur + flat tint + thin border. No gradients, no shadows.
+      const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, 0.04)`
+      pill.style.background = fill
+      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
+      pill.style.boxShadow = 'none'
+      pill.style.border = `0.5px solid hsla(${hue}, 20%, 50%, 0.10)`
+    } else if (mode === 'soft-ring') {
+      // Option B: Blur + tint + uniform inner ring + faint top catch.
+      const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, 0.04)`
+      pill.style.background = fill
+      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
+      pill.style.boxShadow = [
+        `inset 0 0 0 0.5px rgba(255, 255, 255, 0.10)`,
+        `inset 0 1px 0 0 rgba(255, 255, 255, 0.06)`,
+      ].join(', ')
+      pill.style.border = 'none'
+    } else if (mode === 'gradient-wash') {
+      // Option C: Blur + linear gradient top-to-bottom + thin border. No shadows.
+      pill.style.background = `linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01))`
+      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
+      pill.style.boxShadow = 'none'
+      pill.style.border = `0.5px solid hsla(${hue}, 20%, 50%, 0.08)`
+    } else {
+      // Original: full glass recipe with radial highlight + 6 directional shadows.
+      const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, ${cfg.fillOpacity})`
+      const intensity = 0.15 + cfg.fillBrightness * 0.1
+      const highlight = `radial-gradient(ellipse 150% 120% at 50% 10%, rgba(255,255,255,${intensity}), rgba(255,255,255,${intensity * 0.4}) 50%, rgba(255,255,255,${intensity * 0.1}) 85%, transparent 120%)`
+
+      const topHL = cfg.innerGlow * 0.4
+      const botSH = cfg.innerGlow * 0.15
+      const bi = 0.12 + cfg.fillBrightness * 0.15
+      const bw = cfg.borderWidth
+      const boxShadow = [
+        `inset 0 1px 0 0 rgba(255,255,255,${topHL})`,
+        `inset 0 -1px 0 0 rgba(0,0,0,${botSH})`,
+        `inset 0 ${bw}px 0 0 rgba(255,255,255,${bi * 1.2})`,
+        `inset ${bw}px 0 0 0 rgba(255,255,255,${bi})`,
+        `inset -${bw}px 0 0 0 rgba(255,255,255,${bi})`,
+        `inset 0 -${bw}px 0 0 rgba(255,255,255,${bi * 0.8})`,
+      ].join(', ')
+
+      pill.style.background = `${highlight}, ${fill}`
+      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px) saturate(1.2)`)
+      pill.style.boxShadow = boxShadow
+      pill.style.border = `${bw}px solid hsla(${hue}, 20%, 50%, 0.2)`
+    }
   }
 
   // -- Layout detection --
@@ -489,7 +525,7 @@ function setupGlassHighlight(
   function setupThemeObserver(): void {
     observer = new MutationObserver(mutations => {
       for (const m of mutations) {
-        if (m.attributeName === 'data-accent' || m.attributeName === 'data-theme') {
+        if (m.attributeName === 'data-accent' || m.attributeName === 'data-theme' || m.attributeName === 'data-glass-mode') {
           skinPill()
           break
         }
@@ -497,7 +533,7 @@ function setupGlassHighlight(
     })
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-accent', 'data-theme'],
+      attributeFilter: ['data-accent', 'data-theme', 'data-glass-mode'],
     })
   }
 

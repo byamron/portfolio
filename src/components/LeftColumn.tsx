@@ -3,6 +3,7 @@ import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { HeroTitle } from './HeroTitle'
 import { Section } from './Section'
 import { AboutSection } from './AboutSection'
+import { ThemeControls } from './ThemeControls'
 import { sections } from '@/data/projects'
 
 export function LeftColumn() {
@@ -28,6 +29,9 @@ export function LeftColumn() {
           ))}
         </div>
         <AboutSection />
+      </div>
+      <div style={{ marginTop: 80 }}>
+        <ThemeControls />
       </div>
     </main>
   )
