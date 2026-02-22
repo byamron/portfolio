@@ -1,0 +1,84 @@
+import type { AccentColor } from '@/contexts/ThemeContext'
+
+export interface Project {
+  id: string
+  title: string
+  projectId: string // maps to preview image: "uw" | "sony" | "cip" | "acorn"
+  href: string
+  isLink: boolean
+  caseStudySlug?: string // maps to markdown filename in data/case-studies/
+}
+
+export interface Section {
+  context: string[] // paragraph(s) before links — supports inline HTML for links
+  projects: Project[]
+}
+
+export const sections: Section[] = [
+  {
+    context: [
+      'I focus on making complex information actionable within products and organizations.',
+      'Currently leading patient experience design at <a href="https://joinmochi.com/">Mochi Health</a>.',
+    ],
+    projects: [
+      { id: 'mochi-funnel', title: 'Building a competitive top of funnel experience', projectId: 'uw', href: '/project/mochi-ai-tooling', isLink: true, caseStudySlug: 'mochi-ai-tooling' },
+      { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'sony', href: '/project/mochi-progress-tracker', isLink: true, caseStudySlug: 'mochi-progress-tracker' },
+      { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, caseStudySlug: 'mochi-subscriptions' },
+    ],
+  },
+  {
+    context: [
+      'Before Mochi, I helped different teams make sense of information in different contexts.',
+    ],
+    projects: [
+      { id: 'uw-system', title: 'Building a system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system' },
+      { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv' },
+      { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation' },
+      { id: 'duo-flags', title: 'Languages \u2260 Flags', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags' },
+      { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/acorn-eat-local-vt', isLink: true, caseStudySlug: 'acorn-eat-local-vt' },
+    ],
+  },
+  {
+    context: [
+      'On the side, I design and build tools that solve my own problems in life and work.',
+    ],
+    projects: [
+      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'uw', href: '#', isLink: true },
+      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'cip', href: '#', isLink: true },
+      { id: 'ai-search', title: 'Currently exploring new patterns for AI search with personal context (coming soon)', projectId: 'uw', href: '', isLink: false },
+    ],
+  },
+]
+
+// projectId → preview image (only 4 unique previews, not 11)
+export const projectImageMap: Record<string, string> = {
+  uw: '/images/preview-uw.jpg',
+  sony: '/images/preview-sony.jpg',
+  cip: '/images/preview-cip.jpg',
+  acorn: '/images/preview-acorn.jpg',
+}
+
+// accent → default portrait image
+export const defaultImageMap: Record<AccentColor, string> = {
+  table: '/images/portrait-table.jpeg',
+  portrait: '/images/portrait-portrait.jpeg',
+  sky: '/images/portrait-sky.jpeg',
+  pizza: '/images/portrait-pizza.jpeg',
+}
+
+// Flat lookup for ImageDisplay: unique project id → Project
+export const projectsById: Record<string, Project> = Object.fromEntries(
+  sections.flatMap(s => s.projects).map(p => [p.id, p])
+)
+
+// Case study slug → markdown filename mapping
+export const caseStudySlugs: Record<string, string> = {
+  'mochi-ai-tooling': 'mochi-ai-tooling',
+  'mochi-progress-tracker': 'mochi-progress-tracker',
+  'mochi-subscriptions': 'mochi-subscriptions',
+  'uw-design-system': 'uw-design-system',
+  'sony-screenless-tv': 'sony-screenless-tv',
+  'cip-election-misinformation': 'cip-election-misinformation',
+  'duolingo-languages-flags': 'duolingo-languages-flags',
+  'acorn-eat-local-vt': 'acorn-eat-local-vt',
+}

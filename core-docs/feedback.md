@@ -2,6 +2,14 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-02-21 — backdrop-filter requires correct z-index stacking
+
+**What was attempted:** Glass pill for sidebar controls was placed at z-index 0 (behind the controls) with backdrop-filter: blur(1px). Expected the blur to be visible through the transparent mode buttons above.
+
+**What went wrong:** The pill was blurring the uniform dark page background behind it — blurring a solid color looks identical to no blur. Tried removing `willChange`, moving the pill to a parent container, adding z-index to sibling elements — all failed or made things worse.
+
+**Lesson learned:** backdrop-filter blurs what's behind the element in the stacking order. For frosted glass to be visible, the pill must sit ON TOP of the content it should blur (z-index 10, matching useGlassHighlight). `pointerEvents: 'none'` ensures clicks pass through. Also needs `contain: layout style` and `willChange: transform, opacity` for proper compositing. Don't fight the stacking model — match the pattern that already works.
+
 ## 2026-02-21 — CSS transitions + RAF loop conflict for glass pill
 
 **What was attempted:** Used CSS transitions (`transform`, `width`, `height`) for card-to-card pill slides, with a separate `requestAnimationFrame` loop for gravitational pull physics. Added an `isSliding` flag and `setTimeout` to defer RAF writes during the CSS transition.
