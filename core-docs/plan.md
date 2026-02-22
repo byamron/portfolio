@@ -259,27 +259,27 @@ src/
 
 ### 2.1 — Layout Component
 
-- [ ] Full-viewport flex row
-- [ ] Left column: `width: 50%`, `overflow-y: auto`, `padding: 64px 40px`
-- [ ] Right column: `width: 50%`, `position: fixed`, `top: 0`, `right: 0`, `height: 100vh`, `padding: 64px 16px`
+- [x] Full-viewport flex row
+- [x] Left column: `width: 50%`, `overflow-y: auto`, `padding: 64px 40px`
+- [x] Right column: `width: 50%`, `position: fixed`, `top: 0`, `right: 0`, `height: 100vh`, `padding: 64px 16px`
 - [ ] Responsive: hide right column below 1200px, left column becomes full width
 
 ### 2.2 — Left Column Content
 
-- [ ] **HeroTitle**: `<h1>`, 36px Manrope, heading color
-- [ ] **Sections** with context text + project link groups:
+- [x] **HeroTitle**: `<h1>`, 36px Manrope, heading color
+- [x] **Sections** with context text + project link groups:
   - Subsection A (Mochi Health) — context + 3 links
   - Subsection B (Previous work) — context + 5 links
   - Subsection C (Side projects) — context + 2 links + 1 non-link text
-- [ ] **AboutSection**: 3 paragraphs, body text styling
+- [x] **AboutSection**: 3 paragraphs, body text styling
 - [ ] **ThemeControls**: footer row
-- [ ] Spacing: 80px → 64px → 40px → 24px hierarchy (see Visual Spec)
+- [x] Spacing: 80px → 64px → 40px → 24px hierarchy (see Visual Spec)
 
 ### 2.3 — Right Column (ImageDisplay)
 
-- [ ] Fixed position container
-- [ ] Image area: 528×720px, `border-radius: 32px`, `object-fit: cover`
-- [ ] Default state: shows accent-color-associated portrait
+- [x] Fixed position container
+- [x] Image area: 528×720px, `border-radius: 32px`, `object-fit: cover`
+- [x] Default state: shows accent-color-associated portrait (placeholder — table only)
 - [ ] Hover state: cross-fades to project-specific preview image
 - [ ] Uses opacity-based cross-fade (`transition: opacity 0.4s ease`)
 
@@ -300,7 +300,7 @@ src/
     projects: Project[]
   }
   ```
-- [ ] Create `src/data/projects.ts` with all 11 projects organized by section
+- [x] Create `src/data/projects.ts` with all 11 projects organized by section
 - [ ] Create image map: `projectId → preview image path`
 - [ ] Create accent map: `accentColor → default portrait image path`
 
@@ -312,41 +312,39 @@ src/
 
 ### 3.1 — HoverContext
 
-- [ ] Create `HoverContext` with:
+- [x] Create `HoverContext` with:
   - `hoveredProjectId`: `string | null`
   - `setHoveredProjectId(id | null)`: Updates state
-- [ ] Consumed by: ProjectLink (emits), ImageDisplay (swaps image), GlassHighlight (optional)
+- [x] Consumed by: ProjectLink (emits), ImageDisplay (swaps image), GlassHighlight (optional)
 
 ### 3.2 — ProjectLink Component
 
-- [ ] Semantic `<a>` tag with `data-link-card` attribute
-- [ ] On hover/focus: sets `hoveredProjectId` in context
-- [ ] On blur/leave: clears `hoveredProjectId`
-- [ ] Styling:
-  - Link card padding: `8px 12px` (vertical, horizontal); glass pill sizes to the card's bounding box
-  - `border-radius: 16px` (on the glass pill, not the link element)
+- [x] Semantic `<a>` tag with `data-link-card` attribute
+- [x] On hover/focus: sets `hoveredProjectId` in context
+- [x] On blur/leave: clears `hoveredProjectId`
+- [x] Styling:
+  - Link card padding: `24px 16px` with `margin: 0 -16px` (text stays aligned, hover area is generous)
+  - `width: fit-content` — card hugs text, pill hugs card
+  - `border-radius: 16px`, `border: 0.1px solid transparent`
   - 18px Manrope, line-height 1.4, heading color
-  - Subtle underline: `text-decoration: underline`, `text-decoration-color: rgba(238, 238, 238, 0.2)`
+  - Subtle underline: `text-decoration: underline`, `text-decoration-color: var(--text-underline)`
   - Arrow `→` appended for link items
-- [ ] Glass effect on hover (CSS-only approach first):
-  - `background: hsla(var(--accent-hue), 10%, 45%, 0.05)`
-  - `backdrop-filter: blur(1px)`
-  - `box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.08)`
-  - `border: 0.1px solid hsla(var(--accent-hue), 20%, 50%, 0.2)`
-  - `transition: all 0.3s ease`
-- [ ] Non-link variant: no `<a>`, no arrow, no hover effect (for "coming soon" item)
-- [ ] Accessible: focus states, keyboard navigation
+- [x] CSS hover fallback: full glass recipe in globals.css (radial gradient, 6 inset shadows, backdrop blur), disabled when JS pill is active
+- [x] Non-link variant: `<span>`, no `data-link-card`, no arrow, muted color
+- [x] Accessible: focus states, keyboard navigation, focus-visible ring
 
-### 3.3 — GlassHighlight (Animated Pill) — Enhancement
+### 3.3 — GlassHighlight (Animated Pill)
 
-- [ ] **Start with CSS-only hover** (3.2 above) — this matches the visual spec
-- [ ] Optionally layer the animated sliding pill from the Framer originals on top:
-  - Absolute-positioned element that lerps between hovered cards
-  - Stretch/squash deformation during slide
-  - Gravitational pull toward adjacent items
-  - Volume preservation physics
-  - `requestAnimationFrame` lerp loop
-- [ ] This is an enhancement, not a blocker. Ship CSS hover first, add physics later.
+- [x] Single absolutely-positioned pill on LeftColumn container
+- [x] One unified RAF lerp loop drives ALL pill movement (card-to-card slides + gravitational pull)
+  - `lerpSpeed: 0.15` — exponential decay produces smooth deceleration
+  - No CSS transitions on transform/width/height — RAF owns all positioning
+  - Stretch/squash deformation via Web Animations API (`composite: 'add'`)
+  - Gravitational pull: `pow(t, 1.5)` ramp, volume preservation, 0.25 max stretch, 0.15 max translate
+  - Smart lifecycle: stops on settle (0.3px threshold), restarts on mousemove
+- [x] Glass visual: 6-layer recipe (fill, radial highlight, backdrop blur, inner glow, border, shape)
+- [x] Theme reactivity via MutationObserver on `data-accent`/`data-theme`
+- [x] Reduced motion: `lerpSpeed: 1` (instant snap), all deformation/pull disabled
 
 ### 3.4 — Image Swap on Hover
 

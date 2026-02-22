@@ -2,6 +2,30 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-21 — Glass hover highlight with gravitational pull
+
+**Branch:** `byamron/glass-hover-gravity`
+
+**Summary:** Built the portfolio's signature interaction: a single glass pill element that lives on the LeftColumn container, slides smoothly between project links via RAF lerp, and gravitationally pulls toward neighboring cards when the cursor drifts to card edges. Also built all prerequisite scaffolding (contexts, layout, project data, components).
+
+**What was built:**
+- **`src/hooks/useGlassHighlight.ts`** (~300 lines) — Fully imperative physics system. One `requestAnimationFrame` loop drives all pill movement: card-to-card slides, gravitational pull, and volume-preserving stretch. Glass visual recipe (6 layers: fill, radial highlight, backdrop blur, inner glow, border, shape). Theme reactivity via MutationObserver. Scroll/resize tracking. Keyboard focus support. Reduced motion support.
+- **`src/data/projects.ts`** — All 11 projects across 3 content sections with types
+- **`src/contexts/HoverContext.tsx`** — Hovered project ID state
+- **`src/contexts/ThemeContext.tsx`** — Minimal: reads HTML attributes, exposes accent/appearance
+- **`src/components/`** — ProjectLink, Section, HeroTitle, AboutSection, LeftColumn, RightColumn, Layout
+- **`src/App.tsx`** — Wired providers + Layout
+- **`src/styles/globals.css`** — Body background, full glass CSS hover fallback (radial gradient, 6 inset shadows, backdrop blur), `[data-glass-highlight-active]` override
+
+**Key decisions:**
+- **Unified RAF lerp for all motion** (no CSS transitions on position): The first approach used CSS transitions for card-to-card slides with a separate RAF loop for gravitational pull. This caused the two systems to fight — the RAF loop overwrote the CSS transition, causing abrupt jumps. The fix: one RAF loop with exponential lerp (`lerpSpeed: 0.15`) drives ALL pill movement. When hovering a new card, the target updates but current stays at the old position — the lerp naturally produces smooth deceleration. See `feedback.md` for the full lesson.
+- **Container-level pill, not per-card**: The glass pill is a single absolutely-positioned div inside the LeftColumn container. It slides between all `[data-link-card]` elements as one continuous object — matching the Framer original where the code override was applied to the section, not individual cards.
+- **Cards use `width: fit-content`**: ProjectLink elements shrink to their text content so the pill hugs the text rather than spanning the full column width. `padding: 24px 16px` with `margin: 0 -16px` keeps text aligned with surrounding paragraphs.
+- **Smart RAF lifecycle**: Loop stops when pill settles (all dimensions within 0.3px of target). Restarts on `mousemove`. Zero wasted frames when cursor is stationary.
+- **Only CSS transition is opacity**: Fade in/out uses `opacity` CSS transition. Everything else is RAF-driven.
+- **CSS hover fallback**: Full glass recipe (radial gradient, 6 inset box-shadows, backdrop blur) applied via CSS for pre-JS state. Disabled by `[data-glass-highlight-active]` once the hook attaches.
+- **RightColumn is a placeholder**: Shows static portrait-table.jpeg. Image swap on hover is not wired yet.
+
 ## 2026-02-21 — Subframe component library, Tailwind v4, and theme integration
 
 **Branch:** `main`
