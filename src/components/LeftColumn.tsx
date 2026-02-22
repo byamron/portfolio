@@ -10,7 +10,7 @@ export function LeftColumn() {
   useGlassHighlight(contentRef)
 
   return (
-    <div
+    <main
       ref={contentRef}
       style={{
         width: '50%',
@@ -29,6 +29,6 @@ export function LeftColumn() {
         </div>
         <AboutSection />
       </div>
-    </div>
+    </main>
   )
 }

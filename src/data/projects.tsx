@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza'
 
 export interface Project {
@@ -10,7 +12,7 @@ export interface Project {
 
 export interface ContentSection {
   id: string
-  contextParagraphs: string[]
+  contextParagraphs: ReactNode[]
   projects: Project[]
 }
 
@@ -19,7 +21,7 @@ export const sections: ContentSection[] = [
     id: 'mochi',
     contextParagraphs: [
       'I focus on making complex information actionable within products and organizations.',
-      'Currently leading patient experience design at <a href="https://joinmochi.com/">Mochi Health</a>.',
+      <>Currently leading patient experience design at <a href="https://joinmochi.com/" style={{ color: 'var(--text-link)', textDecoration: 'underline', textDecorationColor: 'var(--text-underline)' }}>Mochi Health</a>.</>,
     ],
     projects: [
       { id: 'mochi-funnel', title: 'Building a competitive top of funnel experience', projectId: 'uw', href: '#', isLink: true },

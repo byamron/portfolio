@@ -11,14 +11,15 @@ export function Section({ section }: SectionProps) {
       {section.contextParagraphs.map((p, i) => (
         <p
           key={i}
-          dangerouslySetInnerHTML={{ __html: p }}
           style={{
             fontSize: 18,
             lineHeight: 1.2,
             color: 'var(--text-medium)',
             marginBottom: i < section.contextParagraphs.length - 1 ? 8 : 24,
           }}
-        />
+        >
+          {p}
+        </p>
       ))}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {section.projects.map(project => (

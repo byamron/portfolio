@@ -84,16 +84,28 @@ function setupGlassHighlight(
 
   // -- Reduced motion --
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-  if (prefersReducedMotion.matches) {
-    configRef.current = {
-      ...configRef.current,
-      fadeDuration: 0,
-      pullStrength: 0,
-      stretchAmount: 0,
-      squashAmount: 0,
-      lerpSpeed: 1, // instant — snap to target
+
+  function applyReducedMotion(reduced: boolean): void {
+    if (reduced) {
+      configRef.current = {
+        ...configRef.current,
+        fadeDuration: 0,
+        pullStrength: 0,
+        stretchAmount: 0,
+        squashAmount: 0,
+        lerpSpeed: 1, // instant — snap to target
+      }
+    } else {
+      configRef.current = { ...GLASS_DEFAULTS, ...configRef.current }
     }
   }
+
+  applyReducedMotion(prefersReducedMotion.matches)
+
+  function handleMotionChange(e: MediaQueryListEvent): void {
+    applyReducedMotion(e.matches)
+  }
+  prefersReducedMotion.addEventListener('change', handleMotionChange)
 
   // -- Helpers --
 
@@ -518,6 +530,7 @@ function setupGlassHighlight(
     container.removeEventListener('scroll', handleScroll)
     window.removeEventListener('resize', handleResize)
     observer?.disconnect()
+    prefersReducedMotion.removeEventListener('change', handleMotionChange)
     pill?.remove()
     container.removeAttribute('data-glass-highlight-active')
     if (resizeTimer) clearTimeout(resizeTimer)

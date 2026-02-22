@@ -2,7 +2,7 @@ import portraitTable from '@/assets/images/portrait-table.jpeg'
 
 export function RightColumn() {
   return (
-    <div
+    <aside
       style={{
         width: '50%',
         position: 'fixed',
@@ -22,6 +22,6 @@ export function RightColumn() {
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
-    </div>
+    </aside>
   )
 }
