@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-22 — Tune glass hover physics and fix card stack boundary
+
+**Branch:** `byamron/glass-hover-fix`
+
+**Summary:** Refined the glass pill hover behavior based on hands-on testing: reduced squash deformation for subtlety, increased gravitational pull for more weight, and fixed a bug where the hover persisted when the cursor moved above or below the card stack.
+
+**What changed:**
+- **`src/hooks/useGlassHighlight.ts`** — `squashAmount` 0.01 → 0.003 (more subtle perpendicular compression), `pullStrength` 0.15 → 0.25 (stronger edge gravity). Added `isCursorInCardStack()` geometric check: on non-card mouseover, hover only clears when cursor Y is outside the vertical bounds of the first-to-last card range. 150ms delay on clear for soft exit. Gaps between cards, context paragraphs, and section breaks all preserve the hover.
+- **`src/components/ProjectLink.tsx`** — Removed `react-router-dom` `Link` import (no router configured yet). All links use plain `<a>` tags.
+- **`src/App.tsx`** — Default view switched from `'case-study'` to `'main'`.
+
+**Key decisions:**
+- **Geometric boundary, not time-based debounce:** First attempt used a 60ms debounce to clear hover on non-card areas — too aggressive, caused flicker when sliding between cards. Replaced with `isCursorInCardStack()` which checks if cursor Y is between the first card's top edge and the last card's bottom edge. Within that range, hover never clears regardless of what element the cursor is over.
+- **150ms clear delay:** When cursor exits the card stack bounds, a 150ms timeout softens the disappearance. Cancelled if cursor re-enters a card.
+- **Pull strength increase felt more physically grounded:** 0.15 felt too easy/flexible — the pill floated. 0.25 gives the pull more weight and makes it feel like the pill is being drawn toward neighbors with real force.
+- **Squash barely perceptible is correct:** 0.01 was visible enough to look rubbery. 0.003 is felt more than seen — it sells the physical metaphor without calling attention to itself.
+
+**Updated docs:** design-language.md (squashAmount, pullStrength defaults, card stack boundary exit rule), history.md
+
 ## 2026-02-22 — Case study layout prototype with sticky visuals and hero
 
 **Branch:** `byamron/case-study-layout`

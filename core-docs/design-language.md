@@ -322,11 +322,13 @@ Motion on this site serves two purposes: it communicates state changes (somethin
      peakSy = (1 + stretchAmount * f * vr) * (1 - squashAmount * f * hr)
      ```
    - Stretch is applied in the direction of movement, squash perpendicular
+   - Squash is deliberately subtle (`squashAmount: 0.003`) — barely perceptible, just enough to sell the physical metaphor without looking rubbery
    - Only triggered when `distance > 5px` (prevents micro-jitter deformations)
 
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
 2. No position change — it fades where it is
+3. **Card stack boundary**: The pill only clears when the cursor leaves the vertical bounds of the card stack (above the first card or below the last card). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit.
 
 ### Gravitational pull
 
@@ -505,10 +507,10 @@ All values from the glass highlight system. These serve as the starting spec for
 | fadeDuration | 200 | 0–300 | 10 | Appear/disappear fade in ms |
 | easing | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | — | — | Slide easing curve ("Smooth") |
 | stretchAmount | 0.05 | 0–1 | 0.01 | Deformation in movement direction |
-| squashAmount | 0.01 | 0–0.5 | 0.01 | Perpendicular compression |
+| squashAmount | 0.003 | 0–0.5 | 0.001 | Perpendicular compression |
 | overshoot | 0.05 | 0–1 | 0.01 | Bounce past target (0 = none) |
 | recoveryDuration | 150 | — | — | Deformation recovery in ms |
-| pullStrength | 0.15 | 0–1 | 0.01 | Edge gravitational pull intensity |
+| pullStrength | 0.25 | 0–1 | 0.01 | Edge gravitational pull intensity |
 | edgeZone | 0.20 | 0.1–1 | 0.05 | Responsive area (1 = entire card) |
 | pullLerp | 0.12 | — | — | Pull animation smoothing speed |
 

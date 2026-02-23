@@ -6,7 +6,7 @@ import { CaseStudyPrototype } from '@/components/CaseStudyPrototype'
 import { ViewSwitcher } from '@/components/ViewSwitcher'
 
 function App() {
-  const [view, setView] = useState<'main' | 'case-study'>('case-study')
+  const [view, setView] = useState<'main' | 'case-study'>('main')
 
   return (
     <ThemeProvider>

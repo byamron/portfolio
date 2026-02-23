@@ -31,9 +31,9 @@ export const GLASS_DEFAULTS: GlassConfig = {
   borderRadius: 16,
   fadeDuration: 200,
   stretchAmount: 0.05,
-  squashAmount: 0.01,
+  squashAmount: 0.003,
   recoveryDuration: 150,
-  pullStrength: 0.15,
+  pullStrength: 0.25,
   edgeZone: 0.20,
   lerpSpeed: 0.15,
 }
@@ -72,6 +72,7 @@ function setupGlassHighlight(
   let observer: MutationObserver | null = null
   let isVerticalLayout = true
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
+  let clearTimer: ReturnType<typeof setTimeout> | null = null
 
   // All pill geometry is driven by this state object.
   // The RAF loop lerps `current` toward `target` every frame.
@@ -353,9 +354,39 @@ function setupGlassHighlight(
 
   // -- Event handlers --
 
+  function isCursorInCardStack(clientY: number): boolean {
+    const cards = container.querySelectorAll<HTMLElement>('[data-link-card]')
+    if (cards.length === 0) return false
+    const firstRect = cards[0]!.getBoundingClientRect()
+    const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
+    return clientY >= firstRect.top && clientY <= lastRect.bottom
+  }
+
   function handleMouseOver(e: MouseEvent): void {
     const card = (e.target as HTMLElement).closest<HTMLElement>('[data-link-card]')
-    if (!card) return
+    if (!card) {
+      // Cursor moved to a non-card area — only clear if outside the card stack
+      if (currentCard && !isCursorInCardStack(e.clientY)) {
+        if (!clearTimer) {
+          clearTimer = setTimeout(() => {
+            clearTimer = null
+            currentCard = null
+            fadeOut()
+            stopLoop()
+          }, 150)
+        }
+      } else if (clearTimer) {
+        // Cursor moved back into card stack bounds — cancel pending clear
+        clearTimeout(clearTimer)
+        clearTimer = null
+      }
+      return
+    }
+    // Entered a card — cancel any pending clear
+    if (clearTimer) {
+      clearTimeout(clearTimer)
+      clearTimer = null
+    }
     if (card === currentCard) return
 
     detectLayout()
@@ -406,6 +437,10 @@ function setupGlassHighlight(
 
   function handleMouseLeave(e: MouseEvent): void {
     if (container.contains(e.relatedTarget as Node)) return
+    if (clearTimer) {
+      clearTimeout(clearTimer)
+      clearTimer = null
+    }
     currentCard = null
     fadeOut()
     stopLoop()
@@ -534,5 +569,6 @@ function setupGlassHighlight(
     pill?.remove()
     container.removeAttribute('data-glass-highlight-active')
     if (resizeTimer) clearTimeout(resizeTimer)
+    if (clearTimer) clearTimeout(clearTimer)
   }
 }

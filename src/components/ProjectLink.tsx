@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useHover } from '@/contexts/HoverContext'
 import type { Project } from '@/data/projects'
 
@@ -24,7 +23,6 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     )
   }
 
-  const isInternal = project.href.startsWith('/')
   const linkProps = {
     'data-link-card': true as const,
     'data-project-id': project.id,
@@ -56,10 +54,6 @@ export function ProjectLink({ project }: ProjectLinkProps) {
       <span style={{ flexShrink: 0 }} aria-hidden="true">{'\u2192'}</span>
     </>
   )
-
-  if (isInternal) {
-    return <Link to={project.href} {...linkProps}>{children}</Link>
-  }
 
   return <a href={project.href} {...linkProps}>{children}</a>
 }
