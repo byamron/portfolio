@@ -2,6 +2,20 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-23 — Add contact links and resume to about section
+
+**Branch:** `home-page-refinements`
+
+**Summary:** Updated AboutSection with email, LinkedIn, and resume links. Hosted resume PDF in `public/`.
+
+**What changed:**
+- `src/components/AboutSection.tsx` — Contact paragraph now links to email (mailto) and LinkedIn. Added "Just lurking?" paragraph linking to resume PDF.
+- `public/ben-yamron-resume.pdf` — Resume hosted as static file.
+
+**Files changed:** AboutSection.tsx, public/ben-yamron-resume.pdf (new)
+
+---
+
 ## 2026-02-23 — Subtle glass hover: reduce pull/squash, add minimum width clamp
 
 **Branch:** `subtle-glass-hover`
