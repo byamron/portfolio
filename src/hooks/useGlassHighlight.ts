@@ -601,7 +601,7 @@ function setupGlassHighlight(
   container.addEventListener('mousemove', handleMouseMove, { passive: true })
   container.addEventListener('focusin', handleFocusIn, true)
   container.addEventListener('focusout', handleFocusOut, true)
-  container.addEventListener('scroll', handleScroll, { passive: true })
+  window.addEventListener('scroll', handleScroll, { passive: true })
   window.addEventListener('resize', handleResize)
   setupThemeObserver()
 
@@ -613,7 +613,7 @@ function setupGlassHighlight(
     container.removeEventListener('mousemove', handleMouseMove)
     container.removeEventListener('focusin', handleFocusIn, true)
     container.removeEventListener('focusout', handleFocusOut, true)
-    container.removeEventListener('scroll', handleScroll)
+    window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('resize', handleResize)
     observer?.disconnect()
     prefersReducedMotion.removeEventListener('change', handleMotionChange)

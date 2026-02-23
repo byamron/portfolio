@@ -19,16 +19,14 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
       className="left-column"
       style={{
         width: fullWidth ? '100%' : '50%',
-        overflowY: 'auto',
         padding:
           'var(--layout-padding-top) var(--layout-margin)',
         position: 'relative',
-        height: '100vh',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 64, maxWidth: 480, margin: '0 auto' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 528, margin: '0 auto' }}>
         <HeroTitle />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
           {sections.map((section, i) => (
             <Section key={i} section={section} />
           ))}

@@ -14,7 +14,7 @@ export function AboutSection() {
             fontSize: 18,
             fontWeight: 400,
             lineHeight: 1.2,
-            color: 'var(--text-medium)',
+            color: 'var(--text-grey)',
           }}
           dangerouslySetInnerHTML={{ __html: text }}
         />
