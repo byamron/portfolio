@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-23 — Subtle glass hover: reduce pull/squash, add minimum width clamp
+
+**Branch:** `subtle-glass-hover`
+
+**Summary:** Reduced the glass pill's gravitational pull and squash deformation for a more restrained feel, and added a minimum width clamp so the pill never collapses to zero padding around the text during volume preservation.
+
+**What changed:**
+- **`src/hooks/useGlassHighlight.ts`** — `pullStrength` 0.25 → 0.12 (gentler edge gravity), `squashAmount` 0.003 → 0.001 (barely perceptible perpendicular compression). Added `minW = state.baseW - 24` clamp in `computePullTargets()` so volume preservation never shrinks the pill below 4px padding on each side.
+- **`core-docs/design-language.md`** — Updated squashAmount, pullStrength defaults in both the Motion section and configurator table. Documented minimum width clamp in the volume preservation description.
+
+**Key decisions:**
+- **Pull halved, not removed:** 0.12 still gives the pill physical weight at card edges without the aggressive narrowing that was visible at 0.25.
+- **Width clamp at baseW - 24px:** Card has 16px horizontal padding; clamping at -24px guarantees at least 4px visible padding on each side even at maximum pull.
+- **Squash 3x more subtle:** 0.001 is effectively invisible but keeps the deformation formula active for future tuning.
+
+---
+
 ## 2026-02-22 — Home page refinements: scroll, hierarchy, copy, coming-soon cards
 
 **Branch:** `home-page-refinements`
