@@ -8,17 +8,17 @@ The visual and interaction rules that govern every detail of the site. This docu
 
 ## Core Principles
 
-### 1. Restraint as signal
+### 1. Intentionality over restraint
 
-Every element on the site earns its place. There is one typeface at one weight. There is generous whitespace. There are no decorative elements, no gradients-for-gradients'-sake, no badges or flourishes. The restraint itself communicates: this person edits, curates, and knows what to leave out. When a visitor sees this level of discipline, they infer the same discipline in the work.
+Every element on the site earns its place — not by being minimal for minimalism's sake, but by being thoughtful. There is generous whitespace. There are no decorative elements, no gradients-for-gradients'-sake, no badges or flourishes. But restraint is a tool, not a principle: the site takes calculated risks where they reward attention. Typography, hover interactions, and material choices are areas where the site can be bold and specific — as long as boldness serves the work rather than seeking applause. When a visitor sees this level of intentionality, they infer the same care in the work.
 
 ### 2. The site is the portfolio piece
 
 Before anyone reads a word or clicks a link, the site has already made its case. The quality of the typography, the feel of the hover interactions, the cohesion across themes — these are the first evidence of taste. Implementation craft is not behind-the-scenes infrastructure; it _is_ the portfolio.
 
-### 3. Quiet confidence over spectacle
+### 3. Memorable without being loud
 
-Nothing shouts. The glass effect is barely-there until you notice it. The image cross-fades are smooth but unhurried. The theme switching is ambient. The whole experience says "I don't need to impress you" — which is, itself, impressive. The closer to nelson.co than to Dribbble.
+The site should stand out — this is a portfolio, and being forgettable is a failure mode. But standing out comes from considered choices that reward a closer look, not from spectacle. The glass effect is barely-there until you notice it. The typography pairing is a quiet nod to those with an eye for taste. The theme switching is ambient. The whole experience says "I have a point of view" — and the people this site is built for (design-literate teams at companies like Figma, Anthropic, Stripe) will notice the care. Closer to nelson.co than to Dribbble, but not afraid to take a risk that lands.
 
 ### 4. Complex information made simple
 
@@ -115,9 +115,16 @@ Theme transitions take `500ms ease-in-out` — slow enough to register as intent
 
 ## Typography
 
-### The single-typeface rule
+### The typographic pairing
 
-**Manrope**, weight 400, everywhere. No bold. No italic. No second typeface. Hierarchy is established entirely through size, color, and space — never through weight variation. This constraint forces the layout to do the work, which produces the clean, structurally confident feel the site needs.
+The site uses a serif/sans pairing — a calculated risk that rewards typographic literacy without calling attention to itself. The pairing should feel inevitable, not decorative: someone who doesn't know fonts thinks "this looks clean," someone who does thinks "they chose well."
+
+- **Headings**: **Literata** (Google Fonts), weight **300**. A contemporary serif designed for screen reading — generous x-height, open counters, soft serifs. At 300 weight, it's light and elegant without feeling fragile. It doesn't announce "I chose a serif" — it just reads well and feels considered. The warmth and modernity signal taste to typographically literate visitors without calling attention to itself.
+- **Body**: **Onest** (Google Fonts), weight **400**. A warm, rounded sans-serif with enough personality to feel authored but not so much that it distracts. The rounded terminals echo Literata's softer curves, creating cohesive warmth across the pairing. At 400 weight, it's grounded enough for sustained reading while staying light.
+
+The 100-step weight gap (300 heading / 400 body) creates hierarchy through contrast rather than emphasis — the heading is lighter and more refined, the body is slightly more substantial. Combined with the serif/sans distinction and the size scale, this produces clear typographic hierarchy without either element needing to be bold.
+
+The pairing was chosen to be a "nod to those with an eye for taste" — both fonts are newer, less common choices that a design-literate person would clock as intentional, while someone who doesn't know fonts just thinks "this looks clean."
 
 ### Scale
 
@@ -138,10 +145,11 @@ Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238
 
 ### What typography does NOT do
 
-- No font-weight variation (no bold headings, no light body)
 - No text-transform (no uppercase labels or small caps)
 - No decorative letter-spacing on content text
 - No variable sizing for responsive — the scale is fixed (layout adapts, type doesn't)
+- No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence
+- No weight variation within a role — all headings share one weight, all body text shares one weight
 
 ---
 
@@ -537,8 +545,9 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 
 | Don't | Why |
 |-------|-----|
-| Add a second typeface | The single-typeface constraint is foundational. It forces hierarchy through space and color. |
-| Use font-weight for emphasis | Weight 400 everywhere. Hierarchy comes from size and color, not bold. |
+| Add a third typeface | The serif/sans pairing is the system. A third font breaks coherence and signals indecision. |
+| Vary weight within a role | All headings share one weight, all body shares one weight. Weight contrast is between roles, not within them. |
+| Use weight for emphasis within text | Bold words or phrases within body text fight the clean, even texture. Structure and color create emphasis. |
 | Add drop shadows to cards or containers | The only shadow is the inner glow on the glass effect and the panel shadow. Shadows imply elevation, and this site is flat. |
 | Use color to highlight individual elements | Color is environmental (background tint), not component-level (colored buttons/badges). |
 | Add borders to section dividers | Sections are separated by space alone. Lines or borders add visual noise. |
@@ -546,10 +555,10 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 | Add loading states or skeleton screens | The site is small enough to load instantly. Skeleton screens imply enterprise scale, not personal craft. |
 | Use a card metaphor for project links | Links are text, not cards. The glass effect is momentary, not a resting surface. |
 | Stack the right column below content on mobile | The interaction model doesn't translate to touch. Remove it entirely rather than degrading it. |
-| Use more than two text sizes | 36px for title, 18px for everything else. That's the scale. |
 | Add hover underlines or color changes to links | The glass effect IS the hover state. No additional text-level hover treatment needed. |
 | Use transition durations outside the timing hierarchy | 150 / 200 / 300 / 500ms. Pick the one that matches the action's weight. |
 | Mix easing curves arbitrarily | Use the Smooth curve (`cubic-bezier(0.25, 0.46, 0.45, 0.94)`) as default. Only deviate for specific physical behaviors (snap-back, overshoot). |
+| Be loud without purpose | Standing out is a goal, but every bold choice must reward closer inspection rather than demand attention. |
 
 ---
 
@@ -557,7 +566,8 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 
 When implementing or modifying any part of the site, verify:
 
-- [ ] Does it use Manrope weight 400?
+- [ ] Does it use the correct typeface for its role (serif for headings, sans for body)?
+- [ ] Does it use the correct weight for its role (no weight variation within a role)?
 - [ ] Does it use the spacing hierarchy (80/64/40/24)?
 - [ ] Does the border-radius come from the radius scale (32 / 16 / 8 / 6 / 5)?
 - [ ] Does color come from CSS custom properties, not hardcoded values?
@@ -567,4 +577,4 @@ When implementing or modifying any part of the site, verify:
 - [ ] Does any animation use one of the four timing tiers (150/200/300/500ms)?
 - [ ] Does the Smooth easing curve feel right, or does this interaction need a specific curve?
 - [ ] Would this element make sense in both light and dark mode?
-- [ ] Is this addition necessary, or would the site be better without it?
+- [ ] Is this choice intentional? Does it reward closer inspection or just add noise?

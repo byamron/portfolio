@@ -2,50 +2,48 @@
 
 Decision log and completed work, in reverse chronological order.
 
-## 2026-02-22 — Link all case studies via React Router, remove dev toggle
+## 2026-02-22 — Typography: Literata 300 + Onest 400
 
-**Branch:** `byamron/link-case-studies`
+**Branch:** `byamron/lagos`
 
-**Summary:** Connected all 8 case study project cards on the home page to dedicated case study pages using React Router. Removed the dev ViewSwitcher toggle. Converted all markdown case study content into typed `CaseStudy` objects and wired them through the existing `CaseStudyLayoutA` template. Side projects without case studies changed to non-interactive text.
+**Summary:** Replaced single-typeface Manrope 400 system with a serif/sans pairing: Literata 300 (headings) + Onest 400 (body). Revised the design language philosophy to prioritize intentionality over restraint, and "memorable without being loud" over "quiet confidence." Built a dev-only font comparison panel to evaluate pairings in real-time before committing.
 
-**What was built:**
-- **`src/data/case-study-content.ts`** — Added 7 new typed `CaseStudy` objects (mochiAiTooling, mochiProgressTracker, uwDesignSystem, sonyScreenlessTv, cipElectionMisinformation, duolingoLanguagesFlags, acornEatLocalVt) alongside existing mochiSubscriptions. Exported `caseStudiesBySlug` lookup map for O(1) route resolution.
-- **`src/components/CaseStudyPage.tsx`** — New route component: reads slug from URL params, looks up CaseStudy data, renders CaseStudyLayoutA with back link and edge fades. Scroll-to-top on navigation. Not-found fallback.
-- **`src/App.tsx`** — Replaced ViewSwitcher + conditional rendering with React Router `<Routes>`: `/` → Layout, `/project/:slug` → CaseStudyPage.
-- **`src/main.tsx`** — Wrapped app in `<BrowserRouter>`.
-- **`src/data/projects.ts`** — Changed `todo-priority` and `detect-manip` from `isLink: true, href: '#'` to `isLink: false` (grey non-interactive text).
+**What was explored:**
+- **Heading serifs**: Newsreader, Lora, Literata, Source Serif 4
+- **Body sans**: Manrope, Onest, Plus Jakarta Sans, DM Sans, Nunito, Outfit, Urbanist, Public Sans
+- **Weight combinations**: 300/300, 300/400, 400/300, 400/400, 500/300
 
-**Deleted files:**
-- `src/components/ViewSwitcher.tsx` — Dev toggle, no longer needed
-- `src/components/CaseStudyPrototype.tsx` — Replaced by CaseStudyPage
-- `src/components/CaseStudy.tsx` — Unused markdown renderer
+**Fonts eliminated and why:**
+- **Newsreader**: Sharp serifs felt too old-style/editorial for a modern tech portfolio. High stroke contrast clashed with Onest's rounded warmth — "two fonts that disagree" rather than complement.
+- **Lora**: Too similar to Newsreader's editorial character, less distinctive.
+- **Source Serif 4**: Neutral and precise but lacked personality at display sizes. Paired with Manrope it felt generic.
+- **DM Sans, Nunito, Plus Jakarta Sans, Outfit, Public Sans**: Eliminated during narrowing — either too generic, too playful, or didn't complement the serif options well.
+- **Urbanist**: Clean and geometric but lacked the warmth that Literata needed in a partner.
+- **Manrope (for body)**: Too common — the "Figma-era Helvetica." A typographically literate person wouldn't notice it as a deliberate choice.
 
-**Decisions:**
-- Used typed CaseStudy objects (not raw markdown rendering) so content goes through the same CaseStudyLayoutA two-column sticky layout
-- mochi-ai-tooling is a stub (empty sections, "Content coming soon" subtitle) — layout degrades gracefully
-- CIP election misinformation structured as 2 sections (one per paper) with authors and abstracts as paragraphs
-- ThemeProvider and HoverProvider remain outside Routes so theme state persists across navigation
+**Why Literata + Onest:**
+- Literata: contemporary serif designed for screens, soft serifs, generous x-height. At 300 weight it's light and elegant. Doesn't carry historical baggage like Newsreader. Reads as "quietly modern."
+- Onest: warm rounded sans with enough personality to feel authored but subtle enough to not distract. Both fonts share a design sensibility — contemporary, clarity-first, considered.
+- The pairing rewards typographic literacy ("they chose well") without calling attention to itself ("this looks clean").
+- 300/400 weight gap creates hierarchy through contrast, not emphasis.
+
+**Design language changes:**
+- Principle 1 renamed: "Restraint as signal" → "Intentionality over restraint." Restraint is a tool, not a principle. Calculated risks are encouraged where they reward attention.
+- Principle 3 renamed: "Quiet confidence over spectacle" → "Memorable without being loud." Being forgettable is a failure mode. Standing out through considered choices, not spectacle.
+- Typography section: single-typeface rule replaced with serif/sans pairing philosophy.
+- Anti-patterns updated: "don't add a second typeface" replaced with "don't add a third typeface." Weight rules updated to reflect heading/body weight contrast.
+- Coherence checklist updated for new typography system.
+
+**Implementation:**
+- `index.html`: Google Fonts link loads Literata + Onest (replaced Manrope + Newsreader)
+- `src/styles/globals.css`: Body font → Onest 400, added `h1, h2, h3 { font-family: 'Literata', serif; font-weight: 300 }`
+- `src/styles/theme.css`: Subframe font variable overrides → Literata/Onest
+- Components updated: HeroTitle, CaseStudySectionText, CaseStudyLayoutA (heading fontWeight → 300), CaseStudy (Onest body + Literata heading inline HTML), FontPanel defaults
+
+**Dev tooling:**
+- `src/components/FontPanel.tsx`: Dev-only floating panel (bottom-right) with 4 tabs (Fonts/Scale/Layout/Info). Toggle buttons for heading/body font, weight sliders, size/line-height sliders, content/image max-width sliders. Loads Google Fonts on-demand, injects CSS overrides with `!important`. Gated behind `import.meta.env.DEV`, tree-shaken from production. Keyboard shortcut: Cmd+Shift+T.
 
 ---
-
-## 2026-02-22 — Tune glass hover physics and fix card stack boundary
-
-**Branch:** `byamron/glass-hover-fix`
-
-**Summary:** Refined the glass pill hover behavior based on hands-on testing: reduced squash deformation for subtlety, increased gravitational pull for more weight, and fixed a bug where the hover persisted when the cursor moved above or below the card stack.
-
-**What changed:**
-- **`src/hooks/useGlassHighlight.ts`** — `squashAmount` 0.01 → 0.003 (more subtle perpendicular compression), `pullStrength` 0.15 → 0.25 (stronger edge gravity). Added `isCursorInCardStack()` geometric check: on non-card mouseover, hover only clears when cursor Y is outside the vertical bounds of the first-to-last card range. 150ms delay on clear for soft exit. Gaps between cards, context paragraphs, and section breaks all preserve the hover.
-- **`src/components/ProjectLink.tsx`** — Removed `react-router-dom` `Link` import (no router configured yet). All links use plain `<a>` tags.
-- **`src/App.tsx`** — Default view switched from `'case-study'` to `'main'`.
-
-**Key decisions:**
-- **Geometric boundary, not time-based debounce:** First attempt used a 60ms debounce to clear hover on non-card areas — too aggressive, caused flicker when sliding between cards. Replaced with `isCursorInCardStack()` which checks if cursor Y is between the first card's top edge and the last card's bottom edge. Within that range, hover never clears regardless of what element the cursor is over.
-- **150ms clear delay:** When cursor exits the card stack bounds, a 150ms timeout softens the disappearance. Cancelled if cursor re-enters a card.
-- **Pull strength increase felt more physically grounded:** 0.15 felt too easy/flexible — the pill floated. 0.25 gives the pull more weight and makes it feel like the pill is being drawn toward neighbors with real force.
-- **Squash barely perceptible is correct:** 0.01 was visible enough to look rubbery. 0.003 is felt more than seen — it sells the physical metaphor without calling attention to itself.
-
-**Updated docs:** design-language.md (squashAmount, pullStrength defaults, card stack boundary exit rule), history.md
 
 ## 2026-02-22 — Case study layout prototype with sticky visuals and hero
 
@@ -76,6 +74,29 @@ Decision log and completed work, in reverse chronological order.
 - **Responsive layout tokens shared with main page**: CSS custom properties (`--layout-margin`, `--layout-gap`) used by both main page and case study, ensuring consistent spacing.
 
 **Updated docs:** design-language.md (typography scale, case study layout rules), history.md
+
+## 2026-02-22 — Font comparison dev panel
+
+**Branch:** `byamron/font-comparison-panel`
+
+**Summary:** Built a floating dev control panel for comparing Google Fonts typography on the live site. The panel dynamically loads fonts from Google Fonts and injects CSS overrides to swap heading/body typefaces, weights, sizes, and line-heights in real-time. Dev-only — excluded from production builds via `import.meta.env.DEV` gate.
+
+**What was built:**
+- **`src/components/FontPanel.tsx`** — Self-contained floating panel with 3 tabs (Fonts/Scale/Info). Dark chrome matching the Glass Configurator spec (#1a1a1a, #333 border, 14px radius). System sans-serif for panel UI. Framer Motion enter/exit animation. Keyboard shortcut (Cmd+Shift+T).
+- **Font loading utility** — Injects `<link>` tags to `<head>` with `data-font-panel` attribute for cleanup. Tracks loaded fonts in a Set to avoid duplicate loads. Preloads all curated fonts on first panel open.
+- **CSS override injection** — Injects a `<style id="font-panel-overrides">` tag with `!important` rules to override inline styles on components. Panel itself excluded via `[data-font-panel-root]` selector.
+- **Curated font list (25 fonts)** — 15 sans-serif (Manrope, Inter, DM Sans, Space Grotesk, Outfit, Plus Jakarta Sans, Sora, Work Sans, Karla, Be Vietnam Pro, Figtree, Instrument Sans, Albert Sans, Nunito Sans, Rubik), 7 serif (Newsreader, Fraunces, Playfair Display, Source Serif 4, Lora, Crimson Pro, DM Serif Display), 3 monospace (JetBrains Mono, IBM Plex Mono, Space Mono).
+- **Searchable dropdown** — Font items rendered in their own typeface for instant visual comparison. Grouped by category (sans-serif/serif/monospace). Active selection highlighted with blue left border.
+- **Link toggle** — When on (default), one dropdown controls both heading and body font. When off, independent heading/body selectors appear.
+- **Copy CSS** — Exports current font settings as CSS declarations to clipboard. Button turns green on success.
+
+**Key decisions:**
+- **`!important` overrides:** Components use inline `style` props for `fontWeight`/`fontSize`/`lineHeight`, which have highest CSS specificity. `!important` is the pragmatic choice for a dev tool — avoids refactoring production components for a temporary tool.
+- **Single file, no context:** Panel is fully self-contained. Local state only, no persistence. Keeps the dev tool isolated from the portfolio architecture.
+- **Mounted in App.tsx outside Routes:** Panel available on both home page and case study pages.
+- **Production exclusion verified:** `import.meta.env.DEV` gate confirmed working — `grep` of production bundle shows zero FontPanel references.
+
+**Files changed:** FontPanel.tsx (new), App.tsx (import + mount)
 
 ## 2026-02-21 — Sidebar theme controls with glass pill hover
 

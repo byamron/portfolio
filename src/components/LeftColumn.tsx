@@ -26,7 +26,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
         height: '100vh',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 64, maxWidth: 480, margin: '0 auto' }}>
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
           {sections.map((section, i) => (
