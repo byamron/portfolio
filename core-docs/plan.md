@@ -140,6 +140,23 @@ Row with `gap: 64px`, `padding: 0 16px`:
 
 ---
 
+## Case Study Routing (completed 2026-02-22)
+
+**Branch:** `byamron/link-case-studies` (merged to main)
+
+React Router integration complete. All 8 case study project cards on the home page link to dedicated case study pages using `CaseStudyLayoutA`.
+
+- [x] Set up React Router (`BrowserRouter` in `main.tsx`, `Routes` in `App.tsx`)
+- [x] Convert all 8 markdown case studies → typed `CaseStudy` objects in `case-study-content.ts`
+- [x] Create `CaseStudyPage.tsx` route component (slug resolution, back link, edge fades, scroll-to-top)
+- [x] Wire routes: `/` → `Layout`, `/project/:slug` → `CaseStudyPage`
+- [x] Remove dev `ViewSwitcher` toggle, `CaseStudyPrototype`, unused `CaseStudy.tsx` markdown renderer
+- [x] Fix side projects without case studies → `isLink: false` (grey non-interactive text)
+- [ ] Add real visuals to case studies (currently using `PlaceholderVisual`)
+- [ ] SPA fallback for production deployment (Netlify `_redirects` or equivalent)
+
+---
+
 ## Phase 0: Project Scaffolding
 
 **Goal:** Set up the build toolchain, project structure, and development environment.
@@ -174,9 +191,14 @@ src/
 │   ├── RightColumn.tsx        # Fixed image display
 │   ├── HeroTitle.tsx          # "Ben Yamron is a product designer"
 │   ├── Section.tsx            # Context text + project link group
-│   ├── ProjectLink.tsx        # Hoverable link with glass effect
+│   ├── ProjectLink.tsx        # Hoverable link with glass effect + React Router Link
 │   ├── AboutSection.tsx       # Bio paragraphs
-│   ├── ThemeControls.tsx      # Footer: mode switcher + accent picker
+│   ├── CaseStudyPage.tsx      # Route component: slug → CaseStudyLayoutA
+│   ├── CaseStudyLayoutA.tsx   # Two-column sticky case study layout
+│   ├── CaseStudySectionText.tsx # Shared text renderer for case study sections
+│   ├── PlaceholderVisual.tsx  # Gray placeholder for case study visuals
+│   ├── GlassModeSwitcher.tsx  # Glass mode switcher component
+│   ├── SidebarThemeControls.tsx # Sidebar with accent picker + mode switcher
 │   ├── ModeSwitcher.tsx       # System/Light/Dark toggle
 │   ├── AccentPicker.tsx       # 4 color swatches
 │   ├── ImageDisplay.tsx       # Cross-fading image container
@@ -186,7 +208,9 @@ src/
 │   ├── useTheme.ts
 │   └── useHoveredProject.ts
 ├── data/
-│   └── projects.ts            # Project data: id, title, projectId, href, image
+│   ├── projects.ts            # Project data: id, title, projectId, href, image
+│   ├── case-study-content.ts  # Typed CaseStudy objects + caseStudiesBySlug lookup
+│   └── case-studies/          # 8 markdown source files (reference, not used at runtime)
 ├── assets/
 │   └── images/                # Portraits + project previews
 └── styles/
