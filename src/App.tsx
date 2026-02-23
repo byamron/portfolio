@@ -7,7 +7,7 @@ import { ViewSwitcher } from '@/components/ViewSwitcher'
 import { GlassModeSwitcher } from '@/components/GlassModeSwitcher'
 
 function App() {
-  const [view, setView] = useState<'main' | 'case-study'>('case-study')
+  const [view, setView] = useState<'main' | 'case-study'>('main')
 
   return (
     <ThemeProvider>
