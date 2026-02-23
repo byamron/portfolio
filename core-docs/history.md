@@ -19,6 +19,31 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-02-22 — Home page refinements: scroll, hierarchy, copy, coming-soon cards
+
+**Branch:** `home-page-refinements`
+
+**Summary:** Refined the home page across four areas: scroll architecture, visual hierarchy, content copy, and coming-soon project treatment. Moved scrolling from the left column container to the document level, differentiated narrative text from project links via color, tuned the spacing hierarchy for better scannability, made project link arrows inline characters, and turned coming-soon projects into hoverable glass cards with muted styling.
+
+**What changed:**
+
+- **Scroll architecture** (`LeftColumn.tsx`, `useGlassHighlight.ts`): Removed `overflowY: auto` and `height: 100vh` from the left column so the page scrolls at the document level — scrollbar now appears at the right edge of the viewport instead of at the column boundary. Glass highlight scroll listener moved from container to `window`.
+- **Text color hierarchy** (`Section.tsx`, `AboutSection.tsx`): Narrative/context text changed from `--text-medium` to `--text-grey` to create clear differentiation from project link text (`--text-dark`). Heading remains `--text-dark`.
+- **Spacing hierarchy** (`LeftColumn.tsx`, `Section.tsx`): Heading-to-content gap reduced from 64px to 40px. Between-section gap increased from 40px to 56px. Within-section: 8px gap between context paragraphs, 32px marginTop before project cards, 24px between cards. Content container maxWidth increased from 480px to 528px.
+- **Inline arrows** (`ProjectLink.tsx`): Changed link layout from `display: flex` + `gap: 4` to `display: inline-block` with the arrow as an inline Unicode character. This keeps the arrow and text on a single continuous underline that wraps together.
+- **Coming-soon cards** (`ProjectLink.tsx`, `projects.ts`): Non-link projects changed from plain grey `<p>` elements to hoverable `<div>` cards with `data-link-card` attribute (glass effect works), `--text-medium` color, and an ellipsis `…` at 50% opacity instead of an arrow. All three side projects now have "(coming soon)" suffix.
+- **Content copy** (`HeroTitle.tsx`, `projects.ts`): Heading updated to "Ben Yamron is a product designer. Currently leading design for patient experiences at Mochi Health." (Mochi is a link). Section 1 context: "I own product problems — from setting direction with leadership to shipping the details. These days, I'm deep in AI workflows across design and dev." Section 2 context: "Before Mochi, I took on design and research problems across different domains." UW case study title corrected to "Building the system that builds the system."
+
+**Key decisions:**
+- **Document-level scroll over container scroll**: The scrollbar at the column boundary felt like a UI artifact. Document scroll puts it at the viewport edge where users expect it. Glass highlight math is unaffected since card and container relative offsets are constant.
+- **`--text-grey` for narrative, not `--text-medium`**: Creates a three-tier text hierarchy (dark → medium → grey) where narrative context recedes behind project links. Coming-soon cards use `--text-medium` — muted but more prominent than narrative text.
+- **Inline-block links over flex**: Flex layout broke underline continuity between text and arrow. Inline-block preserves the single underline across the full link including the arrow character.
+- **Coming-soon as hoverable cards, not plain text**: These are future projects, not disabled items. Glass hover signals interactivity and keeps them visually part of the project card system. Ellipsis icon distinguishes them from linked projects (which use →).
+
+**Files changed:** LeftColumn.tsx, HeroTitle.tsx, Section.tsx, AboutSection.tsx, ProjectLink.tsx, projects.ts, useGlassHighlight.ts
+
+---
+
 ## 2026-02-22 — Remove dev panels, add dev panel policy, branch cleanup
 
 **Branch:** `preview-main-build`

@@ -17,8 +17,7 @@ export interface Section {
 export const sections: Section[] = [
   {
     context: [
-      'I focus on making complex information actionable within products and organizations.',
-      'Currently leading patient experience design at <a href="https://joinmochi.com/">Mochi Health</a>.',
+      'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. These days, I\u2019m deep in AI workflows across design and dev.',
     ],
     projects: [
       { id: 'mochi-funnel', title: 'Building a competitive top of funnel experience', projectId: 'uw', href: '/project/mochi-ai-tooling', isLink: true, caseStudySlug: 'mochi-ai-tooling' },
@@ -28,10 +27,10 @@ export const sections: Section[] = [
   },
   {
     context: [
-      'Before Mochi, I helped different teams make sense of information in different contexts.',
+      'Before Mochi, I took on design and research problems across different domains.',
     ],
     projects: [
-      { id: 'uw-system', title: 'Building a system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system' },
+      { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system' },
       { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv' },
       { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation' },
       { id: 'duo-flags', title: 'Languages \u2260 Flags', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags' },
@@ -43,9 +42,9 @@ export const sections: Section[] = [
       'On the side, I design and build tools that solve my own problems in life and work.',
     ],
     projects: [
-      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'uw', href: '', isLink: false },
-      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'cip', href: '', isLink: false },
-      { id: 'ai-search', title: 'Currently exploring new patterns for AI search with personal context (coming soon)', projectId: 'uw', href: '', isLink: false },
+      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized (coming soon)', projectId: 'uw', href: '', isLink: false },
+      { id: 'detect-manip', title: 'Detecting manipulative language on the web (coming soon)', projectId: 'cip', href: '', isLink: false },
+      { id: 'ai-search', title: 'New patterns for AI search with personal context (coming soon)', projectId: 'uw', href: '', isLink: false },
     ],
   },
 ]

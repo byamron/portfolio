@@ -7,20 +7,22 @@ interface SectionProps {
 
 export function Section({ section }: SectionProps) {
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {section.context.map((text, i) => (
-        <p
-          key={i}
-          style={{
-            fontSize: 18,
-            fontWeight: 400,
-            lineHeight: 1.2,
-            color: 'var(--text-medium)',
-          }}
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
-      ))}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <section style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {section.context.map((text, i) => (
+          <p
+            key={i}
+            style={{
+              fontSize: 18,
+              fontWeight: 400,
+              lineHeight: 1.2,
+              color: 'var(--text-grey)',
+            }}
+            dangerouslySetInnerHTML={{ __html: text }}
+          />
+        ))}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginTop: 32 }}>
         {section.projects.map(project => (
           <ProjectLink key={project.id} project={project} />
         ))}
