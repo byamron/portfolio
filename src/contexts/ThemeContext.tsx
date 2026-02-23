@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, t
 
 export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza'
 export type AppearanceMode = 'system' | 'light' | 'dark'
-export type IntensityVariant = 'gradient' | 'ring'
 type ResolvedAppearance = 'light' | 'dark'
 
 // Base HSL values for each accent × mode (from tokens.md)
@@ -39,8 +38,6 @@ interface ThemeContextValue {
   resolvedAppearance: ResolvedAppearance
   bgIntensity: number
   setBgIntensity: (level: number) => void
-  intensityVariant: IntensityVariant
-  setIntensityVariant: (v: IntensityVariant) => void
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
@@ -48,7 +45,6 @@ const ThemeContext = createContext<ThemeContextValue | null>(null)
 const ACCENT_KEY = 'accentColor'
 const APPEARANCE_KEY = 'appearanceMode'
 const INTENSITY_KEY = 'bgIntensity'
-const VARIANT_KEY = 'intensityVariant'
 
 function getSystemPreference(): ResolvedAppearance {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -68,11 +64,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [bgIntensity, setBgIntensityState] = useState<number>(() => {
     const stored = localStorage.getItem(INTENSITY_KEY)
     return stored ? Math.min(INTENSITY_LEVELS.length - 1, Math.max(0, parseInt(stored, 10))) : 0
-  })
-
-  const [intensityVariant, setIntensityVariantState] = useState<IntensityVariant>(() => {
-    const stored = localStorage.getItem(VARIANT_KEY)
-    return (stored === 'ring' ? 'ring' : 'gradient') as IntensityVariant
   })
 
   const [systemPref, setSystemPref] = useState<ResolvedAppearance>(getSystemPreference)
@@ -136,11 +127,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(INTENSITY_KEY, String(clamped))
   }, [])
 
-  const setIntensityVariant = useCallback((v: IntensityVariant) => {
-    setIntensityVariantState(v)
-    localStorage.setItem(VARIANT_KEY, v)
-  }, [])
-
   const value = useMemo<ThemeContextValue>(() => ({
     accentColor,
     setAccentColor,
@@ -149,10 +135,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     resolvedAppearance,
     bgIntensity,
     setBgIntensity,
-    intensityVariant,
-    setIntensityVariant,
   }), [accentColor, setAccentColor, appearanceMode, setAppearanceMode, resolvedAppearance,
-       bgIntensity, setBgIntensity, intensityVariant, setIntensityVariant])
+       bgIntensity, setBgIntensity])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

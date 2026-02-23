@@ -23,6 +23,17 @@ const motionEase = [0.25, 0.46, 0.45, 0.94]
 const PILL_SIZE = 36
 const PILL_RADIUS = 12
 
+// Trigger intensity indicator: combined glow + fill (opacity)
+// Glow: soft ambient halo in the swatch color
+// Fill: compressed opacity range (0.45 → 1.0) so the dot is never invisible
+const TRIGGER_GLOW_SPREAD = [0, 6, 10, 14]
+const TRIGGER_GLOW_ALPHA = [0, 0.2, 0.35, 0.5]
+const TRIGGER_OPACITY = [0.45, 0.65, 0.85, 1.0]
+
+function swatchToHsla(swatch: string, alpha: number): string {
+  return swatch.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`)
+}
+
 // ---------------------------------------------------------------------------
 // Mini glass pill for sidebar controls
 // ---------------------------------------------------------------------------
@@ -43,8 +54,6 @@ function setupControlPill(container: HTMLElement): () => void {
     Object.assign(div.style, {
       position: 'absolute',
       pointerEvents: 'none',
-      // z-index 10: pill sits ON TOP of controls so backdrop-filter blurs
-      // the swatch/icon content below it (matching useGlassHighlight pattern)
       zIndex: '10',
       opacity: '0',
       willChange: 'transform, opacity',
@@ -75,7 +84,6 @@ function setupControlPill(container: HTMLElement): () => void {
     pill.style.border = `0.5px solid hsla(${hue}, 20%, 50%, 0.15)`
   }
 
-  // Fixed-size pill centered on the control's center point
   function getControlPosition(el: HTMLElement) {
     const elRect = el.getBoundingClientRect()
     const containerRect = container.getBoundingClientRect()
@@ -212,16 +220,30 @@ function setupControlPill(container: HTMLElement): () => void {
 // Component
 // ---------------------------------------------------------------------------
 
-const STRIP_HEIGHT = 48
-const ZONE_HEIGHT = STRIP_HEIGHT / INTENSITY_LEVELS.length
+const STRIP_HEIGHT = 72
+const THUMB_SIZE = 11
+const THUMB_TRAVEL = STRIP_HEIGHT - THUMB_SIZE // usable range for thumb center-to-edge
+
+// Stagger delay indices (fixed layout: swatches → intensity → modes)
+// [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes
+const DIVIDER_1 = 0
+const SWATCH_BASE = 1
+const DIVIDER_2 = SWATCH_BASE + accents.length        // 5
+const STRIP_IDX = DIVIDER_2 + 1                       // 6
+const DIVIDER_3 = STRIP_IDX + 1                       // 7
+const MODE_BASE = DIVIDER_3 + 1                       // 8
 
 export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
-          bgIntensity, setBgIntensity, intensityVariant } = useTheme()
+          bgIntensity, setBgIntensity } = useTheme()
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>(null)
-  const toolbarRef = useRef<HTMLDivElement>(null)
-  const cleanupRef = useRef<(() => void) | null>(null)
+  const swatchesRef = useRef<HTMLDivElement>(null)
+  const modesRef = useRef<HTMLDivElement>(null)
+  const cleanupSwatchPill = useRef<(() => void) | null>(null)
+  const cleanupModePill = useRef<(() => void) | null>(null)
+  const draggingRef = useRef(false)
 
   const handleEnter = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current)
@@ -232,30 +254,56 @@ export function SidebarThemeControls() {
     closeTimeout.current = setTimeout(() => setHovered(false), 250)
   }
 
-  // Set up / tear down pill when toolbar opens/closes
-  const setupPill = useCallback(() => {
-    if (cleanupRef.current) {
-      cleanupRef.current()
-      cleanupRef.current = null
-    }
-    if (hovered && toolbarRef.current) {
-      cleanupRef.current = setupControlPill(toolbarRef.current)
+  // Each control group gets its own pill so the hover clears between sections
+  const setupPills = useCallback(() => {
+    cleanupSwatchPill.current?.()
+    cleanupSwatchPill.current = null
+    cleanupModePill.current?.()
+    cleanupModePill.current = null
+    if (hovered) {
+      if (swatchesRef.current) cleanupSwatchPill.current = setupControlPill(swatchesRef.current)
+      if (modesRef.current) cleanupModePill.current = setupControlPill(modesRef.current)
     }
   }, [hovered])
 
   useEffect(() => {
-    // Delay lets framer-motion items settle into position before measuring
-    const timer = setTimeout(setupPill, 120)
+    const timer = setTimeout(setupPills, 120)
     return () => {
       clearTimeout(timer)
-      if (cleanupRef.current) {
-        cleanupRef.current()
-        cleanupRef.current = null
-      }
+      cleanupSwatchPill.current?.()
+      cleanupSwatchPill.current = null
+      cleanupModePill.current?.()
+      cleanupModePill.current = null
     }
-  }, [setupPill])
+  }, [setupPills])
 
   const activeSwatch = accents.find(a => a.color === accentColor)!
+
+  // Gradient strip pointer handlers (drag support)
+  const updateLevelFromPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const y = Math.max(0, Math.min(STRIP_HEIGHT, e.clientY - rect.top))
+    const level = Math.round((y / STRIP_HEIGHT) * (INTENSITY_LEVELS.length - 1))
+    setBgIntensity(Math.min(INTENSITY_LEVELS.length - 1, Math.max(0, level)))
+  }, [setBgIntensity])
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    draggingRef.current = true
+    setIsDragging(true)
+    updateLevelFromPointer(e)
+  }, [updateLevelFromPointer])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return
+    updateLevelFromPointer(e)
+  }, [updateLevelFromPointer])
+
+  const handlePointerUp = useCallback(() => {
+    draggingRef.current = false
+    setIsDragging(false)
+  }, [])
 
   return (
     <div
@@ -280,75 +328,42 @@ export function SidebarThemeControls() {
           alignItems: 'center',
         }}
       >
-        {/* Fixed trigger — always visible, rounded square */}
-        {/* In 'ring' variant: clickable, cycles intensity, ring encodes level */}
-        {intensityVariant === 'ring' ? (
-          <button
-            onClick={() => setBgIntensity((bgIntensity + 1) % INTENSITY_LEVELS.length)}
-            aria-label={`Background intensity: ${INTENSITY_LEVELS[bgIntensity].name}. Click to cycle.`}
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 5,
-              background: activeSwatch.swatch,
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              flexShrink: 0,
-              outline: bgIntensity === 0 ? 'none'
-                : `${bgIntensity === 3 ? 1.5 : 1}px solid color-mix(in srgb, ${activeSwatch.swatch} ${15 + bgIntensity * 12}%, transparent)`,
-              outlineOffset: bgIntensity === 0 ? 0 : 3,
-              boxShadow: bgIntensity === 3
-                ? `0 0 6px color-mix(in srgb, ${activeSwatch.swatch} 20%, transparent)`
-                : 'none',
-              transition: 'background 200ms ease-in-out, outline 200ms ease-in-out, box-shadow 200ms ease-in-out',
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 5,
-              background: activeSwatch.swatch,
-              transition: 'background 200ms ease-in-out',
-              flexShrink: 0,
-            }}
-          />
-        )}
-
-        {/* Expandable toolbar with glass pill */}
+        {/* Fixed trigger — always visible, glow + opacity reflect intensity */}
         <div
-          ref={toolbarRef}
-          style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 5,
+            background: activeSwatch.swatch,
+            opacity: TRIGGER_OPACITY[bgIntensity],
+            boxShadow: bgIntensity > 0
+              ? `0 0 ${TRIGGER_GLOW_SPREAD[bgIntensity]}px ${swatchToHsla(activeSwatch.swatch, TRIGGER_GLOW_ALPHA[bgIntensity])}`
+              : 'none',
+            transition: 'background 200ms ease-in-out, opacity 300ms ease-in-out, box-shadow 300ms ease-in-out',
+            flexShrink: 0,
+          }}
+        />
+
+        {/* Expandable toolbar */}
+        <div
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
           {/* Divider: trigger ↔ swatches */}
           <motion.div
             animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
-            transition={{
-              duration: 0.22,
-              delay: hovered ? 0 * 0.04 : 0,
-              ease: motionEase,
-            }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * 0.04 : 0, ease: motionEase }}
             style={{
-              width: 20,
-              height: 1,
-              background: 'var(--text-dark)',
-              margin: '18px 0',
-              pointerEvents: 'none',
+              width: 20, height: 1, background: 'var(--text-dark)',
+              margin: '18px 0', pointerEvents: 'none',
             }}
           />
 
-          {/* Accent swatches */}
+          {/* Accent swatches — own pill container */}
           <div
+            ref={swatchesRef}
             role="radiogroup"
             aria-label="Accent color"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 14,
-            }}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}
           >
             {accents.map((item, i) => {
               const isActive = accentColor === item.color
@@ -356,11 +371,7 @@ export function SidebarThemeControls() {
                 <motion.div
                   key={item.color}
                   animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
-                  transition={{
-                    duration: 0.22,
-                    delay: hovered ? (1 + i) * 0.04 : 0,
-                    ease: motionEase,
-                  }}
+                  transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * 0.04 : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
                   <button
@@ -370,16 +381,10 @@ export function SidebarThemeControls() {
                     aria-label={`${item.color} theme`}
                     onClick={() => setAccentColor(item.color)}
                     style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 6,
-                      background: item.swatch,
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
+                      width: 24, height: 24, borderRadius: 6,
+                      background: item.swatch, border: 'none', cursor: 'pointer', padding: 0,
                       outline: isActive ? `1.5px solid color-mix(in srgb, ${item.swatch} 50%, transparent)` : 'none',
-                      outlineOffset: 3,
-                      transition: 'outline 200ms ease-in-out',
+                      outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                     }}
                   />
                 </motion.div>
@@ -387,28 +392,100 @@ export function SidebarThemeControls() {
             })}
           </div>
 
-          {/* Divider: swatches ↔ modes */}
+          {/* Divider: swatches ↔ intensity */}
           <motion.div
             animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
-            transition={{
-              duration: 0.22,
-              delay: hovered ? (1 + accents.length) * 0.04 : 0,
-              ease: motionEase,
-            }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * 0.04 : 0, ease: motionEase }}
             style={{
-              width: 20,
-              height: 1,
-              background: 'var(--text-dark)',
-              margin: '18px 0',
-              pointerEvents: 'none',
+              width: 20, height: 1, background: 'var(--text-dark)',
+              margin: '18px 0', pointerEvents: 'none',
             }}
           />
 
-          {/* Mode icons */}
+          {/* Intensity gradient strip */}
+          <motion.div
+            animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
+            transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * 0.04 : 0, ease: motionEase }}
+            style={{ pointerEvents: hovered ? 'auto' : 'none' }}
+          >
+            <div
+              aria-label={`Background intensity: ${INTENSITY_LEVELS[bgIntensity].name}`}
+              role="slider"
+              aria-valuemin={0}
+              aria-valuemax={INTENSITY_LEVELS.length - 1}
+              aria-valuenow={bgIntensity}
+              aria-valuetext={INTENSITY_LEVELS[bgIntensity].name}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                  e.preventDefault()
+                  setBgIntensity(Math.min(INTENSITY_LEVELS.length - 1, bgIntensity + 1))
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                  e.preventDefault()
+                  setBgIntensity(Math.max(0, bgIntensity - 1))
+                }
+              }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onDragStart={(e) => e.preventDefault()}
+              style={{
+                position: 'relative',
+                width: 24,
+                height: STRIP_HEIGHT,
+                display: 'flex',
+                justifyContent: 'center',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                touchAction: 'none',
+                userSelect: 'none',
+              }}
+            >
+              {/* The visual gradient strip */}
+              <div
+                style={{
+                  width: 8,
+                  height: STRIP_HEIGHT,
+                  borderRadius: 4,
+                  background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
+                  transition: 'background 500ms ease-in-out',
+                  pointerEvents: 'none',
+                }}
+              />
+              {/* Active level indicator — thumb dot */}
+              <div
+                style={{
+                  position: 'absolute',
+                  width: 11,
+                  height: 11,
+                  borderRadius: '50%',
+                  background: 'var(--swatch)',
+                  border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  top: (bgIntensity / (INTENSITY_LEVELS.length - 1)) * THUMB_TRAVEL,
+                  transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
+                }}
+              />
+            </div>
+          </motion.div>
+
+          {/* Divider: intensity ↔ modes */}
+          <motion.div
+            animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * 0.04 : 0, ease: motionEase }}
+            style={{
+              width: 20, height: 1, background: 'var(--text-dark)',
+              margin: '18px 0', pointerEvents: 'none',
+            }}
+          />
+
+          {/* Mode icons — own pill container */}
           <div
+            ref={modesRef}
             role="radiogroup"
             aria-label="Appearance mode"
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
           >
             {modes.map(({ mode, Icon, label }, i) => {
               const isActive = appearanceMode === mode
@@ -416,11 +493,7 @@ export function SidebarThemeControls() {
                 <motion.div
                   key={mode}
                   animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
-                  transition={{
-                    duration: 0.22,
-                    delay: hovered ? (2 + accents.length + i) * 0.04 : 0,
-                    ease: motionEase,
-                  }}
+                  transition={{ duration: 0.22, delay: hovered ? (MODE_BASE + i) * 0.04 : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
                   <button
@@ -430,32 +503,18 @@ export function SidebarThemeControls() {
                     aria-label={label}
                     onClick={() => setAppearanceMode(mode)}
                     style={{
-                      width: 40,
-                      height: 40,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                      background: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                      borderRadius: 8,
-                      opacity: isActive ? 1 : 0.4,
-                      color: 'var(--text-dark)',
+                      width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
+                      opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
                       transition: 'opacity 200ms ease-in-out',
                     }}
                   >
                     <span
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 24,
-                        height: 24,
-                        borderRadius: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 24, height: 24, borderRadius: 6,
                         outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
-                        outlineOffset: 3,
-                        transition: 'outline 200ms ease-in-out',
+                        outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                       }}
                     >
                       <Icon size={18} />
@@ -465,97 +524,6 @@ export function SidebarThemeControls() {
               )
             })}
           </div>
-
-          {/* Option 3: Gradient strip for intensity */}
-          {intensityVariant === 'gradient' && (
-            <>
-              {/* Divider: modes ↔ intensity */}
-              <motion.div
-                animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
-                transition={{
-                  duration: 0.22,
-                  delay: hovered ? (2 + accents.length + modes.length) * 0.04 : 0,
-                  ease: motionEase,
-                }}
-                style={{
-                  width: 20,
-                  height: 1,
-                  background: 'var(--text-dark)',
-                  margin: '18px 0',
-                  pointerEvents: 'none',
-                }}
-              />
-
-              <motion.div
-                animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
-                transition={{
-                  duration: 0.22,
-                  delay: hovered ? (3 + accents.length + modes.length) * 0.04 : 0,
-                  ease: motionEase,
-                }}
-                style={{ pointerEvents: hovered ? 'auto' : 'none' }}
-              >
-                <div
-                  aria-label={`Background intensity: ${INTENSITY_LEVELS[bgIntensity].name}`}
-                  role="slider"
-                  aria-valuemin={0}
-                  aria-valuemax={INTENSITY_LEVELS.length - 1}
-                  aria-valuenow={bgIntensity}
-                  aria-valuetext={INTENSITY_LEVELS[bgIntensity].name}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                      e.preventDefault()
-                      setBgIntensity(Math.min(INTENSITY_LEVELS.length - 1, bgIntensity + 1))
-                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                      e.preventDefault()
-                      setBgIntensity(Math.max(0, bgIntensity - 1))
-                    }
-                  }}
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    const y = e.clientY - rect.top
-                    const level = Math.min(INTENSITY_LEVELS.length - 1, Math.floor(y / ZONE_HEIGHT))
-                    setBgIntensity(level)
-                  }}
-                  style={{
-                    position: 'relative',
-                    width: 24,
-                    height: STRIP_HEIGHT,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {/* The visual gradient strip */}
-                  <div
-                    style={{
-                      width: 5,
-                      height: STRIP_HEIGHT,
-                      borderRadius: 2.5,
-                      background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 10%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
-                      transition: 'background 500ms ease-in-out',
-                    }}
-                  />
-                  {/* Active level indicator — small dot on the strip */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      background: 'var(--swatch)',
-                      border: '1.5px solid color-mix(in srgb, var(--text-dark) 30%, transparent)',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      top: bgIntensity * ZONE_HEIGHT + ZONE_HEIGHT / 2 - 3.5,
-                      transition: 'top 200ms ease-in-out, background 500ms ease-in-out',
-                    }}
-                  />
-                </div>
-              </motion.div>
-            </>
-          )}
         </div>
       </div>
     </div>
