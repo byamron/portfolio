@@ -58,8 +58,8 @@ Tokens are organized by what controls them. This is a structural rule, not just 
 | Token | Dark Mode | Light Mode | Role |
 |-------|-----------|-----------|------|
 | `--text-dark` | Near-white (99% L) | Near-black (7% L) | Primary: headings, project link text |
-| `--text-medium` | Light gray (90% L) | Dark gray (20% L) | Secondary: body paragraphs, descriptions |
-| `--text-grey` | Medium gray (75% L) | Medium gray (45% L) | Tertiary: captions, de-emphasized content |
+| `--text-medium` | Light gray (90% L) | Dark gray (20% L) | Secondary: coming-soon project cards, muted interactive elements |
+| `--text-grey` | Medium gray (75% L) | Medium gray (45% L) | Tertiary: narrative/context paragraphs, about section text |
 | `--text-light-grey` | Dark gray (40% L) | Light gray (70% L) | Disabled or deeply muted text |
 | `--text-light` | Near-black (7% L) | White (100% L) | Inverse: text on opposite-mode surfaces |
 | `--text-link` | Soft blue (81% L) | Medium blue (53% L) | Inline links within body text |
@@ -162,11 +162,12 @@ Spacing follows a descending hierarchy that mirrors content hierarchy:
 | Gap | Where | Why |
 |-----|-------|-----|
 | 80px | Between main content and footer controls | The footer is structurally separate — a tool, not content. The large gap signals "this is secondary." |
-| 64px | Between title and first section; left/right column padding (top) | Major structural breaks. "New topic" level. |
-| 40px | Between content sections | Within-topic separation. Enough to breathe, not enough to lose continuity. |
+| 64px | Left/right column padding (top) | Structural padding. "Page margin" level. |
+| 56px | Between content sections | Between-section separation. Enough to signal a new group, close enough to sustain a narrative throughline. |
+| 40px | Between title and first section | Heading-to-content gap. Tighter than between-section to keep the title connected to what follows. |
+| 32px | Between narrative text and project cards within a section | Within-section separation. Clearly groups cards under their context paragraph. |
 | 24px | Between project links within a section | Tight enough to read as a group, loose enough that the glass hover effect has room to exist. |
-
-This 80 → 64 → 40 → 24 progression is not arbitrary. Each step is roughly 60-65% of the previous, creating a consistent visual rhythm. Deviating from these values — even by 8px — breaks the proportional relationship.
+| 8px | Between context paragraphs | Near-zero gap — multiple paragraphs read as a single narrative block. |
 
 ### The two-column model
 
@@ -284,8 +285,8 @@ Each edge is rendered as an inset shadow at the current `borderWidth` (default 0
 - The glass pill is an `aria-hidden="true"` div with `data-glass-highlight="true"`, absolutely positioned inside the link container.
 - **Z-index**: pill is `z-index: 10`, link card content is `z-index: 1` with `position: relative`. This ensures the pill renders behind the text — the pill is inserted as the first child of the container, before link elements in DOM order.
 - Link cards are identified by the `[data-link-card]` selector, with `data-project-id` for hover state matching.
-- Link card layout: `display: flex`, `align-items: center`, `gap: 4px`, padding `8px 12px` (vertical, horizontal).
-- Arrow character `→` in a `flex-shrink: 0` span, same font size as link text.
+- Link card layout: `display: inline-block`, `width: fit-content`, padding `24px 16px`, margin `0 -16px`. Arrow `→` is an inline Unicode character — no flex gap, single continuous underline across text and arrow.
+- Coming-soon (non-link) cards: Same `data-link-card` treatment for glass hover, `--text-medium` color, ellipsis `…` at 50% opacity instead of arrow.
 
 ---
 
@@ -579,7 +580,7 @@ When implementing or modifying any part of the site, verify:
 
 - [ ] Does it use the correct typeface for its role (serif for headings, sans for body)?
 - [ ] Does it use the correct weight for its role (no weight variation within a role)?
-- [ ] Does it use the spacing hierarchy (80/64/40/24)?
+- [ ] Does it use the spacing hierarchy (80/64/56/40/32/24/8)?
 - [ ] Does the border-radius come from the radius scale (32 / 16 / 8 / 6 / 5)?
 - [ ] Does color come from CSS custom properties, not hardcoded values?
 - [ ] Do text colors use appearance-only tokens (`--text-*`), not theme-dependent values?

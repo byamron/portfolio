@@ -11,16 +11,26 @@ export function ProjectLink({ project }: ProjectLinkProps) {
 
   if (!project.isLink) {
     return (
-      <p
+      <div
+        data-link-card
+        data-project-id={project.id}
+        onMouseEnter={() => setHoveredProjectId(project.id)}
+        onMouseLeave={() => setHoveredProjectId(null)}
         style={{
+          display: 'inline-block',
+          width: 'fit-content',
+          padding: '24px 16px',
+          margin: '0 -16px',
+          borderRadius: 16,
           fontSize: 18,
           fontWeight: 400,
           lineHeight: 1.4,
-          color: 'var(--text-grey)',
+          color: 'var(--text-medium)',
+          border: '0.1px solid transparent',
         }}
       >
-        {project.title}
-      </p>
+        {project.title}{' '}<span aria-hidden="true" style={{ opacity: 0.5 }}>{'\u2026'}</span>
+      </div>
     )
   }
 
@@ -32,10 +42,8 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     onFocus: () => setHoveredProjectId(project.id),
     onBlur: () => setHoveredProjectId(null),
     style: {
-      display: 'flex' as const,
-      alignItems: 'center' as const,
+      display: 'inline-block' as const,
       width: 'fit-content' as const,
-      gap: 4,
       padding: '24px 16px',
       margin: '0 -16px',
       borderRadius: 16,
@@ -52,8 +60,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
 
   const children = (
     <>
-      <span>{project.title}</span>
-      <span style={{ flexShrink: 0 }} aria-hidden="true">{'\u2192'}</span>
+      {project.title}{' '}<span aria-hidden="true">{'\u2192'}</span>
     </>
   )
 

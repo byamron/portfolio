@@ -8,7 +8,7 @@ export function HeroTitle() {
         color: 'var(--text-dark)',
       }}
     >
-      Ben Yamron is a product designer
+      Ben Yamron is a product designer. Currently leading design for patient experiences at <a href="https://joinmochi.com/" style={{ color: 'inherit', textDecoration: 'none' }}>Mochi Health</a>.
     </h1>
   )
 }
