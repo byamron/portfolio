@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-22 — Remove dev panels, add dev panel policy, branch cleanup
+
+**Branch:** `preview-main-build`
+
+**Summary:** Removed two dev control panels that had shipped to main: the font comparison panel (`FontPanel.tsx`, Cmd+Shift+T toggle) and the glass mode switcher (`GlassModeSwitcher.tsx`, always visible). Simplified `useGlassHighlight.ts` to hardcode the "frost" glass style instead of switching between 4 modes via `data-glass-mode`. Added a dev panel policy to `CLAUDE.md` and a pre-merge cleanup step (Step 9) to `workflow.md` so dev panels are always stripped before merging.
+
+Also cleaned up 17 stale local branches, 8 stale remote branches, and 2 prunable worktrees (athens, davis) — all fully merged work.
+
+**Files changed:**
+- Deleted `src/components/FontPanel.tsx`, `src/components/GlassModeSwitcher.tsx`
+- `src/App.tsx` — removed imports and renders
+- `src/hooks/useGlassHighlight.ts` — removed `getGlassMode()`, hardcoded frost, removed `data-glass-mode` from observer
+- `CLAUDE.md` — added dev panels policy section, updated glass hover description, removed GlassPanel from project structure
+- `core-docs/workflow.md` — added Step 9 "Pre-Merge Cleanup"
+
+---
+
 ## 2026-02-22 — Typography: Literata 300 + Onest 400
 
 **Branch:** `byamron/font-comparison-panel`
