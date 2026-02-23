@@ -1,15 +1,13 @@
 import { useState } from 'react'
 
 const MODES = [
-  { id: 'original', label: 'Original' },
   { id: 'frost', label: 'Frost' },
   { id: 'soft-ring', label: 'Soft Ring' },
-  { id: 'gradient-wash', label: 'Gradient' },
 ] as const
 
 export function GlassModeSwitcher() {
   const [mode, setMode] = useState(
-    () => document.documentElement.dataset.glassMode || 'original',
+    () => document.documentElement.dataset.glassMode || 'frost',
   )
 
   function handleSelect(id: string) {
@@ -44,7 +42,7 @@ export function GlassModeSwitcher() {
             background: mode === m.id ? '#333' : 'transparent',
             color: mode === m.id ? '#fff' : '#777',
             border: 'none',
-            borderRight: m.id !== 'gradient-wash' ? '1px solid #2a2a2a' : 'none',
+            borderRight: m.id !== 'soft-ring' ? '1px solid #2a2a2a' : 'none',
             cursor: 'pointer',
             fontFamily: 'inherit',
             fontSize: 'inherit',

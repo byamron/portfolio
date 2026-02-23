@@ -152,29 +152,44 @@ function setupGlassHighlight(
 
     pill.style.borderRadius = `${cfg.borderRadius}px`
 
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+
     if (mode === 'frost') {
-      // Option A: Blur + flat tint + thin border. No gradients, no shadows.
-      const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, 0.04)`
+      // Option A: Blur + accent tint + thin border. Mode-aware shading.
+      const fill = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
       pill.style.background = fill
       setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
-      pill.style.boxShadow = 'none'
-      pill.style.border = `0.5px solid hsla(${hue}, 20%, 50%, 0.10)`
+      pill.style.boxShadow = isDark
+        ? `inset 0 1px 0 0 rgba(255, 255, 255, 0.10)`
+        : `inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)`
+      pill.style.border = isDark
+        ? `0.5px solid rgba(255, 255, 255, 0.12)`
+        : `0.5px solid rgba(0, 0, 0, 0.08)`
     } else if (mode === 'soft-ring') {
-      // Option B: Blur + tint + uniform inner ring + faint top catch.
-      const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, 0.04)`
+      // Option B: Blur + accent tint + uniform inner ring. Mode-aware edge.
+      const fill = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
       pill.style.background = fill
       setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
-      pill.style.boxShadow = [
-        `inset 0 0 0 0.5px rgba(255, 255, 255, 0.10)`,
-        `inset 0 1px 0 0 rgba(255, 255, 255, 0.06)`,
-      ].join(', ')
+      pill.style.boxShadow = isDark
+        ? [
+            `inset 0 0 0 0.5px rgba(255, 255, 255, 0.14)`,
+            `inset 0 1px 0 0 rgba(255, 255, 255, 0.10)`,
+          ].join(', ')
+        : [
+            `inset 0 0 0 0.5px rgba(0, 0, 0, 0.08)`,
+            `inset 0 -1px 0 0 rgba(0, 0, 0, 0.04)`,
+          ].join(', ')
       pill.style.border = 'none'
     } else if (mode === 'gradient-wash') {
-      // Option C: Blur + linear gradient top-to-bottom + thin border. No shadows.
-      pill.style.background = `linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01))`
+      // Option C: Blur + mode-aware linear gradient + thin border.
+      pill.style.background = isDark
+        ? `linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01))`
+        : `linear-gradient(to bottom, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.005))`
       setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
       pill.style.boxShadow = 'none'
-      pill.style.border = `0.5px solid hsla(${hue}, 20%, 50%, 0.08)`
+      pill.style.border = isDark
+        ? `0.5px solid rgba(255, 255, 255, 0.06)`
+        : `0.5px solid rgba(0, 0, 0, 0.05)`
     } else {
       // Original: full glass recipe with radial highlight + 6 directional shadows.
       const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, ${cfg.fillOpacity})`
