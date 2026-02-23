@@ -4,6 +4,7 @@ import { HoverProvider } from '@/contexts/HoverContext'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPrototype } from '@/components/CaseStudyPrototype'
 import { ViewSwitcher } from '@/components/ViewSwitcher'
+import { GlassModeSwitcher } from '@/components/GlassModeSwitcher'
 
 function App() {
   const [view, setView] = useState<'main' | 'case-study'>('case-study')
@@ -13,6 +14,7 @@ function App() {
       <HoverProvider>
         <ViewSwitcher view={view} onViewChange={setView} />
         {view === 'main' ? <Layout /> : <CaseStudyPrototype />}
+        <GlassModeSwitcher />
       </HoverProvider>
     </ThemeProvider>
   )
