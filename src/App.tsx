@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
+import { GlassModeSwitcher } from '@/components/GlassModeSwitcher'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Route path="/" element={<Layout />} />
           <Route path="/project/:slug" element={<CaseStudyPage />} />
         </Routes>
+        <GlassModeSwitcher />
       </HoverProvider>
     </ThemeProvider>
   )

@@ -24,7 +24,6 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     )
   }
 
-  const isInternal = project.href.startsWith('/')
   const linkProps = {
     'data-link-card': true as const,
     'data-project-id': project.id,
@@ -36,6 +35,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
       display: 'flex' as const,
       alignItems: 'center' as const,
       gap: 4,
+      width: 'fit-content' as const,
       padding: '24px 16px',
       margin: '0 -16px',
       borderRadius: 16,
@@ -56,6 +56,8 @@ export function ProjectLink({ project }: ProjectLinkProps) {
       <span style={{ flexShrink: 0 }} aria-hidden="true">{'\u2192'}</span>
     </>
   )
+
+  const isInternal = project.href.startsWith('/')
 
   if (isInternal) {
     return <Link to={project.href} {...linkProps}>{children}</Link>
