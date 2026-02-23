@@ -2,6 +2,32 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-22 — Link all case studies via React Router, remove dev toggle
+
+**Branch:** `byamron/link-case-studies`
+
+**Summary:** Connected all 8 case study project cards on the home page to dedicated case study pages using React Router. Removed the dev ViewSwitcher toggle. Converted all markdown case study content into typed `CaseStudy` objects and wired them through the existing `CaseStudyLayoutA` template. Side projects without case studies changed to non-interactive text.
+
+**What was built:**
+- **`src/data/case-study-content.ts`** — Added 7 new typed `CaseStudy` objects (mochiAiTooling, mochiProgressTracker, uwDesignSystem, sonyScreenlessTv, cipElectionMisinformation, duolingoLanguagesFlags, acornEatLocalVt) alongside existing mochiSubscriptions. Exported `caseStudiesBySlug` lookup map for O(1) route resolution.
+- **`src/components/CaseStudyPage.tsx`** — New route component: reads slug from URL params, looks up CaseStudy data, renders CaseStudyLayoutA with back link and edge fades. Scroll-to-top on navigation. Not-found fallback.
+- **`src/App.tsx`** — Replaced ViewSwitcher + conditional rendering with React Router `<Routes>`: `/` → Layout, `/project/:slug` → CaseStudyPage.
+- **`src/main.tsx`** — Wrapped app in `<BrowserRouter>`.
+- **`src/data/projects.ts`** — Changed `todo-priority` and `detect-manip` from `isLink: true, href: '#'` to `isLink: false` (grey non-interactive text).
+
+**Deleted files:**
+- `src/components/ViewSwitcher.tsx` — Dev toggle, no longer needed
+- `src/components/CaseStudyPrototype.tsx` — Replaced by CaseStudyPage
+- `src/components/CaseStudy.tsx` — Unused markdown renderer
+
+**Decisions:**
+- Used typed CaseStudy objects (not raw markdown rendering) so content goes through the same CaseStudyLayoutA two-column sticky layout
+- mochi-ai-tooling is a stub (empty sections, "Content coming soon" subtitle) — layout degrades gracefully
+- CIP election misinformation structured as 2 sections (one per paper) with authors and abstracts as paragraphs
+- ThemeProvider and HoverProvider remain outside Routes so theme state persists across navigation
+
+---
+
 ## 2026-02-22 — Tune glass hover physics and fix card stack boundary
 
 **Branch:** `byamron/glass-hover-fix`
