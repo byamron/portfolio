@@ -2,6 +2,29 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-22 — Background intensity control with gradient strip in sidebar
+
+**Branch:** `byamron/bg-intensity-panel` → merged to `main` via PR #15
+
+**Summary:** Added a background intensity system that scales saturation and lightness across all 4 accent themes × 2 appearance modes. Explored multiple control patterns (segmented buttons, ring cycle, gradient strip) and placement variants (under modes, under swatch, above modes). Landed on a draggable gradient strip placed between swatches and mode icons.
+
+**What was built:**
+- **Intensity system in `ThemeContext.tsx`** — 4 levels (Whisper, Subtle, Tinted, Warm) with per-level saturation multiplier and lightness shift. At intensity 0, CSS `--bg` variable is untouched (cascade takes over). At 1+, `computeBg()` generates an HSL override applied via `document.documentElement.style.setProperty('--bg', ...)`. Persisted to localStorage as `bgIntensity`.
+- **Gradient strip in `SidebarThemeControls.tsx`** — 72px tall, 8px wide gradient bar with 11px draggable thumb. Uses Pointer Capture API for smooth drag. Thumb travels full strip length (top-flush at intensity 0, bottom-flush at intensity 3). Keyboard accessible via arrow keys.
+- **Trigger glow + opacity** — The sidebar trigger dot (16×16) reflects intensity via combined atmospheric indicators: opacity scales from 0.45 → 1.0, box-shadow glow spreads from 0 → 14px. Both use the active swatch color.
+- **Split pill containers** — Glass pill system split into two independent instances (swatches, modes) so the hover clears when cursor enters the intensity strip area between them.
+
+**Key decisions:**
+- **Gradient strip over ring cycle:** Ring was not discoverable enough — a single squircle cycling through 4 states on click lacked clear affordance. Gradient strip is continuous and self-descriptive.
+- **Above-modes placement over under-swatch:** The strip is a global setting (persists across all swatches), so placing it under the active swatch implied per-swatch ownership. Above-modes creates a clean three-tier hierarchy (color → intensity → mode) with no layout instability.
+- **Trigger uses atmospheric, not structural indicators:** Rejected color (desaturation), ring (outline), and size (growth) — all modified the trigger's identity or structural role. Glow + opacity layer on top of the trigger's fixed identity without altering shape, size, or color. See `core-docs/feedback.md` for full rationale.
+- **Split pill containers:** Single container caused the glass pill to linger on the nearest swatch/mode when cursor entered the strip. Two containers with independent pill lifecycles match the project card behavior (pill clears when leaving a group).
+- **Dark mode intensity tuning:** Initial dark mode lightShiftDark values were too light. Reduced to [0, 1, 1.5, 2] to keep dark backgrounds dark even at Warm intensity.
+
+**Iteration path:** Segmented buttons → removed Vivid level → dark mode tuning → sidebar integration brainstorm (4 options) → gradient strip + ring cycle prototypes → gradient strip chosen → above-modes + under-swatch placement variants → above-modes chosen → trigger indicator exploration (5 variants) → glow + fill combined → split pill containers → thumb full-travel fix
+
+**Files changed:** ThemeContext.tsx, SidebarThemeControls.tsx, App.tsx, core-docs/feedback.md. Deleted: BgIntensityPanel.tsx
+
 ## 2026-02-22 — Link all case studies via React Router, remove dev toggle
 
 **Branch:** `byamron/link-case-studies`
