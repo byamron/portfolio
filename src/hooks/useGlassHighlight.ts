@@ -31,9 +31,9 @@ export const GLASS_DEFAULTS: GlassConfig = {
   borderRadius: 16,
   fadeDuration: 200,
   stretchAmount: 0.05,
-  squashAmount: 0.003,
+  squashAmount: 0.001,
   recoveryDuration: 150,
-  pullStrength: 0.25,
+  pullStrength: 0.12,
   edgeZone: 0.20,
   lerpSpeed: 0.15,
 }
@@ -327,9 +327,13 @@ function setupGlassHighlight(
       const stretchPx = Math.abs(pullAmount) * maxStretch
       const movePx = pullAmount * maxMove
 
+      // Minimum 4px padding on each side — card has 16px horizontal padding,
+      // so pill can shrink by at most 12px per side (24px total)
+      const minW = state.baseW - 24
+
       if (isVerticalLayout) {
         newH = state.baseH + stretchPx
-        newW = state.baseW * (state.baseH / newH) // volume preservation
+        newW = Math.max(state.baseW * (state.baseH / newH), minW) // volume preservation + clamp
         newX = state.baseX + (state.baseW - newW) / 2
         newY = state.baseY + movePx
         if (pullAmount < 0) newY -= stretchPx
