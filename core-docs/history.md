@@ -4,7 +4,7 @@ Decision log and completed work, in reverse chronological order.
 
 ## 2026-02-22 — Typography: Literata 300 + Onest 400
 
-**Branch:** `byamron/lagos`
+**Branch:** `byamron/font-comparison-panel`
 
 **Summary:** Replaced single-typeface Manrope 400 system with a serif/sans pairing: Literata 300 (headings) + Onest 400 (body). Revised the design language philosophy to prioritize intentionality over restraint, and "memorable without being loud" over "quiet confidence." Built a dev-only font comparison panel to evaluate pairings in real-time before committing.
 
@@ -98,6 +98,74 @@ Decision log and completed work, in reverse chronological order.
 
 **Files changed:** FontPanel.tsx (new), App.tsx (import + mount)
 
+## 2026-02-22 — Background intensity control with gradient strip in sidebar
+
+**Branch:** `byamron/bg-intensity-panel` → merged to `main` via PR #15
+
+**Summary:** Added a background intensity system that scales saturation and lightness across all 4 accent themes × 2 appearance modes. Explored multiple control patterns (segmented buttons, ring cycle, gradient strip) and placement variants (under modes, under swatch, above modes). Landed on a draggable gradient strip placed between swatches and mode icons.
+
+**What was built:**
+- **Intensity system in `ThemeContext.tsx`** — 4 levels (Whisper, Subtle, Tinted, Warm) with per-level saturation multiplier and lightness shift. At intensity 0, CSS `--bg` variable is untouched (cascade takes over). At 1+, `computeBg()` generates an HSL override applied via `document.documentElement.style.setProperty('--bg', ...)`. Persisted to localStorage as `bgIntensity`.
+- **Gradient strip in `SidebarThemeControls.tsx`** — 72px tall, 8px wide gradient bar with 11px draggable thumb. Uses Pointer Capture API for smooth drag. Thumb travels full strip length (top-flush at intensity 0, bottom-flush at intensity 3). Keyboard accessible via arrow keys.
+- **Trigger glow + opacity** — The sidebar trigger dot (16×16) reflects intensity via combined atmospheric indicators: opacity scales from 0.45 → 1.0, box-shadow glow spreads from 0 → 14px. Both use the active swatch color.
+- **Split pill containers** — Glass pill system split into two independent instances (swatches, modes) so the hover clears when cursor enters the intensity strip area between them.
+
+**Key decisions:**
+- **Gradient strip over ring cycle:** Ring was not discoverable enough — a single squircle cycling through 4 states on click lacked clear affordance. Gradient strip is continuous and self-descriptive.
+- **Above-modes placement over under-swatch:** The strip is a global setting (persists across all swatches), so placing it under the active swatch implied per-swatch ownership. Above-modes creates a clean three-tier hierarchy (color → intensity → mode) with no layout instability.
+- **Trigger uses atmospheric, not structural indicators:** Rejected color (desaturation), ring (outline), and size (growth) — all modified the trigger's identity or structural role. Glow + opacity layer on top of the trigger's fixed identity without altering shape, size, or color. See `core-docs/feedback.md` for full rationale.
+- **Split pill containers:** Single container caused the glass pill to linger on the nearest swatch/mode when cursor entered the strip. Two containers with independent pill lifecycles match the project card behavior (pill clears when leaving a group).
+- **Dark mode intensity tuning:** Initial dark mode lightShiftDark values were too light. Reduced to [0, 1, 1.5, 2] to keep dark backgrounds dark even at Warm intensity.
+
+**Iteration path:** Segmented buttons → removed Vivid level → dark mode tuning → sidebar integration brainstorm (4 options) → gradient strip + ring cycle prototypes → gradient strip chosen → above-modes + under-swatch placement variants → above-modes chosen → trigger indicator exploration (5 variants) → glow + fill combined → split pill containers → thumb full-travel fix
+
+**Files changed:** ThemeContext.tsx, SidebarThemeControls.tsx, App.tsx, core-docs/feedback.md. Deleted: BgIntensityPanel.tsx
+
+## 2026-02-22 — Link all case studies via React Router, remove dev toggle
+
+**Branch:** `byamron/link-case-studies`
+
+**Summary:** Connected all 8 case study project cards on the home page to dedicated case study pages using React Router. Removed the dev ViewSwitcher toggle. Converted all markdown case study content into typed `CaseStudy` objects and wired them through the existing `CaseStudyLayoutA` template. Side projects without case studies changed to non-interactive text.
+
+**What was built:**
+- **`src/data/case-study-content.ts`** — Added 7 new typed `CaseStudy` objects (mochiAiTooling, mochiProgressTracker, uwDesignSystem, sonyScreenlessTv, cipElectionMisinformation, duolingoLanguagesFlags, acornEatLocalVt) alongside existing mochiSubscriptions. Exported `caseStudiesBySlug` lookup map for O(1) route resolution.
+- **`src/components/CaseStudyPage.tsx`** — New route component: reads slug from URL params, looks up CaseStudy data, renders CaseStudyLayoutA with back link and edge fades. Scroll-to-top on navigation. Not-found fallback.
+- **`src/App.tsx`** — Replaced ViewSwitcher + conditional rendering with React Router `<Routes>`: `/` → Layout, `/project/:slug` → CaseStudyPage.
+- **`src/main.tsx`** — Wrapped app in `<BrowserRouter>`.
+- **`src/data/projects.ts`** — Changed `todo-priority` and `detect-manip` from `isLink: true, href: '#'` to `isLink: false` (grey non-interactive text).
+
+**Deleted files:**
+- `src/components/ViewSwitcher.tsx` — Dev toggle, no longer needed
+- `src/components/CaseStudyPrototype.tsx` — Replaced by CaseStudyPage
+- `src/components/CaseStudy.tsx` — Unused markdown renderer
+
+**Decisions:**
+- Used typed CaseStudy objects (not raw markdown rendering) so content goes through the same CaseStudyLayoutA two-column sticky layout
+- mochi-ai-tooling is a stub (empty sections, "Content coming soon" subtitle) — layout degrades gracefully
+- CIP election misinformation structured as 2 sections (one per paper) with authors and abstracts as paragraphs
+- ThemeProvider and HoverProvider remain outside Routes so theme state persists across navigation
+
+---
+
+## 2026-02-22 — Tune glass hover physics and fix card stack boundary
+
+**Branch:** `byamron/glass-hover-fix`
+
+**Summary:** Refined the glass pill hover behavior based on hands-on testing: reduced squash deformation for subtlety, increased gravitational pull for more weight, and fixed a bug where the hover persisted when the cursor moved above or below the card stack.
+
+**What changed:**
+- **`src/hooks/useGlassHighlight.ts`** — `squashAmount` 0.01 → 0.003 (more subtle perpendicular compression), `pullStrength` 0.15 → 0.25 (stronger edge gravity). Added `isCursorInCardStack()` geometric check: on non-card mouseover, hover only clears when cursor Y is outside the vertical bounds of the first-to-last card range. 150ms delay on clear for soft exit. Gaps between cards, context paragraphs, and section breaks all preserve the hover.
+- **`src/components/ProjectLink.tsx`** — Removed `react-router-dom` `Link` import (no router configured yet). All links use plain `<a>` tags.
+- **`src/App.tsx`** — Default view switched from `'case-study'` to `'main'`.
+
+**Key decisions:**
+- **Geometric boundary, not time-based debounce:** First attempt used a 60ms debounce to clear hover on non-card areas — too aggressive, caused flicker when sliding between cards. Replaced with `isCursorInCardStack()` which checks if cursor Y is between the first card's top edge and the last card's bottom edge. Within that range, hover never clears regardless of what element the cursor is over.
+- **150ms clear delay:** When cursor exits the card stack bounds, a 150ms timeout softens the disappearance. Cancelled if cursor re-enters a card.
+- **Pull strength increase felt more physically grounded:** 0.15 felt too easy/flexible — the pill floated. 0.25 gives the pull more weight and makes it feel like the pill is being drawn toward neighbors with real force.
+- **Squash barely perceptible is correct:** 0.01 was visible enough to look rubbery. 0.003 is felt more than seen — it sells the physical metaphor without calling attention to itself.
+
+**Updated docs:** design-language.md (squashAmount, pullStrength defaults, card stack boundary exit rule), history.md
+
 ## 2026-02-21 — Sidebar theme controls with glass pill hover
 
 **Branch:** `byamron/react-portfolio-build`
@@ -121,7 +189,6 @@ Decision log and completed work, in reverse chronological order.
 **Iteration path:** 3 variants (A/B/C) → user testing → consolidated hybrid → size/spacing tuning → rounded squares everywhere → glass pill added → pill size normalized → blur fix (z-index) → selected state borders → border refinement (1.5px, lighter colors, smaller icons)
 
 **Files changed:** SidebarThemeControls.tsx (new), Layout.tsx, core-docs/design-language.md, core-docs/history.md, core-docs/feedback.md
->>>>>>> origin/main
 
 ## 2026-02-21 — Accessibility fixes for glass highlight scaffolding
 

@@ -437,15 +437,26 @@ Four rounded-square swatches, 24×24px, `border-radius: 6px`. Stacked vertically
 Controls live in a thin sidebar on the right edge of the viewport (`width: 56px`, `position: fixed`). They are tools, not content — deliberately placed outside the main layout where they don't compete with the work.
 
 **Structure:**
-- **Trigger** (always visible): A 16×16px rounded square (`border-radius: 5px`) filled with the active accent color. Fixed at `top: 64px`, aligned with the image and heading. The trigger is an indicator, not a selectable control — its distinct shape (smaller, tighter radius) separates it from the swatch options below.
-- **Expandable toolbar** (visible on hover): Divider → swatches → divider → mode icons, staggered slide-in from the right (`x: 20 → 0`, 0.22s duration, 0.04s stagger per item). Uses the Smooth easing curve.
-- **Two dividers**: One between trigger and swatches, one between swatches and mode icons. Both are `width: 20px, height: 1px, var(--text-dark)` at 0.15 opacity, with `margin: 18px 0`. They animate in/out with the toolbar (only the trigger is visible at rest).
+- **Trigger** (always visible): A 16×16px rounded square (`border-radius: 5px`) filled with the active accent color. Fixed at `top: 64px`, aligned with the image and heading. The trigger is an indicator, not a selectable control — its distinct shape (smaller, tighter radius) separates it from the swatch options below. Reflects current background intensity via combined glow (box-shadow 0–14px spread) and opacity (0.45–1.0) — atmospheric properties that layer on top of the trigger's identity without altering its shape, size, or color.
+- **Expandable toolbar** (visible on hover): Three sections — swatches → intensity strip → mode icons — separated by dividers. Staggered slide-in from the right (`x: 20 → 0`, 0.22s duration, 0.04s stagger per item). Uses the Smooth easing curve.
+- **Three dividers**: Between trigger↔swatches, swatches↔intensity, intensity↔modes. All are `width: 20px, height: 1px, var(--text-dark)` at 0.15 opacity, with `margin: 18px 0`. They animate in/out with the toolbar (only the trigger is visible at rest).
 - **Hover zone**: The full 56px-wide strip is the hover target, extending to the viewport's right edge. A 250ms close delay prevents flicker when the cursor drifts to the screen edge.
 - **Alignment**: The trigger's top edge aligns with the image container's top edge and the heading text's top edge (all at 64px from viewport top).
 
+### Background intensity strip
+
+A draggable vertical gradient strip that controls background color intensity across all themes.
+
+- **Dimensions**: 24px wide hit area, 8px wide visible gradient bar (`border-radius: 4px`), 72px tall
+- **Gradient**: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))` — top is barely tinted, bottom is visibly saturated
+- **Thumb**: 11px diameter circle, `var(--swatch)` fill, 1.5px border, subtle drop shadow. Travels the full strip length — flush with top at intensity 0, flush with bottom at intensity 3 (Warm).
+- **Interaction**: Click to set level, drag with Pointer Capture for continuous adjustment. `cursor: grab` / `grabbing`. Native drag prevention via `e.preventDefault()` on pointerDown.
+- **Keyboard**: Arrow keys step through levels. `role="slider"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`.
+- **4 intensity levels**: Whisper (baseline), Subtle, Tinted, Warm. Each scales background saturation (1.0×–2.8×) and shifts lightness (light mode: 0 to -10; dark mode: 0 to +2). Persisted to localStorage.
+
 ### Sidebar glass pill
 
-A mini glass pill provides hover feedback for all sidebar controls. It uses the same visual recipe as the project card glass (from `useGlassHighlight`) but with fixed sizing.
+Each control group (swatches, modes) has its own independent glass pill instance. The pill clears when the cursor leaves a group — hovering the intensity strip between them shows no pill (the strip has its own visual feedback via gradient + thumb + cursor). This matches project card behavior where the pill disappears when leaving the link container.
 
 - **Size**: 36×36px, `border-radius: 12px` — concentric with swatches (24px, r=6) and selection outlines (30px, r≈9)
 - **z-index: 10** — sits ON TOP of controls so `backdrop-filter` blurs the content below (swatches, icons). `pointerEvents: none` ensures clicks pass through.
