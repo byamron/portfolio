@@ -141,80 +141,25 @@ function setupGlassHighlight(
     return div
   }
 
-  function getGlassMode(): string {
-    return document.documentElement.dataset.glassMode || 'original'
-  }
-
   function skinPill(): void {
     if (!pill) return
     const cfg = configRef.current
     const hue = getAccentHue()
-    const mode = getGlassMode()
 
     pill.style.borderRadius = `${cfg.borderRadius}px`
 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
-    if (mode === 'frost') {
-      // Option A: Blur + accent tint + thin border. Mode-aware shading.
-      const fill = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
-      pill.style.background = fill
-      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
-      pill.style.boxShadow = isDark
-        ? `inset 0 1px 0 0 rgba(255, 255, 255, 0.10)`
-        : `inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)`
-      pill.style.border = isDark
-        ? `0.5px solid rgba(255, 255, 255, 0.12)`
-        : `0.5px solid rgba(0, 0, 0, 0.08)`
-    } else if (mode === 'soft-ring') {
-      // Option B: Blur + accent tint + uniform inner ring. Mode-aware edge.
-      const fill = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
-      pill.style.background = fill
-      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
-      pill.style.boxShadow = isDark
-        ? [
-            `inset 0 0 0 0.5px rgba(255, 255, 255, 0.14)`,
-            `inset 0 1px 0 0 rgba(255, 255, 255, 0.10)`,
-          ].join(', ')
-        : [
-            `inset 0 0 0 0.5px rgba(0, 0, 0, 0.08)`,
-            `inset 0 -1px 0 0 rgba(0, 0, 0, 0.04)`,
-          ].join(', ')
-      pill.style.border = 'none'
-    } else if (mode === 'gradient-wash') {
-      // Option C: Blur + mode-aware linear gradient + thin border.
-      pill.style.background = isDark
-        ? `linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01))`
-        : `linear-gradient(to bottom, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.005))`
-      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
-      pill.style.boxShadow = 'none'
-      pill.style.border = isDark
-        ? `0.5px solid rgba(255, 255, 255, 0.06)`
-        : `0.5px solid rgba(0, 0, 0, 0.05)`
-    } else {
-      // Original: full glass recipe with radial highlight + 6 directional shadows.
-      const fill = `hsla(${hue}, ${cfg.fillSaturation * 100}%, ${cfg.fillBrightness * 100}%, ${cfg.fillOpacity})`
-      const intensity = 0.15 + cfg.fillBrightness * 0.1
-      const highlight = `radial-gradient(ellipse 150% 120% at 50% 10%, rgba(255,255,255,${intensity}), rgba(255,255,255,${intensity * 0.4}) 50%, rgba(255,255,255,${intensity * 0.1}) 85%, transparent 120%)`
-
-      const topHL = cfg.innerGlow * 0.4
-      const botSH = cfg.innerGlow * 0.15
-      const bi = 0.12 + cfg.fillBrightness * 0.15
-      const bw = cfg.borderWidth
-      const boxShadow = [
-        `inset 0 1px 0 0 rgba(255,255,255,${topHL})`,
-        `inset 0 -1px 0 0 rgba(0,0,0,${botSH})`,
-        `inset 0 ${bw}px 0 0 rgba(255,255,255,${bi * 1.2})`,
-        `inset ${bw}px 0 0 0 rgba(255,255,255,${bi})`,
-        `inset -${bw}px 0 0 0 rgba(255,255,255,${bi})`,
-        `inset 0 -${bw}px 0 0 rgba(255,255,255,${bi * 0.8})`,
-      ].join(', ')
-
-      pill.style.background = `${highlight}, ${fill}`
-      setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px) saturate(1.2)`)
-      pill.style.boxShadow = boxShadow
-      pill.style.border = `${bw}px solid hsla(${hue}, 20%, 50%, 0.2)`
-    }
+    // Frost: Blur + accent tint + thin border. Mode-aware shading.
+    const fill = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
+    pill.style.background = fill
+    setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
+    pill.style.boxShadow = isDark
+      ? `inset 0 1px 0 0 rgba(255, 255, 255, 0.10)`
+      : `inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)`
+    pill.style.border = isDark
+      ? `0.5px solid rgba(255, 255, 255, 0.12)`
+      : `0.5px solid rgba(0, 0, 0, 0.08)`
   }
 
   // -- Layout detection --
@@ -575,7 +520,7 @@ function setupGlassHighlight(
   function setupThemeObserver(): void {
     observer = new MutationObserver(mutations => {
       for (const m of mutations) {
-        if (m.attributeName === 'data-accent' || m.attributeName === 'data-theme' || m.attributeName === 'data-glass-mode') {
+        if (m.attributeName === 'data-accent' || m.attributeName === 'data-theme') {
           skinPill()
           break
         }
@@ -583,7 +528,7 @@ function setupGlassHighlight(
     })
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-accent', 'data-theme', 'data-glass-mode'],
+      attributeFilter: ['data-accent', 'data-theme'],
     })
   }
 

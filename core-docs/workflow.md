@@ -73,7 +73,17 @@ Present the work for feedback. Show what was built, why, and how.
    - Technical details (branch name, issue number if applicable)
 2. Proceed to commit.
 
-### 9. Commit and Push
+### 9. Pre-Merge Cleanup
+
+Before merging any branch into `main`, check for and remove dev control panels:
+- Font/typography comparison panels
+- Glass mode/configurator switchers
+- Layout tuning panels
+- Any other floating dev tools with sliders, toggles, or debug UI
+
+Remove the component files, their imports, their render calls, and any hook/CSS plumbing that exists solely to support them. Dev panels are welcome on feature branches for experimentation but must never ship to `main`.
+
+### 10. Commit and Push
 
 - Commit changes with a clear, descriptive message
 - Push to the relevant remote branch on GitHub

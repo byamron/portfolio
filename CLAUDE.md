@@ -62,7 +62,7 @@ The project uses **Subframe** (component library) and **Tailwind CSS v4** for bu
 - **Glass highlight on hover**: Project links get a frosted-glass background on hover — `backdrop-filter: blur(1px)`, semi-transparent accent-hued fill, inner glow, subtle border, `border-radius: 16px`. CSS-first implementation, with optional physics-based animated pill as enhancement. All formulas, defaults, and slider ranges documented in `core-docs/design-language.md`.
 - **Image swap on hover**: Hovering a project link cross-fades the right-column image to a project-specific preview. Leaving resets to the accent-color default portrait. Both transitions (glass + image) happen simultaneously. Supports 4 image variants (one per theme). Theme-to-image mapping documented in `core-docs/design-language.md`.
 - **Appearance toggle**: 3-mode toggle (system/light/dark) with Phosphor Icons (monitor/sun/moon), localStorage persistence (`"appearanceMode"` key), system preference detection, and browser meta theme-color integration.
-- **Glass configurator panel**: Floating demo panel that tunes the glass hover effect in real-time with sliders. 3 tabs (Fill/Shadow/Motion). Complete config defaults and slider ranges in `core-docs/design-language.md`.
+- **Glass hover style**: The pill uses the "frost" mode — blur + accent tint + thin border, mode-aware shading. Config defaults and slider ranges documented in `core-docs/design-language.md`.
 
 ### Typography:
 
@@ -71,6 +71,10 @@ The project uses **Subframe** (component library) and **Tailwind CSS v4** for bu
 - **Body/description**: 18px, weight 400, line-height 1.2
 - **Project links**: 18px, weight 400, line-height 1.4
 - Nuances (scale, secondary sizes, weights) to be refined later
+
+### Dev panels policy:
+
+Dev control panels (e.g. font comparison panels, glass mode switchers, layout tuners) must **never** be merged into `main`. They are useful on feature branches for experimentation, but must be removed before merging. When preparing a branch for merge, Claude should check for and flag any dev panels that need to be stripped out — including their component files, imports, renders, and any hook/CSS plumbing that exists solely to support them.
 
 ### Architecture principles:
 
@@ -140,7 +144,6 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 │   │   ├── ModeSwitcher.tsx
 │   │   ├── AccentPicker.tsx
 │   │   ├── ImageDisplay.tsx   # Cross-fading images
-│   │   ├── GlassPanel.tsx     # Config panel (demo)
 │   │   └── GlassButton.tsx
 │   ├── ui/                    # Subframe components (synced, do not edit)
 │   │   ├── theme.css          # Subframe theme tokens (overridden by styles/theme.css)
