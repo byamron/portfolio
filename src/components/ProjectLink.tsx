@@ -34,8 +34,8 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     style: {
       display: 'flex' as const,
       alignItems: 'center' as const,
-      gap: 4,
       width: 'fit-content' as const,
+      gap: 4,
       padding: '24px 16px',
       margin: '0 -16px',
       borderRadius: 16,

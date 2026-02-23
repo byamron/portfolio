@@ -43,7 +43,7 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
           <h1
             style={{
               fontSize: 36,
-              fontWeight: 400,
+              fontWeight: 300,
               lineHeight: 1.2,
               color: 'var(--text-dark)',
               marginBottom: 16,
@@ -129,7 +129,7 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
             <h1
               style={{
                 fontSize: 48,
-                fontWeight: 400,
+                fontWeight: 300,
                 lineHeight: 1.2,
                 color: 'var(--text-dark)',
                 marginBottom: 16,

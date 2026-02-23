@@ -117,14 +117,14 @@
  * ============================================================================ */
 
 :root {
-  /* Fonts — Manrope for body, Newsreader for headings */
-  --font-caption: Manrope, sans-serif;
-  --font-caption-bold: Manrope, sans-serif;
-  --font-body: Manrope, sans-serif;
-  --font-body-bold: Manrope, sans-serif;
-  --font-heading-3: Newsreader, serif;
-  --font-heading-2: Newsreader, serif;
-  --font-heading-1: Newsreader, serif;
+  /* Fonts — Onest for body, Literata for headings */
+  --font-caption: Onest, sans-serif;
+  --font-caption-bold: Onest, sans-serif;
+  --font-body: Onest, sans-serif;
+  --font-body-bold: Onest, sans-serif;
+  --font-heading-3: Literata, serif;
+  --font-heading-2: Literata, serif;
+  --font-heading-1: Literata, serif;
   --font-monospace-body: monospace;
 
   /* Font weights — 400 throughout per design language */

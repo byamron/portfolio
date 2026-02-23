@@ -2,6 +2,102 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-22 — Typography: Literata 300 + Onest 400
+
+**Branch:** `byamron/font-comparison-panel`
+
+**Summary:** Replaced single-typeface Manrope 400 system with a serif/sans pairing: Literata 300 (headings) + Onest 400 (body). Revised the design language philosophy to prioritize intentionality over restraint, and "memorable without being loud" over "quiet confidence." Built a dev-only font comparison panel to evaluate pairings in real-time before committing.
+
+**What was explored:**
+- **Heading serifs**: Newsreader, Lora, Literata, Source Serif 4
+- **Body sans**: Manrope, Onest, Plus Jakarta Sans, DM Sans, Nunito, Outfit, Urbanist, Public Sans
+- **Weight combinations**: 300/300, 300/400, 400/300, 400/400, 500/300
+
+**Fonts eliminated and why:**
+- **Newsreader**: Sharp serifs felt too old-style/editorial for a modern tech portfolio. High stroke contrast clashed with Onest's rounded warmth — "two fonts that disagree" rather than complement.
+- **Lora**: Too similar to Newsreader's editorial character, less distinctive.
+- **Source Serif 4**: Neutral and precise but lacked personality at display sizes. Paired with Manrope it felt generic.
+- **DM Sans, Nunito, Plus Jakarta Sans, Outfit, Public Sans**: Eliminated during narrowing — either too generic, too playful, or didn't complement the serif options well.
+- **Urbanist**: Clean and geometric but lacked the warmth that Literata needed in a partner.
+- **Manrope (for body)**: Too common — the "Figma-era Helvetica." A typographically literate person wouldn't notice it as a deliberate choice.
+
+**Why Literata + Onest:**
+- Literata: contemporary serif designed for screens, soft serifs, generous x-height. At 300 weight it's light and elegant. Doesn't carry historical baggage like Newsreader. Reads as "quietly modern."
+- Onest: warm rounded sans with enough personality to feel authored but subtle enough to not distract. Both fonts share a design sensibility — contemporary, clarity-first, considered.
+- The pairing rewards typographic literacy ("they chose well") without calling attention to itself ("this looks clean").
+- 300/400 weight gap creates hierarchy through contrast, not emphasis.
+
+**Design language changes:**
+- Principle 1 renamed: "Restraint as signal" → "Intentionality over restraint." Restraint is a tool, not a principle. Calculated risks are encouraged where they reward attention.
+- Principle 3 renamed: "Quiet confidence over spectacle" → "Memorable without being loud." Being forgettable is a failure mode. Standing out through considered choices, not spectacle.
+- Typography section: single-typeface rule replaced with serif/sans pairing philosophy.
+- Anti-patterns updated: "don't add a second typeface" replaced with "don't add a third typeface." Weight rules updated to reflect heading/body weight contrast.
+- Coherence checklist updated for new typography system.
+
+**Implementation:**
+- `index.html`: Google Fonts link loads Literata + Onest (replaced Manrope + Newsreader)
+- `src/styles/globals.css`: Body font → Onest 400, added `h1, h2, h3 { font-family: 'Literata', serif; font-weight: 300 }`
+- `src/styles/theme.css`: Subframe font variable overrides → Literata/Onest
+- Components updated: HeroTitle, CaseStudySectionText, CaseStudyLayoutA (heading fontWeight → 300), CaseStudy (Onest body + Literata heading inline HTML), FontPanel defaults
+
+**Dev tooling:**
+- `src/components/FontPanel.tsx`: Dev-only floating panel (bottom-right) with 4 tabs (Fonts/Scale/Layout/Info). Toggle buttons for heading/body font, weight sliders, size/line-height sliders, content/image max-width sliders. Loads Google Fonts on-demand, injects CSS overrides with `!important`. Gated behind `import.meta.env.DEV`, tree-shaken from production. Keyboard shortcut: Cmd+Shift+T.
+
+---
+
+## 2026-02-22 — Case study layout prototype with sticky visuals and hero
+
+**Branch:** `byamron/case-study-layout`
+
+**Summary:** Designed, prototyped, and refined a case study page layout. Explored three directions (sticky companion, breakout visuals, Tufte-style sidebar), narrowed to the sticky companion column, and iterated through visual blocks grouping, responsive spacing, gallery section, and a 100vh hero with vertically centered text and visual.
+
+**What was built:**
+- **`src/data/case-study-content.ts`** — Typed data structure for case studies: `CaseStudy` (title, subtitle, timeline, heroVisual, sections, gallery), `CaseStudySection`, `CaseStudyVisual`, `GalleryItem`. Mochi Subscriptions fully populated with 5 sections (3 with visuals), 1 hero visual, and 6 gallery items.
+- **`src/components/CaseStudyLayoutA.tsx`** — Two-column case study layout. 100vh hero row with vertically centered title (48px display) and hero visual. Each content section gets its own 100vh row with text left, sticky visual right. Visual carry-forward: `resolveVisuals()` ensures sections without their own visual show the most recent one (seeded by hero visual). Gallery section after narrative with full-width and 2-up grid patterns. Responsive: collapses to single column below 1200px.
+- **`src/components/PlaceholderVisual.tsx`** — Gray rectangle placeholder (16:10, 32px radius, theme-adaptive) with optional caption.
+- **`src/components/CaseStudySectionText.tsx`** — Shared text component: 24px h2 + 18px/1.4 paragraphs.
+- **`src/components/CaseStudyPrototype.tsx`** — Wrapper with top/bottom fade gradients (20px linear fade).
+- **`src/components/ViewSwitcher.tsx`** — Floating dev toggle for Main/Case Study view switching.
+- **`src/hooks/useMediaQuery.ts`** — Shared responsive hook with `useIsWide()` (1200px breakpoint).
+
+**Modified files:**
+- **`src/App.tsx`** — View switching state between Layout and CaseStudyPrototype.
+- **`src/styles/globals.css`** — Responsive layout spacing tokens (`--layout-margin`, `--layout-gap`, `--layout-padding-top`) with breakpoints at 1440/1200/768px.
+- **`src/components/Layout.tsx`**, **`LeftColumn.tsx`**, **`RightColumn.tsx`** — Updated to use responsive spacing variables and `useIsWide()` hook.
+
+**Key decisions:**
+- **Dropped breakout layout (Direction B)**: IntersectionObserver-based layout transitions caused flickering and content reflow. Violated the design language anti-pattern against scroll-triggered animations. Structural problem, not fixable.
+- **Per-section rows over visual blocks**: Initially grouped sections into "visual blocks" (multiple sections per row). Switched to one section per row so each gets its own 100vh space with one heading and its paragraphs — cleaner rhythm.
+- **Visual carry-forward seeded by hero**: `resolveVisuals()` walks sections linearly, carrying the last visual forward. Hero visual seeds the initial value, so sections before the first visual still show the hero image.
+- **48px display title**: Extended the type scale (14 → 18 → 24 → 36 → 48) for the case study hero. Follows the ~1.33× progression. Main page h1 stays at 36px.
+- **50/50 column split**: Matches the main page. Text column achieves 50-70 char/line ideal at ~600px effective width.
+- **Responsive layout tokens shared with main page**: CSS custom properties (`--layout-margin`, `--layout-gap`) used by both main page and case study, ensuring consistent spacing.
+
+**Updated docs:** design-language.md (typography scale, case study layout rules), history.md
+
+## 2026-02-22 — Font comparison dev panel
+
+**Branch:** `byamron/font-comparison-panel`
+
+**Summary:** Built a floating dev control panel for comparing Google Fonts typography on the live site. The panel dynamically loads fonts from Google Fonts and injects CSS overrides to swap heading/body typefaces, weights, sizes, and line-heights in real-time. Dev-only — excluded from production builds via `import.meta.env.DEV` gate.
+
+**What was built:**
+- **`src/components/FontPanel.tsx`** — Self-contained floating panel with 3 tabs (Fonts/Scale/Info). Dark chrome matching the Glass Configurator spec (#1a1a1a, #333 border, 14px radius). System sans-serif for panel UI. Framer Motion enter/exit animation. Keyboard shortcut (Cmd+Shift+T).
+- **Font loading utility** — Injects `<link>` tags to `<head>` with `data-font-panel` attribute for cleanup. Tracks loaded fonts in a Set to avoid duplicate loads. Preloads all curated fonts on first panel open.
+- **CSS override injection** — Injects a `<style id="font-panel-overrides">` tag with `!important` rules to override inline styles on components. Panel itself excluded via `[data-font-panel-root]` selector.
+- **Curated font list (25 fonts)** — 15 sans-serif (Manrope, Inter, DM Sans, Space Grotesk, Outfit, Plus Jakarta Sans, Sora, Work Sans, Karla, Be Vietnam Pro, Figtree, Instrument Sans, Albert Sans, Nunito Sans, Rubik), 7 serif (Newsreader, Fraunces, Playfair Display, Source Serif 4, Lora, Crimson Pro, DM Serif Display), 3 monospace (JetBrains Mono, IBM Plex Mono, Space Mono).
+- **Searchable dropdown** — Font items rendered in their own typeface for instant visual comparison. Grouped by category (sans-serif/serif/monospace). Active selection highlighted with blue left border.
+- **Link toggle** — When on (default), one dropdown controls both heading and body font. When off, independent heading/body selectors appear.
+- **Copy CSS** — Exports current font settings as CSS declarations to clipboard. Button turns green on success.
+
+**Key decisions:**
+- **`!important` overrides:** Components use inline `style` props for `fontWeight`/`fontSize`/`lineHeight`, which have highest CSS specificity. `!important` is the pragmatic choice for a dev tool — avoids refactoring production components for a temporary tool.
+- **Single file, no context:** Panel is fully self-contained. Local state only, no persistence. Keeps the dev tool isolated from the portfolio architecture.
+- **Mounted in App.tsx outside Routes:** Panel available on both home page and case study pages.
+- **Production exclusion verified:** `import.meta.env.DEV` gate confirmed working — `grep` of production bundle shows zero FontPanel references.
+
+**Files changed:** FontPanel.tsx (new), App.tsx (import + mount)
+
 ## 2026-02-22 — Background intensity control with gradient strip in sidebar
 
 **Branch:** `byamron/bg-intensity-panel` → merged to `main` via PR #15
@@ -70,36 +166,6 @@ Decision log and completed work, in reverse chronological order.
 
 **Updated docs:** design-language.md (squashAmount, pullStrength defaults, card stack boundary exit rule), history.md
 
-## 2026-02-22 — Case study layout prototype with sticky visuals and hero
-
-**Branch:** `byamron/case-study-layout`
-
-**Summary:** Designed, prototyped, and refined a case study page layout. Explored three directions (sticky companion, breakout visuals, Tufte-style sidebar), narrowed to the sticky companion column, and iterated through visual blocks grouping, responsive spacing, gallery section, and a 100vh hero with vertically centered text and visual.
-
-**What was built:**
-- **`src/data/case-study-content.ts`** — Typed data structure for case studies: `CaseStudy` (title, subtitle, timeline, heroVisual, sections, gallery), `CaseStudySection`, `CaseStudyVisual`, `GalleryItem`. Mochi Subscriptions fully populated with 5 sections (3 with visuals), 1 hero visual, and 6 gallery items.
-- **`src/components/CaseStudyLayoutA.tsx`** — Two-column case study layout. 100vh hero row with vertically centered title (48px display) and hero visual. Each content section gets its own 100vh row with text left, sticky visual right. Visual carry-forward: `resolveVisuals()` ensures sections without their own visual show the most recent one (seeded by hero visual). Gallery section after narrative with full-width and 2-up grid patterns. Responsive: collapses to single column below 1200px.
-- **`src/components/PlaceholderVisual.tsx`** — Gray rectangle placeholder (16:10, 32px radius, theme-adaptive) with optional caption.
-- **`src/components/CaseStudySectionText.tsx`** — Shared text component: 24px h2 + 18px/1.4 paragraphs.
-- **`src/components/CaseStudyPrototype.tsx`** — Wrapper with top/bottom fade gradients (20px linear fade).
-- **`src/components/ViewSwitcher.tsx`** — Floating dev toggle for Main/Case Study view switching.
-- **`src/hooks/useMediaQuery.ts`** — Shared responsive hook with `useIsWide()` (1200px breakpoint).
-
-**Modified files:**
-- **`src/App.tsx`** — View switching state between Layout and CaseStudyPrototype.
-- **`src/styles/globals.css`** — Responsive layout spacing tokens (`--layout-margin`, `--layout-gap`, `--layout-padding-top`) with breakpoints at 1440/1200/768px.
-- **`src/components/Layout.tsx`**, **`LeftColumn.tsx`**, **`RightColumn.tsx`** — Updated to use responsive spacing variables and `useIsWide()` hook.
-
-**Key decisions:**
-- **Dropped breakout layout (Direction B)**: IntersectionObserver-based layout transitions caused flickering and content reflow. Violated the design language anti-pattern against scroll-triggered animations. Structural problem, not fixable.
-- **Per-section rows over visual blocks**: Initially grouped sections into "visual blocks" (multiple sections per row). Switched to one section per row so each gets its own 100vh space with one heading and its paragraphs — cleaner rhythm.
-- **Visual carry-forward seeded by hero**: `resolveVisuals()` walks sections linearly, carrying the last visual forward. Hero visual seeds the initial value, so sections before the first visual still show the hero image.
-- **48px display title**: Extended the type scale (14 → 18 → 24 → 36 → 48) for the case study hero. Follows the ~1.33× progression. Main page h1 stays at 36px.
-- **50/50 column split**: Matches the main page. Text column achieves 50-70 char/line ideal at ~600px effective width.
-- **Responsive layout tokens shared with main page**: CSS custom properties (`--layout-margin`, `--layout-gap`) used by both main page and case study, ensuring consistent spacing.
-
-**Updated docs:** design-language.md (typography scale, case study layout rules), history.md
-
 ## 2026-02-21 — Sidebar theme controls with glass pill hover
 
 **Branch:** `byamron/react-portfolio-build`
@@ -123,7 +189,6 @@ Decision log and completed work, in reverse chronological order.
 **Iteration path:** 3 variants (A/B/C) → user testing → consolidated hybrid → size/spacing tuning → rounded squares everywhere → glass pill added → pill size normalized → blur fix (z-index) → selected state borders → border refinement (1.5px, lighter colors, smaller icons)
 
 **Files changed:** SidebarThemeControls.tsx (new), Layout.tsx, core-docs/design-language.md, core-docs/history.md, core-docs/feedback.md
->>>>>>> origin/main
 
 ## 2026-02-21 — Accessibility fixes for glass highlight scaffolding
 

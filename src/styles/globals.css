@@ -16,7 +16,7 @@ html {
 }
 
 body {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Onest', sans-serif;
   font-weight: 400;
   min-height: 100vh;
   background-color: var(--bg);
@@ -49,6 +49,11 @@ body {
   :root {
     --layout-margin: 20px;
   }
+}
+
+h1, h2, h3 {
+  font-family: 'Literata', serif;
+  font-weight: 300;
 }
 
 img {

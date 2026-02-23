@@ -12,7 +12,7 @@ export function CaseStudySectionText({
       <h2
         style={{
           fontSize: 24,
-          fontWeight: 400,
+          fontWeight: 300,
           lineHeight: 1.2,
           color: 'var(--text-dark)',
           marginBottom: 16,

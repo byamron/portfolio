@@ -18,8 +18,9 @@ export function ImageDisplay() {
       aria-live="polite"
       style={{
         position: 'relative',
-        width: 528,
-        height: 720,
+        width: '100%',
+        maxWidth: 528,
+        aspectRatio: '528 / 720',
         borderRadius: 32,
         overflow: 'hidden',
       }}
