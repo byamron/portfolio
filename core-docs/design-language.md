@@ -115,29 +115,39 @@ Theme transitions take `500ms ease-in-out` — slow enough to register as intent
 
 ## Typography
 
-### The typographic pairing
+### The two-voice system
 
 The site uses a serif/sans pairing — a calculated risk that rewards typographic literacy without calling attention to itself. The pairing should feel inevitable, not decorative: someone who doesn't know fonts thinks "this looks clean," someone who does thinks "they chose well."
 
-- **Headings**: **Literata** (Google Fonts), weight **300**. A contemporary serif designed for screen reading — generous x-height, open counters, soft serifs. At 300 weight, it's light and elegant without feeling fragile. It doesn't announce "I chose a serif" — it just reads well and feels considered. The warmth and modernity signal taste to typographically literate visitors without calling attention to itself.
-- **Body**: **Onest** (Google Fonts), weight **400**. A warm, rounded sans-serif with enough personality to feel authored but not so much that it distracts. The rounded terminals echo Literata's softer curves, creating cohesive warmth across the pairing. At 400 weight, it's grounded enough for sustained reading while staying light.
+Beyond the typeface pairing, the two fonts map to two distinct voices on the page:
 
-The 100-step weight gap (300 heading / 400 body) creates hierarchy through contrast rather than emphasis — the heading is lighter and more refined, the body is slightly more substantial. Combined with the serif/sans distinction and the size scale, this produces clear typographic hierarchy without either element needing to be bold.
+- **Serif voice (Literata)** = the author speaking — heading, narrative context, about section. This is Ben's editorial voice: who he is, how he thinks, what he cares about.
+- **Sans voice (Onest)** = the work speaking — project links, functional elements. This is navigational: what he built, where to find it.
+
+This split is more meaningful than "serif = big, sans = everything else." The narrative text (section intros, about paragraphs) is functionally closer to the heading than to the project links — it sets context and establishes tone. Giving it the serif voice creates a clear editorial backbone that the sans project links hang from. A visitor reads the serif passages as authored prose, then scans the sans links as action items.
+
+### Typeface roles
+
+- **Headings**: **Literata** (Google Fonts), weight **300**. A contemporary serif designed for screen reading — generous x-height, open counters, soft serifs. At 300 weight, it's light and elegant without feeling fragile. It doesn't announce "I chose a serif" — it just reads well and feels considered. The warmth and modernity signal taste to typographically literate visitors without calling attention to itself.
+- **Narrative**: **Literata**, weight **300**. The same serif voice as headings, at a smaller size (22px vs 36px). Differentiated from headings by size and color (`--text-grey` vs `--text-dark`). The shared typeface and weight create a familial connection — the narrative reads as a natural continuation of the heading's voice, not a separate element.
+- **Body / links**: **Onest** (Google Fonts), weight **400**. A warm, rounded sans-serif with enough personality to feel authored but not so much that it distracts. The rounded terminals echo Literata's softer curves, creating cohesive warmth across the pairing. At 400 weight, it's grounded enough for sustained reading while staying light.
+
+The weight gap (300 serif / 400 sans) creates hierarchy through contrast rather than emphasis — the serif voice is lighter and more refined, the sans voice is slightly more substantial. Combined with the size scale and color roles, this produces a clear 4-tier typographic hierarchy without any element needing to be bold.
 
 The pairing was chosen to be a "nod to those with an eye for taste" — both fonts are newer, less common choices that a design-literate person would clock as intentional, while someone who doesn't know fonts just thinks "this looks clean."
 
 ### Scale
 
-| Element | Size | Line height | Color role |
-|---------|------|-------------|------------|
-| Display (case study hero h1) | 48px | 1.2 | Heading (high contrast) |
-| Title (h1) | 36px | 1.2 | Heading (high contrast) |
-| Section heading (case study h2) | 24px | 1.2 | Heading (high contrast) |
-| Body / descriptions | 18px | 1.2 | Body (muted) |
-| Project links | 18px | 1.4 | Heading (high contrast) |
-| Meta / captions | 14px | 1.4 | Grey (low contrast) |
+| Element | Font | Size | Line height | Color role |
+|---------|------|------|-------------|------------|
+| Display (case study hero h1) | Literata | 48px | 1.2 | Heading (high contrast) |
+| Title (h1) | Literata | 36px | 1.2 | Heading (high contrast) |
+| Section heading (case study h2) | Literata | 24px | 1.2 | Heading (high contrast) |
+| Narrative (section intros, about) | Literata | 22px | 1.4 | Tertiary (muted) |
+| Project links | Onest | 18px | 1.4 | Heading (high contrast) |
+| Meta / captions | Onest | 14px | 1.4 | Grey (low contrast) |
 
-The main page scale is deliberately tight — only two sizes (36/18). The title is 2x the body, which is a clean ratio. Case study pages extend the scale with a 48px display size for the hero, 24px section headings for scannability, and 14px for captions and metadata. The full scale follows a roughly 1.33× progression: 14 → 18 → 24 → 36 → 48. Project links share the body size but use heading color and taller line-height, differentiating them through color and rhythm rather than scale.
+The main page uses a 3-tier scale: 36px heading → 22px narrative → 18px links. The heading is the identity statement, the narrative sets editorial context, and the links are navigational. The 36→22 step (1.64×) is large enough to maintain clear heading dominance. The 22→18 step (1.22×) is subtle — narrative and links are differentiated primarily by font, weight, and color rather than dramatic size contrast. Case study pages extend the scale with a 48px display size for the hero, 24px section headings, and 14px for captions. The full scale follows a roughly 1.2–1.33× progression: 14 → 18 → 22 → 24 → 36 → 48.
 
 ### Link treatment
 
@@ -165,7 +175,7 @@ Spacing follows a descending hierarchy that mirrors content hierarchy:
 | 64px | Left/right column padding (top) | Structural padding. "Page margin" level. |
 | 56px | Between content sections | Between-section separation. Enough to signal a new group, close enough to sustain a narrative throughline. |
 | 40px | Between title and first section | Heading-to-content gap. Tighter than between-section to keep the title connected to what follows. |
-| 32px | Between narrative text and project cards within a section | Within-section separation. Clearly groups cards under their context paragraph. |
+| 32px | Between narrative text and project cards within a section; between about section paragraphs | Within-section separation. Clearly groups cards under their context paragraph. Also used between about section paragraphs — the 22px serif text needs more air than 24px provided at 18px. |
 | 24px | Between project links within a section | Tight enough to read as a group, loose enough that the glass hover effect has room to exist. |
 | 8px | Between context paragraphs | Near-zero gap — multiple paragraphs read as a single narrative block. |
 
@@ -579,7 +589,7 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 
 When implementing or modifying any part of the site, verify:
 
-- [ ] Does it use the correct typeface for its role (serif for headings, sans for body)?
+- [ ] Does it use the correct typeface for its voice (serif for headings + narrative, sans for links + body)?
 - [ ] Does it use the correct weight for its role (no weight variation within a role)?
 - [ ] Does it use the spacing hierarchy (80/64/56/40/32/24/8)?
 - [ ] Does the border-radius come from the radius scale (32 / 16 / 8 / 6 / 5)?

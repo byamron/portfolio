@@ -7,14 +7,15 @@ const paragraphs = [
 
 export function AboutSection() {
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <section style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {paragraphs.map((text, i) => (
         <p
           key={i}
           style={{
-            fontSize: 18,
-            fontWeight: 400,
-            lineHeight: 1.2,
+            fontFamily: "'Literata', serif",
+            fontSize: 22,
+            fontWeight: 300,
+            lineHeight: 1.4,
             color: 'var(--text-grey)',
           }}
           dangerouslySetInnerHTML={{ __html: text }}
