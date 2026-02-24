@@ -2,6 +2,33 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-23 — Serif narrative text: extend typographic voice to editorial passages
+
+**Branch:** `serif-narrative-text`
+
+**Summary:** Narrative text (section intros and about section paragraphs) now uses Literata serif at 22px/300 instead of Onest sans at 18px/400. This creates a two-voice typographic system where the serif voice (Literata) carries the author's editorial tone — heading + narrative — and the sans voice (Onest) carries navigational/functional content — project links. About section paragraph gap increased from 24px to 32px to restore proportional breathing room at the larger text size.
+
+**What changed:**
+- `src/components/Section.tsx` — Narrative paragraphs: `fontFamily: 'Literata', serif`, `fontSize: 22`, `fontWeight: 300`, `lineHeight: 1.4` (was Onest 18px/400/1.2)
+- `src/components/AboutSection.tsx` — Same narrative styling. Paragraph gap: `32px` (was 24px)
+- `core-docs/design-language.md` — Typography section rewritten: "The typographic pairing" → "The two-voice system." Documented the serif/sans voice split rationale, added Narrative row to the scale table (22px/1.4/Tertiary), updated spacing table to include about section gap at 32px, updated coherence checklist
+- `core-docs/history.md` — This entry
+
+**Key decisions:**
+- **Serif for narrative, not just headings:** The narrative text is authorial voice — it sets context and establishes tone, functionally closer to the heading than to project links. Giving it Literata creates a clear editorial backbone (serif = author speaking) that the sans project links (work speaking) hang from. This is a stronger conceptual split than the previous "serif = big, sans = everything else."
+- **22px, not 20px or 24px:** 22px provides a clear step up from 18px links (1.22×) and a clear step down from 36px heading (1.64×). The narrative catches your eye via size, links draw you in via contrast and underline. 20px was too subtle; 24px competed with the heading.
+- **Weight 300, matching heading:** The shared weight reinforces the familial connection between heading and narrative — both are the same voice at different volumes. The 300/400 weight contrast now maps cleanly to serif/sans rather than heading/body.
+- **About section gap 24px → 32px:** At 22px/1.4, line height is ~31px. The previous 24px gap (0.77× line height) was proportionally tighter than it had been at 18px (0.96×). 32px restores ~1.03× line height of air and aligns with the spacing hierarchy's "within-section" tier.
+- **Narrative-to-cards gap left at 32px:** The visual gap is 56px (32 + 24px card padding), which is 1.8× the narrative line height — generous enough. The narrative and cards are meant to read as one group; loosening that coupling would weaken the grouping.
+- **Line-height 1.4 for narrative:** More generous than the heading's 1.2. Literata at 22px reads better with more leading, and the taller line-height helps distinguish narrative rhythm from the heading's tighter setting.
+
+**What was explored:** Built a dev panel (NarrativeFontPanel) to toggle between serif and sans variants at 22px in real-time. Both variants were evaluated at weight 300. Serif was the stronger choice — the sans variant looked like slightly bigger body text without adding meaning, while the serif signaled editorial intent. Dev panel stripped before merge per dev panels policy.
+
+**Files changed:** Section.tsx, AboutSection.tsx, design-language.md, history.md
+**Files deleted (dev panel):** NarrativeFontPanel.tsx, NarrativeFontContext.tsx
+
+---
+
 ## 2026-02-23 — Add contact links and resume to about section
 
 **Branch:** `home-page-refinements`
