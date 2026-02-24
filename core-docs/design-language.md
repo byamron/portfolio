@@ -331,7 +331,7 @@ Motion on this site serves two purposes: it communicates state changes (somethin
      peakSy = (1 + stretchAmount * f * vr) * (1 - squashAmount * f * hr)
      ```
    - Stretch is applied in the direction of movement, squash perpendicular
-   - Squash is deliberately subtle (`squashAmount: 0.003`) — barely perceptible, just enough to sell the physical metaphor without looking rubbery
+   - Squash is deliberately subtle (`squashAmount: 0.001`) — barely perceptible, just enough to sell the physical metaphor without looking rubbery
    - Only triggered when `distance > 5px` (prevents micro-jitter deformations)
 
 **Exit** (disappear):
@@ -353,7 +353,7 @@ When the cursor drifts toward the edge of a hovered card, the glass pill stretch
   movePx     = t * maxMove
   ```
   Where `dimension` is the card's height (vertical layout) or width (horizontal layout).
-- **Volume preservation**: `newWidth = baseWidth * (baseHeight / newHeight)` — as the pill stretches taller, it narrows proportionally. The inverse applies for horizontal stretching.
+- **Volume preservation**: `newWidth = baseWidth * (baseHeight / newHeight)` — as the pill stretches taller, it narrows proportionally. The inverse applies for horizontal stretching. Width is clamped to `baseWidth - 24px` minimum, ensuring at least 4px of visible padding on each side (card has 16px horizontal padding).
 - **Layout detection**: Vertical vs horizontal is determined by comparing the first two `[data-link-card]` elements — if `abs(b.top - a.top) > abs(b.left - a.left)`, it's vertical.
 - **Lerp rate**: 0.12 per frame — creates a "chasing" feel where the pill accelerates into the pull and decelerates as it approaches. Animated via `requestAnimationFrame` loop, not CSS transitions.
 - **Settle threshold**: 0.3px — when all four dimensions (x, y, width, height) are within 0.3px of target, the loop snaps to exact values and stops.
@@ -528,10 +528,10 @@ All values from the glass highlight system. These serve as the starting spec for
 | fadeDuration | 200 | 0–300 | 10 | Appear/disappear fade in ms |
 | easing | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | — | — | Slide easing curve ("Smooth") |
 | stretchAmount | 0.05 | 0–1 | 0.01 | Deformation in movement direction |
-| squashAmount | 0.003 | 0–0.5 | 0.001 | Perpendicular compression |
+| squashAmount | 0.001 | 0–0.5 | 0.001 | Perpendicular compression |
 | overshoot | 0.05 | 0–1 | 0.01 | Bounce past target (0 = none) |
 | recoveryDuration | 150 | — | — | Deformation recovery in ms |
-| pullStrength | 0.25 | 0–1 | 0.01 | Edge gravitational pull intensity |
+| pullStrength | 0.12 | 0–1 | 0.01 | Edge gravitational pull intensity |
 | edgeZone | 0.20 | 0.1–1 | 0.05 | Responsive area (1 = entire card) |
 | pullLerp | 0.12 | — | — | Pull animation smoothing speed |
 
