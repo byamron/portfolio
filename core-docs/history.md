@@ -2,6 +2,26 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-23 — Continuous background intensity slider
+
+**Branch:** `continuous-intensity-slider`
+
+**Summary:** Converted the background intensity system from a discrete 4-step integer model (0–3) to a continuous float range (0.0–1.0), enabling smooth, stepless control over accent color intensity. Replaced index-based level lookups with a pure linear interpolation function (`computeBg`), added direct DOM mutation during drag for zero-lag visual feedback, and updated ARIA attributes to reflect a 0–100 percentage range.
+
+**What changed:**
+
+- **`src/contexts/ThemeContext.tsx`** — `INTENSITY_LEVELS` simplified to reference presets with `t` positions. New exported `computeBg(accent, mode, t)` function: `satMult = 1.0 + 1.8 * t`, `lightShift = -10 * t` (light) / `2 * t` (dark). State initialized as float with migration logic for old integer values. Effect uses `< 0.001` threshold instead of `=== 0` for float precision.
+- **`src/components/SidebarThemeControls.tsx`** — Imports `computeBg` instead of `INTENSITY_LEVELS`. Added `lerp()` helper for continuous interpolation of glow/opacity. `KEYBOARD_STEP = 0.05`. Drag handler sets `t = y / STRIP_HEIGHT` (float). Direct DOM mutations during drag: thumb position, `--bg` CSS variable, trigger glow/opacity, meta theme-color. Body transition suppressed during drag and restored on pointer up. ARIA updated to `aria-valuemax={100}`, `aria-valuenow` as percentage.
+
+**Key decisions:**
+- **Direct DOM mutations during drag for zero-lag feedback:** React state is still the source of truth (setBgIntensity called on every pointer move), but during active drag, DOM is mutated directly to bypass the React render cycle. Body transition is suppressed during drag to prevent CSS transitions from fighting direct updates.
+- **Named presets kept as reference:** `INTENSITY_LEVELS` array retained with `t` values (0, 0.33, 0.67, 1) for potential future labeling but no longer drives the math.
+- **Migration for old localStorage values:** `(Number.isInteger(parsed) && parsed >= 1 && parsed <= 3) ? parsed / 3 : parsed` — correctly maps old integers 1, 2, 3 to their proportional 0–1 equivalents while leaving values already in the 0–1 range unchanged.
+
+**Files changed:** ThemeContext.tsx, SidebarThemeControls.tsx, core-docs/design-language.md, core-docs/plan.md, core-docs/history.md
+
+---
+
 ## 2026-02-22 — Home page refinements: scroll, hierarchy, copy, coming-soon cards
 
 **Branch:** `home-page-refinements`

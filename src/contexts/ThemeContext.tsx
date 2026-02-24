@@ -12,22 +12,23 @@ const BG_BASE: Record<AccentColor, Record<'light' | 'dark', [number, number, num
   pizza:    { light: [10, 30, 96],  dark: [8, 22, 7] },
 }
 
-// Each level scales saturation and shifts lightness away from pure white/black
+// Named intensity presets (kept for reference / future labeling)
 export const INTENSITY_LEVELS = [
-  { name: 'Whisper',  satMult: 1.0, lightShiftLight: 0,   lightShiftDark: 0 },
-  { name: 'Subtle',   satMult: 1.5, lightShiftLight: -3,  lightShiftDark: 1 },
-  { name: 'Tinted',   satMult: 2.0, lightShiftLight: -6,  lightShiftDark: 1.5 },
-  { name: 'Warm',     satMult: 2.8, lightShiftLight: -10, lightShiftDark: 2 },
+  { name: 'Whisper',  t: 0 },
+  { name: 'Subtle',   t: 0.33 },
+  { name: 'Tinted',   t: 0.67 },
+  { name: 'Warm',     t: 1 },
 ]
 
-function computeBg(accent: AccentColor, mode: 'light' | 'dark', intensity: number): string {
+// Continuous intensity: t ∈ [0, 1]
+// t=0 → satMult 1.0, no lightness shift  |  t=1 → satMult 2.8, full shift
+export function computeBg(accent: AccentColor, mode: 'light' | 'dark', t: number): string {
   const [h, s, l] = BG_BASE[accent][mode]
-  const level = INTENSITY_LEVELS[intensity]
-  const newS = Math.min(100, s * level.satMult)
-  const newL = mode === 'light'
-    ? l + level.lightShiftLight
-    : l + level.lightShiftDark
-  return `hsl(${h}, ${newS.toFixed(1)}%, ${newL}%)`
+  const satMult = 1.0 + 1.8 * t
+  const lightShift = mode === 'light' ? -10 * t : 2 * t
+  const newS = Math.min(100, s * satMult)
+  const newL = l + lightShift
+  return `hsl(${h}, ${newS.toFixed(1)}%, ${newL.toFixed(1)}%)`
 }
 
 interface ThemeContextValue {
@@ -63,7 +64,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [bgIntensity, setBgIntensityState] = useState<number>(() => {
     const stored = localStorage.getItem(INTENSITY_KEY)
-    return stored ? Math.min(INTENSITY_LEVELS.length - 1, Math.max(0, parseInt(stored, 10))) : 0
+    if (!stored) return 0
+    const parsed = parseFloat(stored)
+    // Migrate old 0–3 integer values to 0–1 range
+    const value = (Number.isInteger(parsed) && parsed >= 1 && parsed <= 3) ? parsed / 3 : parsed
+    return Math.min(1, Math.max(0, value))
   })
 
   const [systemPref, setSystemPref] = useState<ResolvedAppearance>(getSystemPreference)
@@ -86,7 +91,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // Apply dynamic --bg when intensity > 0; remove override at 0 so CSS values are used
   useEffect(() => {
-    if (bgIntensity === 0) {
+    if (bgIntensity < 0.001) {
       document.documentElement.style.removeProperty('--bg')
     } else {
       const bg = computeBg(accentColor, resolvedAppearance, bgIntensity)
@@ -122,7 +127,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setBgIntensity = useCallback((level: number) => {
-    const clamped = Math.min(INTENSITY_LEVELS.length - 1, Math.max(0, level))
+    const clamped = Math.min(1, Math.max(0, level))
     setBgIntensityState(clamped)
     localStorage.setItem(INTENSITY_KEY, String(clamped))
   }, [])
