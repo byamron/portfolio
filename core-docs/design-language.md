@@ -282,13 +282,32 @@ Each edge is rendered as an inset shadow at the current `borderWidth` (default 0
 
 **Padding note**: The glass pill itself has `padding: 0` — it sizes to the card element's bounding box. The `24px 16px` padding visible in the layout comes from the **glass highlight's extra padding config** (default 0), not from the link element. The link card's own padding is `8px 12px` (vertical, horizontal). The larger `24px 16px` padding specified in the visual spec refers to the combined effect of the card's content padding plus any glass padding adjustment — in practice, the glass pill wraps the full card element.
 
+### The frost recipe (authoritative, mode-aware)
+
+The glass pill uses a simplified "frost" style — blur + accent tint + thin border, with mode-aware shading. This recipe is shared across all pill implementations (project cards, inline links, sidebar controls):
+
+- **Fill**: `hsla(accent-hue, 20%, 55%, 0.12)` dark / `hsla(accent-hue, 20%, 40%, 0.08)` light
+- **Backdrop**: `blur(1px)`
+- **Inner glow**: `inset 0 1px 0 0 rgba(255,255,255,0.10)` dark / `inset 0 -1px 0 0 rgba(0,0,0,0.06)` light
+- **Border**: `0.5px solid rgba(255,255,255,0.12)` dark / `0.5px solid rgba(0,0,0,0.08)` light
+
 ### The glass rules
 
-- Glass appears **only** on hover/focus of project links. It does not exist in resting state.
-- Glass uses the **same recipe** across all themes — only the hue shifts. Opacity, blur, shadow structure, and radii are invariant.
-- Glass **never** appears on elements that aren't project links. It is not a general-purpose surface treatment.
-- The fill opacity must stay at or below `0.05`. Higher values make it look like a card background rather than a momentary surface.
+- Glass appears on hover/focus of **project links**, **inline text links** (Mochi Health, contact links), and **sidebar controls**. It does not exist in resting state.
+- Glass uses the **same frost recipe** across all themes — only the accent hue shifts. Opacity, blur, shadow structure are invariant.
+- The fill opacity must stay within the frost recipe range. Higher values make it look like a card background rather than a momentary surface.
 - The backdrop blur must stay at `1px` or below. Higher values create a heavy frosted-glass look that fights the site's lightness.
+
+### Inline link glass behavior
+
+Inline text links (Mochi Health in the hero, email/LinkedIn/resume in the about section) use the same frost recipe as project cards but with different interaction parameters:
+
+- **Border radius**: `8px` (via `data-border-radius="8"` or container config) — tighter than project cards' `16px`, proportional to the smaller text size.
+- **Tight bounds**: Pill clears when the cursor leaves the link, not when it leaves the card stack. Implemented via `data-tight-bounds` (per-card) or `tightBounds: true` (container-level).
+- **No deformation**: `pullStrength: 0`, `stretchAmount: 0`, `squashAmount: 0` — pull/stretch physics don't make sense on small inline targets.
+- **Mochi Health** shares the project card pill container (so the pill can slide from Mochi Health to the first project card and back), but has per-card tight bounds.
+- **Contact links** have their own `useGlassHighlight` instance with `cardSelector: '[data-contact-card]'`, completely isolated from the project card pill.
+- **Clear delays**: Project cards 150ms, contact links 300ms, tight-bounds-to-stack transitions 400ms.
 
 ### Stacking and DOM structure
 
@@ -578,7 +597,7 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 | Add loading states or skeleton screens | The site is small enough to load instantly. Skeleton screens imply enterprise scale, not personal craft. |
 | Use a card metaphor for project links | Links are text, not cards. The glass effect is momentary, not a resting surface. |
 | Stack the right column below content on mobile | The interaction model doesn't translate to touch. Remove it entirely rather than degrading it. |
-| Add hover underlines or color changes to links | The glass effect IS the hover state. No additional text-level hover treatment needed. |
+| Add hover underlines or color changes to project card links | The glass effect IS the hover state for project cards. Inline text links (Mochi Health, contact links) use a persistent subtle underline (`--text-underline`) for in-context readability, but project cards should not. |
 | Use transition durations outside the timing hierarchy | 150 / 200 / 300 / 500ms. Pick the one that matches the action's weight. |
 | Mix easing curves arbitrarily | Use the Smooth curve (`cubic-bezier(0.25, 0.46, 0.45, 0.94)`) as default. Only deviate for specific physical behaviors (snap-back, overshoot). |
 | Be loud without purpose | Standing out is a goal, but every bold choice must reward closer inspection rather than demand attention. |

@@ -19,6 +19,9 @@ export interface GlassConfig {
   pullStrength: number
   edgeZone: number
   lerpSpeed: number
+  tightBounds: boolean
+  clearDelay: number
+  cardSelector: string
 }
 
 export const GLASS_DEFAULTS: GlassConfig = {
@@ -36,6 +39,9 @@ export const GLASS_DEFAULTS: GlassConfig = {
   pullStrength: 0.12,
   edgeZone: 0.20,
   lerpSpeed: 0.15,
+  tightBounds: false,
+  clearDelay: 150,
+  cardSelector: '[data-link-card]',
 }
 
 // ---------------------------------------------------------------------------
@@ -165,7 +171,7 @@ function setupGlassHighlight(
   // -- Layout detection --
 
   function detectLayout(): void {
-    const cards = container.querySelectorAll<HTMLElement>('[data-link-card]')
+    const cards = container.querySelectorAll<HTMLElement>(configRef.current.cardSelector)
     if (cards.length >= 2) {
       const a = cards[0]!.getBoundingClientRect()
       const b = cards[1]!.getBoundingClientRect()
@@ -355,7 +361,8 @@ function setupGlassHighlight(
   // -- Event handlers --
 
   function isCursorInCardStack(clientY: number): boolean {
-    const cards = container.querySelectorAll<HTMLElement>('[data-link-card]')
+    const sel = configRef.current.cardSelector
+    const cards = container.querySelectorAll<HTMLElement>(sel)
     if (cards.length === 0) return false
     const firstRect = cards[0]!.getBoundingClientRect()
     const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
@@ -363,17 +370,28 @@ function setupGlassHighlight(
   }
 
   function handleMouseOver(e: MouseEvent): void {
-    const card = (e.target as HTMLElement).closest<HTMLElement>('[data-link-card]')
+    const card = (e.target as HTMLElement).closest<HTMLElement>(configRef.current.cardSelector)
+    // Ignore cards that belong to a nested glass container
+    if (card && card.closest('[data-glass-highlight-active]') !== container) {
+      return
+    }
     if (!card) {
-      // Cursor moved to a non-card area — only clear if outside the card stack
-      if (currentCard && !isCursorInCardStack(e.clientY)) {
+      // Cursor moved to a non-card area
+      const cardTight = currentCard?.hasAttribute('data-tight-bounds')
+      const inStack = isCursorInCardStack(e.clientY)
+      const shouldClear = configRef.current.tightBounds || cardTight || !inStack
+      if (currentCard && shouldClear) {
         if (!clearTimer) {
+          // Longer delay when leaving a tight-bounds card toward other cards,
+          // so the cursor has time to reach the next card and cancel the timer
+          const base = configRef.current.clearDelay
+          const delay = (cardTight && inStack) ? Math.max(base, 400) : base
           clearTimer = setTimeout(() => {
             clearTimer = null
             currentCard = null
             fadeOut()
             stopLoop()
-          }, 150)
+          }, delay)
         }
       } else if (clearTimer) {
         // Cursor moved back into card stack bounds — cancel pending clear
@@ -393,6 +411,12 @@ function setupGlassHighlight(
 
     const prevCard = currentCard
     currentCard = card
+
+    // Per-card border radius override
+    const cardRadius = card.getAttribute('data-border-radius')
+    if (pill) {
+      pill.style.borderRadius = `${cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius}px`
+    }
 
     const pos = getCardPosition(card)
 
@@ -455,8 +479,8 @@ function setupGlassHighlight(
   }
 
   function handleFocusIn(e: FocusEvent): void {
-    const card = (e.target as HTMLElement).closest<HTMLElement>('[data-link-card]')
-    if (!card) return
+    const card = (e.target as HTMLElement).closest<HTMLElement>(configRef.current.cardSelector)
+    if (!card || card.closest('[data-glass-highlight-active]') !== container) return
 
     detectLayout()
     const prevCard = currentCard
@@ -491,7 +515,7 @@ function setupGlassHighlight(
 
   function handleFocusOut(e: FocusEvent): void {
     const related = e.relatedTarget as HTMLElement | null
-    if (related?.closest?.('[data-link-card]')) return
+    if (related?.closest?.(configRef.current.cardSelector)) return
     currentCard = null
     fadeOut()
     stopLoop()

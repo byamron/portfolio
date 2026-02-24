@@ -2,6 +2,30 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-23 — Glass hover on inline links (Mochi Health + contact links)
+
+**Branch:** `home-page-refinements`
+
+**Summary:** Extended the glass pill hover system to inline text links — "Mochi Health" in the hero title, and email/LinkedIn/resume contact links in the about section. Each link group has its own glass behavior tuned for inline context: tighter border radius (8px vs 16px), no pull/stretch deformation, and per-card tight bounds so the pill clears when the cursor leaves a link rather than staying alive across the full container.
+
+**What changed:**
+- `src/components/HeroTitle.tsx` — "Mochi Health" link uses `data-link-card` (participates in project card pill) with `data-tight-bounds` (clears when cursor leaves) and `data-border-radius="8"` (inline-sized pill). Inline-block with lineHeight 1 for tight pill sizing. Underline matches project card style (`--text-underline`).
+- `src/components/AboutSection.tsx` — Refactored from `dangerouslySetInnerHTML` to JSX. Contact links (email, LinkedIn, resume) use `data-contact-card` inside a dedicated `useGlassHighlight` container with `cardSelector: '[data-contact-card]'`, `tightBounds: true`, `clearDelay: 300`, `borderRadius: 8`, no pull/stretch.
+- `src/hooks/useGlassHighlight.ts` — New config options: `cardSelector` (customizable element selector, default `'[data-link-card]'`), `tightBounds` (container-level immediate clear), `clearDelay` (configurable clear timer, default 150ms). Per-card `data-tight-bounds` attribute for mixed containers. Per-card `data-border-radius` override. Nested container guard (`card.closest('[data-glass-highlight-active]') !== container`) prevents parent pill instances from responding to cards in nested containers. When leaving a tight-bounds card toward the card stack, uses a longer delay (400ms) so the cursor can reach the next card.
+- `src/components/SidebarThemeControls.tsx` — Updated `skinPill()` to use frost recipe (matching useGlassHighlight).
+- `src/styles/globals.css` — Aligned CSS fallback hover to frost recipe (mode-aware light/dark). Added dark mode variant to pill suppression rule for specificity. Removed unused `[data-glass-link]` CSS rules.
+
+**Key decisions:**
+- **Three pill systems, one recipe:** Project cards (main container, sticky bounds), Mochi Health (main container, tight bounds), and contact links (own container, tight bounds) all use the same frost glass visual recipe but different interaction behaviors.
+- **`cardSelector` config:** Prevents the project card pill on `<main>` from detecting contact links. Each `useGlassHighlight` instance only responds to its own selector.
+- **Per-card `data-tight-bounds`:** Mochi Health shares the project card container (so the pill can slide between them) but has individual tight bounds. This is a hybrid: shared pill, mixed clearing behavior.
+- **400ms delay for tight-to-stack transitions:** When leaving a tight-bounds card toward the card stack, the clear timer is longer (400ms vs 150ms) so the cursor can reach the next card before the pill fades. Entering the next card cancels the timer and triggers a smooth slide.
+- **Contact links `clearDelay: 300`:** More forgiving than project cards (150ms) because the links are farther apart (across paragraphs with 32px gap).
+
+**Files changed:** HeroTitle.tsx, AboutSection.tsx, useGlassHighlight.ts, SidebarThemeControls.tsx, globals.css, design-language.md, history.md
+
+---
+
 ## 2026-02-23 — Serif narrative text: extend typographic voice to editorial passages
 
 **Branch:** `serif-narrative-text`

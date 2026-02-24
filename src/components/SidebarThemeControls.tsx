@@ -72,18 +72,18 @@ function setupControlPill(container: HTMLElement): () => void {
     const hue = parseFloat(
       getComputedStyle(document.documentElement).getPropertyValue('--accent-hue').trim()
     ) || 34
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
-    const fill = `hsla(${hue}, 10%, 45%, 0.08)`
-    const highlight = `radial-gradient(ellipse 150% 120% at 50% 10%, rgba(255,255,255,0.12), rgba(255,255,255,0.048) 50%, rgba(255,255,255,0.012) 85%, transparent 120%)`
-
-    pill.style.background = `${highlight}, ${fill}`
-    pill.style.backdropFilter = 'blur(1px) saturate(1.2)'
-    pill.style.webkitBackdropFilter = 'blur(1px) saturate(1.2)'
-    pill.style.boxShadow = [
-      'inset 0 0.5px 0 0 rgba(255,255,255,0.2)',
-      'inset 0 -0.5px 0 0 rgba(0,0,0,0.08)',
-    ].join(', ')
-    pill.style.border = `0.5px solid hsla(${hue}, 20%, 50%, 0.15)`
+    // Frost: matches useGlassHighlight skinPill()
+    pill.style.background = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
+    pill.style.backdropFilter = 'blur(1px)'
+    pill.style.webkitBackdropFilter = 'blur(1px)'
+    pill.style.boxShadow = isDark
+      ? 'inset 0 1px 0 0 rgba(255, 255, 255, 0.10)'
+      : 'inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)'
+    pill.style.border = isDark
+      ? '0.5px solid rgba(255, 255, 255, 0.12)'
+      : '0.5px solid rgba(0, 0, 0, 0.08)'
   }
 
   function getControlPosition(el: HTMLElement) {
