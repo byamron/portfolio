@@ -157,6 +157,14 @@ React Router integration complete. All 8 case study project cards on the home pa
 
 ---
 
+## Continuous Background Intensity (completed 2026-02-23)
+
+**Branch:** `continuous-intensity-slider` (merged to main)
+
+Converted the background intensity system from discrete 4-step integers (0–3) to a continuous float range (0.0–1.0). `computeBg(accent, mode, t)` uses linear interpolation: `satMult = 1.0 + 1.8 * t`, `lightShift = -10 * t` (light) / `2 * t` (dark). Direct DOM mutations during drag for zero-lag feedback. ARIA reports 0–100 percentage. Keyboard step: 0.05. Old integer localStorage values migrated automatically.
+
+---
+
 ## Phase 0: Project Scaffolding
 
 **Goal:** Set up the build toolchain, project structure, and development environment.
