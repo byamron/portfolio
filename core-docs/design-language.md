@@ -446,14 +446,15 @@ Controls live in a thin sidebar on the right edge of the viewport (`width: 56px`
 
 ### Background intensity strip
 
-A draggable vertical gradient strip that controls background color intensity across all themes.
+A draggable vertical gradient strip that controls background color intensity continuously across all themes.
 
 - **Dimensions**: 24px wide hit area, 8px wide visible gradient bar (`border-radius: 4px`), 72px tall
 - **Gradient**: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))` — top is barely tinted, bottom is visibly saturated
-- **Thumb**: 11px diameter circle, `var(--swatch)` fill, 1.5px border, subtle drop shadow. Travels the full strip length — flush with top at intensity 0, flush with bottom at intensity 3 (Warm).
-- **Interaction**: Click to set level, drag with Pointer Capture for continuous adjustment. `cursor: grab` / `grabbing`. Native drag prevention via `e.preventDefault()` on pointerDown.
-- **Keyboard**: Arrow keys step through levels. `role="slider"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`.
-- **4 intensity levels**: Whisper (baseline), Subtle, Tinted, Warm. Each scales background saturation (1.0×–2.8×) and shifts lightness (light mode: 0 to -10; dark mode: 0 to +2). Persisted to localStorage.
+- **Thumb**: 11px diameter circle, `var(--swatch)` fill, 1.5px border, subtle drop shadow. Travels the full strip length — flush with top at `t=0` (no tint), flush with bottom at `t=1` (full tint).
+- **Interaction**: Click to set level, drag with Pointer Capture for continuous adjustment. `cursor: grab` / `grabbing`. Native drag prevention via `e.preventDefault()` on pointerDown. During drag, direct DOM mutations bypass React renders for zero-lag visual feedback (thumb position, `--bg` CSS variable, trigger glow, meta theme-color); React state is committed on each pointer move for persistence.
+- **Keyboard**: Arrow keys step by `0.05` increments. `role="slider"` with `aria-valuemin={0}`, `aria-valuemax={100}`, `aria-valuenow={Math.round(t * 100)}`, `aria-valuetext` as a percentage string.
+- **Continuous intensity** (`t ∈ [0, 1]`): Background saturation scales from 1.0× to 2.8× via `satMult = 1.0 + 1.8 * t`. Lightness shifts from 0 to -10 in light mode (`-10 * t`) and 0 to +2 in dark mode (`2 * t`). Computed by `computeBg(accent, mode, t)` in ThemeContext. At `t < 0.001`, the `--bg` CSS override is removed and the cascade falls back to the base CSS value. Persisted to localStorage as a float.
+- **Named presets** (kept for reference/labeling): Whisper (`t=0`), Subtle (`t=0.33`), Tinted (`t=0.67`), Warm (`t=1`).
 
 ### Sidebar glass pill
 

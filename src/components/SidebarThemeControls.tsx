@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Monitor, Sun, Moon } from '@phosphor-icons/react'
-import { useTheme, INTENSITY_LEVELS, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
+import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -23,12 +23,14 @@ const motionEase = [0.25, 0.46, 0.45, 0.94]
 const PILL_SIZE = 36
 const PILL_RADIUS = 12
 
-// Trigger intensity indicator: combined glow + fill (opacity)
-// Glow: soft ambient halo in the swatch color
+// Trigger intensity indicator: continuous lerp (glow + fill opacity)
+// Glow: soft ambient halo in the swatch color, 0–14px spread
 // Fill: compressed opacity range (0.45 → 1.0) so the dot is never invisible
-const TRIGGER_GLOW_SPREAD = [0, 6, 10, 14]
-const TRIGGER_GLOW_ALPHA = [0, 0.2, 0.35, 0.5]
-const TRIGGER_OPACITY = [0.45, 0.65, 0.85, 1.0]
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t
+}
+
+const KEYBOARD_STEP = 0.05
 
 function swatchToHsla(swatch: string, alpha: number): string {
   return swatch.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`)
@@ -237,7 +239,7 @@ export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
-          bgIntensity, setBgIntensity } = useTheme()
+          resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>(null)
   const swatchesRef = useRef<HTMLDivElement>(null)
   const modesRef = useRef<HTMLDivElement>(null)
@@ -279,30 +281,52 @@ export function SidebarThemeControls() {
 
   const activeSwatch = accents.find(a => a.color === accentColor)!
 
-  // Gradient strip pointer handlers (drag support)
-  const updateLevelFromPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const thumbRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
+
+  // Gradient strip pointer handlers (continuous drag support)
+  const updateFromPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const y = Math.max(0, Math.min(STRIP_HEIGHT, e.clientY - rect.top))
-    const level = Math.round((y / STRIP_HEIGHT) * (INTENSITY_LEVELS.length - 1))
-    setBgIntensity(Math.min(INTENSITY_LEVELS.length - 1, Math.max(0, level)))
-  }, [setBgIntensity])
+    const t = y / STRIP_HEIGHT
+    setBgIntensity(t)
+    // Direct DOM updates for zero-lag visual feedback during drag
+    if (draggingRef.current) {
+      const bg = computeBg(accentColor, resolvedAppearance, t)
+      if (thumbRef.current) thumbRef.current.style.top = `${t * THUMB_TRAVEL}px`
+      document.documentElement.style.setProperty('--bg', bg)
+      // Sync trigger dot and meta theme-color in the same frame
+      if (triggerRef.current) {
+        triggerRef.current.style.opacity = String(lerp(0.45, 1.0, t))
+        triggerRef.current.style.boxShadow = t > 0.01
+          ? `0 0 ${lerp(0, 14, t).toFixed(1)}px ${swatchToHsla(activeSwatch.swatch, lerp(0, 0.5, t))}`
+          : 'none'
+      }
+      const meta = document.querySelector('meta[name="theme-color"]')
+      if (meta) meta.setAttribute('content', bg)
+    }
+  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatch.swatch])
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.currentTarget.setPointerCapture(e.pointerId)
     draggingRef.current = true
     setIsDragging(true)
-    updateLevelFromPointer(e)
-  }, [updateLevelFromPointer])
+    // Disable body bg transition for instant feedback during drag
+    document.body.style.transition = 'none'
+    updateFromPointer(e)
+  }, [updateFromPointer])
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return
-    updateLevelFromPointer(e)
-  }, [updateLevelFromPointer])
+    updateFromPointer(e)
+  }, [updateFromPointer])
 
   const handlePointerUp = useCallback(() => {
     draggingRef.current = false
     setIsDragging(false)
+    // Restore body bg transition
+    document.body.style.transition = ''
   }, [])
 
   return (
@@ -330,14 +354,15 @@ export function SidebarThemeControls() {
       >
         {/* Fixed trigger — always visible, glow + opacity reflect intensity */}
         <div
+          ref={triggerRef}
           style={{
             width: 16,
             height: 16,
             borderRadius: 5,
             background: activeSwatch.swatch,
-            opacity: TRIGGER_OPACITY[bgIntensity],
-            boxShadow: bgIntensity > 0
-              ? `0 0 ${TRIGGER_GLOW_SPREAD[bgIntensity]}px ${swatchToHsla(activeSwatch.swatch, TRIGGER_GLOW_ALPHA[bgIntensity])}`
+            opacity: lerp(0.45, 1.0, bgIntensity),
+            boxShadow: bgIntensity > 0.01
+              ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px ${swatchToHsla(activeSwatch.swatch, lerp(0, 0.5, bgIntensity))}`
               : 'none',
             transition: 'background 200ms ease-in-out, opacity 300ms ease-in-out, box-shadow 300ms ease-in-out',
             flexShrink: 0,
@@ -409,20 +434,20 @@ export function SidebarThemeControls() {
             style={{ pointerEvents: hovered ? 'auto' : 'none' }}
           >
             <div
-              aria-label={`Background intensity: ${INTENSITY_LEVELS[bgIntensity].name}`}
+              aria-label="Background intensity"
               role="slider"
               aria-valuemin={0}
-              aria-valuemax={INTENSITY_LEVELS.length - 1}
-              aria-valuenow={bgIntensity}
-              aria-valuetext={INTENSITY_LEVELS[bgIntensity].name}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(bgIntensity * 100)}
+              aria-valuetext={`${Math.round(bgIntensity * 100)}%`}
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
                   e.preventDefault()
-                  setBgIntensity(Math.min(INTENSITY_LEVELS.length - 1, bgIntensity + 1))
+                  setBgIntensity(Math.min(1, bgIntensity + KEYBOARD_STEP))
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
                   e.preventDefault()
-                  setBgIntensity(Math.max(0, bgIntensity - 1))
+                  setBgIntensity(Math.max(0, bgIntensity - KEYBOARD_STEP))
                 }
               }}
               onPointerDown={handlePointerDown}
@@ -453,6 +478,7 @@ export function SidebarThemeControls() {
               />
               {/* Active level indicator — thumb dot */}
               <div
+                ref={thumbRef}
                 style={{
                   position: 'absolute',
                   width: 11,
@@ -463,7 +489,7 @@ export function SidebarThemeControls() {
                   boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  top: (bgIntensity / (INTENSITY_LEVELS.length - 1)) * THUMB_TRAVEL,
+                  top: bgIntensity * THUMB_TRAVEL,
                   transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
                 }}
               />
