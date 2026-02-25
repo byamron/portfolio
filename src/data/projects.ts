@@ -7,6 +7,7 @@ export interface Project {
   href: string
   isLink: boolean
   caseStudySlug?: string // maps to markdown filename in data/case-studies/
+  lottiePreview?: string // optional Lottie JSON path (overrides projectImageMap)
 }
 
 export interface Section {
@@ -21,7 +22,7 @@ export const sections: Section[] = [
     ],
     projects: [
       { id: 'mochi-funnel', title: 'Building a competitive top of funnel experience', projectId: 'uw', href: '/project/mochi-ai-tooling', isLink: true, caseStudySlug: 'mochi-ai-tooling' },
-      { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'sony', href: '/project/mochi-progress-tracker', isLink: true, caseStudySlug: 'mochi-progress-tracker' },
+      { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, caseStudySlug: 'mochi-progress-tracker' },
       { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, caseStudySlug: 'mochi-subscriptions' },
     ],
   },
@@ -32,7 +33,7 @@ export const sections: Section[] = [
     projects: [
       { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system' },
       { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv' },
-      { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation' },
+      { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json' },
       { id: 'duo-flags', title: 'Languages \u2260 Flags', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags' },
       { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/acorn-eat-local-vt', isLink: true, caseStudySlug: 'acorn-eat-local-vt' },
     ],
@@ -52,9 +53,10 @@ export const sections: Section[] = [
 // projectId → preview image (only 4 unique previews, not 11)
 export const projectImageMap: Record<string, string> = {
   uw: '/images/preview-uw.jpg',
-  sony: '/images/preview-sony.jpg',
+  sony: '/images/preview-sony.gif',
   cip: '/images/preview-cip.jpg',
-  acorn: '/images/preview-acorn.jpg',
+  acorn: '/images/preview-acorn.png',
+  'mochi-tracker': '/images/preview-mochi-tracker.jpg',
 }
 
 // accent → default portrait image

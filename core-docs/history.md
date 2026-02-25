@@ -2,6 +2,33 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-02-24 — Project hover previews: Lottie, GIF, and static images (WIP)
+
+**Branch:** `lottie-cip-hover`
+
+**Summary:** Added project-specific hover previews to the right column — replacing the previous placeholder system where all projects shared one of 4 generic images. Previews now support multiple media formats (Lottie JSON, GIF, PNG) and preserve their native aspect ratios. Added mode-aware drop shadows for light-background previews. Work in progress — more project visuals still needed.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Rewrote to support three media types: static images, animated GIFs (via `<img>`), and Lottie JSON (via `lottie-react`, fetched on hover). Removed fixed `528×720` aspect ratio container — previews now use `object-fit: contain` centered in the right column. Added `drop-shadow` filter for specified projects, mode-aware (soft white glow in dark mode, subtle black shadow in light mode).
+- `src/components/RightColumn.tsx` — Changed `justifyContent` to `center` for vertical centering of variable-aspect-ratio previews.
+- `src/data/projects.ts` — Added optional `lottiePreview` field to `Project` interface. Set on `cip-misinfo` project. Gave `mochi-tracker` its own `projectId` to decouple it from the Sony gif. Updated image map: `sony` → `.gif`, `acorn` → `.png`, added `mochi-tracker` entry.
+- `public/images/preview-cip.json` — Lottie animation for CSCW misinformation project (fan-in network visualization, plays once).
+- `public/images/preview-sony.gif` — Animated GIF for Screenless TV project (loops).
+- `public/images/preview-acorn.png` — Eat Local VT mobile app screenshot.
+- `package.json` — Added `lottie-react` dependency.
+- `core-docs/design-language.md` — Documented project preview media system, Lottie support, shadow specs, updated image rules.
+
+**Key decisions:**
+- **Per-project `lottiePreview` override** rather than changing the shared `projectImageMap` system. This keeps backward compatibility — most projects still use the `projectId` → image lookup, only specific projects opt into Lottie.
+- **`object-fit: contain`** for previews instead of `cover` — each preview keeps its native aspect ratio rather than being cropped to a fixed frame.
+- **Mode-aware `drop-shadow`** using CSS `filter` (follows pixel shape) rather than `box-shadow` (follows bounding box). White glow in dark mode, black shadow in light mode — both subtle enough to not look like a design element.
+- **Lottie plays once** for CSCW; GIF loops natively for Sony. Loop behavior is per-media-type.
+- **WIP**: More project visuals still need to be added (UW, Mochi projects, Duolingo).
+
+**Files changed:** ImageDisplay.tsx, RightColumn.tsx, projects.ts, design-language.md, history.md, preview-cip.json, preview-sony.gif, preview-acorn.png, package.json
+
+---
+
 ## 2026-02-23 — Glass hover on inline links (Mochi Health + contact links)
 
 **Branch:** `home-page-refinements`
