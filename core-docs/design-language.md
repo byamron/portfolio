@@ -428,12 +428,26 @@ There are exactly 4 image variants — one per accent theme. (The original Frame
 
 In the React implementation, map `accentColor` directly to the image filename. The Framer variant numbering is preserved here only for reference.
 
+### Project preview media
+
+Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, or Lottie JSON animations. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`, no forced container dimensions.
+
+| Project | Format | File | Loop | Notes |
+|---------|--------|------|------|-------|
+| Screenless TV | GIF | `preview-sony.gif` | Yes (native) | Animated TV concept |
+| Eat Local VT | PNG | `preview-acorn.png` | — | Mobile app screenshot |
+| CSCW Misinformation | Lottie JSON | `preview-cip.json` | No (plays once) | Fan-in network animation |
+
+**Lottie support**: Projects can specify `lottiePreview` in project data to override the default `projectImageMap` image. Lottie JSON is fetched on hover and rendered via `lottie-react`. The `loop` behavior is per-animation (currently only CSCW uses Lottie, set to play once).
+
+**Shadows for light-background previews**: Previews with white/light backgrounds (eat local PNG, CSCW Lottie) use a subtle `drop-shadow` filter to create separation from the page background. The shadow follows the pixel shape (not the bounding box) and is mode-aware:
+- **Dark mode**: `drop-shadow(0 2px 40px rgba(255, 255, 255, 0.1))` — soft white glow
+- **Light mode**: `drop-shadow(0 2px 40px rgba(0, 0, 0, 0.08))` — subtle ambient shadow
+
 ### Image rules
 
-- All images use the same container: `528 x 720px`, `border-radius: 32px`, `object-fit: cover`
-- Images fill the container completely — no letterboxing, no padding, no borders
-- The rounded corners are the only "frame" — there is no drop shadow, no border, no card surface behind the image
-- Project preview images (shown on hover) should share the same aspect ratio and cropping approach
+- Portrait images use `object-fit: cover` with `border-radius: 32px` — they fill the space
+- Project previews use `object-fit: contain` — aspect ratio is preserved, centered in the right column
 - Images transition via opacity cross-fade only. No scale, no slide, no clip-path reveals.
 
 ---

@@ -15,8 +15,7 @@ export function RightColumn() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 24,
+        justifyContent: 'center',
       }}
     >
       <ImageDisplay />
