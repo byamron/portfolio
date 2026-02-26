@@ -1,13 +1,25 @@
 import { useParams, Link } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { caseStudiesBySlug } from '@/data/case-study-content'
 import { CaseStudyLayoutA } from './CaseStudyLayoutA'
 import { useIsWide } from '@/hooks/useMediaQuery'
+import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 
 export function CaseStudyPage() {
   const { slug } = useParams<{ slug: string }>()
   const isWide = useIsWide()
   const caseStudy = slug ? caseStudiesBySlug[slug] : undefined
+
+  const navRef = useRef<HTMLElement>(null)
+  useGlassHighlight(navRef, {
+    borderRadius: 8,
+    pullStrength: 0,
+    stretchAmount: 0,
+    squashAmount: 0,
+    tightBounds: true,
+    clearDelay: 300,
+    cardSelector: '[data-back-link]',
+  })
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -23,10 +35,14 @@ export function CaseStudyPage() {
       >
         <Link
           to="/"
+          data-back-link
           style={{
             display: 'inline-block',
-            marginBottom: 40,
+            padding: '8px 12px',
+            margin: '0 -12px 40px',
             fontSize: 18,
+            fontFamily: "'Onest', sans-serif",
+            fontWeight: 400,
             color: 'var(--text-dark)',
             textDecoration: 'underline',
             textDecorationColor: 'var(--text-underline)',
@@ -73,11 +89,30 @@ export function CaseStudyPage() {
         }}
       />
 
-      <nav style={{ padding: '24px var(--layout-margin) 0' }}>
+      <nav
+        ref={navRef}
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          padding: '24px var(--layout-margin) 0',
+          pointerEvents: 'none',
+        }}
+      >
         <Link
           to="/"
+          data-back-link
           style={{
+            display: 'inline-block',
+            pointerEvents: 'auto',
+            padding: '8px 12px',
+            margin: '0 -12px',
+            borderRadius: 8,
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             fontSize: 18,
+            fontFamily: "'Onest', sans-serif",
+            fontWeight: 400,
             color: 'var(--text-dark)',
             textDecoration: 'underline',
             textDecorationColor: 'var(--text-underline)',
