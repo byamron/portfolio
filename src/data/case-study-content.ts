@@ -314,34 +314,58 @@ export const cipElectionMisinformation: CaseStudy = {
 export const duolingoLanguagesFlags: CaseStudy = {
   id: 'duolingo-languages-flags',
   title: 'Languages \u2260 Flags',
-  subtitle:
-    'Languages don\u2019t map to flags. I redesigned Duolingo\u2019s course selection to fix a system that excludes, confuses, and can\u2019t follow its own logic.',
+  subtitle: 'Duolingo redesign \u00b7 Personal project, 2020',
   timeline: 'Personal project, 2020',
   sections: [
     {
       id: 'duo-problem',
-      heading: 'Before I was a designer, I was an international studies student and a longtime Duolingo user',
+      heading: 'The problem',
       paragraphs: [
-        'I noticed something that bothered me: Duolingo represents language courses with flags. But which flag represents Spanish \u2014 Spain? Mexico? The 19 other countries? Which flag gets Portuguese \u2014 Brazil or Portugal? The current system can\u2019t follow logic because languages and flags don\u2019t map cleanly. It excludes, confuses, and the CEO has acknowledged it\u2019s flawed.',
-      ],
-      visual: null,
-    },
-    {
-      id: 'duo-solution',
-      heading: 'Curiosity and a problem worth solving \u2014 that was enough to start',
-      paragraphs: [
-        'After researching the problem, illustrating flags for 20+ countries, and iterating through possible solutions, I landed on something simple: use ISO-639 language codes for course selection (standardized, uniform length, immediately implementable) and repurpose flags to highlight cultural diversity within course content \u2014 stories, roleplay scenarios, loading screens.',
+        'Duolingo represents every language course with a flag. But which flag represents Spanish \u2014 Spain? Mexico? The 19 other countries? The mapping can\u2019t follow logic because no logic exists. And when it breaks down completely \u2014 the Arab League for Arabic, the state flag of Hawaii for Hawaiian \u2014 Duolingo reaches for flags most users couldn\u2019t identify anyway.',
       ],
       visual: {
-        id: 'duo-redesign',
-        caption: 'Course selection redesign using ISO-639 language codes.',
+        id: 'duo-flag-grid',
+        caption: 'Grid of Duolingo\u2019s actual flag-language pairings, arranged to make the inconsistency undeniable at a glance.',
+      },
+    },
+    {
+      id: 'duo-known-problem',
+      heading: 'A known problem, an unknown priority',
+      paragraphs: [
+        'Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against using flags for languages. Duolingo even hired a sensitivity consultant to redesign a character\u2019s body shape to avoid stereotypes \u2014 but this systemic issue remains untouched. It persists because it doesn\u2019t cause measurable pain and it\u2019s an industry-wide convention. Neither is a good reason at this scale.',
+      ],
+      visual: {
+        id: 'duo-evidence',
+        caption: 'Compact composite of Reddit screenshots, CEO acknowledgment, and Vikram redesign callout.',
+      },
+    },
+    {
+      id: 'duo-remove-flags',
+      heading: 'Remove flags from course selection',
+      paragraphs: [
+        'Replace them with ISO-639 language codes \u2014 standardized, uniform length, immediately implementable. They drop into existing UI without changing anything else.',
+      ],
+      visual: {
+        id: 'duo-before-after',
+        caption: 'Before/after of the course selection screen \u2014 flags vs. ISO codes styled in Duolingo\u2019s typeface and colors.',
+      },
+    },
+    {
+      id: 'duo-add-flags',
+      heading: 'Add flags everywhere else',
+      paragraphs: [
+        'Don\u2019t remove flags from the platform \u2014 increase their use. Repurpose them in stories, roleplay scenarios, and loading screens to highlight the cultural diversity that the current system erases. Flags are great at representing countries. They\u2019re just bad at representing languages.',
+      ],
+      visual: {
+        id: 'duo-flags-in-content',
+        caption: 'Mockups showing flags used well inside course content \u2014 stories, loading screens, roleplay scenarios.',
       },
     },
     {
       id: 'duo-result',
       heading: 'One change removes the problem. The other turns flags into an asset.',
       paragraphs: [
-        'Duolingo, if you\u2019re reading this \u2014 just do it. I\u2019ll wait.',
+        'This is a personal project \u2014 but it doesn\u2019t have to be. The solution is low-cost, immediately implementable, and makes the platform better. Duolingo, the ball is in your court.',
       ],
       visual: null,
     },

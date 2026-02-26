@@ -34,7 +34,7 @@ export const sections: Section[] = [
       { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system' },
       { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv' },
       { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json' },
-      { id: 'duo-flags', title: 'Languages \u2260 Flags', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags' },
+      { id: 'duo-flags', title: 'Making Duolingo\u2019s use of flags more inclusive', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags' },
       { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/acorn-eat-local-vt', isLink: true, caseStudySlug: 'acorn-eat-local-vt' },
     ],
   },
