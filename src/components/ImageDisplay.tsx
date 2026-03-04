@@ -75,22 +75,21 @@ export function ImageDisplay() {
     <div
       aria-live="polite"
       style={{
+        position: 'relative',
         width: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: summary ? 20 : 0,
       }}
     >
-      {/* Image area */}
+      {/* Image area — always fills the full container */}
       <div
         style={{
           position: 'relative',
           width: '100%',
-          flex: '1 1 0',
-          minHeight: 0,
+          height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -141,7 +140,7 @@ export function ImageDisplay() {
         </AnimatePresence>
       </div>
 
-      {/* Summary text area */}
+      {/* Summary text area — absolutely positioned so it never affects image sizing */}
       <AnimatePresence mode="sync">
         {summary && (
           <motion.p
@@ -156,13 +155,16 @@ export function ImageDisplay() {
             }}
             style={{
               ...summaryStyles[SUMMARY_FONT],
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
               lineHeight: 1.5,
               color: 'var(--text-grey)',
               maxWidth: 480,
               padding: '0 24px',
               textAlign: 'left',
               margin: 0,
-              flexShrink: 0,
             }}
           >
             {summary}
