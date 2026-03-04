@@ -2,6 +2,27 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-04 — Custom cursor controls in sidebar
+
+**Branch:** `muscat`
+
+**Summary:** Added a 3-option cursor style selector to the sidebar theme controls, grouped below the appearance mode selector. Users can choose between a standard cursor, an 80px inverted-color circle (mix-blend-mode: difference), or a 72px figpal character trailing the cursor with spring inertia.
+
+**What changed:**
+- `src/contexts/CursorContext.tsx` — New context providing `cursorMode` ('standard' | 'invert' | 'figpal') with localStorage persistence. Follows the same pattern as ThemeContext.
+- `src/components/CustomCursor.tsx` — New component that renders cursor effects via imperative DOM manipulation. Invert mode: hides the default cursor (`* { cursor: none !important }` injected globally), shows an 80px white circle with `mix-blend-mode: difference`. On linkable card hover (tied to `hoveredProjectId` from HoverContext, not `elementFromPoint`), the circle morphs into a `→` arrow via scale transition — the arrow sits beneath the circle, revealed as the disc scales to 0. Debounced arrow→circle transition (200ms) prevents flicker between cards. Over the sidebar, the circle shrinks to a 12px dot (scale 0.15) and the arrow stays hidden. Figpal mode keeps the standard cursor and renders the character trailing 24px right/below with RAF lerp inertia (rate 0.12). Respects `prefers-reduced-motion`.
+- `src/components/SidebarThemeControls.tsx` — Extended with a new cursor radiogroup section: divider + 3 buttons (Cursor icon, Circle icon, figpal thumbnail). Own glass pill container. Stagger indices extended (DIVIDER_4, CURSOR_BASE). Added `data-sidebar` attribute on outermost container for cursor detection. Imported Cursor and Circle from Phosphor.
+- `src/components/ImageDisplay.tsx` — Fixed hover preview summary text causing theme image to shrink: made summary text absolutely positioned so it overlays without affecting image sizing.
+- `src/App.tsx` — Added CursorProvider and CustomCursor to the provider tree.
+- `public/images/figpal.png` — Figpal character image for the trailing cursor and sidebar icon.
+
+**Decisions:**
+- Separate CursorContext rather than extending ThemeContext — keeps concerns modular.
+- Single container with `mix-blend-mode: difference` for invert mode — arrow and circle are children. Avoids stacking context isolation issues from nesting blend modes.
+- Arrow morph uses scale transition on circle (top layer) to reveal arrow text (bottom layer) — visually convincing disc-to-arrow morph.
+- Card hover detection uses `hoveredProjectId` (React state) rather than `elementFromPoint` — ties cursor arrow to same state as glass pill, preventing flicker in gaps between cards.
+- Figpal icon in sidebar uses a tiny `<img>` rather than a Phosphor icon since it's a custom character.
+
 ## 2026-02-24 — Project hover previews: Lottie, GIF, and static images (WIP)
 
 **Branch:** `lottie-cip-hover`
