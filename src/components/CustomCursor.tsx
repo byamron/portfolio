@@ -27,7 +27,7 @@ function removeCursorNoneStyle() {
 
 export function CustomCursor() {
   const { cursorMode } = useCursor()
-  const { hoveredProjectId } = useHover()
+  const { hoveredProjectId, hoveringLink } = useHover()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const circleRef = useRef<HTMLDivElement | null>(null)
   const arrowRef = useRef<HTMLDivElement | null>(null)
@@ -230,13 +230,13 @@ export function CustomCursor() {
     }
   }, [cursorMode])
 
-  // Morph circle ↔ arrow based on hovered project (tied to glass pill state).
+  // Morph circle ↔ arrow based on hovered project or external link.
   // Debounce the arrow→circle transition so moving between cards doesn't flicker.
   useEffect(() => {
     if (cursorMode !== 'invert' || !circleRef.current) return
 
     const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
-    const showArrow = !!(project && project.isLink)
+    const showArrow = !!(project && project.isLink) || hoveringLink
 
     if (showArrow === onCardRef.current) return
 
@@ -269,7 +269,7 @@ export function CustomCursor() {
         morphTimerRef.current = null
       }
     }
-  }, [hoveredProjectId, cursorMode])
+  }, [hoveredProjectId, hoveringLink, cursorMode])
 
   return null
 }
