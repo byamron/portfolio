@@ -3,17 +3,22 @@ import { createContext, useContext, useState, useMemo, type ReactNode } from 're
 interface HoverContextValue {
   hoveredProjectId: string | null
   setHoveredProjectId: (id: string | null) => void
+  hoveringLink: boolean
+  setHoveringLink: (hovering: boolean) => void
 }
 
 const HoverContext = createContext<HoverContextValue | null>(null)
 
 export function HoverProvider({ children }: { children: ReactNode }) {
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
+  const [hoveringLink, setHoveringLink] = useState(false)
 
   const value = useMemo<HoverContextValue>(() => ({
     hoveredProjectId,
     setHoveredProjectId,
-  }), [hoveredProjectId])
+    hoveringLink,
+    setHoveringLink,
+  }), [hoveredProjectId, hoveringLink])
 
   return <HoverContext.Provider value={value}>{children}</HoverContext.Provider>
 }

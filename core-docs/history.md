@@ -12,14 +12,95 @@ Decision log and completed work, in reverse chronological order.
 - `src/hooks/useGlassHighlight.ts` — Major rewrite (~690 → ~530 lines). Deleted `generateDeformedPath()` (~145 lines), `KAPPA` constant, `applyClipPath()`, and all clip-path logic. Added lean + tilt math in the RAF loop using dead zone (0.7) + exponential pull curve. Updated `applyPillPosition()` to accept lean/tilt params. Made `skinPill()` border + inner glow unconditional (no longer gated on `maxPull > 0`).
 - `src/components/AboutSection.tsx` — Changed `maxPull: 0` to `maxPull: 3` for subtle directional feedback on email/LinkedIn/resume links.
 - `src/components/CaseStudyPage.tsx` — Changed `maxPull: 0` to `maxPull: 3` for subtle lean + tilt on the sticky back button.
-- `src/contexts/ThemeContext.tsx` — Fixed localStorage validation bug (previous session carry-over).
-- `src/components/SidebarThemeControls.tsx` — Fixed `activeSwatch` undefined guard (previous session carry-over).
 
 **Key decisions:**
 - **Lean + tilt over clip-path**: The pentagon clip-path system (V1-V10+) produced directional feedback but accumulated visual artifacts (corner flicker, ghost outlines, tip radius mismatches). CSS transforms are inherently clean — no path string generation, no vertex ordering, no sub-pixel rendering issues.
 - **Tilt formula**: `(cnx * dirY * |dirY| + cny * dirX * |dirX|) * maxTilt * t` — uses `dirY * |dirY|` (preserving sign, squaring magnitude) to ensure symmetric rotation in all quadrants. Earlier attempts with skew and simpler rotation formulas produced asymmetric results.
 - **No swell**: Scale-based swell was removed because its translate offset (to simulate non-center transform-origin) overwhelmed the tilt's edge displacement, causing asymmetry.
 - **Sidebar unaffected**: `SidebarThemeControls.tsx` uses its own custom pill implementation, not `useGlassHighlight`, so it gets no lean/tilt by design.
+
+## 2026-03-05 — Sidebar theme controls on all pages
+
+**Branch:** `hover-theme-all-pages`
+
+**Summary:** Moved `SidebarThemeControls` from `Layout.tsx` (home page only) up to `App.tsx` so the hover sidebar theme changer renders on all routes, including case study pages.
+
+**What changed:**
+- `src/App.tsx` — Added `SidebarThemeControls` import and render alongside `<Routes>`.
+- `src/components/Layout.tsx` — Removed `SidebarThemeControls` import and render (no longer needed here since it's at the app level).
+
+**Bugfix — localStorage validation crash:**
+- `ThemeContext` initialized `accentColor` from localStorage with `(stored as AccentColor) || 'table'`, which only catches null/empty — not invalid strings. Stale localStorage values from other branches crashed `SidebarThemeControls` because `accents.find()` returned `undefined` and `activeSwatch.swatch` threw a TypeError, blanking the entire page.
+- Fixed by adding `VALID_ACCENTS` and `VALID_MODES` arrays and validating with `.includes()` before using stored values. Also changed `accents.find(...)!` to `accents.find(...) ?? accents[0]` in SidebarThemeControls for defensive fallback.
+- Applied the same validation to `CursorContext.tsx` with `VALID_CURSOR_MODES`.
+- See `core-docs/feedback.md` for the full lesson on localStorage validation.
+
+**Bugfix — sidebar pill position during animation:**
+- `getControlPosition` in `SidebarThemeControls` used `getBoundingClientRect()`, which reflects CSS transforms applied by Framer Motion's slide-in animation (x: 20 → 0). This caused the pill to snap to the wrong position when a user hovered a control before the entrance animation completed.
+- Fixed by replacing `getBoundingClientRect()` with an `offsetLeft`/`offsetTop` traversal loop up to the container, which reads layout position independent of CSS transforms.
+
+**Bugfix — hover state persisting on case study pages:**
+- `CaseStudyPage.tsx` now resets `hoveredProjectId` and `hoveringLink` on navigation, preventing stale hover state from the home page from affecting the sidebar on case study pages.
+
+**Decisions:**
+- Since `SidebarThemeControls` uses `position: fixed`, it doesn't depend on any parent layout — lifting it to `App.tsx` is the simplest approach with no side effects.
+
+## 2026-03-05 — New vineyard theme + sky image swap + portrait color tuning
+
+**Branch:** `sky-theme-image`
+
+**Summary:** Replaced the sky theme portrait with a vineyard photo (Napa wine country). Added a new "vineyard" accent theme (warm yellow-green, hsl 90°) derived from the photo's spring-green hills. Retuned the portrait accent from warm wheat (hsl 47, 34%) to a cooler taupe (hsl 43, 22%) that better complements the studio portrait's grey backdrop. Theme system now has 5 accents: table, portrait, sky, pizza, vineyard.
+
+**What changed:**
+- `public/images/portrait-sky.jpeg` — Restored to original sky image.
+- `public/images/portrait-vineyard.jpeg` — New vineyard portrait (pre-cropped to portrait aspect ratio).
+- `src/contexts/ThemeContext.tsx` — Added `vineyard` to AccentColor union and BG_BASE. Updated portrait BG values to cooler taupe (hsl 39/41°, 14-15% sat).
+- `src/components/SidebarThemeControls.tsx` — Added vineyard swatch. Updated portrait swatch to `hsl(43, 22%, 62%)`.
+- `src/data/projects.ts` — Added vineyard to defaultImageMap.
+- `src/styles/theme.css` — Added vineyard light/dark CSS rules. Updated portrait swatch, bg, and accent-hue across light and dark modes. Added `--swatch-vineyard` root variable.
+- `tokens.md` — Updated portrait values, added vineyard values, updated counts (5 themes, 19 tokens).
+
+**Decisions:**
+- Vineyard hue landed at 90° after iterating from 105° (too blue-green) → 82° (too chartreuse) → 90° (matches sunlit Napa hills).
+- Portrait color tuned through 4 test variants (warm wheat, amber, cool taupe, neutral grey, plus blue slates). Final choice: `hsl(43, 22%, 62%)` — slightly cooler and less saturated than original, better match for the grey studio backdrop.
+- Sky image restored to original; vineyard gets its own separate image file.
+
+## 2026-03-04 — Arrow cursor on contact and Mochi Health links
+
+**Branch:** `fix-link-cursor-arrow`
+
+**Summary:** Extended the invert cursor arrow morph to fire on all glass-highlighted links — Mochi Health, email, LinkedIn, and resume — matching the behavior already present on project cards.
+
+**What changed:**
+- `src/contexts/HoverContext.tsx` — Added `hoveringLink` boolean + `setHoveringLink` setter alongside the existing `hoveredProjectId` state. Keeps project-specific hover (used for image swap) separate from generic link hover (cursor only).
+- `src/components/CustomCursor.tsx` — Arrow morph condition expanded: `showArrow = (project?.isLink) || hoveringLink`. Added `hoveringLink` to the useEffect dependency array.
+- `src/components/HeroTitle.tsx` — Mochi Health `<a>` now calls `setHoveringLink(true/false)` on mouse enter/leave and focus/blur.
+- `src/components/AboutSection.tsx` — Email, LinkedIn, and resume `<a>` elements now call `setHoveringLink(true/false)` on mouse enter/leave and focus/blur.
+
+**Decisions:**
+- Used a separate `hoveringLink` boolean rather than funneling through `hoveredProjectId` — avoids triggering the image swap on the right column, which only responds to project IDs.
+- Same morph animation (circle scale 0 → arrow fade in, 200ms debounced restore) applies identically to all links.
+
+## 2026-03-04 — Custom cursor controls in sidebar
+
+**Branch:** `muscat`
+
+**Summary:** Added a 3-option cursor style selector to the sidebar theme controls, grouped below the appearance mode selector. Users can choose between a standard cursor, an 80px inverted-color circle (mix-blend-mode: difference), or a 72px figpal character trailing the cursor with spring inertia.
+
+**What changed:**
+- `src/contexts/CursorContext.tsx` — New context providing `cursorMode` ('standard' | 'invert' | 'figpal') with localStorage persistence. Follows the same pattern as ThemeContext.
+- `src/components/CustomCursor.tsx` — New component that renders cursor effects via imperative DOM manipulation. Invert mode: hides the default cursor (`* { cursor: none !important }` injected globally), shows an 80px white circle with `mix-blend-mode: difference`. On linkable card hover (tied to `hoveredProjectId` from HoverContext, not `elementFromPoint`), the circle morphs into a `→` arrow via scale transition — the arrow sits beneath the circle, revealed as the disc scales to 0. Debounced arrow→circle transition (200ms) prevents flicker between cards. Over the sidebar, the circle shrinks to a 12px dot (scale 0.15) and the arrow stays hidden. Figpal mode keeps the standard cursor and renders the character trailing 24px right/below with RAF lerp inertia (rate 0.12). Respects `prefers-reduced-motion`.
+- `src/components/SidebarThemeControls.tsx` — Extended with a new cursor radiogroup section: divider + 3 buttons (Cursor icon, Circle icon, figpal thumbnail). Own glass pill container. Stagger indices extended (DIVIDER_4, CURSOR_BASE). Added `data-sidebar` attribute on outermost container for cursor detection. Imported Cursor and Circle from Phosphor.
+- `src/components/ImageDisplay.tsx` — Fixed hover preview summary text causing theme image to shrink: made summary text absolutely positioned so it overlays without affecting image sizing.
+- `src/App.tsx` — Added CursorProvider and CustomCursor to the provider tree.
+- `public/images/figpal.png` — Figpal character image for the trailing cursor and sidebar icon.
+
+**Decisions:**
+- Separate CursorContext rather than extending ThemeContext — keeps concerns modular.
+- Single container with `mix-blend-mode: difference` for invert mode — arrow and circle are children. Avoids stacking context isolation issues from nesting blend modes.
+- Arrow morph uses scale transition on circle (top layer) to reveal arrow text (bottom layer) — visually convincing disc-to-arrow morph.
+- Card hover detection uses `hoveredProjectId` (React state) rather than `elementFromPoint` — ties cursor arrow to same state as glass pill, preventing flicker in gaps between cards.
+- Figpal icon in sidebar uses a tiny `<img>` rather than a Phosphor icon since it's a custom character.
 
 ## 2026-02-24 — Project hover previews: Lottie, GIF, and static images (WIP)
 

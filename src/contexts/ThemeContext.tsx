@@ -1,15 +1,18 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 
-export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza'
+export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza' | 'vineyard'
+const VALID_ACCENTS: AccentColor[] = ['table', 'portrait', 'sky', 'pizza', 'vineyard']
 export type AppearanceMode = 'system' | 'light' | 'dark'
+const VALID_MODES: AppearanceMode[] = ['system', 'light', 'dark']
 type ResolvedAppearance = 'light' | 'dark'
 
 // Base HSL values for each accent × mode (from tokens.md)
 const BG_BASE: Record<AccentColor, Record<'light' | 'dark', [number, number, number]>> = {
   sky:      { light: [200, 23, 95], dark: [200, 22, 8] },
   table:    { light: [30, 17, 91],  dark: [33, 18, 12] },
-  portrait: { light: [42, 22, 91],  dark: [47, 18, 10] },
+  portrait: { light: [39, 15, 92],  dark: [41, 14, 10] },
   pizza:    { light: [10, 30, 96],  dark: [8, 22, 7] },
+  vineyard: { light: [86, 18, 93], dark: [88, 18, 9] },
 }
 
 // Named intensity presets (kept for reference / future labeling)
@@ -22,7 +25,6 @@ export const INTENSITY_LEVELS = [
 
 // Continuous intensity: t ∈ [0, 1]
 // t=0 → satMult 1.0, no lightness shift  |  t=1 → satMult 2.8, full shift
-const VALID_ACCENTS = new Set<string>(Object.keys(BG_BASE))
 
 export function computeBg(accent: AccentColor, mode: 'light' | 'dark', t: number): string {
   const entry = BG_BASE[accent]
@@ -58,12 +60,12 @@ function getSystemPreference(): ResolvedAppearance {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
     const stored = localStorage.getItem(ACCENT_KEY)
-    return stored && VALID_ACCENTS.has(stored) ? (stored as AccentColor) : 'table'
+    return VALID_ACCENTS.includes(stored as AccentColor) ? (stored as AccentColor) : 'table'
   })
 
   const [appearanceMode, setAppearanceModeState] = useState<AppearanceMode>(() => {
     const stored = localStorage.getItem(APPEARANCE_KEY)
-    return (stored as AppearanceMode) || 'system'
+    return VALID_MODES.includes(stored as AppearanceMode) ? (stored as AppearanceMode) : 'system'
   })
 
   const [bgIntensity, setBgIntensityState] = useState<number>(() => {

@@ -206,7 +206,7 @@ src/
 │   ├── CaseStudySectionText.tsx # Shared text renderer for case study sections
 │   ├── PlaceholderVisual.tsx  # Gray placeholder for case study visuals
 │   ├── GlassModeSwitcher.tsx  # Glass mode switcher component
-│   ├── SidebarThemeControls.tsx # Sidebar with accent picker + mode switcher
+│   ├── SidebarThemeControls.tsx # Sidebar with accent picker + mode switcher (rendered in App.tsx, visible on all routes)
 │   ├── ModeSwitcher.tsx       # System/Light/Dark toggle
 │   ├── AccentPicker.tsx       # 4 color swatches
 │   ├── ImageDisplay.tsx       # Cross-fading image container

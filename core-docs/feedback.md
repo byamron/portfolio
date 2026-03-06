@@ -2,6 +2,26 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-05 — localStorage values must be validated against known sets
+
+**What was attempted:** `ThemeContext` initialized `accentColor` from localStorage with `(stored as AccentColor) || 'table'`. `SidebarThemeControls` then did `accents.find(a => a.color === accentColor)!` to look up the active swatch.
+
+**What went wrong:** The `|| 'table'` fallback only catches falsy values (null, empty string). If localStorage contains a truthy but invalid string (e.g. a stale value from a previous branch, a renamed accent, or any non-empty garbage), it passes through the `||` guard and gets used as-is. `accents.find()` returns `undefined`, and `activeSwatch.swatch` crashes the entire app — blank page, no error boundary, no recovery. This is especially common with worktree builds where different branches may write different localStorage values to the same origin.
+
+**Lesson learned:** Never trust localStorage values with a simple `||` fallback. Always validate against the actual set of valid values using `.includes()` or a `Set.has()` check. The pattern is:
+```ts
+// BAD — only catches null/empty, not invalid values
+const stored = localStorage.getItem(KEY)
+return (stored as MyType) || defaultValue
+
+// GOOD — validates against known values
+const stored = localStorage.getItem(KEY)
+return VALID_VALUES.includes(stored as MyType) ? (stored as MyType) : defaultValue
+```
+Additionally, any code that looks up a value from an array using `.find()` should use `?? fallback` instead of `!` (non-null assertion). The `!` operator silences TypeScript but doesn't prevent runtime crashes. Prefer defensive fallbacks (`?? accents[0]`) that keep the app running even with unexpected state.
+
+**Scope:** This applies to ALL localStorage reads in the codebase — accent color, appearance mode, cursor mode, bg intensity, and any future persisted state. When adding new persisted values, always define a `VALID_*` array and validate on read.
+
 ## 2026-02-21 — backdrop-filter requires correct z-index stacking
 
 **What was attempted:** Glass pill for sidebar controls was placed at z-index 0 (behind the controls) with backdrop-filter: blur(1px). Expected the blur to be visible through the transparent mode buttons above.

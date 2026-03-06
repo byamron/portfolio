@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Monitor, Sun, Moon } from '@phosphor-icons/react'
+import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
+import { useCursor, type CursorMode } from '@/contexts/CursorContext'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -9,11 +10,18 @@ const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'dark', Icon: Moon, label: 'Dark theme' },
 ]
 
+const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle' | 'figpal' }[] = [
+  { mode: 'standard', label: 'Standard cursor', icon: 'cursor' },
+  { mode: 'invert', label: 'Invert circle cursor', icon: 'circle' },
+  { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
+]
+
 const accents: { color: AccentColor; swatch: string }[] = [
   { color: 'table', swatch: 'hsl(34, 50%, 60%)' },
-  { color: 'portrait', swatch: 'hsl(47, 34%, 64%)' },
+  { color: 'portrait', swatch: 'hsl(43, 22%, 62%)' },
   { color: 'sky', swatch: 'hsl(204, 50%, 70%)' },
   { color: 'pizza', swatch: 'hsl(15, 53%, 64%)' },
+  { color: 'vineyard', swatch: 'hsl(90, 36%, 48%)' },
 ]
 
 const motionEase = [0.25, 0.46, 0.45, 0.94]
@@ -87,10 +95,19 @@ function setupControlPill(container: HTMLElement): () => void {
   }
 
   function getControlPosition(el: HTMLElement) {
-    const elRect = el.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-    const centerX = elRect.left + elRect.width / 2 - containerRect.left
-    const centerY = elRect.top + elRect.height / 2 - containerRect.top
+    // Use offsetLeft/offsetTop to get layout position without CSS transforms.
+    // getBoundingClientRect() reflects Framer Motion's slide-in animation
+    // (x: 20 → 0), which causes the pill to snap to the wrong position
+    // when hovering a control before its animation completes.
+    let x = 0, y = 0
+    let node: HTMLElement | null = el
+    while (node && node !== container) {
+      x += node.offsetLeft
+      y += node.offsetTop
+      node = node.offsetParent as HTMLElement | null
+    }
+    const centerX = x + el.offsetWidth / 2
+    const centerY = y + el.offsetHeight / 2
     return {
       x: centerX - PILL_SIZE / 2,
       y: centerY - PILL_SIZE / 2,
@@ -226,25 +243,30 @@ const STRIP_HEIGHT = 72
 const THUMB_SIZE = 11
 const THUMB_TRAVEL = STRIP_HEIGHT - THUMB_SIZE // usable range for thumb center-to-edge
 
-// Stagger delay indices (fixed layout: swatches → intensity → modes)
-// [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes
+// Stagger delay indices (fixed layout: swatches → intensity → modes → cursors)
+// [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes  [11] divider  [12-14] cursors
 const DIVIDER_1 = 0
 const SWATCH_BASE = 1
 const DIVIDER_2 = SWATCH_BASE + accents.length        // 5
 const STRIP_IDX = DIVIDER_2 + 1                       // 6
 const DIVIDER_3 = STRIP_IDX + 1                       // 7
 const MODE_BASE = DIVIDER_3 + 1                       // 8
+const DIVIDER_4 = MODE_BASE + modes.length             // 11
+const CURSOR_BASE = DIVIDER_4 + 1                      // 12
 
 export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
+  const { cursorMode, setCursorMode } = useCursor()
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>(null)
   const swatchesRef = useRef<HTMLDivElement>(null)
   const modesRef = useRef<HTMLDivElement>(null)
+  const cursorsRef = useRef<HTMLDivElement>(null)
   const cleanupSwatchPill = useRef<(() => void) | null>(null)
   const cleanupModePill = useRef<(() => void) | null>(null)
+  const cleanupCursorPill = useRef<(() => void) | null>(null)
   const draggingRef = useRef(false)
 
   const handleEnter = () => {
@@ -262,9 +284,12 @@ export function SidebarThemeControls() {
     cleanupSwatchPill.current = null
     cleanupModePill.current?.()
     cleanupModePill.current = null
+    cleanupCursorPill.current?.()
+    cleanupCursorPill.current = null
     if (hovered) {
       if (swatchesRef.current) cleanupSwatchPill.current = setupControlPill(swatchesRef.current)
       if (modesRef.current) cleanupModePill.current = setupControlPill(modesRef.current)
+      if (cursorsRef.current) cleanupCursorPill.current = setupControlPill(cursorsRef.current)
     }
   }, [hovered])
 
@@ -276,6 +301,8 @@ export function SidebarThemeControls() {
       cleanupSwatchPill.current = null
       cleanupModePill.current?.()
       cleanupModePill.current = null
+      cleanupCursorPill.current?.()
+      cleanupCursorPill.current = null
     }
   }, [setupPills])
 
@@ -331,6 +358,7 @@ export function SidebarThemeControls() {
 
   return (
     <div
+      data-sidebar
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
       style={{
@@ -544,6 +572,69 @@ export function SidebarThemeControls() {
                       }}
                     >
                       <Icon size={18} />
+                    </span>
+                  </button>
+                </motion.div>
+              )
+            })}
+          </div>
+
+          {/* Divider: modes ↔ cursors */}
+          <motion.div
+            animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
+            style={{
+              width: 20, height: 1, background: 'var(--text-dark)',
+              margin: '18px 0', pointerEvents: 'none',
+            }}
+          />
+
+          {/* Cursor style icons — own pill container */}
+          <div
+            ref={cursorsRef}
+            role="radiogroup"
+            aria-label="Cursor style"
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+          >
+            {cursorOptions.map(({ mode, label, icon }, i) => {
+              const isActive = cursorMode === mode
+              return (
+                <motion.div
+                  key={mode}
+                  animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
+                  transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * 0.04 : 0, ease: motionEase }}
+                  style={{ pointerEvents: hovered ? 'auto' : 'none' }}
+                >
+                  <button
+                    data-sidebar-control
+                    role="radio"
+                    aria-checked={isActive}
+                    aria-label={label}
+                    onClick={() => setCursorMode(mode)}
+                    style={{
+                      width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
+                      opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
+                      transition: 'opacity 200ms ease-in-out',
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 24, height: 24, borderRadius: 6,
+                        outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
+                        outlineOffset: 3, transition: 'outline 200ms ease-in-out',
+                      }}
+                    >
+                      {icon === 'cursor' && <Cursor size={18} />}
+                      {icon === 'circle' && <Circle size={18} />}
+                      {icon === 'figpal' && (
+                        <img
+                          src="/images/figpal.png"
+                          alt=""
+                          style={{ width: 18, height: 18, objectFit: 'contain' }}
+                        />
+                      )}
                     </span>
                   </button>
                 </motion.div>

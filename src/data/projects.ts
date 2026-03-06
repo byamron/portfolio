@@ -66,6 +66,7 @@ export const defaultImageMap: Record<AccentColor, string> = {
   portrait: '/images/portrait-portrait.jpeg',
   sky: '/images/portrait-sky.jpeg',
   pizza: '/images/portrait-pizza.jpeg',
+  vineyard: '/images/portrait-vineyard.jpeg',
 }
 
 // Flat lookup for ImageDisplay: unique project id → Project
