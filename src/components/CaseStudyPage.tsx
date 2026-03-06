@@ -13,9 +13,7 @@ export function CaseStudyPage() {
   const navRef = useRef<HTMLElement>(null)
   useGlassHighlight(navRef, {
     borderRadius: 8,
-    pullStrength: 0,
-    stretchAmount: 0,
-    squashAmount: 0,
+    maxPull: 3,
     tightBounds: true,
     clearDelay: 300,
     cardSelector: '[data-back-link]',

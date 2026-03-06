@@ -279,7 +279,7 @@ export function SidebarThemeControls() {
     }
   }, [setupPills])
 
-  const activeSwatch = accents.find(a => a.color === accentColor)!
+  const activeSwatch = accents.find(a => a.color === accentColor) ?? accents[0]
 
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
