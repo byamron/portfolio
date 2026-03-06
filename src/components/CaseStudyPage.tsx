@@ -4,11 +4,13 @@ import { caseStudiesBySlug } from '@/data/case-study-content'
 import { CaseStudyLayoutA } from './CaseStudyLayoutA'
 import { useIsWide } from '@/hooks/useMediaQuery'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
+import { useHover } from '@/contexts/HoverContext'
 
 export function CaseStudyPage() {
   const { slug } = useParams<{ slug: string }>()
   const isWide = useIsWide()
   const caseStudy = slug ? caseStudiesBySlug[slug] : undefined
+  const { setHoveredProjectId, setHoveringLink } = useHover()
 
   const navRef = useRef<HTMLElement>(null)
   useGlassHighlight(navRef, {
@@ -23,7 +25,9 @@ export function CaseStudyPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [slug])
+    setHoveredProjectId(null)
+    setHoveringLink(false)
+  }, [slug, setHoveredProjectId, setHoveringLink])
 
   if (!caseStudy) {
     return (

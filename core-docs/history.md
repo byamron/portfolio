@@ -2,6 +2,32 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-05 — Sidebar theme controls on all pages
+
+**Branch:** `hover-theme-all-pages`
+
+**Summary:** Moved `SidebarThemeControls` from `Layout.tsx` (home page only) up to `App.tsx` so the hover sidebar theme changer renders on all routes, including case study pages.
+
+**What changed:**
+- `src/App.tsx` — Added `SidebarThemeControls` import and render alongside `<Routes>`.
+- `src/components/Layout.tsx` — Removed `SidebarThemeControls` import and render (no longer needed here since it's at the app level).
+
+**Bugfix — localStorage validation crash:**
+- `ThemeContext` initialized `accentColor` from localStorage with `(stored as AccentColor) || 'table'`, which only catches null/empty — not invalid strings. Stale localStorage values from other branches crashed `SidebarThemeControls` because `accents.find()` returned `undefined` and `activeSwatch.swatch` threw a TypeError, blanking the entire page.
+- Fixed by adding `VALID_ACCENTS` and `VALID_MODES` arrays and validating with `.includes()` before using stored values. Also changed `accents.find(...)!` to `accents.find(...) ?? accents[0]` in SidebarThemeControls for defensive fallback.
+- Applied the same validation to `CursorContext.tsx` with `VALID_CURSOR_MODES`.
+- See `core-docs/feedback.md` for the full lesson on localStorage validation.
+
+**Bugfix — sidebar pill position during animation:**
+- `getControlPosition` in `SidebarThemeControls` used `getBoundingClientRect()`, which reflects CSS transforms applied by Framer Motion's slide-in animation (x: 20 → 0). This caused the pill to snap to the wrong position when a user hovered a control before the entrance animation completed.
+- Fixed by replacing `getBoundingClientRect()` with an `offsetLeft`/`offsetTop` traversal loop up to the container, which reads layout position independent of CSS transforms.
+
+**Bugfix — hover state persisting on case study pages:**
+- `CaseStudyPage.tsx` now resets `hoveredProjectId` and `hoveringLink` on navigation, preventing stale hover state from the home page from affecting the sidebar on case study pages.
+
+**Decisions:**
+- Since `SidebarThemeControls` uses `position: fixed`, it doesn't depend on any parent layout — lifting it to `App.tsx` is the simplest approach with no side effects.
+
 ## 2026-03-05 — New vineyard theme + sky image swap + portrait color tuning
 
 **Branch:** `sky-theme-image`

@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 
 export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza' | 'vineyard'
+const VALID_ACCENTS: AccentColor[] = ['table', 'portrait', 'sky', 'pizza', 'vineyard']
 export type AppearanceMode = 'system' | 'light' | 'dark'
+const VALID_MODES: AppearanceMode[] = ['system', 'light', 'dark']
 type ResolvedAppearance = 'light' | 'dark'
 
 // Base HSL values for each accent × mode (from tokens.md)
@@ -55,12 +57,12 @@ function getSystemPreference(): ResolvedAppearance {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
     const stored = localStorage.getItem(ACCENT_KEY)
-    return (stored as AccentColor) || 'table'
+    return VALID_ACCENTS.includes(stored as AccentColor) ? (stored as AccentColor) : 'table'
   })
 
   const [appearanceMode, setAppearanceModeState] = useState<AppearanceMode>(() => {
     const stored = localStorage.getItem(APPEARANCE_KEY)
-    return (stored as AppearanceMode) || 'system'
+    return VALID_MODES.includes(stored as AppearanceMode) ? (stored as AppearanceMode) : 'system'
   })
 
   const [bgIntensity, setBgIntensityState] = useState<number>(() => {
