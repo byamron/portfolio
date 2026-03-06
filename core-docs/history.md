@@ -2,6 +2,26 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-05 — New vineyard theme + sky image swap + portrait color tuning
+
+**Branch:** `sky-theme-image`
+
+**Summary:** Replaced the sky theme portrait with a vineyard photo (Napa wine country). Added a new "vineyard" accent theme (warm yellow-green, hsl 90°) derived from the photo's spring-green hills. Retuned the portrait accent from warm wheat (hsl 47, 34%) to a cooler taupe (hsl 43, 22%) that better complements the studio portrait's grey backdrop. Theme system now has 5 accents: table, portrait, sky, pizza, vineyard.
+
+**What changed:**
+- `public/images/portrait-sky.jpeg` — Restored to original sky image.
+- `public/images/portrait-vineyard.jpeg` — New vineyard portrait (pre-cropped to portrait aspect ratio).
+- `src/contexts/ThemeContext.tsx` — Added `vineyard` to AccentColor union and BG_BASE. Updated portrait BG values to cooler taupe (hsl 39/41°, 14-15% sat).
+- `src/components/SidebarThemeControls.tsx` — Added vineyard swatch. Updated portrait swatch to `hsl(43, 22%, 62%)`.
+- `src/data/projects.ts` — Added vineyard to defaultImageMap.
+- `src/styles/theme.css` — Added vineyard light/dark CSS rules. Updated portrait swatch, bg, and accent-hue across light and dark modes. Added `--swatch-vineyard` root variable.
+- `tokens.md` — Updated portrait values, added vineyard values, updated counts (5 themes, 19 tokens).
+
+**Decisions:**
+- Vineyard hue landed at 90° after iterating from 105° (too blue-green) → 82° (too chartreuse) → 90° (matches sunlit Napa hills).
+- Portrait color tuned through 4 test variants (warm wheat, amber, cool taupe, neutral grey, plus blue slates). Final choice: `hsl(43, 22%, 62%)` — slightly cooler and less saturated than original, better match for the grey studio backdrop.
+- Sky image restored to original; vineyard gets its own separate image file.
+
 ## 2026-03-04 — Arrow cursor on contact and Mochi Health links
 
 **Branch:** `fix-link-cursor-arrow`

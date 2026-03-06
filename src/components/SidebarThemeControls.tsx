@@ -18,9 +18,10 @@ const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle
 
 const accents: { color: AccentColor; swatch: string }[] = [
   { color: 'table', swatch: 'hsl(34, 50%, 60%)' },
-  { color: 'portrait', swatch: 'hsl(47, 34%, 64%)' },
+  { color: 'portrait', swatch: 'hsl(43, 22%, 62%)' },
   { color: 'sky', swatch: 'hsl(204, 50%, 70%)' },
   { color: 'pizza', swatch: 'hsl(15, 53%, 64%)' },
+  { color: 'vineyard', swatch: 'hsl(90, 36%, 48%)' },
 ]
 
 const motionEase = [0.25, 0.46, 0.45, 0.94]

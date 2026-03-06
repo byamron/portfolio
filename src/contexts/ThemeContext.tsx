@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 
-export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza'
+export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza' | 'vineyard'
 export type AppearanceMode = 'system' | 'light' | 'dark'
 type ResolvedAppearance = 'light' | 'dark'
 
@@ -8,8 +8,9 @@ type ResolvedAppearance = 'light' | 'dark'
 const BG_BASE: Record<AccentColor, Record<'light' | 'dark', [number, number, number]>> = {
   sky:      { light: [200, 23, 95], dark: [200, 22, 8] },
   table:    { light: [30, 17, 91],  dark: [33, 18, 12] },
-  portrait: { light: [42, 22, 91],  dark: [47, 18, 10] },
+  portrait: { light: [39, 15, 92],  dark: [41, 14, 10] },
   pizza:    { light: [10, 30, 96],  dark: [8, 22, 7] },
+  vineyard: { light: [86, 18, 93], dark: [88, 18, 9] },
 }
 
 // Named intensity presets (kept for reference / future labeling)

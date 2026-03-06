@@ -17,7 +17,7 @@ All values extracted from Framer color panel. HSL format: `hsl(H, S%, L%)`.
 | `--text-underline` | `hsla(0, 0%, 7%, 0.2)` | `hsla(0, 0%, 93%, 0.2)` | Link underline decoration |
 
 **Notes:**
-- Text colors are **not theme-dependent** — they stay the same across table/portrait/sky/pizza.
+- Text colors are **not theme-dependent** — they stay the same across table/portrait/sky/pizza/vineyard.
 - They only change between light and dark appearance mode.
 - `--text-grey` has a very slight blue tint (240deg hue, 2% saturation).
 
@@ -25,14 +25,15 @@ All values extracted from Framer color panel. HSL format: `hsl(H, S%, L%)`.
 
 ## Background Colors (Theme-Specific)
 
-These are the 4 named theme backgrounds. They change based on both theme selection AND appearance mode.
+These are the 5 named theme backgrounds. They change based on both theme selection AND appearance mode.
 
 | Token | Light Mode | Dark Mode |
 |-------|-----------|-----------|
 | `--bg-sky` | `hsl(200, 23%, 95%)` | `hsl(200, 22%, 8%)` |
 | `--bg-table` | `hsl(30, 17%, 91%)` | `hsl(33, 18%, 12%)` |
-| `--bg-portrait` | `hsl(42, 22%, 91%)` | `hsl(47, 18%, 10%)` |
+| `--bg-portrait` | `hsl(39, 15%, 92%)` | `hsl(41, 14%, 10%)` |
 | `--bg-pizza` | `hsl(10, 30%, 96%)` | `hsl(8, 22%, 7%)` |
+| `--bg-vineyard` | `hsl(86, 18%, 93%)` | `hsl(88, 18%, 9%)` |
 
 **Pattern:** In light mode, backgrounds are very desaturated and near-white (L: 91-96%). In dark mode, they're very dark (L: 7-12%) with similar hue but slightly shifted saturation.
 
@@ -46,14 +47,15 @@ These are the theme accent/swatch colors. They appear **identical in light and d
 |-------|-------------------|
 | `--swatch-sky` | `hsl(204, 50%, 70%)` |
 | `--swatch-table` | `hsl(34, 50%, 60%)` |
-| `--swatch-portrait` | `hsl(47, 34%, 64%)` |
+| `--swatch-portrait` | `hsl(43, 22%, 62%)` |
 | `--swatch-pizza` | `hsl(15, 53%, 64%)` |
+| `--swatch-vineyard` | `hsl(90, 36%, 48%)` |
 
 ---
 
 ## CSS Implementation (Draft)
 
-Canonical attribute names: `data-theme` (light/dark), `data-accent` (table/portrait/sky/pizza), both on `<html>`.
+Canonical attribute names: `data-theme` (light/dark), `data-accent` (table/portrait/sky/pizza/vineyard), both on `<html>`.
 
 ```css
 /* Appearance mode: light */
@@ -94,14 +96,19 @@ Canonical attribute names: `data-theme` (light/dark), `data-accent` (table/portr
   --accent-hue: 34;
 }
 [data-theme="light"][data-accent="portrait"] {
-  --bg: hsl(42, 22%, 91%);
-  --swatch: hsl(47, 34%, 64%);
-  --accent-hue: 47;
+  --bg: hsl(39, 15%, 92%);
+  --swatch: hsl(43, 22%, 62%);
+  --accent-hue: 43;
 }
 [data-theme="light"][data-accent="pizza"] {
   --bg: hsl(10, 30%, 96%);
   --swatch: hsl(15, 53%, 64%);
   --accent-hue: 15;
+}
+[data-theme="light"][data-accent="vineyard"] {
+  --bg: hsl(86, 18%, 93%);
+  --swatch: hsl(90, 36%, 48%);
+  --accent-hue: 90;
 }
 
 /* Theme backgrounds + swatches + accent-hue (dark) */
@@ -116,14 +123,19 @@ Canonical attribute names: `data-theme` (light/dark), `data-accent` (table/portr
   --accent-hue: 34;
 }
 [data-theme="dark"][data-accent="portrait"] {
-  --bg: hsl(47, 18%, 10%);
-  --swatch: hsl(47, 34%, 64%);
-  --accent-hue: 47;
+  --bg: hsl(41, 14%, 10%);
+  --swatch: hsl(43, 22%, 62%);
+  --accent-hue: 43;
 }
 [data-theme="dark"][data-accent="pizza"] {
   --bg: hsl(8, 22%, 7%);
   --swatch: hsl(15, 53%, 64%);
   --accent-hue: 15;
+}
+[data-theme="dark"][data-accent="vineyard"] {
+  --bg: hsl(88, 18%, 9%);
+  --swatch: hsl(90, 36%, 48%);
+  --accent-hue: 90;
 }
 ```
 
@@ -138,6 +150,6 @@ Default, Default Frosted, Extra Light, Mochi Blue, Mochi Blue Transparent, UW Pu
 ## Summary
 
 - **Text colors** are theme-independent. They only change with light/dark appearance mode.
-- **Background colors** change with both theme selection (sky/table/portrait/pizza) AND appearance mode (light/dark).
+- **Background colors** change with both theme selection (sky/table/portrait/pizza/vineyard) AND appearance mode (light/dark).
 - **Swatch colors** are constant across appearance modes — they're the accent spot color for each theme.
-- Total: **15 unique token values** (7 text + 4 bg + 4 swatch) across 2 appearance modes.
+- Total: **19 unique token values** (7 text + 5 bg + 5 swatch) across 2 appearance modes.
