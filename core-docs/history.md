@@ -22,6 +22,22 @@ Decision log and completed work, in reverse chronological order.
 - Portrait color tuned through 4 test variants (warm wheat, amber, cool taupe, neutral grey, plus blue slates). Final choice: `hsl(43, 22%, 62%)` — slightly cooler and less saturated than original, better match for the grey studio backdrop.
 - Sky image restored to original; vineyard gets its own separate image file.
 
+## 2026-03-04 — Arrow cursor on contact and Mochi Health links
+
+**Branch:** `fix-link-cursor-arrow`
+
+**Summary:** Extended the invert cursor arrow morph to fire on all glass-highlighted links — Mochi Health, email, LinkedIn, and resume — matching the behavior already present on project cards.
+
+**What changed:**
+- `src/contexts/HoverContext.tsx` — Added `hoveringLink` boolean + `setHoveringLink` setter alongside the existing `hoveredProjectId` state. Keeps project-specific hover (used for image swap) separate from generic link hover (cursor only).
+- `src/components/CustomCursor.tsx` — Arrow morph condition expanded: `showArrow = (project?.isLink) || hoveringLink`. Added `hoveringLink` to the useEffect dependency array.
+- `src/components/HeroTitle.tsx` — Mochi Health `<a>` now calls `setHoveringLink(true/false)` on mouse enter/leave and focus/blur.
+- `src/components/AboutSection.tsx` — Email, LinkedIn, and resume `<a>` elements now call `setHoveringLink(true/false)` on mouse enter/leave and focus/blur.
+
+**Decisions:**
+- Used a separate `hoveringLink` boolean rather than funneling through `hoveredProjectId` — avoids triggering the image swap on the right column, which only responds to project IDs.
+- Same morph animation (circle scale 0 → arrow fade in, 200ms debounced restore) applies identically to all links.
+
 ## 2026-03-04 — Custom cursor controls in sidebar
 
 **Branch:** `muscat`

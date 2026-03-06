@@ -1,4 +1,5 @@
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
+import { useHover } from '@/contexts/HoverContext'
 import { useGlassHighlight } from '../hooks/useGlassHighlight'
 
 const textStyle = {
@@ -19,6 +20,9 @@ const linkCardStyle = {
 } as const
 
 export function AboutSection() {
+  const { setHoveringLink } = useHover()
+  const onEnter = useCallback(() => setHoveringLink(true), [setHoveringLink])
+  const onLeave = useCallback(() => setHoveringLink(false), [setHoveringLink])
   const contactRef = useRef<HTMLDivElement>(null)
   useGlassHighlight(contactRef, {
     borderRadius: 8,
@@ -41,13 +45,13 @@ export function AboutSection() {
       <div ref={contactRef} data-contact-links style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 32 }}>
         <p style={textStyle}>
           You can say hi if you see me running around SF, or you can contact me via{' '}
-          <a href="mailto:ben.yamron@icloud.com" data-contact-card style={linkCardStyle}>email</a>
+          <a href="mailto:ben.yamron@icloud.com" data-contact-card style={linkCardStyle} onMouseEnter={onEnter} onMouseLeave={onLeave} onFocus={onEnter} onBlur={onLeave}>email</a>
           {' '}or on{' '}
-          <a href="https://www.linkedin.com/in/benyamron" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle}>LinkedIn</a>.
+          <a href="https://www.linkedin.com/in/benyamron" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle} onMouseEnter={onEnter} onMouseLeave={onLeave} onFocus={onEnter} onBlur={onLeave}>LinkedIn</a>.
         </p>
         <p style={textStyle}>
           Just lurking? Take a look at my{' '}
-          <a href="/ben-yamron-resume.pdf" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle}>resume</a>.
+          <a href="/ben-yamron-resume.pdf" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle} onMouseEnter={onEnter} onMouseLeave={onLeave} onFocus={onEnter} onBlur={onLeave}>resume</a>.
         </p>
       </div>
     </section>
