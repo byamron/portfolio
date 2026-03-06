@@ -95,10 +95,19 @@ function setupControlPill(container: HTMLElement): () => void {
   }
 
   function getControlPosition(el: HTMLElement) {
-    const elRect = el.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-    const centerX = elRect.left + elRect.width / 2 - containerRect.left
-    const centerY = elRect.top + elRect.height / 2 - containerRect.top
+    // Use offsetLeft/offsetTop to get layout position without CSS transforms.
+    // getBoundingClientRect() reflects Framer Motion's slide-in animation
+    // (x: 20 → 0), which causes the pill to snap to the wrong position
+    // when hovering a control before its animation completes.
+    let x = 0, y = 0
+    let node: HTMLElement | null = el
+    while (node && node !== container) {
+      x += node.offsetLeft
+      y += node.offsetTop
+      node = node.offsetParent as HTMLElement | null
+    }
+    const centerX = x + el.offsetWidth / 2
+    const centerY = y + el.offsetHeight / 2
     return {
       x: centerX - PILL_SIZE / 2,
       y: centerY - PILL_SIZE / 2,
@@ -297,7 +306,7 @@ export function SidebarThemeControls() {
     }
   }, [setupPills])
 
-  const activeSwatch = accents.find(a => a.color === accentColor)!
+  const activeSwatch = accents.find(a => a.color === accentColor) ?? accents[0]
 
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
