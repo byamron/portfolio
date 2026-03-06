@@ -13,11 +13,7 @@ export interface GlassConfig {
   borderWidth: number
   borderRadius: number
   fadeDuration: number
-  stretchAmount: number
-  squashAmount: number
-  recoveryDuration: number
-  pullStrength: number
-  edgeZone: number
+  maxPull: number
   lerpSpeed: number
   tightBounds: boolean
   clearDelay: number
@@ -33,11 +29,7 @@ export const GLASS_DEFAULTS: GlassConfig = {
   borderWidth: 0.10,
   borderRadius: 16,
   fadeDuration: 200,
-  stretchAmount: 0.05,
-  squashAmount: 0.001,
-  recoveryDuration: 150,
-  pullStrength: 0.12,
-  edgeZone: 0.20,
+  maxPull: 10,
   lerpSpeed: 0.15,
   tightBounds: false,
   clearDelay: 150,
@@ -72,13 +64,14 @@ function setupGlassHighlight(
 ): () => void {
   // -- Mutable state --
   let pill: HTMLDivElement | null = null
+
   let currentCard: HTMLElement | null = null
   let isVisible = false
   let rafId: number | null = null
   let observer: MutationObserver | null = null
-  let isVerticalLayout = true
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
   let clearTimer: ReturnType<typeof setTimeout> | null = null
+  let currentBorderRadius = configRef.current.borderRadius
 
   // All pill geometry is driven by this state object.
   // The RAF loop lerps `current` toward `target` every frame.
@@ -97,9 +90,7 @@ function setupGlassHighlight(
       configRef.current = {
         ...configRef.current,
         fadeDuration: 0,
-        pullStrength: 0,
-        stretchAmount: 0,
-        squashAmount: 0,
+        maxPull: 0,
         lerpSpeed: 1, // instant — snap to target
       }
     } else {
@@ -156,27 +147,17 @@ function setupGlassHighlight(
 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
-    // Frost: Blur + accent tint + thin border. Mode-aware shading.
+    // Frost: Blur + accent tint. Mode-aware shading.
     const fill = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
     pill.style.background = fill
     setBackdropFilter(pill, `blur(${cfg.surfaceBlur}px)`)
+
     pill.style.boxShadow = isDark
       ? `inset 0 1px 0 0 rgba(255, 255, 255, 0.10)`
       : `inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)`
     pill.style.border = isDark
       ? `0.5px solid rgba(255, 255, 255, 0.12)`
       : `0.5px solid rgba(0, 0, 0, 0.08)`
-  }
-
-  // -- Layout detection --
-
-  function detectLayout(): void {
-    const cards = container.querySelectorAll<HTMLElement>(configRef.current.cardSelector)
-    if (cards.length >= 2) {
-      const a = cards[0]!.getBoundingClientRect()
-      const b = cards[1]!.getBoundingClientRect()
-      isVerticalLayout = Math.abs(b.top - a.top) > Math.abs(b.left - a.left)
-    }
   }
 
   // -- Positioning --
@@ -192,49 +173,37 @@ function setupGlassHighlight(
     }
   }
 
+  // -- Position helper --
+
+  function applyPillPosition(
+    x: number, y: number, w: number, h: number,
+    leanX = 0, leanY = 0, scaleX = 1, scaleY = 1,
+    rotate = 0,
+  ): void {
+    if (!pill) return
+    pill.style.transform = `translate(${x + leanX}px, ${y + leanY}px) rotate(${rotate}deg) scale(${scaleX}, ${scaleY})`
+    pill.style.width = `${w}px`
+    pill.style.height = `${h}px`
+  }
+
   // -- Fade (the ONLY thing using CSS transitions) --
 
   function fadeIn(): void {
     if (!pill) return
     isVisible = true
-    pill.style.transition = `opacity ${configRef.current.fadeDuration}ms ease`
+    const t = `opacity ${configRef.current.fadeDuration}ms ease`
+    pill.style.transition = t
     pill.style.opacity = '1'
+
   }
 
   function fadeOut(): void {
     if (!pill) return
     isVisible = false
-    pill.style.transition = `opacity ${configRef.current.fadeDuration}ms ease`
+    const t = `opacity ${configRef.current.fadeDuration}ms ease`
+    pill.style.transition = t
     pill.style.opacity = '0'
-  }
 
-  // -- Stretch/squash deformation (Web Animations API, layered on top) --
-
-  function applyStretchSquash(dx: number, dy: number, distance: number): void {
-    if (!pill) return
-    const cfg = configRef.current
-    if (distance <= 5) return
-
-    const f = Math.min(distance / 150, 1)
-    const hr = Math.abs(dx) / distance
-    const vr = Math.abs(dy) / distance
-
-    const peakSx = (1 + cfg.stretchAmount * f * hr) * (1 - cfg.squashAmount * f * vr)
-    const peakSy = (1 + cfg.stretchAmount * f * vr) * (1 - cfg.squashAmount * f * hr)
-
-    pill.animate(
-      [
-        { transform: 'scale(1, 1)', offset: 0 },
-        { transform: `scale(${peakSx}, ${peakSy})`, offset: 0.3 },
-        { transform: 'scale(1, 1)', offset: 1.0 },
-      ],
-      {
-        duration: 350,
-        easing: 'ease-out',
-        fill: 'none' as FillMode,
-        composite: 'add',
-      },
-    )
   }
 
   // -- The one RAF loop that drives all pill movement --
@@ -258,8 +227,11 @@ function setupGlassHighlight(
     const cfg = configRef.current
     const lr = cfg.lerpSpeed
 
-    // Compute pull-adjusted targets (gravitational pull modifies target from base)
-    computePullTargets(cfg)
+    // Targets stay at base (card position)
+    state.targetX = state.baseX
+    state.targetY = state.baseY
+    state.targetW = state.baseW
+    state.targetH = state.baseH
 
     // Lerp current toward target
     state.currentX += (state.targetX - state.currentX) * lr
@@ -282,80 +254,51 @@ function setupGlassHighlight(
       state.currentH = state.targetH
     }
 
-    // Apply to DOM — single write
-    pill.style.transform = `translate(${state.currentX}px, ${state.currentY}px)`
-    pill.style.width = `${state.currentW}px`
-    pill.style.height = `${state.currentH}px`
+    // Compute lean + tilt from cursor position
+    let leanX = 0, leanY = 0
+    let rotateDeg = 0
 
-    // Keep running if not settled, or if a card is hovered (mouse may move into edge zone)
+    if (cfg.maxPull > 0) {
+      const containerRect = container.getBoundingClientRect()
+      const pillVpX = containerRect.left + state.currentX - container.scrollLeft
+      const pillVpY = containerRect.top + state.currentY - container.scrollTop
+      const relX = state.mouseX - pillVpX - state.currentW / 2
+      const relY = state.mouseY - pillVpY - state.currentH / 2
+      const nx = state.currentW > 0 ? relX / (state.currentW / 2) : 0
+      const ny = state.currentH > 0 ? relY / (state.currentH / 2) : 0
+      const d = Math.sqrt(nx * nx + ny * ny)
+
+      const deadZone = 0.7
+      const rawD = Math.max(0, d - deadZone) / (1 - deadZone)
+      const t = 1 - Math.exp(-rawD * 1.5)
+
+      // Lean: offset toward cursor
+      const maxLean = 3
+      const dirX = d > 0.001 ? nx / d : 0
+      const dirY = d > 0.001 ? ny / d : 0
+      leanX = dirX * t * maxLean
+      leanY = dirY * t * maxLean
+
+      // Tilt: cross-axis positional hint via rotation
+      // Uses dirY * |dirY| (not just |dirY|) so the rotation sign flips correctly
+      // when pulling from opposite sides. Symmetric in all quadrants.
+      const maxTilt = 1.0 // degrees
+      const cnx = Math.max(-1, Math.min(1, nx))
+      const cny = Math.max(-1, Math.min(1, ny))
+      rotateDeg = (cnx * dirY * Math.abs(dirY) + cny * dirX * Math.abs(dirX)) * maxTilt * t
+    }
+
+    // Apply position + lean + tilt to DOM
+    applyPillPosition(
+      state.currentX, state.currentY, state.currentW, state.currentH,
+      leanX, leanY, 1, 1, rotateDeg,
+    )
+
+    // Keep running if not settled
     if (!settled) {
       rafId = requestAnimationFrame(loop)
     }
     // When settled, loop stops. mousemove restarts it.
-  }
-
-  function computePullTargets(cfg: GlassConfig): void {
-    if (!currentCard) return
-
-    // Start from base position (the card's natural position)
-    let newX = state.baseX
-    let newY = state.baseY
-    let newW = state.baseW
-    let newH = state.baseH
-
-    // Gravitational pull: if cursor is in edge zone, stretch + shift
-    const cardRect = currentCard.getBoundingClientRect()
-    const relX = (state.mouseX - cardRect.left) / cardRect.width
-    const relY = (state.mouseY - cardRect.top) / cardRect.height
-
-    const ez = cfg.edgeZone
-    let pullAmount = 0
-
-    if (isVerticalLayout) {
-      if (relY < ez) {
-        pullAmount = -Math.pow(Math.max(0, Math.min(1, 1 - relY / ez)), 1.5)
-      } else if (relY > 1 - ez) {
-        pullAmount = Math.pow(Math.max(0, Math.min(1, (relY - (1 - ez)) / ez)), 1.5)
-      }
-    } else {
-      if (relX < ez) {
-        pullAmount = -Math.pow(Math.max(0, Math.min(1, 1 - relX / ez)), 1.5)
-      } else if (relX > 1 - ez) {
-        pullAmount = Math.pow(Math.max(0, Math.min(1, (relX - (1 - ez)) / ez)), 1.5)
-      }
-    }
-
-    if (pullAmount !== 0) {
-      const ps = cfg.pullStrength
-      const dim = isVerticalLayout ? state.baseH : state.baseW
-      const maxStretch = dim * 0.25 * ps
-      const maxMove = dim * 0.15 * ps
-      const stretchPx = Math.abs(pullAmount) * maxStretch
-      const movePx = pullAmount * maxMove
-
-      // Minimum 4px padding on each side — card has 16px horizontal padding,
-      // so pill can shrink by at most 12px per side (24px total)
-      const minW = state.baseW - 24
-
-      if (isVerticalLayout) {
-        newH = state.baseH + stretchPx
-        newW = Math.max(state.baseW * (state.baseH / newH), minW) // volume preservation + clamp
-        newX = state.baseX + (state.baseW - newW) / 2
-        newY = state.baseY + movePx
-        if (pullAmount < 0) newY -= stretchPx
-      } else {
-        newW = state.baseW + stretchPx
-        newH = state.baseH * (state.baseW / newW)
-        newY = state.baseY + (state.baseH - newH) / 2
-        newX = state.baseX + movePx
-        if (pullAmount < 0) newX -= stretchPx
-      }
-    }
-
-    state.targetX = newX
-    state.targetY = newY
-    state.targetW = newW
-    state.targetH = newH
   }
 
   // -- Event handlers --
@@ -407,16 +350,14 @@ function setupGlassHighlight(
     }
     if (card === currentCard) return
 
-    detectLayout()
-
     const prevCard = currentCard
     currentCard = card
 
     // Per-card border radius override
     const cardRadius = card.getAttribute('data-border-radius')
-    if (pill) {
-      pill.style.borderRadius = `${cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius}px`
-    }
+    currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
+    if (pill) pill.style.borderRadius = `${currentBorderRadius}px`
+
 
     const pos = getCardPosition(card)
 
@@ -428,18 +369,13 @@ function setupGlassHighlight(
       state.baseH = state.currentH = state.targetH = pos.h
 
       pill!.style.transition = 'none'
-      pill!.style.transform = `translate(${pos.x}px, ${pos.y}px)`
-      pill!.style.width = `${pos.w}px`
-      pill!.style.height = `${pos.h}px`
+
+      applyPillPosition(pos.x, pos.y, pos.w, pos.h)
       void pill!.offsetHeight // force reflow
 
       fadeIn()
     } else {
       // Slide: update base and target, current stays where it is — lerp does the rest
-      const dx = pos.x - state.baseX
-      const dy = pos.y - state.baseY
-      const distance = Math.sqrt(dx * dx + dy * dy)
-
       state.baseX = pos.x
       state.baseY = pos.y
       state.baseW = pos.w
@@ -449,9 +385,6 @@ function setupGlassHighlight(
       state.targetW = pos.w
       state.targetH = pos.h
       // current stays at old position — the loop lerps it to the new target
-
-      // Layer stretch/squash deformation on top
-      applyStretchSquash(dx, dy, distance)
     }
 
     state.mouseX = e.clientX
@@ -482,9 +415,14 @@ function setupGlassHighlight(
     const card = (e.target as HTMLElement).closest<HTMLElement>(configRef.current.cardSelector)
     if (!card || card.closest('[data-glass-highlight-active]') !== container) return
 
-    detectLayout()
     const prevCard = currentCard
     currentCard = card
+
+    const cardRadius = card.getAttribute('data-border-radius')
+    currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
+    if (pill) pill.style.borderRadius = `${currentBorderRadius}px`
+
+
     const pos = getCardPosition(card)
 
     if (!prevCard) {
@@ -494,9 +432,8 @@ function setupGlassHighlight(
       state.baseH = state.currentH = state.targetH = pos.h
 
       pill!.style.transition = 'none'
-      pill!.style.transform = `translate(${pos.x}px, ${pos.y}px)`
-      pill!.style.width = `${pos.w}px`
-      pill!.style.height = `${pos.h}px`
+
+      applyPillPosition(pos.x, pos.y, pos.w, pos.h)
       void pill!.offsetHeight
 
       fadeIn()
@@ -530,15 +467,12 @@ function setupGlassHighlight(
     state.baseW = state.currentW = state.targetW = pos.w
     state.baseH = state.currentH = state.targetH = pos.h
 
-    pill.style.transform = `translate(${pos.x}px, ${pos.y}px)`
-    pill.style.width = `${pos.w}px`
-    pill.style.height = `${pos.h}px`
+    applyPillPosition(pos.x, pos.y, pos.w, pos.h)
   }
 
   function handleResize(): void {
     if (resizeTimer) clearTimeout(resizeTimer)
     resizeTimer = setTimeout(() => {
-      detectLayout()
       if (currentCard && isVisible) handleScroll()
     }, 100)
   }
@@ -567,7 +501,6 @@ function setupGlassHighlight(
   // Only opacity transitions — all position/size driven by RAF
   pill.style.transition = `opacity ${configRef.current.fadeDuration}ms ease`
   container.setAttribute('data-glass-highlight-active', 'true')
-  detectLayout()
 
   container.addEventListener('mouseover', handleMouseOver)
   container.addEventListener('mouseleave', handleMouseLeave)

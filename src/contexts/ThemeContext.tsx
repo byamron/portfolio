@@ -25,8 +25,11 @@ export const INTENSITY_LEVELS = [
 
 // Continuous intensity: t ∈ [0, 1]
 // t=0 → satMult 1.0, no lightness shift  |  t=1 → satMult 2.8, full shift
+
 export function computeBg(accent: AccentColor, mode: 'light' | 'dark', t: number): string {
-  const [h, s, l] = BG_BASE[accent][mode]
+  const entry = BG_BASE[accent]
+  if (!entry) return mode === 'dark' ? 'hsl(33, 18%, 12%)' : 'hsl(30, 17%, 91%)'
+  const [h, s, l] = entry[mode]
   const satMult = 1.0 + 1.8 * t
   const lightShift = mode === 'light' ? -10 * t : 2 * t
   const newS = Math.min(100, s * satMult)

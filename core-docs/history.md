@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-05 — Glass hover: lean + tilt (replace clip-path pentagon)
+
+**Branch:** `cursor-pull-glass-hover`
+
+**Summary:** Replaced the clip-path pentagon deformation system with a simpler CSS transform approach: lean (3px translate toward cursor) + tilt (1.0° rotation for cross-axis feedback). The new system is GPU-composited, artifact-free, and ~120 lines shorter. Also applied subtle lean + tilt to contact links, the Mochi Health link, and the case study back button.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — Major rewrite (~690 → ~530 lines). Deleted `generateDeformedPath()` (~145 lines), `KAPPA` constant, `applyClipPath()`, and all clip-path logic. Added lean + tilt math in the RAF loop using dead zone (0.7) + exponential pull curve. Updated `applyPillPosition()` to accept lean/tilt params. Made `skinPill()` border + inner glow unconditional (no longer gated on `maxPull > 0`).
+- `src/components/AboutSection.tsx` — Changed `maxPull: 0` to `maxPull: 3` for subtle directional feedback on email/LinkedIn/resume links.
+- `src/components/CaseStudyPage.tsx` — Changed `maxPull: 0` to `maxPull: 3` for subtle lean + tilt on the sticky back button.
+
+**Key decisions:**
+- **Lean + tilt over clip-path**: The pentagon clip-path system (V1-V10+) produced directional feedback but accumulated visual artifacts (corner flicker, ghost outlines, tip radius mismatches). CSS transforms are inherently clean — no path string generation, no vertex ordering, no sub-pixel rendering issues.
+- **Tilt formula**: `(cnx * dirY * |dirY| + cny * dirX * |dirX|) * maxTilt * t` — uses `dirY * |dirY|` (preserving sign, squaring magnitude) to ensure symmetric rotation in all quadrants. Earlier attempts with skew and simpler rotation formulas produced asymmetric results.
+- **No swell**: Scale-based swell was removed because its translate offset (to simulate non-center transform-origin) overwhelmed the tilt's edge displacement, causing asymmetry.
+- **Sidebar unaffected**: `SidebarThemeControls.tsx` uses its own custom pill implementation, not `useGlassHighlight`, so it gets no lean/tilt by design.
+
 ## 2026-03-05 — Sidebar theme controls on all pages
 
 **Branch:** `hover-theme-all-pages`
