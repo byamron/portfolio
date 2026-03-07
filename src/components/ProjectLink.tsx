@@ -19,6 +19,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
         style={{
           display: 'inline-block',
           width: 'fit-content',
+          alignSelf: 'flex-start',
           padding: '24px 16px',
           margin: '0 -16px',
           borderRadius: 16,
@@ -44,6 +45,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     style: {
       display: 'inline-block' as const,
       width: 'fit-content' as const,
+      alignSelf: 'flex-start' as const,
       padding: '24px 16px',
       margin: '0 -16px',
       borderRadius: 16,

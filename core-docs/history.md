@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-07 — Fix image resize on hover and sticky card hover
+
+**Branch:** `fix-image-resize-on-hover`
+
+**Summary:** Fixed two issues: (1) right-column images abruptly resizing when hovering between theme portraits and project previews with summary text, and (2) project cards staying hovered when the cursor moved horizontally off the card but stayed at the same Y position.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Restructured so each crossfade state (portrait or project preview) is a **single unit** containing both an image area (`flex: 1`) and a fixed-height text zone (`120px`, always allocated). Previously the image and summary were separate AnimatePresence groups — the image filled the full container and the summary was absolutely positioned at the bottom, causing visual size shifts during transitions. Now every unit has identical layout structure, so the image area never changes size regardless of whether summary text is present.
+- `src/components/ImageDisplay.tsx` — Removed `delay: 0.15` from summary text transition so image and text fade in/out simultaneously instead of the text lagging behind.
+- `src/components/ProjectLink.tsx` — Added `alignSelf: 'flex-start'` to both link and non-link card styles. Cards in a flex column with default `align-items: stretch` were stretching to the full container width despite having `width: fit-content`, causing `onMouseLeave` to only fire when leaving the entire LeftColumn rather than the card's visible bounds.
+
+**Decisions:**
+- `TEXT_ZONE_HEIGHT = 120` accommodates ~5 lines of summary text at 15px/1.5 line-height. Always allocated even when empty (portrait state) to keep the image area stable.
+- Summary text has its own inner AnimatePresence within the text zone, keyed by `project.id`, to handle cases where two projects share the same `projectId` but have different summaries.
+
+---
+
 ## 2026-03-07 — Fix meta theme-color, reorder swatches, set default intensity
 
 **Branch:** `test-main-localhost`
