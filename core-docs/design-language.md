@@ -304,9 +304,10 @@ Inline text links (Mochi Health in the hero, email/LinkedIn/resume in the about 
 
 - **Border radius**: `8px` (via `data-border-radius="8"` or container config) — tighter than project cards' `16px`, proportional to the smaller text size.
 - **Tight bounds**: Pill clears when the cursor leaves the link, not when it leaves the card stack. Implemented via `data-tight-bounds` (per-card) or `tightBounds: true` (container-level).
-- **No deformation**: `pullStrength: 0`, `stretchAmount: 0`, `squashAmount: 0` — pull/stretch physics don't make sense on small inline targets.
+- **Lean + tilt**: `maxPull: 3` — subtle directional feedback on small inline targets. Same lean + tilt system as project cards but at lower intensity due to smaller targets.
 - **Mochi Health** shares the project card pill container (so the pill can slide from Mochi Health to the first project card and back), but has per-card tight bounds.
-- **Contact links** have their own `useGlassHighlight` instance with `cardSelector: '[data-contact-card]'`, completely isolated from the project card pill.
+- **Contact links** have their own `useGlassHighlight` instance with `cardSelector: '[data-contact-card]'`, completely isolated from the project card pill. Uses `maxPull: 3` for subtle lean + tilt.
+- **Back button** (case study pages) has its own `useGlassHighlight` instance with `cardSelector: '[data-back-link]'`, uses `maxPull: 3`.
 - **Clear delays**: Project cards 150ms, contact links 300ms, tight-bounds-to-stack transitions 400ms.
 
 ### Stacking and DOM structure
@@ -329,7 +330,7 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 
 | Duration | Use | Character |
 |----------|-----|-----------|
-| 150ms | Recovery from deformation, pull snap-back | Fast enough to feel "spring-like" |
+| 150ms | Pill clear delay (project cards) | Fast enough to feel responsive, long enough to prevent flicker |
 | 200ms | Glass pill appear/disappear, card-to-card slide | The site's default action tempo. Responsive but not instant. |
 | 300ms | Image cross-fade (both hover preview and glass hover CSS) | Perceptible transition. The user sees the change happening. |
 | 500ms | Theme/accent transitions, default portrait return | Environmental shifts. Slower because the whole atmosphere is changing. |
@@ -346,46 +347,32 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 3. The pill never "flies in" from off-screen. It materializes in place.
 
 **Sliding between cards**:
-1. CSS transition on `transform`, `width`, `height` — 200ms, Smooth easing
-2. If `overshoot > 0`: easing becomes `cubic-bezier(0.34, [1 + overshoot], 0.64, 1)` — a subtle bounce past the target
-3. Simultaneously: stretch/squash deformation via Web Animation API (350ms total = `duration + recoveryDuration`, ease-out)
-   - 3 keyframes at offsets 0, 0.3, 1: `scale(1,1)` → `scale(peakSx, peakSy)` → `scale(1,1)`
-   - Peak deformation at 30% of the timeline, then recovery to normal
-   - Deformation formula:
-     ```
-     f = min(distance / 150, 1)        // Normalize by distance (caps at 150px)
-     hr = abs(dx) / distance            // Horizontal ratio of movement
-     vr = abs(dy) / distance            // Vertical ratio of movement
-     peakSx = (1 + stretchAmount * f * hr) * (1 - squashAmount * f * vr)
-     peakSy = (1 + stretchAmount * f * vr) * (1 - squashAmount * f * hr)
-     ```
-   - Stretch is applied in the direction of movement, squash perpendicular
-   - Squash is deliberately subtle (`squashAmount: 0.001`) — barely perceptible, just enough to sell the physical metaphor without looking rubbery
-   - Only triggered when `distance > 5px` (prevents micro-jitter deformations)
+1. Lerp-based interpolation at 0.12 per frame via `requestAnimationFrame` — creates a smooth "chasing" feel
+2. Lean + tilt naturally point toward the target card during transitions, providing directional intent feedback
+3. Position, width, and height all interpolate simultaneously
 
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
 2. No position change — it fades where it is
 3. **Card stack boundary**: The pill only clears when the cursor leaves the vertical bounds of the card stack (above the first card or below the last card). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit.
 
-### Gravitational pull
+### Directional feedback: lean + tilt
 
-When the cursor drifts toward the edge of a hovered card, the glass pill stretches and shifts toward that edge, as if drawn toward the neighboring card. This is the site's most physically expressive behavior.
+When the cursor moves toward the edge of a hovered card, the glass pill responds with two subtle CSS transform effects. This replaces the earlier clip-path pentagon deformation system with a simpler, GPU-composited approach that's free of visual artifacts.
 
-- **Activation zone**: Outer 20% (`edgeZone: 0.2`) of the card. Cursor position within the card is computed as a 0–1 ratio; if `ratio > 1 - edgeZone` → pulling toward bottom/right; if `ratio < edgeZone` → pulling toward top/left.
-- **Ramp curve**: `t = pow(clamp(t, 0, 1), 1.5)` — imperceptible near the boundary, strong near the edge
-- **Max stretch/translate formulas**:
-  ```
-  maxStretch = dimension * 0.25 * pullStrength
-  maxMove    = dimension * 0.15 * pullStrength
-  stretchPx  = t * maxStretch
-  movePx     = t * maxMove
-  ```
-  Where `dimension` is the card's height (vertical layout) or width (horizontal layout).
-- **Volume preservation**: `newWidth = baseWidth * (baseHeight / newHeight)` — as the pill stretches taller, it narrows proportionally. The inverse applies for horizontal stretching. Width is clamped to `baseWidth - 24px` minimum, ensuring at least 4px of visible padding on each side (card has 16px horizontal padding).
-- **Layout detection**: Vertical vs horizontal is determined by comparing the first two `[data-link-card]` elements — if `abs(b.top - a.top) > abs(b.left - a.left)`, it's vertical.
-- **Lerp rate**: 0.12 per frame — creates a "chasing" feel where the pill accelerates into the pull and decelerates as it approaches. Animated via `requestAnimationFrame` loop, not CSS transitions.
+**Lean** — The pill translates 3px toward the cursor direction, creating a "drawn toward" feeling.
+
+**Tilt** — The pill rotates up to 1.0° to provide cross-axis positional feedback. When the cursor is in the top-right corner, the top-right corner of the pill visually follows. This communicates spatial awareness beyond simple attraction.
+
+- **Dead zone**: Inner 70% of the card (`deadZone: 0.7`). Cursor in the center of the card produces no lean or tilt. Effect activates in the outer 30%.
+- **Pull curve**: `t = 1 - exp(-rawD * 1.5)` — exponential approach from 0 to 1. Smooth onset, asymptotically approaches maximum.
+- **Lean formula**: `leanX = dirX * t * maxLean`, `leanY = dirY * t * maxLean` where `maxLean = 3px` and `dir` is the unit vector from card center to cursor.
+- **Tilt formula**: `rotateDeg = (cnx * dirY * |dirY| + cny * dirX * |dirX|) * maxTilt * t` — uses `dirY * |dirY|` (preserving sign, squaring magnitude) to ensure symmetric rotation in all quadrants. `cnx`/`cny` are clamped normalized cursor positions.
+- **Config**: `maxPull` controls activation. `maxPull: 0` disables lean + tilt entirely (no directional feedback). Any positive value activates lean (3px) + tilt (1.0°).
+- **Lerp rate**: 0.12 per frame — creates a "chasing" feel. Animated via `requestAnimationFrame` loop, not CSS transitions.
 - **Settle threshold**: 0.3px — when all four dimensions (x, y, width, height) are within 0.3px of target, the loop snaps to exact values and stops.
+- **No clip-path**: The pill uses only `transform: translate() rotate()` — no SVG path generation, no clip-path manipulation. This is GPU-composited and never triggers layout or paint.
+- **Border + inner glow**: Always applied regardless of `maxPull` value. The simplified transform approach doesn't require oversized clip regions, so the pill's border and inner glow are always visible.
 
 ### Image transitions
 
@@ -398,7 +385,7 @@ When the cursor drifts toward the edge of a hovered card, the glass pill stretch
 - No entrance animations on page load (content is immediately present)
 - No scroll-triggered animations or parallax
 - No loading spinners or skeleton screens
-- No bouncy/springy overshoots beyond the subtle 0.05 overshoot on pill slides
+- No bouncy/springy overshoots
 - No motion that continues after the user stops interacting
 
 ---

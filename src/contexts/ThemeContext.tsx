@@ -25,8 +25,11 @@ export const INTENSITY_LEVELS = [
 
 // Continuous intensity: t ∈ [0, 1]
 // t=0 → satMult 1.0, no lightness shift  |  t=1 → satMult 2.8, full shift
+
 export function computeBg(accent: AccentColor, mode: 'light' | 'dark', t: number): string {
-  const [h, s, l] = BG_BASE[accent][mode]
+  const entry = BG_BASE[accent]
+  if (!entry) return mode === 'dark' ? 'hsl(33, 18%, 12%)' : 'hsl(30, 17%, 91%)'
+  const [h, s, l] = entry[mode]
   const satMult = 1.0 + 1.8 * t
   const lightShift = mode === 'light' ? -10 * t : 2 * t
   const newS = Math.min(100, s * satMult)
@@ -67,7 +70,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [bgIntensity, setBgIntensityState] = useState<number>(() => {
     const stored = localStorage.getItem(INTENSITY_KEY)
-    if (!stored) return 0
+    if (!stored) return 0.2
     const parsed = parseFloat(stored)
     // Migrate old 0–3 integer values to 0–1 range
     const value = (Number.isInteger(parsed) && parsed >= 1 && parsed <= 3) ? parsed / 3 : parsed
@@ -103,20 +106,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [accentColor, resolvedAppearance, bgIntensity])
 
   // Update <meta name="theme-color"> for browser chrome
-  // Deferred to next frame so CSS has recalculated after data-attribute changes
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
-      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
-      const meta = document.querySelector('meta[name="theme-color"]')
-      if (meta) {
-        meta.remove()
-        const fresh = document.createElement('meta')
-        fresh.name = 'theme-color'
-        fresh.content = bg
-        document.head.appendChild(fresh)
-      }
-    })
-    return () => cancelAnimationFrame(raf)
+    const bg = computeBg(accentColor, resolvedAppearance, bgIntensity)
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', bg)
   }, [resolvedAppearance, accentColor, bgIntensity])
 
   const setAccentColor = useCallback((color: AccentColor) => {
