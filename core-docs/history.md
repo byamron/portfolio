@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-07 — Fix meta theme-color, reorder swatches, set default intensity
+
+**Branch:** `test-main-localhost`
+
+**Summary:** Fixed the browser chrome theme-color meta tag not updating on theme switch, reordered accent swatches into a visually cohesive warm→cool sequence, and changed the default background intensity from 0 to 20% for first-time visitors.
+
+**What changed:**
+- `src/contexts/ThemeContext.tsx` — Replaced fragile RAF + getComputedStyle + remove/recreate meta tag approach with direct `computeBg()` calculation and `setAttribute`. Changed default `bgIntensity` from 0 to 0.2.
+- `src/components/SidebarThemeControls.tsx` — Reordered accent swatches from arbitrary order to: table (34°) → portrait (43°) → pizza (15°) → vineyard (90°) → sky (204°). Warm cluster first, then cool fade, with table (default) leading.
+
+**Key decisions:**
+- **Direct computation over DOM read**: The old meta tag update read `--bg` from `getComputedStyle` inside a `requestAnimationFrame`, which was fragile and timing-dependent. Computing the value directly from state via `computeBg()` is simpler and reliable.
+- **setAttribute over remove/recreate**: No need to remove and recreate the meta element — `setAttribute('content', ...)` works in modern browsers.
+- **Swatch order**: Chose warm-cluster → cool-fade (table → portrait → pizza → vineyard → sky) over strict hue order, keeping the default accent first while grouping the three warm tones together.
+- **20% default intensity**: Gives first-time visitors a hint of color rather than a flat neutral, making the theming system more discoverable.
+
 ## 2026-03-05 — Glass hover: lean + tilt (replace clip-path pentagon)
 
 **Branch:** `cursor-pull-glass-hover`
