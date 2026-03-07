@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-07 — Add portfolio guidelines doc
+
+**Branch:** `add-portfolio-guidelines`
+
+**Summary:** Created `core-docs/guidelines.md` — a strategic lens for content, copy, layout, and interaction decisions. Consolidated positioning, voice, visual philosophy, case study approach, and AI decision filters into a single doc. Updated CLAUDE.md to reference it and removed redundant "Design Philosophy" section.
+
+**What changed:**
+- Created `core-docs/guidelines.md` with: throughline ("finds the structural problem beneath the presented problem, then designs the simplest system that resolves it"), four principles (reframe first, systems over surfaces, design/engineering boundary is artificial, audience screening for autonomy), per-project reframe reference table, voice guidelines, case study philosophy, and AI decision filters.
+- Grounded the throughline in Ben's sociology background (International Studies + Sociology at Middlebury) — structural thinking as worldview, not design technique.
+- `CLAUDE.md` — Removed "Design Philosophy" section (subsumed by guidelines.md). Trimmed "About Ben" to factual context with pointer to guidelines.md. Added guidelines.md to core docs table and rules (consulted before any content/copy/design decision). Updated project structure tree.
+
+**Decisions:**
+- Guidelines.md operates at a higher altitude than design-language.md: guidelines = why (positioning, voice, editorial judgment), design-language = how (CSS values, glass recipes, timing tiers), tokens.md = what (HSL numbers).
+- Project reframes table serves dual purpose: evidence for the throughline and a cheat sheet for case study writing.
+- Case study philosophy updated: first bullet changed from "the actual problem" to "the reframe" to connect explicitly to the throughline.
+
+---
+
 ## 2026-03-07 — Fix image resize on hover and sticky card hover
 
 **Branch:** `fix-image-resize-on-hover`
