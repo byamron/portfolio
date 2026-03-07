@@ -2,19 +2,7 @@
 
 ## About Ben
 
-Ben is a senior product designer who works at the intersection of complex information and human decision-making — across health tech, AI, and tools for critical thinking. He thrives in fast-moving, ambiguous environments where design, strategy, and engineering blur together, and he's at his best when turning messy, high-stakes problems into clear, actionable experiences.
-
-## Design Philosophy
-
-The site should feel like a design artifact in itself — clean, opinionated, and structurally confident in a way that signals senior-level taste before anyone reads a word.
-
-Architecture should lead with outcomes, decisions, and strategic thinking rather than process documentation, making it immediately clear that this is someone who shapes what gets built and why, not someone proving they can push pixels.
-
-The entire experience should embody that core value proposition of making complex information feel simple and actionable: effortless navigation, clear hierarchy, intentional restraint, nothing decorative without purpose.
-
-It should read as authored and specific — built for an audience of design-mature companies like Figma, Anthropic, and Stripe — rather than trying to appeal to everyone.
-
-The vibe is quiet confidence and substance over spectacle, closer to nelson.co than a Dribbble portfolio. Someone should land on it and within seconds think: this person has a point of view, ships real work, and I'd trust their judgment on my team.
+Ben is a senior product designer working across health tech, AI, and tools for critical thinking. The portfolio's positioning, voice, visual philosophy, and decision-making lens are defined in `core-docs/guidelines.md` — read that first for any content, copy, or design decision.
 
 ## Core Documentation
 
@@ -22,6 +10,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 | File | Purpose | When to update |
 |------|---------|----------------|
+| `core-docs/guidelines.md` | Positioning, voice, visual philosophy, case study approach, AI decision filters | When content strategy, voice, or editorial standards change |
 | `core-docs/design-language.md` | Visual & interaction rules, principles, anti-patterns | When design decisions are made, patterns are established, or visual rules change |
 | `core-docs/plan.md` | Migration plan, visual spec, phase breakdown | When scope changes, phases complete, or new info emerges |
 | `core-docs/workflow.md` | Development process (plan → build → review → feedback loop) | When the process itself needs refinement |
@@ -33,6 +22,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 ### Rules for core docs:
 
 - **Before starting any work**: Read `core-docs/feedback.md` and `core-docs/history.md` to avoid repeating mistakes and understand prior decisions.
+- **Before any content, copy, or design decision**: Read `core-docs/guidelines.md`. This is the strategic lens — positioning, voice, editorial standards, and the filters every AI-generated output must pass through.
 - **Before any design/implementation work**: Read `core-docs/design-language.md` to ensure consistency with the site's visual and interaction rules. Use the coherence checklist before considering work complete.
 - **Before planning**: Read `core-docs/plan.md` to understand the current state and what's next.
 - **Follow the workflow**: Read and follow `core-docs/workflow.md` for the full development process.
@@ -120,6 +110,7 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 ├── .subframe/
 │   └── sync.json             # Subframe project config (do not edit manually)
 ├── core-docs/
+│   ├── guidelines.md         # Positioning, voice, philosophy, decision filters
 │   ├── plan.md               # Migration plan (living document)
 │   ├── design-language.md    # Visual & interaction rules
 │   ├── workflow.md           # Development process
