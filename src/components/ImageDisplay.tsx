@@ -28,6 +28,9 @@ const reducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+// Fixed height for text zone — always allocated so the image area never resizes
+const TEXT_ZONE_HEIGHT = 120
+
 export function ImageDisplay() {
   const { hoveredProjectId } = useHover()
   const { accentColor, resolvedAppearance } = useTheme()
@@ -78,98 +81,103 @@ export function ImageDisplay() {
         position: 'relative',
         width: '100%',
         height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
-      {/* Image area — always fills the full container */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <AnimatePresence mode="sync">
-          {lottieUrl && lottieData ? (
-            <motion.div
-              key={contentKey}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                filter: dropShadow,
-              }}
-            >
+      <AnimatePresence mode="sync">
+        {/* Each state (portrait or project preview) is a single crossfade unit
+            containing both image + text zone with identical layout structure.
+            The text zone is always allocated so the image area never changes size. */}
+        <motion.div
+          key={contentKey}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          {/* Image area — flex: 1, always same height regardless of text */}
+          <div
+            style={{
+              flex: 1,
+              position: 'relative',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 0,
+            }}
+          >
+            {lottieUrl && lottieData ? (
               <Lottie
                 animationData={lottieData}
                 loop={false}
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  filter: dropShadow,
+                }}
               />
-            </motion.div>
-          ) : (
-            <motion.img
-              key={contentKey}
-              src={imageSrc}
-              alt={project ? project.title : 'Ben Yamron portrait'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-              style={{
-                position: 'absolute',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 32,
-                filter: dropShadow,
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </div>
+            ) : (
+              <img
+                src={imageSrc}
+                alt={project ? project.title : 'Ben Yamron portrait'}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: 32,
+                  filter: dropShadow,
+                }}
+              />
+            )}
+          </div>
 
-      {/* Summary text area — absolutely positioned so it never affects image sizing */}
-      <AnimatePresence mode="sync">
-        {summary && (
-          <motion.p
-            key={contentKey + '-summary'}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: reducedMotion ? 0 : 0.3,
-              delay: reducedMotion ? 0 : 0.15,
-              ease: 'easeInOut',
-            }}
+          {/* Text zone — always present, fixed height, never changes image sizing */}
+          <div
             style={{
-              ...summaryStyles[SUMMARY_FONT],
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              lineHeight: 1.5,
-              color: 'var(--text-grey)',
-              maxWidth: 480,
-              padding: '0 24px',
-              textAlign: 'left',
-              margin: 0,
+              width: '100%',
+              height: TEXT_ZONE_HEIGHT,
+              flexShrink: 0,
+              position: 'relative',
             }}
           >
-            {summary}
-          </motion.p>
-        )}
+            <AnimatePresence mode="sync">
+              {summary && (
+                <motion.p
+                  key={project?.id ?? 'none'}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: reducedMotion ? 0 : 0.3,
+                    ease: 'easeInOut',
+                  }}
+                  style={{
+                    ...summaryStyles[SUMMARY_FONT],
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    lineHeight: 1.5,
+                    color: 'var(--text-grey)',
+                    maxWidth: 480,
+                    padding: '0 24px',
+                    textAlign: 'left',
+                    margin: 0,
+                  }}
+                >
+                  {summary}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
       </AnimatePresence>
     </div>
   )
