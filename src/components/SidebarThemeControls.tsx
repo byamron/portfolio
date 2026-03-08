@@ -57,6 +57,11 @@ function setupControlPill(container: HTMLElement): () => void {
     currentX: 0, currentY: 0, currentW: 0, currentH: 0,
     targetX: 0, targetY: 0, targetW: 0, targetH: 0,
   }
+  let retryRafId: number | null = null
+  let pendingControl: HTMLElement | null = null
+  let lastClientX = -1
+  let lastClientY = -1
+  let probeTimerId: ReturnType<typeof setTimeout> | null = null
 
   function createPill(): HTMLDivElement {
     const div = document.createElement('div')
@@ -174,12 +179,21 @@ function setupControlPill(container: HTMLElement): () => void {
     }
   }
 
-  function handleMouseOver(e: MouseEvent): void {
-    const control = (e.target as HTMLElement).closest<HTMLElement>('[data-sidebar-control]')
-    if (!control) return
-    if (control === currentControl) return
+  function cancelRetry(): void {
+    if (retryRafId !== null) {
+      cancelAnimationFrame(retryRafId)
+      retryRafId = null
+    }
+    pendingControl = null
+  }
 
-    const prevControl = currentControl
+  function isControlVisible(control: HTMLElement): boolean {
+    const wrapper = control.parentElement
+    if (!wrapper) return true
+    return parseFloat(getComputedStyle(wrapper).opacity) >= 0.95
+  }
+
+  function showPillForControl(control: HTMLElement, prevControl: HTMLElement | null): void {
     currentControl = control
     const pos = getControlPosition(control)
 
@@ -207,11 +221,63 @@ function setupControlPill(container: HTMLElement): () => void {
     startLoop()
   }
 
+  function retryUntilVisible(control: HTMLElement): void {
+    cancelRetry()
+    pendingControl = control
+    retryRafId = requestAnimationFrame(function check() {
+      retryRafId = null
+      if (pendingControl !== control) return
+      if (isControlVisible(control)) {
+        const prev = currentControl
+        pendingControl = null
+        showPillForControl(control, prev)
+      } else {
+        retryRafId = requestAnimationFrame(check)
+      }
+    })
+  }
+
+  function handleMouseOver(e: MouseEvent): void {
+    const control = (e.target as HTMLElement).closest<HTMLElement>('[data-sidebar-control]')
+    if (!control) return
+    if (control === currentControl) return
+
+    cancelRetry()
+
+    if (!isControlVisible(control)) {
+      retryUntilVisible(control)
+      return
+    }
+
+    showPillForControl(control, currentControl)
+  }
+
   function handleMouseLeave(e: MouseEvent): void {
     if (container.contains(e.relatedTarget as Node)) return
+    cancelRetry()
     currentControl = null
     fadeOut()
     stopLoop()
+  }
+
+  // Track cursor position so we can probe for a stationary cursor after
+  // stagger animations complete. mouseover doesn't fire when elements
+  // animate under a stationary pointer — only pointer input triggers it.
+  function trackMouse(e: MouseEvent): void {
+    lastClientX = e.clientX
+    lastClientY = e.clientY
+  }
+
+  function probeStaticCursor(): void {
+    probeTimerId = null
+    if (currentControl || pendingControl) return
+    if (lastClientX < 0) return
+    const el = document.elementFromPoint(lastClientX, lastClientY)
+    if (!el) return
+    const control = el.closest<HTMLElement>('[data-sidebar-control]')
+    if (!control || !container.contains(control)) return
+    if (!isControlVisible(control)) return
+    showPillForControl(control, null)
   }
 
   const observer = new MutationObserver(() => skinPill())
@@ -225,11 +291,18 @@ function setupControlPill(container: HTMLElement): () => void {
 
   container.addEventListener('mouseover', handleMouseOver)
   container.addEventListener('mouseleave', handleMouseLeave)
+  container.addEventListener('mousemove', trackMouse)
+  // Probe after stagger animations would be complete (~780ms max).
+  // Catches a stationary cursor that ended up over a control.
+  probeTimerId = setTimeout(probeStaticCursor, 800)
 
   return () => {
     stopLoop()
+    cancelRetry()
+    if (probeTimerId !== null) { clearTimeout(probeTimerId); probeTimerId = null }
     container.removeEventListener('mouseover', handleMouseOver)
     container.removeEventListener('mouseleave', handleMouseLeave)
+    container.removeEventListener('mousemove', trackMouse)
     observer.disconnect()
     pill?.remove()
   }
