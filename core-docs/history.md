@@ -2,6 +2,28 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-07 — Fix sidebar hover pill timing with stagger animations
+
+**Branch:** `fix-sidebar-hover-timing`
+
+**Summary:** Fixed a UX gap where the sidebar hover pill wouldn't appear if the user's cursor was stationary over a control that was mid-stagger-animation, or if the cursor moved to a control before its opacity animation completed.
+
+**What changed:**
+- `src/components/SidebarThemeControls.tsx` — Extracted pill-positioning logic from `handleMouseOver` into `showPillForControl` to enable reuse from multiple code paths.
+- Added `isControlVisible(control)` — checks if a control's parent `motion.div` wrapper has reached opacity >= 0.95 (i.e., stagger animation complete).
+- Added `retryUntilVisible(control)` — rAF loop that polls until a hovered control becomes visible, then shows the pill. Handles the case where the user mouses over a control before its stagger animation finishes.
+- Added `probeStaticCursor()` — one-shot 800ms timeout that uses `document.elementFromPoint` to detect if a stationary cursor is over a control that animated in underneath it. `mouseover` doesn't re-fire when elements animate under a stationary pointer.
+- Added `trackMouse` listener to cache cursor position for the static-cursor probe.
+- Updated `handleMouseLeave` to cancel pending retries via `cancelRetry()`.
+- All new resources (rAF, setTimeout, mousemove listener) properly cleaned up in teardown.
+
+**Decisions:**
+- Used `requestAnimationFrame` polling (not `setTimeout`) for the retry loop to stay in sync with the browser's render cycle and Framer Motion's opacity animation.
+- 800ms probe delay chosen to exceed the maximum stagger animation completion time (~780ms = 14 items × 0.04s delay + 0.22s duration).
+- Opacity threshold of 0.95 (not 1.0) to account for floating-point precision in computed styles.
+
+---
+
 ## 2026-03-07 — Add portfolio guidelines doc
 
 **Branch:** `add-portfolio-guidelines`
