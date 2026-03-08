@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-07 — Remove top-of-funnel case study, keep AI tooling as separate project
+
+**Branch:** `remove-funnel-case-study`
+
+**Summary:** Removed the "Building a competitive top of funnel experience" project link and its association with the `mochi-ai-tooling` case study. Re-added AI tooling as its own distinct project (stub, content TBD) — third in the Mochi section, after tracker and subscriptions.
+
+**What changed:**
+- `src/data/projects.ts` — Removed `mochi-funnel` project entry. Added `mochi-ai-tooling` as a separate project with its own case study slug.
+- `src/data/case-study-content.ts` — `mochiAiTooling` case study retained as a stub (empty sections/gallery, "Content coming soon.").
+- `src/data/case-studies/mochi-ai-tooling.md` — Recreated as stub markdown.
+- `core-docs/plan.md` — Updated Mochi section project list to reflect the change.
+
+**Decisions:**
+- Top-of-funnel and AI tooling are separate projects — the old entry conflated them by linking the funnel title to the AI tooling case study.
+- AI tooling kept as a live link to a stub page rather than a "coming soon" non-link, since content will be added soon.
+
+---
+
 ## 2026-03-07 — Fix sidebar hover pill timing with stagger animations
 
 **Branch:** `fix-sidebar-hover-timing`

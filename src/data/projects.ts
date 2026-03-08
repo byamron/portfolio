@@ -22,9 +22,9 @@ export const sections: Section[] = [
       'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. These days, I\u2019m deep in AI workflows across design and dev.',
     ],
     projects: [
-      { id: 'mochi-funnel', title: 'Building a competitive top of funnel experience', projectId: 'uw', href: '/project/mochi-ai-tooling', isLink: true, caseStudySlug: 'mochi-ai-tooling' },
       { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, caseStudySlug: 'mochi-progress-tracker', summary: 'Mochi\u2019s progress tracker existed but nobody used it. I drove a 53% increase in weekly active users, then identified its real value\u2009\u2014\u2009a single source of truth for patient weight data\u2009\u2014\u2009and built the integration that made it critical to the clinical workflow.' },
       { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, caseStudySlug: 'mochi-subscriptions', summary: 'Mochi billed its patients for monthly medication whether it shipped or not. I rebuilt subscriptions so billing triggers when an order is processed, gave patients control over their schedule, and eliminated $200\u2013300k/month in infrastructure costs. 90%+ of patients have been successfully migrated.' },
+      { id: 'mochi-ai-tooling', title: 'AI tooling to automate internal workflows', projectId: 'uw', href: '/project/mochi-ai-tooling', isLink: true, caseStudySlug: 'mochi-ai-tooling' },
     ],
   },
   {

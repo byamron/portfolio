@@ -106,9 +106,9 @@ transition: opacity 0.4s ease;
 - "I focus on making complex information actionable within products and organizations."
 - "Currently leading patient experience design at [Mochi Health](https://joinmochi.com/)." (inline link)
 - Project links:
-  1. "Building a competitive top of funnel experience →" (`projectId: uw`)
-  2. "Boosting engagement with our in-app weight tracker →" (`projectId: sony`)
-  3. "Improving billing UX for our core subscriptions model →" (`projectId: cip`)
+  1. "Boosting engagement with our in-app weight tracker →" (`projectId: mochi-tracker`)
+  2. "Improving billing UX for our core subscriptions model →" (`projectId: cip`)
+  3. "AI tooling to automate internal workflows →" (`projectId: uw`) — stub, content TBD
 
 **Subsection B — Previous work:**
 - "Before Mochi, I helped different teams make sense of information in different contexts."
