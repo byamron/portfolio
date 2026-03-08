@@ -384,6 +384,21 @@ export function SidebarThemeControls() {
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
 
+  // Jiggle the trigger dot when accent is cycled via image click
+  useEffect(() => {
+    const handler = () => {
+      const el = triggerRef.current
+      if (!el) return
+      el.classList.remove('sidebar-jiggle')
+      void el.offsetHeight
+      el.classList.add('sidebar-jiggle')
+      const cleanup = () => el.classList.remove('sidebar-jiggle')
+      el.addEventListener('animationend', cleanup, { once: true })
+    }
+    document.addEventListener('accent-cycled', handler)
+    return () => document.removeEventListener('accent-cycled', handler)
+  }, [])
+
   // Gradient strip pointer handlers (continuous drag support)
   const updateFromPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 
 export type AccentColor = 'table' | 'portrait' | 'sky' | 'pizza' | 'vineyard'
-const VALID_ACCENTS: AccentColor[] = ['table', 'portrait', 'sky', 'pizza', 'vineyard']
+export const VALID_ACCENTS: AccentColor[] = ['table', 'portrait', 'sky', 'pizza', 'vineyard']
 export type AppearanceMode = 'system' | 'light' | 'dark'
 const VALID_MODES: AppearanceMode[] = ['system', 'light', 'dark']
 type ResolvedAppearance = 'light' | 'dark'
@@ -40,6 +40,7 @@ export function computeBg(accent: AccentColor, mode: 'light' | 'dark', t: number
 interface ThemeContextValue {
   accentColor: AccentColor
   setAccentColor: (color: AccentColor) => void
+  cycleAccent: () => void
   appearanceMode: AppearanceMode
   setAppearanceMode: (mode: AppearanceMode) => void
   resolvedAppearance: ResolvedAppearance
@@ -117,6 +118,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ACCENT_KEY, color)
   }, [])
 
+  const cycleAccent = useCallback(() => {
+    setAccentColorState(prev => {
+      const next = VALID_ACCENTS[(VALID_ACCENTS.indexOf(prev) + 1) % VALID_ACCENTS.length]
+      localStorage.setItem(ACCENT_KEY, next)
+      return next
+    })
+  }, [])
+
   const setAppearanceMode = useCallback((mode: AppearanceMode) => {
     setAppearanceModeState(mode)
     localStorage.setItem(APPEARANCE_KEY, mode)
@@ -131,12 +140,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ThemeContextValue>(() => ({
     accentColor,
     setAccentColor,
+    cycleAccent,
     appearanceMode,
     setAppearanceMode,
     resolvedAppearance,
     bgIntensity,
     setBgIntensity,
-  }), [accentColor, setAccentColor, appearanceMode, setAppearanceMode, resolvedAppearance,
+  }), [accentColor, setAccentColor, cycleAccent, appearanceMode, setAppearanceMode, resolvedAppearance,
        bgIntensity, setBgIntensity])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

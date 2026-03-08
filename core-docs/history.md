@@ -2,6 +2,30 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-07 — Add accent cycle on image click + sidebar jiggle
+
+**Branch:** `image-click-delight`
+
+**Summary:** Clicking the right-column portrait now cycles the accent color with a spring press animation. When the accent cycles via image click, the sidebar trigger dot jiggles to encourage discovery of the full theme controls. Explored multiple approaches (CSS ring ripple, canvas-based water ripple with 5 render styles) before settling on the simpler cycle + spring press — aligned with the "skeleton is permanent; skin is variable" design principle.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Added click/keyboard handlers that call `cycleAccent()`, play a CSS spring press (`scale(0.985)` → `scale(1)` with overshoot bezier), and dispatch a custom `accent-cycled` DOM event. Added `cursor: pointer`, `tabIndex={0}`, `role="button"`, `aria-label`. Separated `aria-live="polite"` into a dedicated visually-hidden element to avoid conflicting ARIA semantics (live regions must not be interactive). Also added Lottie preview support and a fixed-height text zone for project summaries (crossfade layout).
+- `src/components/SidebarThemeControls.tsx` — Added `useEffect` listener for the `accent-cycled` custom event that applies/removes a `sidebar-jiggle` CSS class on the trigger dot ref.
+- `src/contexts/ThemeContext.tsx` — Exported `VALID_ACCENTS`. Added `cycleAccent()` to context value (functional state update, persists to localStorage).
+- `src/styles/globals.css` — Added `@keyframes sidebar-jiggle` (horizontal nudge, 400ms) and `.sidebar-jiggle` class. Existing `prefers-reduced-motion` rule covers the jiggle automatically.
+- `src/components/RightColumn.tsx` — Simplified (no props, no toggle state).
+
+**Deleted (dev-only exploration code):**
+- `src/components/DevVariantToggle.tsx` — Dev toggle for switching between ripple/cycle variants and ripple sub-styles.
+- `src/hooks/useWaterRipple.ts` — Canvas-based two-buffer wave propagation hook with 5 render styles (pure, refraction, chromatic, tint, blur).
+
+**Decisions:**
+- Cycle + spring press chosen over water ripple — the ripple was technically impressive but felt heavy for a portfolio. The cycle is more aligned with the site's theme of subtle discovery.
+- Custom DOM event (`accent-cycled`) used for cross-component communication to avoid polluting React context with transient UI state. Jiggle only fires on image-click, not sidebar swatch clicks.
+- Spring press uses CSS-only approach (not Framer Motion) to avoid mixing animation systems per earlier feedback.
+
+---
+
 ## 2026-03-07 — Remove top-of-funnel case study, keep AI tooling as separate project
 
 **Branch:** `remove-funnel-case-study`
