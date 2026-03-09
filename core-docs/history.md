@@ -20,6 +20,35 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-08 — Page transitions, hero image anchor, and case study hero centering
+
+**Branch:** `cambridge`
+
+**Summary:** Implemented smooth page transitions between homepage and case study pages using the View Transitions API for hero image morphing, framer-motion for content fade animations, and centered the case study hero section (title + image).
+
+**What changed:**
+
+- `src/components/ProjectLink.tsx` — Arrow slide-out animation (500ms) on click before navigation. Wraps navigation in `document.startViewTransition()` + `flushSync` + `scrollTo(0, 0)` for seamless hero image morph. Sets `navigatingProjectId` in HoverContext to trigger homepage content exit fade.
+- `src/components/ImageDisplay.tsx` — Added `viewTransitionName: 'project-hero'` on project preview images (conditional: only when a project is hovered and not showing Lottie). Changed text zone height from always-120px to `summary ? 120 : 0` so default portrait gets full image area.
+- `src/components/LeftColumn.tsx` — Wrapped content in `motion.div` with entrance/exit fade driven by `navigatingProjectId`. Exit fade (280ms, 150ms delay) aligns with arrow animation timing. Entrance fade (350ms, 120ms delay) plays when returning from case study.
+- `src/components/CaseStudyPage.tsx` — Added `isExiting` state and `motion.div` wrapper for full-page fade-out (280ms) on back navigation before View Transition fires. Nav changed from `sticky` to `fixed` to remove it from document flow (eliminates 64px vertical offset that broke image anchor). `scrollTo(0, 0)` inside `startViewTransition` callback ensures correct capture position.
+- `src/components/CaseStudyLayoutA.tsx` — Added `previewImage` and `summary` props. Hero image with `viewTransitionName: 'project-hero'` for anchor morph. Entrance fade on `motion.header` (400ms, 150ms delay). Wide layout: centered title/subtitle (`textAlign: 'center'`, `alignItems: 'center'`). Left column mirrors right column's `flex: 1` + text zone reservation structure so title and image share the same vertical center.
+- `src/contexts/HoverContext.tsx` — Added `navigatingProjectId` state (readable by LeftColumn for exit fade, set by ProjectLink on click).
+- `src/data/projects.ts` — Added `getProjectForSlug()` helper to look up full Project object from case study slug.
+- `src/styles/globals.css` — Added View Transition CSS: root crossfade (250ms), `project-hero` morph (300ms, cubic-bezier easing), reduced-motion overrides.
+- `src/components/CustomCursor.tsx` — Extended braille unicode animation for cursor invert mode.
+- `src/vite-env.d.ts` — Added `startViewTransition` type declaration for View Transitions API.
+
+**Key decisions:**
+- **View Transitions for image only, framer-motion for text**: `view-transition-name: page-content` on text containers didn't produce visible animations despite correct CSS. Switched to framer-motion for all text fade animations. Image morph via View Transitions API works reliably.
+- **Full-page fade on back navigation**: User preferred ALL case study content fading out together (single `motion.div` wrapper) rather than text fading separately from images.
+- **Nav fixed instead of sticky**: Removes nav from document flow so hero section starts at viewport top, matching homepage RightColumn's `position: fixed; top: 0`. Functionally identical (was sticky at top: 0).
+- **Text zone reservation on left column**: The right column's 120px text zone (for summary text) offsets the image center upward. Adding the same reservation to the left column ensures title and image share the same vertical center. Height is conditional (`summary ? 120 : 0`), matching all 8 case studies correctly.
+- **Padding matches homepage**: Both hero columns keep `padding: var(--layout-padding-top) var(--layout-margin)` to match the homepage RightColumn exactly, preserving the view transition anchor position.
+>>>>>>> origin/main
+
+---
+
 ## 2026-03-07 — Add accent cycle on image click + sidebar jiggle
 
 **Branch:** `image-click-delight`

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useCursor } from '@/contexts/CursorContext'
 import { useHover } from '@/contexts/HoverContext'
 import { projectsById } from '@/data/projects'
+import { DIRECTIONAL_SWEEP } from '@/utils/braille'
 
 const INVERT_SIZE = 80
 const ARROW_FONT_SIZE = 36
@@ -30,7 +31,7 @@ function removeCursorNoneStyle() {
 
 export function CustomCursor() {
   const { cursorMode } = useCursor()
-  const { hoveredProjectId, hoveringLink } = useHover()
+  const { hoveredProjectId, hoveringLink, navigatingProjectId } = useHover()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const circleRef = useRef<HTMLDivElement | null>(null)
   const arrowRef = useRef<HTMLDivElement | null>(null)
@@ -46,6 +47,7 @@ export function CustomCursor() {
   const onImageRef = useRef(false)
   const onBackLinkRef = useRef(false)
   const morphTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cursorAnimRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     reducedMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -315,6 +317,37 @@ export function CustomCursor() {
       }
     }
   }, [hoveredProjectId, hoveringLink, cursorMode])
+
+  // Braille animation on cursor arrow when a project link is clicked in invert mode
+  useEffect(() => {
+    if (cursorMode !== 'invert' || !navigatingProjectId || !arrowRef.current) return
+    if (reducedMotion.current) return
+
+    const arrow = arrowRef.current
+    const { frames, interval } = DIRECTIONAL_SWEEP
+    let frameIndex = 0
+
+    cursorAnimRef.current = setInterval(() => {
+      if (frameIndex < frames.length) {
+        arrow.textContent = frames[frameIndex] ?? '\u2192'
+        frameIndex++
+      } else {
+        clearInterval(cursorAnimRef.current!)
+        cursorAnimRef.current = null
+        arrow.textContent = '\u2192'
+      }
+    }, interval)
+
+    return () => {
+      if (cursorAnimRef.current) {
+        clearInterval(cursorAnimRef.current)
+        cursorAnimRef.current = null
+      }
+      if (arrowRef.current) {
+        arrowRef.current.textContent = '\u2192'
+      }
+    }
+  }, [navigatingProjectId, cursorMode])
 
   return null
 }
