@@ -16,7 +16,6 @@ export function CaseStudyPage() {
   const caseStudy = slug ? caseStudiesBySlug[slug] : undefined
   const projectData = slug ? getProjectForSlug(slug) : undefined
   const previewImage = projectData ? projectImageMap[projectData.projectId] : undefined
-  const summary = projectData?.summary
   const { setHoveredProjectId, setHoveringLink } = useHover()
   const [isExiting, setIsExiting] = useState(false)
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -165,7 +164,7 @@ export function CaseStudyPage() {
         </Link>
       </nav>
 
-      <CaseStudyLayoutA data={caseStudy} isNarrow={!isWide} previewImage={previewImage} summary={summary} />
+      <CaseStudyLayoutA data={caseStudy} isNarrow={!isWide} previewImage={previewImage} />
     </motion.div>
   )
 }

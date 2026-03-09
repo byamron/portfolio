@@ -156,6 +156,18 @@ p a {
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Sidebar trigger jiggle — draws attention after image-click accent cycle */
+@keyframes sidebar-jiggle {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(1px); }
+}
+.sidebar-jiggle {
+  animation: sidebar-jiggle 400ms ease-in-out;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

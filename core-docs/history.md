@@ -30,6 +30,70 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-07 — Add accent cycle on image click + sidebar jiggle
+
+**Branch:** `image-click-delight`
+
+**Summary:** Clicking the right-column portrait now cycles the accent color with a spring press animation. When the accent cycles via image click, the sidebar trigger dot jiggles to encourage discovery of the full theme controls. Explored multiple approaches (CSS ring ripple, canvas-based water ripple with 5 render styles) before settling on the simpler cycle + spring press — aligned with the "skeleton is permanent; skin is variable" design principle.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Added click/keyboard handlers that call `cycleAccent()`, play a CSS spring press (`scale(0.985)` → `scale(1)` with overshoot bezier), and dispatch a custom `accent-cycled` DOM event. Added `cursor: pointer`, `tabIndex={0}`, `role="button"`, `aria-label`. Separated `aria-live="polite"` into a dedicated visually-hidden element to avoid conflicting ARIA semantics (live regions must not be interactive). Also added Lottie preview support and a fixed-height text zone for project summaries (crossfade layout).
+- `src/components/SidebarThemeControls.tsx` — Added `useEffect` listener for the `accent-cycled` custom event that applies/removes a `sidebar-jiggle` CSS class on the trigger dot ref.
+- `src/contexts/ThemeContext.tsx` — Exported `VALID_ACCENTS`. Added `cycleAccent()` to context value (functional state update, persists to localStorage).
+- `src/styles/globals.css` — Added `@keyframes sidebar-jiggle` (horizontal nudge, 400ms) and `.sidebar-jiggle` class. Existing `prefers-reduced-motion` rule covers the jiggle automatically.
+- `src/components/RightColumn.tsx` — Simplified (no props, no toggle state).
+
+**Deleted (dev-only exploration code):**
+- `src/components/DevVariantToggle.tsx` — Dev toggle for switching between ripple/cycle variants and ripple sub-styles.
+- `src/hooks/useWaterRipple.ts` — Canvas-based two-buffer wave propagation hook with 5 render styles (pure, refraction, chromatic, tint, blur).
+
+**Decisions:**
+- Cycle + spring press chosen over water ripple — the ripple was technically impressive but felt heavy for a portfolio. The cycle is more aligned with the site's theme of subtle discovery.
+- Custom DOM event (`accent-cycled`) used for cross-component communication to avoid polluting React context with transient UI state. Jiggle only fires on image-click, not sidebar swatch clicks.
+- Spring press uses CSS-only approach (not Framer Motion) to avoid mixing animation systems per earlier feedback.
+
+---
+
+## 2026-03-07 — Remove top-of-funnel case study, keep AI tooling as separate project
+
+**Branch:** `remove-funnel-case-study`
+
+**Summary:** Removed the "Building a competitive top of funnel experience" project link and its association with the `mochi-ai-tooling` case study. Re-added AI tooling as its own distinct project (stub, content TBD) — third in the Mochi section, after tracker and subscriptions.
+
+**What changed:**
+- `src/data/projects.ts` — Removed `mochi-funnel` project entry. Added `mochi-ai-tooling` as a separate project with its own case study slug.
+- `src/data/case-study-content.ts` — `mochiAiTooling` case study retained as a stub (empty sections/gallery, "Content coming soon.").
+- `src/data/case-studies/mochi-ai-tooling.md` — Recreated as stub markdown.
+- `core-docs/plan.md` — Updated Mochi section project list to reflect the change.
+
+**Decisions:**
+- Top-of-funnel and AI tooling are separate projects — the old entry conflated them by linking the funnel title to the AI tooling case study.
+- AI tooling kept as a live link to a stub page rather than a "coming soon" non-link, since content will be added soon.
+
+---
+
+## 2026-03-07 — Fix sidebar hover pill timing with stagger animations
+
+**Branch:** `fix-sidebar-hover-timing`
+
+**Summary:** Fixed a UX gap where the sidebar hover pill wouldn't appear if the user's cursor was stationary over a control that was mid-stagger-animation, or if the cursor moved to a control before its opacity animation completed.
+
+**What changed:**
+- `src/components/SidebarThemeControls.tsx` — Extracted pill-positioning logic from `handleMouseOver` into `showPillForControl` to enable reuse from multiple code paths.
+- Added `isControlVisible(control)` — checks if a control's parent `motion.div` wrapper has reached opacity >= 0.95 (i.e., stagger animation complete).
+- Added `retryUntilVisible(control)` — rAF loop that polls until a hovered control becomes visible, then shows the pill. Handles the case where the user mouses over a control before its stagger animation finishes.
+- Added `probeStaticCursor()` — one-shot 800ms timeout that uses `document.elementFromPoint` to detect if a stationary cursor is over a control that animated in underneath it. `mouseover` doesn't re-fire when elements animate under a stationary pointer.
+- Added `trackMouse` listener to cache cursor position for the static-cursor probe.
+- Updated `handleMouseLeave` to cancel pending retries via `cancelRetry()`.
+- All new resources (rAF, setTimeout, mousemove listener) properly cleaned up in teardown.
+
+**Decisions:**
+- Used `requestAnimationFrame` polling (not `setTimeout`) for the retry loop to stay in sync with the browser's render cycle and Framer Motion's opacity animation.
+- 800ms probe delay chosen to exceed the maximum stagger animation completion time (~780ms = 14 items × 0.04s delay + 0.22s duration).
+- Opacity threshold of 0.95 (not 1.0) to account for floating-point precision in computed styles.
+
+---
+
 ## 2026-03-07 — Add portfolio guidelines doc
 
 **Branch:** `add-portfolio-guidelines`

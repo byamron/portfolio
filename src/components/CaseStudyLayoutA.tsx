@@ -13,7 +13,6 @@ interface CaseStudyLayoutAProps {
   data: CaseStudy
   isNarrow: boolean
   previewImage?: string
-  summary?: string
 }
 
 /**
@@ -31,7 +30,7 @@ function resolveVisuals(
   })
 }
 
-export function CaseStudyLayoutA({ data, isNarrow, previewImage, summary }: CaseStudyLayoutAProps) {
+export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayoutAProps) {
   const visuals = useMemo(
     () => resolveVisuals(data.sections, data.heroVisual),
     [data.sections, data.heroVisual],
@@ -148,56 +147,37 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, summary }: Case
             justifyContent: 'center',
           }}
         >
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 0,
-            }}
+          <motion.header
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            style={{ textAlign: 'center' }}
           >
-            <motion.header
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.15 }}
-              style={{ textAlign: 'center' }}
+            <h1
+              style={{
+                fontSize: 48,
+                fontWeight: 300,
+                lineHeight: 1.2,
+                color: 'var(--text-dark)',
+                marginBottom: 16,
+              }}
             >
-              <h1
-                style={{
-                  fontSize: 48,
-                  fontWeight: 300,
-                  lineHeight: 1.2,
-                  color: 'var(--text-dark)',
-                  marginBottom: 16,
-                }}
-              >
-                {data.title}
-              </h1>
-              <p
-                style={{
-                  fontSize: 18,
-                  lineHeight: 1.4,
-                  color: 'var(--text-medium)',
-                  marginBottom: 8,
-                }}
-              >
-                {data.subtitle}
-              </p>
-              <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
-                {data.timeline}
-              </p>
-            </motion.header>
-          </div>
-          {/* Match right column's text zone reservation so vertical centers align */}
-          <div
-            style={{
-              width: '100%',
-              height: summary ? 120 : 0,
-              flexShrink: 0,
-            }}
-          />
+              {data.title}
+            </h1>
+            <p
+              style={{
+                fontSize: 18,
+                lineHeight: 1.4,
+                color: 'var(--text-medium)',
+                marginBottom: 8,
+              }}
+            >
+              {data.subtitle}
+            </p>
+            <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
+              {data.timeline}
+            </p>
+          </motion.header>
         </div>
 
         {/* Right panel — matches RightColumn + ImageDisplay structure exactly */}
@@ -207,58 +187,25 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, summary }: Case
             height: '100vh',
             padding: 'var(--layout-padding-top) var(--layout-margin)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            {/* Image area — flex: 1, same as ImageDisplay */}
-            <div
+          {previewImage ? (
+            <img
+              src={previewImage}
+              alt={data.title}
               style={{
-                flex: 1,
-                position: 'relative',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: 0,
-              }}
-            >
-              {previewImage ? (
-                <img
-                  src={previewImage}
-                  alt={data.title}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                    borderRadius: 32,
-                    viewTransitionName: 'project-hero',
-                  }}
-                />
-              ) : data.heroVisual ? (
-                <PlaceholderVisual caption={data.heroVisual.caption} />
-              ) : null}
-            </div>
-            {/* Text zone reservation — matches ImageDisplay's TEXT_ZONE_HEIGHT */}
-            <div
-              style={{
-                width: '100%',
-                height: summary ? 120 : 0,
-                flexShrink: 0,
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: 32,
+                viewTransitionName: 'project-hero',
               }}
             />
-          </div>
+          ) : data.heroVisual ? (
+            <PlaceholderVisual caption={data.heroVisual.caption} />
+          ) : null}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import Lottie from 'lottie-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useHover } from '@/contexts/HoverContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { projectsById, projectImageMap, defaultImageMap } from '@/data/projects'
@@ -33,7 +33,7 @@ const TEXT_ZONE_HEIGHT = 120
 
 export function ImageDisplay() {
   const { hoveredProjectId } = useHover()
-  const { accentColor, resolvedAppearance } = useTheme()
+  const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
 
   const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
   const lottieUrl = project?.lottiePreview ?? null
@@ -54,6 +54,33 @@ export function ImageDisplay() {
       ? 'drop-shadow(0 2px 40px rgba(255, 255, 255, 0.1))'
       : 'drop-shadow(0 2px 40px rgba(0, 0, 0, 0.08))'
     : undefined
+
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const triggerSpringPress = useCallback(() => {
+    if (reducedMotion || !containerRef.current) return
+    const el = containerRef.current
+    el.style.transition = 'none'
+    el.style.transform = 'scale(0.985)'
+    void el.offsetHeight
+    el.style.transition = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+    el.style.transform = 'scale(1)'
+  }, [])
+
+  const handleClick = useCallback(() => {
+    cycleAccent()
+    triggerSpringPress()
+    document.dispatchEvent(new CustomEvent('accent-cycled'))
+  }, [cycleAccent, triggerSpringPress])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      cycleAccent()
+      triggerSpringPress()
+      document.dispatchEvent(new CustomEvent('accent-cycled'))
+    }
+  }, [cycleAccent, triggerSpringPress])
 
   const [lottieData, setLottieData] = useState<object | null>(null)
 
@@ -76,113 +103,124 @@ export function ImageDisplay() {
 
   return (
     <div
-      aria-live="polite"
+      ref={containerRef}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label="Cycle accent color"
       style={{
         position: 'relative',
         width: '100%',
         height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
       }}
     >
+      {/* Live region for screen reader announcements — must be separate from interactive elements */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {project ? project.title : `Portrait, ${accentColor} theme`}
+      </div>
+      {/* Image — fills available space */}
       <AnimatePresence mode="sync">
-        {/* Each state (portrait or project preview) is a single crossfade unit
-            containing both image + text zone with identical layout structure.
-            The text zone is always allocated so the image area never changes size. */}
-        <motion.div
-          key={contentKey}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          {/* Image area — flex: 1, always same height regardless of text */}
-          <div
+        {lottieUrl && lottieData ? (
+          <motion.div
+            key={contentKey}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
             style={{
-              flex: 1,
-              position: 'relative',
-              width: '100%',
+              position: 'absolute',
+              inset: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: 0,
+              filter: dropShadow,
             }}
           >
-            {lottieUrl && lottieData ? (
-              <Lottie
-                animationData={lottieData}
-                loop={false}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  filter: dropShadow,
-                }}
-              />
-            ) : (
-              <img
-                src={imageSrc}
-                alt={project ? project.title : 'Ben Yamron portrait'}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain',
-                  borderRadius: 32,
-                  filter: dropShadow,
-                  viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
-                }}
-              />
-            )}
-          </div>
-
-          {/* Text zone — only reserves space when there's a summary to show.
-              Each crossfade state is its own absolute-positioned flex container,
-              so the default portrait gets full image height (0px text zone)
-              while project hovers get the 120px text zone. */}
-          <div
+            <Lottie
+              animationData={lottieData}
+              loop={false}
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
+            />
+          </motion.div>
+        ) : (
+          <motion.img
+            key={contentKey}
+            src={imageSrc}
+            alt={project ? project.title : 'Ben Yamron portrait'}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
             style={{
-              width: '100%',
-              height: summary ? TEXT_ZONE_HEIGHT : 0,
-              flexShrink: 0,
-              position: 'relative',
+              position: 'absolute',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              borderRadius: 32,
+              filter: dropShadow,
+              viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
             }}
-          >
-            <AnimatePresence mode="sync">
-              {summary && (
-                <motion.p
-                  key={project?.id ?? 'none'}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{
-                    duration: reducedMotion ? 0 : 0.3,
-                    ease: 'easeInOut',
-                  }}
-                  style={{
-                    ...summaryStyles[SUMMARY_FONT],
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    lineHeight: 1.5,
-                    color: 'var(--text-grey)',
-                    maxWidth: 480,
-                    padding: '0 24px',
-                    textAlign: 'left',
-                    margin: 0,
-                  }}
-                >
-                  {summary}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
+          />
+        )}
       </AnimatePresence>
+
+      {/* Summary text — absolutely positioned at bottom, no layout impact */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: TEXT_ZONE_HEIGHT,
+          pointerEvents: 'none',
+        }}
+      >
+        <AnimatePresence mode="sync">
+          {summary && (
+            <motion.p
+              key={contentKey + '-summary'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: reducedMotion ? 0 : 0.3,
+                delay: reducedMotion ? 0 : 0.15,
+                ease: 'easeInOut',
+              }}
+              style={{
+                ...summaryStyles[SUMMARY_FONT],
+                lineHeight: 1.5,
+                color: 'var(--text-grey)',
+                maxWidth: 480,
+                padding: '0 24px',
+                textAlign: 'left',
+                margin: 0,
+              }}
+            >
+              {summary}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
