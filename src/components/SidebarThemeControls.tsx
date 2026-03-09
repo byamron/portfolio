@@ -16,13 +16,17 @@ const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle
   { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
 ]
 
-const accents: { color: AccentColor; swatch: string }[] = [
-  { color: 'table', swatch: 'hsl(34, 50%, 60%)' },
-  { color: 'portrait', swatch: 'hsl(43, 22%, 62%)' },
-  { color: 'pizza', swatch: 'hsl(15, 53%, 64%)' },
-  { color: 'vineyard', swatch: 'hsl(90, 36%, 48%)' },
-  { color: 'sky', swatch: 'hsl(204, 50%, 70%)' },
-]
+const ACCENT_ORDER: AccentColor[] = ['table', 'portrait', 'pizza', 'vineyard', 'sky']
+
+function readSwatchColors(): { color: AccentColor; swatch: string }[] {
+  const style = getComputedStyle(document.documentElement)
+  return ACCENT_ORDER.map(color => ({
+    color,
+    swatch: style.getPropertyValue(`--swatch-${color}`).trim() || 'gray',
+  }))
+}
+
+const accents = readSwatchColors()
 
 const motionEase = [0.25, 0.46, 0.45, 0.94]
 

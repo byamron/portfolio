@@ -92,7 +92,7 @@ export function CustomCursor() {
         justifyContent: 'center',
         color: 'white',
         fontSize: `${ARROW_FONT_SIZE}px`,
-        fontFamily: "'Manrope', sans-serif",
+        fontFamily: "'Onest', sans-serif",
         fontWeight: '400',
         lineHeight: '1',
         opacity: '0',

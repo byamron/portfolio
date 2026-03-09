@@ -2,6 +2,53 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-08 — Fix design language audit findings (8 items)
+
+**Branch:** `update-design-language-doc`
+
+**Summary:** Systematic audit of the codebase against `design-language.md` found 8 inconsistencies. All fixed in one pass.
+
+**Fixes:**
+1. **Manrope → Onest** in `CaseStudyPage.tsx` (error fallback) and `CustomCursor.tsx` (arrow element). Manrope was the old font; the two-voice system uses Literata + Onest.
+2. **Image cross-fade 400ms → 300ms** in `ImageDisplay.tsx`. Spec says 300ms for hover transitions.
+3. **Case study header fade 400ms → 350ms** in `CaseStudyLayoutA.tsx`. Spec says 350ms for content reveals.
+4. **Portrait color values fixed in design-language.md** — bg was `hsl(47,18%,10%)`/`hsl(42,22%,91%)`, corrected to `hsl(41,14%,10%)`/`hsl(39,15%,92%)`. Swatch was `hsl(47,34%,64%)`, corrected to `hsl(43,22%,62%)`. Now matches `tokens.md` and `theme.css`.
+5. **Added onFocus/onBlur to back links** in `CaseStudyPage.tsx` (both error fallback and main nav). Keyboard users now get cursor arrow morph on focus.
+6. **Resolved SUMMARY_FONT dev toggle** in `ImageDisplay.tsx`. Committed to serif (Literata 300/15px), removed the toggle and dual-style object.
+7. **Trimmed Google Fonts weights** in `index.html`. Was loading 300-700 for both fonts; now loads only Literata 300 and Onest 400 (the only weights used).
+8. **Centralized swatch colors** in `SidebarThemeControls.tsx`. Replaced hardcoded HSL strings with reads from `--swatch-{color}` CSS custom properties, eliminating token duplication.
+
+---
+
+## 2026-03-08 — Synthesize design patterns into design-language.md
+
+**Branch:** `update-design-language-doc`
+
+**Summary:** Comprehensive update to `core-docs/design-language.md` to document patterns that had been implemented but not codified. The document now covers the full scope of the site's design system, enabling Claude to make better decisions when building new UI.
+
+**What was added:**
+- **Cursor System** (new section): Three cursor modes (standard/invert/figpal), invert mode morphing priority hierarchy (arrow > hand > sidebar shrink > disc), braille micro-animation on navigation, figpal trailing physics, global cursor suppression, reduced motion handling.
+- **Iconography & Symbols** (new section): Phosphor Icons system with sizing rules, Unicode symbol vocabulary (→←…⠀–⣿), arrow-as-interaction-signal principle, anti-patterns for icon usage.
+- **Page Transitions & Navigation** (new section): View Transitions API usage, navigation choreography timelines for both cursor modes, exit/entry animations, case study page structure (layout, edge fades, sticky visuals, gallery grid).
+- **Click-to-cycle accent** (new subsection under Imagery): Spring press animation, accent-cycled event, sidebar jiggle cross-reference.
+- **Summary text below image** (new subsection under Imagery): Font options, delayed fade timing, fixed text zone for layout stability.
+- **Cursor mode picker** (added to Interactive Controls): Three modes in sidebar toolbar.
+- **Sidebar jiggle** (added to Interactive Controls): Horizontal nudge animation on accent cycle.
+- **Vineyard theme** added throughout: 5th accent color with background, swatch, and portrait image values.
+- **Timing hierarchy expanded**: From 4 tiers to 10, including braille frames (50ms), exit/entry fades (280/350ms), spring press (400ms), and intermediate durations.
+- **Easing assignments table**: Maps each curve to its specific use case and physical metaphor.
+- **Radius scale expanded**: Added 12px (sidebar pill) and 4px (intensity strip).
+- **Anti-patterns expanded**: Added rules for icons, cursor changes, page transitions, and mobile hover simulation.
+- **Coherence checklist restructured**: Organized by category (typography, layout, motion, craft) with new checks for cursor morphing, reduced motion, data attributes, and Phosphor Icons.
+- Updated "What motion does NOT do" to nuance the overshoot anti-pattern (Spring easing is intentional for direct press actions).
+
+**Decisions:**
+- Documented the Spring easing exception explicitly — the site avoids ambient bouncy overshoots but intentionally uses Spring for direct user-initiated press feedback. This resolves the apparent contradiction.
+- Structured new sections to match existing document conventions (philosophy statement → specification tables → anti-patterns).
+- Kept case study layout documentation at a structural level (not pixel-level) since that layout is still evolving.
+
+---
+
 ## 2026-03-08 — Add hand cursor on theme image hover
 
 **Branch:** `cursor-hand-on-image`

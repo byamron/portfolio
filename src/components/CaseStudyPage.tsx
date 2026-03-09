@@ -64,7 +64,7 @@ export function CaseStudyPage() {
       <main
         style={{
           padding: 'var(--layout-padding-top) var(--layout-margin)',
-          fontFamily: "'Manrope', sans-serif",
+          fontFamily: "'Onest', sans-serif",
         }}
       >
         <Link
@@ -72,6 +72,8 @@ export function CaseStudyPage() {
           data-back-link
           onMouseEnter={() => setHoveringLink(true)}
           onMouseLeave={() => setHoveringLink(false)}
+          onFocus={() => setHoveringLink(true)}
+          onBlur={() => setHoveringLink(false)}
           onClick={handleBack}
           style={{
             display: 'inline-block',
@@ -146,6 +148,8 @@ export function CaseStudyPage() {
           data-back-link
           onMouseEnter={() => setHoveringLink(true)}
           onMouseLeave={() => setHoveringLink(false)}
+          onFocus={() => setHoveringLink(true)}
+          onBlur={() => setHoveringLink(false)}
           onClick={handleBack}
           style={{
             display: 'inline-block',
