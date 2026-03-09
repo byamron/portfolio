@@ -104,6 +104,7 @@ export function ImageDisplay() {
   return (
     <div
       ref={containerRef}
+      data-theme-image
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}

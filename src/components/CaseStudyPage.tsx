@@ -70,6 +70,8 @@ export function CaseStudyPage() {
         <Link
           to="/"
           data-back-link
+          onMouseEnter={() => setHoveringLink(true)}
+          onMouseLeave={() => setHoveringLink(false)}
           onClick={handleBack}
           style={{
             display: 'inline-block',
@@ -142,6 +144,8 @@ export function CaseStudyPage() {
         <Link
           to="/"
           data-back-link
+          onMouseEnter={() => setHoveringLink(true)}
+          onMouseLeave={() => setHoveringLink(false)}
           onClick={handleBack}
           style={{
             display: 'inline-block',
