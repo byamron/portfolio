@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 import type {
   CaseStudy,
   CaseStudySection,
@@ -11,6 +12,8 @@ import { PlaceholderVisual } from './PlaceholderVisual'
 interface CaseStudyLayoutAProps {
   data: CaseStudy
   isNarrow: boolean
+  previewImage?: string
+  summary?: string
 }
 
 /**
@@ -28,7 +31,7 @@ function resolveVisuals(
   })
 }
 
-export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
+export function CaseStudyLayoutA({ data, isNarrow, previewImage, summary }: CaseStudyLayoutAProps) {
   const visuals = useMemo(
     () => resolveVisuals(data.sections, data.heroVisual),
     [data.sections, data.heroVisual],
@@ -39,7 +42,12 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
   if (isNarrow) {
     return (
       <article style={{ padding: 'var(--layout-padding-top) var(--layout-margin)' }}>
-        <header style={{ marginBottom: 64 }}>
+        <motion.header
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          style={{ marginBottom: 64 }}
+        >
           <h1
             style={{
               fontSize: 36,
@@ -64,12 +72,26 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
           <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
             {data.timeline}
           </p>
-          {data.heroVisual && (
+          {(previewImage || data.heroVisual) && (
             <div style={{ marginTop: 32 }}>
-              <PlaceholderVisual caption={data.heroVisual.caption} />
+              {previewImage ? (
+                <img
+                  src={previewImage}
+                  alt={data.title}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    borderRadius: 32,
+                    viewTransitionName: 'project-hero',
+                  }}
+                />
+              ) : (
+                <PlaceholderVisual caption={data.heroVisual!.caption} />
+              )}
             </div>
           )}
-        </header>
+        </motion.header>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
           {data.sections.map((section) => (
             <div key={section.id}>
@@ -107,64 +129,136 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
 
   return (
     <article>
-      {/* Hero: 100vh two-column row with vertically centered text */}
+      {/* Hero: 100vh two-column row matching homepage Layout structure */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'row',
-          gap: 'var(--layout-gap)',
           minHeight: '100vh',
         }}
       >
         <div
           style={{
             width: '50%',
-            padding: 'var(--layout-padding-top) var(--layout-margin) 40px',
+            height: '100vh',
+            padding: 'var(--layout-padding-top) var(--layout-margin)',
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <header>
-            <h1
-              style={{
-                fontSize: 48,
-                fontWeight: 300,
-                lineHeight: 1.2,
-                color: 'var(--text-dark)',
-                marginBottom: 16,
-              }}
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 0,
+            }}
+          >
+            <motion.header
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+              style={{ textAlign: 'center' }}
             >
-              {data.title}
-            </h1>
-            <p
-              style={{
-                fontSize: 18,
-                lineHeight: 1.4,
-                color: 'var(--text-medium)',
-                marginBottom: 8,
-              }}
-            >
-              {data.subtitle}
-            </p>
-            <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
-              {data.timeline}
-            </p>
-          </header>
+              <h1
+                style={{
+                  fontSize: 48,
+                  fontWeight: 300,
+                  lineHeight: 1.2,
+                  color: 'var(--text-dark)',
+                  marginBottom: 16,
+                }}
+              >
+                {data.title}
+              </h1>
+              <p
+                style={{
+                  fontSize: 18,
+                  lineHeight: 1.4,
+                  color: 'var(--text-medium)',
+                  marginBottom: 8,
+                }}
+              >
+                {data.subtitle}
+              </p>
+              <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
+                {data.timeline}
+              </p>
+            </motion.header>
+          </div>
+          {/* Match right column's text zone reservation so vertical centers align */}
+          <div
+            style={{
+              width: '100%',
+              height: summary ? 120 : 0,
+              flexShrink: 0,
+            }}
+          />
         </div>
 
+        {/* Right panel — matches RightColumn + ImageDisplay structure exactly */}
         <div
           style={{
             width: '50%',
-            padding: 'var(--layout-padding-top) var(--layout-margin) 40px 0',
+            height: '100vh',
+            padding: 'var(--layout-padding-top) var(--layout-margin)',
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          {data.heroVisual && (
-            <PlaceholderVisual caption={data.heroVisual.caption} />
-          )}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            {/* Image area — flex: 1, same as ImageDisplay */}
+            <div
+              style={{
+                flex: 1,
+                position: 'relative',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 0,
+              }}
+            >
+              {previewImage ? (
+                <img
+                  src={previewImage}
+                  alt={data.title}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    borderRadius: 32,
+                    viewTransitionName: 'project-hero',
+                  }}
+                />
+              ) : data.heroVisual ? (
+                <PlaceholderVisual caption={data.heroVisual.caption} />
+              ) : null}
+            </div>
+            {/* Text zone reservation — matches ImageDisplay's TEXT_ZONE_HEIGHT */}
+            <div
+              style={{
+                width: '100%',
+                height: summary ? 120 : 0,
+                flexShrink: 0,
+              }}
+            />
+          </div>
         </div>
       </div>
 

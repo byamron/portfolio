@@ -133,16 +133,20 @@ export function ImageDisplay() {
                   objectFit: 'contain',
                   borderRadius: 32,
                   filter: dropShadow,
+                  viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
                 }}
               />
             )}
           </div>
 
-          {/* Text zone — always present, fixed height, never changes image sizing */}
+          {/* Text zone — only reserves space when there's a summary to show.
+              Each crossfade state is its own absolute-positioned flex container,
+              so the default portrait gets full image height (0px text zone)
+              while project hovers get the 120px text zone. */}
           <div
             style={{
               width: '100%',
-              height: TEXT_ZONE_HEIGHT,
+              height: summary ? TEXT_ZONE_HEIGHT : 0,
               flexShrink: 0,
               position: 'relative',
             }}

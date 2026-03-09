@@ -5,6 +5,8 @@ interface HoverContextValue {
   setHoveredProjectId: (id: string | null) => void
   hoveringLink: boolean
   setHoveringLink: (hovering: boolean) => void
+  navigatingProjectId: string | null
+  setNavigatingProjectId: (id: string | null) => void
 }
 
 const HoverContext = createContext<HoverContextValue | null>(null)
@@ -12,13 +14,16 @@ const HoverContext = createContext<HoverContextValue | null>(null)
 export function HoverProvider({ children }: { children: ReactNode }) {
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
   const [hoveringLink, setHoveringLink] = useState(false)
+  const [navigatingProjectId, setNavigatingProjectId] = useState<string | null>(null)
 
   const value = useMemo<HoverContextValue>(() => ({
     hoveredProjectId,
     setHoveredProjectId,
     hoveringLink,
     setHoveringLink,
-  }), [hoveredProjectId, hoveringLink])
+    navigatingProjectId,
+    setNavigatingProjectId,
+  }), [hoveredProjectId, hoveringLink, navigatingProjectId])
 
   return <HoverContext.Provider value={value}>{children}</HoverContext.Provider>
 }
