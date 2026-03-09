@@ -41,7 +41,7 @@ Color is environmental, not decorative. It tints the entire atmosphere of the pa
 Color has two independent dimensions:
 
 - **Appearance** (light / dark / system): Controls the overall luminance and contrast. Dark mode is the default and the "home" state — a warm, low-light environment that lets the content and imagery lead. Light mode inverts the hierarchy but preserves the warmth.
-- **Accent** (table / portrait / sky / pizza): Controls the hue that tints everything. Each accent is a full environment — a background tone, an associated portrait image, and a derived glass fill color. Changing the accent doesn't just swap a highlight color; it changes what the room feels like.
+- **Accent** (table / portrait / sky / pizza / vineyard): Controls the hue that tints everything. Each accent is a full environment — a background tone, an associated portrait image, and a derived glass fill color. Changing the accent doesn't just swap a highlight color; it changes what the room feels like.
 
 ### The three-tier token architecture
 
@@ -75,9 +75,10 @@ Tokens are organized by what controls them. This is a structural rule, not just 
 | Accent | Dark Mode | Light Mode | Character |
 |--------|-----------|-----------|-----------|
 | table | `hsl(33, 18%, 12%)` | `hsl(30, 17%, 91%)` | Warm gold. Default. Grounded, natural, confident. |
-| portrait | `hsl(47, 18%, 10%)` | `hsl(42, 22%, 91%)` | Warm ochre. Earthy, slightly warmer than table. |
+| portrait | `hsl(41, 14%, 10%)` | `hsl(39, 15%, 92%)` | Warm ochre. Earthy, slightly warmer than table. |
 | sky | `hsl(200, 22%, 8%)` | `hsl(200, 23%, 95%)` | Cool blue. Calm, open, expansive. The counterpoint. |
 | pizza | `hsl(8, 22%, 7%)` | `hsl(10, 30%, 96%)` | Warm coral. Playful, human, approachable. |
+| vineyard | `hsl(88, 18%, 9%)` | `hsl(86, 18%, 93%)` | Muted green. Natural, grounded, verdant. The cool-warm counterpoint to sky. |
 
 **Pattern:** In dark mode, backgrounds are very dark (L: 7-12%) with low saturation (18-22%). In light mode, backgrounds are near-white (L: 91-96%) with similar saturation. The hue stays roughly the same between modes — the room "dims" rather than changing color. Pizza has the highest light-mode saturation (30%), giving it a slightly more tinted feel.
 
@@ -86,9 +87,10 @@ Tokens are organized by what controls them. This is a structural rule, not just 
 | Accent | HSL | Character |
 |--------|-----|-----------|
 | table | `hsl(34, 50%, 60%)` | Warm gold at medium brightness and saturation |
-| portrait | `hsl(47, 34%, 64%)` | Muted ochre — the most desaturated swatch |
+| portrait | `hsl(43, 22%, 62%)` | Muted ochre — the most desaturated swatch |
 | sky | `hsl(204, 50%, 70%)` | Soft blue — the lightest swatch |
 | pizza | `hsl(15, 53%, 64%)` | Terra cotta — the most saturated swatch |
+| vineyard | `hsl(90, 36%, 48%)` | Olive green — mid-saturation, the only cool-warm hybrid |
 
 These are the dots in the accent picker. They don't adapt to appearance mode because they represent the theme's identity — a fixed reference point as the environment shifts.
 
@@ -105,7 +107,7 @@ Panel colors are hardcoded, not tokenized — the panel is a developer tool, not
 
 **Changes**: Background hue/tone, glass fill hue (derived from background via HSL extraction), default portrait image, browser chrome color. The entire atmospheric envelope shifts.
 
-**Stays constant**: All text colors, all structural properties (spacing, radii, shadows), all animation timings, all typography, the glass effect's saturation/brightness/opacity recipe, the interaction model. The skeleton is permanent; the skin is variable.
+**Stays constant**: All text colors, all structural properties (spacing, radii, shadows), all animation timings, all typography, the glass effect's saturation/brightness/opacity recipe, the interaction model, cursor behavior and morphing rules. The skeleton is permanent; the skin is variable.
 
 ### Transition behavior
 
@@ -208,13 +210,15 @@ Radii follow a descending scale that maps to element role:
 
 | Radius | Element | Role |
 |--------|---------|------|
-| 32px | Image container | Content showcase — the largest, most prominent shape |
-| 16px | Glass hover surface | Interactive surface — half of image radius, creating visual kinship |
-| 8px | Mode buttons (40px) | Large controls — rounded rectangles |
+| 32px | Image container, placeholder visuals | Content showcase — the largest, most prominent shape |
+| 16px | Glass hover surface (project cards) | Interactive surface — half of image radius, creating visual kinship |
+| 12px | Sidebar glass pill (36px) | Control-level hover surface — concentric with swatches/icons |
+| 8px | Mode buttons (40px), inline link glass | Large controls and small interactive surfaces — rounded rectangles |
 | 6px | Accent swatches (24px) | Small controls — rounded squares |
 | 5px | Sidebar trigger (16px) | Indicator — smallest rounded square, distinct from swatches by both size and proportion |
+| 4px | Intensity strip gradient bar | Micro-element — barely rounded, visually reads as a line |
 
-**Shape language:** Rounded squares/rectangles are used for all interactive controls. Circles are not used. This creates a visual system where shape communicates role: rounded squares = controls, rounded rectangles = surfaces. The trigger's smaller size and tighter radius distinguish it from the selectable swatches it anchors.
+**Shape language:** Rounded squares/rectangles are used for all interactive controls. Circles appear only as cursor elements (the invert disc) and the intensity thumb — never as button shapes. This creates a visual system where shape communicates role: rounded squares = controls, rounded rectangles = surfaces, circles = cursors/indicators. The trigger's smaller size and tighter radius distinguish it from the selectable swatches it anchors.
 
 ---
 
@@ -330,14 +334,31 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 
 | Duration | Use | Character |
 |----------|-----|-----------|
-| 150ms | Pill clear delay (project cards) | Fast enough to feel responsive, long enough to prevent flicker |
-| 200ms | Glass pill appear/disappear, card-to-card slide | The site's default action tempo. Responsive but not instant. |
-| 300ms | Image cross-fade (both hover preview and glass hover CSS) | Perceptible transition. The user sees the change happening. |
-| 500ms | Theme/accent transitions, default portrait return | Environmental shifts. Slower because the whole atmosphere is changing. |
+| 50ms | Braille frame interval | Subliminal. Individual frames aren't consciously perceived — the aggregate sweep is. |
+| 150ms | Pill clear delay (project cards), sidebar pill fade | Fast enough to feel responsive, long enough to prevent flicker. |
+| 200ms | Glass pill appear/disappear, cursor morph debounce, CSS glass hover transition | The site's default action tempo. Responsive but not instant. |
+| 250ms | View Transition root crossfade, sidebar close delay | Slightly slower than action tempo — used for transitions that involve layout shifts. |
+| 280ms | Left column exit fade, case study exit fade | Content departure. Quick enough to not delay navigation. |
+| 300ms | Image cross-fade, braille sweep total (6×50ms), hero image morph, summary text fade, contact link clear delay | Perceptible transition. The user sees the change happening. |
+| 350ms | Left column entry fade | Content arrival. Slightly slower than departure — settling in feels more natural than leaving. |
+| 400ms | Spring press recovery, sidebar jiggle, tight-bounds-to-stack clear delay | Physical responses. Slow enough to feel like a real material bouncing back. |
+| 500ms | Theme/accent transitions, default portrait return, arrow slide-out | Environmental shifts. Slower because the whole atmosphere is changing. |
 
 ### The default easing
 
 `cubic-bezier(0.25, 0.46, 0.45, 0.94)` — labeled "Smooth" in the system. This is a deceleration curve that starts moderately fast and settles gently. It avoids the abruptness of `ease-out` and the sluggish start of `ease-in-out`. It's the site's "voice" in motion — measured, confident, unhurried.
+
+### Easing assignments
+
+Each easing curve has a specific role. Don't swap them arbitrarily — the curve should match the physical metaphor:
+
+| Curve | Name | Where used | Physical metaphor |
+|-------|------|-----------|-------------------|
+| `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | Smooth | Glass hover, sidebar stagger, default CSS transitions | Confident deceleration. An object coming to a natural stop. |
+| `cubic-bezier(0.4, 0, 0.2, 1)` | Material | View Transition hero morph | Precise, mechanical. A designed surface sliding into position. |
+| `cubic-bezier(0.22, 1, 0.36, 1)` | Quint Out | Arrow slide-out on link click | Flick. Fast start, long gentle coast — like flicking something off a table. |
+| `cubic-bezier(0.34, 1.56, 0.64, 1)` | Spring | Image click press recovery | Bounce-back. Overshoots target then settles — a physical spring. Only for direct user-initiated press actions. |
+| `ease-in-out` | Built-in | Theme transitions (500ms), background color (500ms), sidebar jiggle | Symmetric. Appropriate for environmental shifts where neither start nor end should feel abrupt. |
 
 ### Glass pill choreography
 
@@ -385,8 +406,9 @@ When the cursor moves toward the edge of a hovered card, the glass pill responds
 - No entrance animations on page load (content is immediately present)
 - No scroll-triggered animations or parallax
 - No loading spinners or skeleton screens
-- No bouncy/springy overshoots
-- No motion that continues after the user stops interacting
+- No ambient bouncy/springy overshoots (exception: Spring easing is used for direct user-initiated press actions like image click, where overshoot confirms the physical response)
+- No motion that continues after the user stops interacting (exception: figpal cursor trailing settles to rest after the cursor stops)
+- No motion without a direct cause — every animation traces back to a specific user action (hover, click, drag)
 
 ---
 
@@ -401,8 +423,9 @@ Each accent theme has an associated portrait that shares its color temperature:
 - **portrait**: Warm, earthy tones. Similar to table but shifted toward ochre. The most neutral of the four.
 - **sky**: Bright daylight, blue sky, sunglasses. Open and expansive.
 - **pizza**: Night scene, warm artificial light, neon. Energetic and human.
+- **vineyard**: Green, natural outdoor setting. Verdant and grounded.
 
-There are exactly 4 image variants — one per accent theme. (The original Framer component had a vestigial 5th variant slot; it is not used.)
+There are exactly 5 image variants — one per accent theme.
 
 ### Theme-to-image mapping
 
@@ -412,8 +435,9 @@ There are exactly 4 image variants — one per accent theme. (The original Frame
 | portrait | `portrait-portrait.jpeg` | variant2 |
 | sky | `portrait-sky.jpeg` | variant3 |
 | pizza | `portrait-pizza.jpeg` | variant4 |
+| vineyard | `portrait-vineyard.jpeg` | — |
 
-In the React implementation, map `accentColor` directly to the image filename. The Framer variant numbering is preserved here only for reference.
+In the React implementation, map `accentColor` directly to the image filename.
 
 ### Project preview media
 
@@ -437,6 +461,26 @@ Hovering a project link swaps the right-column image to a project-specific previ
 - Project previews use `object-fit: contain` — aspect ratio is preserved, centered in the right column
 - Images transition via opacity cross-fade only. No scale, no slide, no clip-path reveals.
 
+### Click-to-cycle accent
+
+Clicking the right-column portrait image cycles through accent colors in order (table → portrait → sky → pizza → vineyard → table…). This interaction transforms the passive image area into a playful discovery mechanism:
+
+- **Spring press**: On click, the image scales to `0.985` instantly (no transition), then returns to `1.0` with `transition: 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'` (Spring easing with overshoot). The overshoot creates a subtle "bounce" that makes the click feel physically responsive.
+- **Accent cycle**: Dispatches `accent-cycled` custom event, triggering the sidebar jiggle (see **Sidebar jiggle** below). The accent change fires the full environmental shift (background + image + glass + browser chrome).
+- **Accessibility**: `tabIndex={0}`, `role="button"`, `aria-label="Cycle accent color"`. Keyboard-operable.
+
+> **Note on the Spring easing**: This is the only intentional overshoot on the site. The anti-pattern "no bouncy/springy overshoots" applies to ambient or continuous animations. A spring press on a direct click action is a deliberate, user-initiated physical response — the overshoot confirms "your action registered" in the same way a physical button springs back.
+
+### Summary text below image
+
+Some projects display a short summary below the preview image on hover:
+
+- **Font**: Literata 300 at 15px (serif voice for editorial description) — or Onest 400 at 14px (sans voice for functional description), toggled via `SUMMARY_FONT` constant (currently: serif)
+- **Color**: `var(--text-grey)`, `lineHeight: 1.5`, `maxWidth: 480px`, `padding: 0 24px`
+- **Animation**: Delayed fade — 300ms duration, 150ms delay. Appears slightly after the image swap, creating a staggered reveal hierarchy (image first, text second).
+- **Layout stability**: A fixed `TEXT_ZONE_HEIGHT = 120px` is always allocated below the image, whether or not summary text is shown. This prevents layout shifts when hovering between projects with and without summaries.
+- **Reduced motion**: Instant opacity, no fade.
+
 ---
 
 ## Interactive Controls
@@ -456,7 +500,7 @@ Three icon buttons stacked vertically: System (monitor), Light (sun), Dark (moon
 
 ### Accent picker
 
-Four rounded-square swatches, 24×24px, `border-radius: 6px`. Stacked vertically with `gap: 14px`.
+Five rounded-square swatches, 24×24px, `border-radius: 6px`. Stacked vertically with `gap: 14px`.
 
 - Each swatch is filled with its accent's swatch color (from `tokens.md` — constant across light/dark)
 - Active swatch shows an outline ring: `1.5px solid color-mix(in srgb, <swatch-color> 50%, transparent)` at `outlineOffset: 3px`. Half-opacity of the swatch color keeps the ring subtle but visible.
@@ -469,8 +513,8 @@ Controls live in a thin sidebar on the right edge of the viewport (`width: 56px`
 
 **Structure:**
 - **Trigger** (always visible): A 16×16px rounded square (`border-radius: 5px`) filled with the active accent color. Fixed at `top: 64px`, aligned with the image and heading. The trigger is an indicator, not a selectable control — its distinct shape (smaller, tighter radius) separates it from the swatch options below. Reflects current background intensity via combined glow (box-shadow 0–14px spread) and opacity (0.45–1.0) — atmospheric properties that layer on top of the trigger's identity without altering its shape, size, or color.
-- **Expandable toolbar** (visible on hover): Three sections — swatches → intensity strip → mode icons — separated by dividers. Staggered slide-in from the right (`x: 20 → 0`, 0.22s duration, 0.04s stagger per item). Uses the Smooth easing curve.
-- **Three dividers**: Between trigger↔swatches, swatches↔intensity, intensity↔modes. All are `width: 20px, height: 1px, var(--text-dark)` at 0.15 opacity, with `margin: 18px 0`. They animate in/out with the toolbar (only the trigger is visible at rest).
+- **Expandable toolbar** (visible on hover): Four sections — swatches → intensity strip → appearance modes → cursor modes — separated by dividers. Staggered slide-in from the right (`x: 20 → 0`, 0.22s duration, 0.04s stagger per item). Uses the Smooth easing curve.
+- **Four dividers**: Between trigger↔swatches, swatches↔intensity, intensity↔modes, modes↔cursors. All are `width: 20px, height: 1px, var(--text-dark)` at 0.15 opacity, with `margin: 18px 0`. They animate in/out with the toolbar (only the trigger is visible at rest).
 - **Hover zone**: The full 56px-wide strip is the hover target, extending to the viewport's right edge. A 250ms close delay prevents flicker when the cursor drifts to the screen edge.
 - **Alignment**: The trigger's top edge aligns with the image container's top edge and the heading text's top edge (all at 64px from viewport top).
 
@@ -496,6 +540,206 @@ Each control group (swatches, modes) has its own independent glass pill instance
 - **Motion**: RAF lerp at 0.2 speed between controls. Snaps to first hovered control, lerps to subsequent ones. Fades in/out at 150ms.
 - **Theme-reactive**: MutationObserver watches `data-accent` and `data-theme` attributes to re-skin the pill on theme change.
 - **Lifecycle**: Created when toolbar opens (120ms delay for framer-motion settlement), destroyed when toolbar closes.
+
+### Cursor mode picker
+
+Three icon buttons in the sidebar toolbar, matching the appearance mode layout (40×40 tap targets, gap 6px):
+
+- **Standard** (Phosphor Cursor icon): Default browser cursor. No custom cursor element.
+- **Invert** (Phosphor Circle icon): Custom 80×80px white disc with `mix-blend-mode: difference`. Morphs contextually (see **Cursor System** below).
+- **Figpal** (figpal.png thumbnail): Trailing companion image (72×72px) that follows the cursor with `LERP_RATE = 0.12` lag.
+
+Active mode: full opacity + outline ring. Inactive: 0.4 opacity. Glass pill shared with appearance modes or isolated per group. Persisted to `localStorage.cursorMode`.
+
+### Sidebar jiggle
+
+When the accent color is cycled (via clicking the portrait image), the sidebar trigger dot plays a horizontal nudge animation:
+
+- **Keyframe**: `0 → -3px → 3px → -2px → 1px → 0` (damped oscillation)
+- **Duration**: 400ms, `ease-in-out`
+- **Trigger**: Custom DOM event `accent-cycled`, dispatched by `ImageDisplay` on portrait click
+- **Implementation**: CSS class `sidebar-jiggle` applied on event, removed on `animationend`
+
+This creates a cause-and-effect pairing: clicking the image shifts the environment (accent cycle) and the sidebar trigger physically reacts — a small moment of delight that connects two otherwise separate interface elements.
+
+---
+
+## Cursor System
+
+The site offers three cursor modes, each expressing a different interaction personality. The cursor is a first-class design element — not just a pointer, but a communicative surface that morphs to telegraph what will happen before you click.
+
+### The three modes
+
+| Mode | Visual | Character |
+|------|--------|-----------|
+| Standard | Native browser cursor | Invisible, utilitarian. The site's interactions speak for themselves. |
+| Invert | 80×80px white disc, `mix-blend-mode: difference` | Bold, graphic. The cursor becomes a lens that inverts everything beneath it. |
+| Figpal | 72×72px trailing companion image | Playful, personal. A small illustrated character follows the cursor with physics-based lag. |
+
+### Invert mode morphing
+
+The invert cursor is the most expressive mode. It doesn't just track the mouse — it shapeshifts to communicate context:
+
+**Priority hierarchy** (highest wins):
+
+1. **Arrow** (`→` or `←`): When hovering any navigational link (`[data-link-card]`, `[data-contact-card]`, `[data-back-link]`). The disc scales to 0 and a 36px Onest 400 Unicode arrow fades in at full opacity.
+   - `→` (right arrow) for forward navigation (project links, external links)
+   - `←` (left arrow) for backward navigation (back button on case study pages)
+2. **Hand** (Phosphor hand-pointing SVG, 48×48px white): When hovering the right-column theme image (`[data-theme-image]`). The disc scales to 0 and the hand icon fades in — communicating "this is clickable" without a traditional pointer cursor.
+3. **Sidebar shrink**: When hovering sidebar controls. The disc shrinks to `scale(0.15)` — a small dot that stays present but doesn't interfere with the compact control surface.
+4. **Default disc**: 80×80px white circle at `scale(1)`. The resting state.
+
+**Transitions between states:**
+- All morphs use opacity and scale transitions, gated on `prefers-reduced-motion` (instant if reduced motion).
+- A 200ms debounce prevents flicker when moving between adjacent project links — the cursor holds its arrow form briefly rather than flickering back to disc and forward to arrow.
+- When arrow and hand compete (e.g., hovering a link card positioned over the image), arrow always wins. On card leave, hand restores if the cursor is still over the image.
+
+**Global cursor suppression**: In invert mode, a `<style>` tag injects `* { cursor: none !important; }` to suppress all native cursors. This ensures the custom disc is the only cursor visible.
+
+### Figpal mode
+
+A trailing companion image (`/images/figpal.png`, 72×72px) offset 24px right and 24px down from the true cursor position. Uses linear interpolation (`LERP_RATE = 0.12`) per `requestAnimationFrame` for a smooth trailing effect. No `cursor: none` — the native cursor remains visible alongside the companion.
+
+Reduced motion: lerp is skipped (companion snaps to cursor position instantly).
+
+### Braille micro-animation on navigation
+
+When a project link is clicked in invert mode, the cursor arrow doesn't simply disappear — it cycles through 6 Unicode braille characters (U+2800–U+28FF) at 50ms per frame (300ms total), creating a rapid "sweep" animation that visually exhausts before navigation fires.
+
+**The directional sweep frames** (left-to-right):
+1. Left column dots fill
+2. Both columns partially filled
+3. Full 8-dot grid
+4. Right column dominant
+5. Right column only
+6. Empty (U+2800) — the "visual exhale"
+
+The empty final frame is deliberate: it creates a beat of stillness before the page transitions, preventing the animation from feeling abruptly cut off. The braille character set was chosen because it provides structured, grid-based visual progression using pure text — no SVG, no canvas, no image sprites.
+
+In standard/figpal cursor modes, the braille animation is skipped and the inline arrow in the link plays a CSS `arrowSlideOut` keyframe instead (see **Navigation choreography** below).
+
+---
+
+## Iconography & Symbols
+
+### Philosophy
+
+Icons and symbols on this site are functional, not decorative. Every icon either communicates state (which mode is active) or telegraphs action (what will happen on click/hover). There are no illustrative icons, no hero icons, no icon-as-decoration patterns. The icon vocabulary is deliberately small — each symbol earns its place by being the clearest way to communicate its specific meaning.
+
+### The Phosphor system
+
+All UI icons use [Phosphor Icons](https://phosphoricons.com/) at consistent sizing. Phosphor was chosen for its optical consistency (uniform stroke weight, balanced proportions) and its warm, slightly rounded character — it matches Onest's friendly geometry without being cartoonish.
+
+| Icon | Context | Size | Variant |
+|------|---------|------|---------|
+| Monitor | System appearance mode | 18px | Regular |
+| Sun | Light appearance mode | 18px | Regular |
+| Moon | Dark appearance mode | 18px | Regular |
+| Cursor | Standard cursor mode | 18px | Regular |
+| Circle | Invert cursor mode | 18px | Regular |
+| HandPointing | Cursor morph over image | 48px | Fill (inline SVG) |
+
+**Sizing rule**: Sidebar control icons are always 18px within 24×24 spans inside 40×40 tap targets. The hand-pointing icon is 48px because it replaces the 80×80 cursor disc — it needs enough visual mass to read as a cursor substitute.
+
+### Unicode symbols
+
+The site uses Unicode characters as typographic elements rather than icon components. This keeps symbols integrated with the text flow — they inherit font properties, respond to text color tokens, and don't require separate asset loading.
+
+| Character | Unicode | Context | Why Unicode |
+|-----------|---------|---------|-------------|
+| → | U+2192 | Project link suffix, cursor arrow | Typographically integrated with link text. Uses `verticalAlign: text-top` for optical alignment. |
+| ← | U+2190 | Back link, cursor back arrow | Same treatment as →, directionally paired. |
+| … | U+2026 | Coming-soon project suffix | Communicates incompleteness at 50% opacity — quieter than "Coming soon" text. |
+| ⠀–⣿ | U+2800–U+28FF | Braille navigation animation | 8-dot grid enables structured frame-by-frame animation using pure text characters. |
+
+**Arrow as interaction signal**: The `→` character does double duty — in the link text, it signals "this goes somewhere," and in the invert cursor, it signals "you're about to go somewhere." The same symbol in two contexts creates semantic consistency: arrows mean navigation.
+
+### What iconography does NOT do
+
+- No icon-only buttons without labels (sidebar icons have `aria-label` but are always grouped with visual context)
+- No animated icons in resting state (icons only animate in response to user action)
+- No custom icon set or icon font — Phosphor + Unicode covers all needs
+- No color on icons beyond `currentColor` (icons inherit text color, adapting to light/dark mode automatically)
+
+---
+
+## Page Transitions & Navigation
+
+### Philosophy
+
+Page transitions serve the same principle as all motion on this site: they communicate continuity. When you click a project link, the transition should make you feel like you're moving deeper into the same space, not jumping to a different page. The hero image is the visual anchor — it morphs from the homepage position to the case study position, grounding the transition in a shared physical element.
+
+### View Transitions API
+
+Internal navigation uses the browser's View Transitions API (`document.startViewTransition()`) with `flushSync` for synchronous DOM updates. This provides native morphing between the homepage image and the case study hero without JavaScript animation libraries.
+
+| Transition | Duration | Easing | What morphs |
+|------------|----------|--------|-------------|
+| Root crossfade | 250ms | ease-out (old), ease-in (new) | Page content opacity |
+| Hero image morph | 300ms | `cubic-bezier(0.4, 0, 0.2, 1)` (Material) | Position, size, border-radius of the project image |
+
+The `viewTransitionName: 'project-hero'` CSS property is applied to project preview images in `ImageDisplay` (not to default portraits or Lottie animations). This means only projects with static image previews get the morphing transition — Lottie projects crossfade normally.
+
+### Navigation choreography
+
+Navigation from the homepage to a case study follows a carefully sequenced timeline:
+
+**Standard/Figpal cursor mode:**
+1. **Click** → Arrow `→` plays `arrowSlideOut` keyframe: 0-30% pullback (`translateX(-20%)`), 30-100% accelerate out (`translateX(110%)`, `opacity: 0`). Duration: 500ms, easing: Quint Out (`cubic-bezier(0.22, 1, 0.36, 1)`).
+2. **Simultaneously** → Left column content fades out (280ms, 150ms delay via Framer Motion)
+3. **After 500ms** → View Transition fires, hero image morphs to case study position
+4. **On case study mount** → Content fades in (350ms, 120ms delay)
+
+**Invert cursor mode:**
+1. **Click** → Cursor arrow cycles through 6 braille frames (50ms each = 300ms total)
+2. **Inline arrow stays static** (cursor handles the visual feedback)
+3. **After 300ms** → View Transition fires
+4. **Same mount animation** as above
+
+**Reduced motion**: All animations skipped. Navigation is instant.
+
+### Exit and entry animations
+
+**Leaving the homepage:**
+- Left column: Framer Motion `opacity: 0`, duration 280ms, delay 150ms
+- Right column: hero image held in place for View Transition morphing
+
+**Arriving at a case study:**
+- Content: Framer Motion `opacity: 1`, duration 350ms, delay 120ms
+- Scroll position: reset to top (`scrollTo(0, 0)`)
+
+**Leaving a case study (back navigation):**
+- Full page: opacity fade to 0 over 280ms before View Transition fires
+- Same braille or arrow animation as forward navigation, but with `←` direction
+
+### Case study page structure
+
+Case study pages follow a distinct layout from the homepage while sharing the same design vocabulary:
+
+**Navigation:**
+- Fixed top bar with `← Back` link, font Onest 18px
+- `backdropFilter: blur(4px)` for glassmorphic header
+- Glass pill hover with `borderRadius: 8, maxPull: 3, tightBounds: true`
+
+**Edge fades:**
+- Fixed 20px gradients at top and bottom edges of viewport
+- Gradient from `var(--bg)` to transparent — creates a soft vignette that prevents hard content clipping during scroll
+
+**Wide layout (≥1200px):**
+- Two-column hero section filling 100vh
+- Left: centered title (Literata 48px, weight 300), subtitle (18px), timeline (14px)
+- Right: preview image with `viewTransitionName: 'project-hero'`
+- Narrative sections: full-width rows with 50/50 text/visual split
+- Visuals are `position: sticky, top: 64px` — they scroll with content but pin when they reach the top
+- Visuals carry forward: if a section has no visual, the previous section's visual remains pinned
+
+**Narrow layout (<1200px):**
+- Single column, title at 36px
+- Same content structure, linearized
+
+**Gallery:**
+- Full-width items span the content width
+- Half items pair up in 2-up grid with 40px gap
 
 ---
 
@@ -600,7 +844,11 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 | Stack the right column below content on mobile | The interaction model doesn't translate to touch. Remove it entirely rather than degrading it. |
 | Add hover underlines or color changes to project card links | The glass effect IS the hover state for project cards. Inline text links (Mochi Health, contact links) use a persistent subtle underline (`--text-underline`) for in-context readability, but project cards should not. |
 | Use transition durations outside the timing hierarchy | 150 / 200 / 300 / 500ms. Pick the one that matches the action's weight. |
-| Mix easing curves arbitrarily | Use the Smooth curve (`cubic-bezier(0.25, 0.46, 0.45, 0.94)`) as default. Only deviate for specific physical behaviors (snap-back, overshoot). |
+| Mix easing curves arbitrarily | Use the Smooth curve (`cubic-bezier(0.25, 0.46, 0.45, 0.94)`) as default. Only deviate for specific physical behaviors (snap-back, overshoot). See **Easing assignments** for the role of each curve. |
+| Add custom icons beyond Phosphor + Unicode | The icon vocabulary is deliberately minimal. Every icon earns its place. A new icon should only be added if no existing Phosphor icon or Unicode symbol communicates the meaning. |
+| Use cursor changes for decoration | Cursor morphing communicates function (arrow = navigation, hand = clickable, shrink = control zone). Never morph the cursor for aesthetic effect without a functional reason. |
+| Add page transitions with JavaScript animation libraries | View Transitions API handles page morphs natively. Don't add GSAP, anime.js, or similar for page-level transitions. Framer Motion is for component-level orchestration only. |
+| Create separate hover states for mobile | Touch interactions are fundamentally different. Don't simulate hover with touch-and-hold or first-tap-reveals. Either the interaction translates naturally to touch (tap) or it's removed (glass pill, image swap). |
 | Be loud without purpose | Standing out is a goal, but every bold choice must reward closer inspection rather than demand attention. |
 
 ---
@@ -609,15 +857,27 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 
 When implementing or modifying any part of the site, verify:
 
-- [ ] Does it use the correct typeface for its voice (serif for headings + narrative, sans for links + body)?
-- [ ] Does it use the correct weight for its role (no weight variation within a role)?
-- [ ] Does it use the spacing hierarchy (80/64/56/40/32/24/8)?
-- [ ] Does the border-radius come from the radius scale (32 / 16 / 8 / 6 / 5)?
-- [ ] Does color come from CSS custom properties, not hardcoded values?
+**Typography & Color:**
+- [ ] Does it use the correct typeface for its voice (Literata for headings + narrative, Onest for links + body)?
+- [ ] Does it use the correct weight for its role (300 for serif, 400 for sans — no variation within a role)?
 - [ ] Do text colors use appearance-only tokens (`--text-*`), not theme-dependent values?
 - [ ] Do background colors use the correct theme+appearance combination from `tokens.md`?
-- [ ] Is the element visually identical across all four accent themes (with only hue shifting)?
-- [ ] Does any animation use one of the four timing tiers (150/200/300/500ms)?
-- [ ] Does the Smooth easing curve feel right, or does this interaction need a specific curve?
+- [ ] Does color come from CSS custom properties, not hardcoded values?
+- [ ] Is the element visually identical across all five accent themes (with only hue shifting)?
 - [ ] Would this element make sense in both light and dark mode?
+
+**Layout & Shape:**
+- [ ] Does it use the spacing hierarchy (80/64/56/40/32/24/8)?
+- [ ] Does the border-radius come from the radius scale (32 / 16 / 12 / 8 / 6 / 5)?
+
+**Motion & Interaction:**
+- [ ] Does any animation use a duration from the timing hierarchy (50/150/200/250/280/300/350/400/500ms)?
+- [ ] Is the easing curve appropriate for the physical metaphor? (See **Easing assignments**)
+- [ ] Does the cursor morph appropriately for the element type? (arrow for links, hand for clickable images, shrink for controls)
+- [ ] Does the interaction respect `prefers-reduced-motion: reduce`?
+- [ ] If this is a navigable link, does it have the correct `data-*` attribute for cursor detection?
+
+**Craft & Intentionality:**
 - [ ] Is this choice intentional? Does it reward closer inspection or just add noise?
+- [ ] Does a new interactive element have glass pill hover treatment where appropriate?
+- [ ] If adding a new icon, is it from Phosphor Icons? Is it the right size (18px for controls, 48px for cursor)?

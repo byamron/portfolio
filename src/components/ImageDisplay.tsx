@@ -8,20 +8,10 @@ import { projectsById, projectImageMap, defaultImageMap } from '@/data/projects'
 // Projects whose previews need a subtle shadow to separate from the background
 const needsShadow = new Set(['cip-misinfo', 'acorn-covid'])
 
-// Toggle between 'serif' and 'sans' to compare font treatments
-const SUMMARY_FONT: 'serif' | 'sans' = 'serif'
-
-const summaryStyles: Record<'serif' | 'sans', React.CSSProperties> = {
-  serif: {
-    fontFamily: "'Literata', serif",
-    fontWeight: 300,
-    fontSize: 15,
-  },
-  sans: {
-    fontFamily: "'Onest', sans-serif",
-    fontWeight: 400,
-    fontSize: 14,
-  },
+const summaryStyle: React.CSSProperties = {
+  fontFamily: "'Literata', serif",
+  fontWeight: 300,
+  fontSize: 15,
 }
 
 const reducedMotion =
@@ -146,7 +136,7 @@ export function ImageDisplay() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -170,7 +160,7 @@ export function ImageDisplay() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
               maxWidth: '100%',
@@ -208,7 +198,7 @@ export function ImageDisplay() {
                 ease: 'easeInOut',
               }}
               style={{
-                ...summaryStyles[SUMMARY_FONT],
+                ...summaryStyle,
                 lineHeight: 1.5,
                 color: 'var(--text-grey)',
                 maxWidth: 480,

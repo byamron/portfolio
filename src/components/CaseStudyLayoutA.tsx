@@ -44,7 +44,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
         <motion.header
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
           style={{ marginBottom: 64 }}
         >
           <h1
@@ -150,7 +150,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
           <motion.header
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
+            transition={{ duration: 0.35, delay: 0.15 }}
             style={{ textAlign: 'center' }}
           >
             <h1
