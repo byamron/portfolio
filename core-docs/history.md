@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-08 — Add hand cursor on theme image hover
+
+**Branch:** `cursor-hand-on-image`
+
+**Summary:** Hovering the right-column theme image now morphs the invert cursor from the white disc to a Phosphor hand-pointing icon (white, 48×48). The cursor arrow also flips to a left arrow (`←`) when hovering back links on case study pages.
+
+**What changed:**
+- `src/components/CustomCursor.tsx` — Added `HAND_SVG` constant (Phosphor fill hand-pointing). Created a new `hand` DOM element (opacity-faded, layered below the circle). On `pointermove`, detects `[data-theme-image]` elements: circle scales to 0 and hand fades in; leaving restores circle or hand based on context. Arrow direction now reads `onBackLinkRef` to show `←` on `[data-back-link]` elements. All new transitions (arrow opacity, hand opacity, circle scale) are gated on `reducedMotion.current` per accessibility standards.
+- `src/components/ImageDisplay.tsx` — Added `data-theme-image` attribute to the outermost container for cursor hit-detection.
+- `src/components/CaseStudyPage.tsx` — Added `onMouseEnter`/`onMouseLeave` handlers on both back links to set `hoveringLink`, enabling the cursor arrow direction flip.
+
+**Decisions:**
+- Hand cursor uses the same `mix-blend-mode: difference` container as the circle/arrow, so it inverts naturally over light/dark backgrounds.
+- Arrow takes priority over hand: when hovering a card over the image, the hand hides and arrow shows. On card leave, hand restores if still over the image.
+- All new CSS transitions gated on `reducedMotion.current` — falls back to `'none'` (instant) when `prefers-reduced-motion: reduce` is active.
+
+---
+
 ## 2026-03-07 — Add accent cycle on image click + sidebar jiggle
 
 **Branch:** `image-click-delight`
