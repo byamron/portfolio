@@ -1,6 +1,9 @@
-import { useParams, Link } from 'react-router-dom'
-import { useEffect, useRef } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { flushSync } from 'react-dom'
+import { useEffect, useRef, useCallback, useState } from 'react'
+import { motion } from 'framer-motion'
 import { caseStudiesBySlug } from '@/data/case-study-content'
+import { getProjectForSlug, projectImageMap } from '@/data/projects'
 import { CaseStudyLayoutA } from './CaseStudyLayoutA'
 import { useIsWide } from '@/hooks/useMediaQuery'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
@@ -9,8 +12,36 @@ import { useHover } from '@/contexts/HoverContext'
 export function CaseStudyPage() {
   const { slug } = useParams<{ slug: string }>()
   const isWide = useIsWide()
+  const navigate = useNavigate()
   const caseStudy = slug ? caseStudiesBySlug[slug] : undefined
+  const projectData = slug ? getProjectForSlug(slug) : undefined
+  const previewImage = projectData ? projectImageMap[projectData.projectId] : undefined
   const { setHoveredProjectId, setHoveringLink } = useHover()
+  const [isExiting, setIsExiting] = useState(false)
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const doBack = useCallback(() => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        flushSync(() => navigate('/'))
+        window.scrollTo(0, 0)
+      })
+    } else {
+      navigate('/')
+    }
+  }, [navigate])
+
+  const handleBack = useCallback((e: React.MouseEvent) => {
+    // Cmd/Ctrl+click: let browser handle natively
+    if (e.metaKey || e.ctrlKey || e.button === 1) return
+    e.preventDefault()
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      doBack()
+      return
+    }
+    setIsExiting(true)
+    exitTimer.current = setTimeout(doBack, 280)
+  }, [doBack])
 
   const navRef = useRef<HTMLElement>(null)
   useGlassHighlight(navRef, {
@@ -25,6 +56,7 @@ export function CaseStudyPage() {
     window.scrollTo(0, 0)
     setHoveredProjectId(null)
     setHoveringLink(false)
+    return () => { if (exitTimer.current) clearTimeout(exitTimer.current) }
   }, [slug, setHoveredProjectId, setHoveringLink])
 
   if (!caseStudy) {
@@ -38,6 +70,7 @@ export function CaseStudyPage() {
         <Link
           to="/"
           data-back-link
+          onClick={handleBack}
           style={{
             display: 'inline-block',
             padding: '8px 12px',
@@ -61,7 +94,10 @@ export function CaseStudyPage() {
   }
 
   return (
-    <>
+    <motion.div
+      animate={{ opacity: isExiting ? 0 : 1 }}
+      transition={{ duration: 0.28 }}
+    >
       {/* Top fade */}
       <div
         aria-hidden="true"
@@ -94,8 +130,10 @@ export function CaseStudyPage() {
       <nav
         ref={navRef}
         style={{
-          position: 'sticky',
+          position: 'fixed',
           top: 0,
+          left: 0,
+          right: 0,
           zIndex: 50,
           padding: '24px var(--layout-margin) 0',
           pointerEvents: 'none',
@@ -104,6 +142,7 @@ export function CaseStudyPage() {
         <Link
           to="/"
           data-back-link
+          onClick={handleBack}
           style={{
             display: 'inline-block',
             pointerEvents: 'auto',
@@ -125,7 +164,7 @@ export function CaseStudyPage() {
         </Link>
       </nav>
 
-      <CaseStudyLayoutA data={caseStudy} isNarrow={!isWide} />
-    </>
+      <CaseStudyLayoutA data={caseStudy} isNarrow={!isWide} previewImage={previewImage} />
+    </motion.div>
   )
 }

@@ -135,6 +135,27 @@ p a {
   }
 }
 
+/* View Transitions: page crossfade */
+::view-transition-old(root) {
+  animation: 250ms ease-out both vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 250ms ease-in both vt-fade-in;
+}
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+}
+
+/* Shared element: project image morphs between homepage and case study */
+::view-transition-old(project-hero),
+::view-transition-new(project-hero) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Sidebar trigger jiggle — draws attention after image-click accent cycle */
 @keyframes sidebar-jiggle {
   0%, 100% { transform: translateX(0); }
@@ -155,5 +176,12 @@ p a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(project-hero),
+  ::view-transition-new(project-hero) {
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
   }
 }

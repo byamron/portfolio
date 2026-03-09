@@ -177,6 +177,7 @@ export function ImageDisplay() {
               objectFit: 'contain',
               borderRadius: 32,
               filter: dropShadow,
+              viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
             }}
           />
         )}

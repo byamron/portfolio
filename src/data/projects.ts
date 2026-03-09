@@ -74,6 +74,11 @@ export const projectsById: Record<string, Project> = Object.fromEntries(
   sections.flatMap(s => s.projects).map(p => [p.id, p])
 )
 
+// Case study slug → project data (for hero images + summary on case study pages)
+export function getProjectForSlug(slug: string): Project | undefined {
+  return sections.flatMap(s => s.projects).find(p => p.caseStudySlug === slug)
+}
+
 // Case study slug → markdown filename mapping
 export const caseStudySlugs: Record<string, string> = {
   'mochi-ai-tooling': 'mochi-ai-tooling',
