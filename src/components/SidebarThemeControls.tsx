@@ -26,7 +26,12 @@ function readSwatchColors(): { color: AccentColor; swatch: string }[] {
   }))
 }
 
-const accents = readSwatchColors()
+let _accentsCache: { color: AccentColor; swatch: string }[] | null = null
+function getAccents() {
+  if (!_accentsCache || _accentsCache[0].swatch === 'gray') _accentsCache = readSwatchColors()
+  return _accentsCache
+}
+const accents = ACCENT_ORDER.map(color => ({ color, swatch: 'gray' }))
 
 const motionEase = [0.25, 0.46, 0.45, 0.94]
 
@@ -383,7 +388,8 @@ export function SidebarThemeControls() {
     }
   }, [setupPills])
 
-  const activeSwatch = accents.find(a => a.color === accentColor) ?? accents[0]
+  const liveAccents = getAccents()
+  const activeSwatch = liveAccents.find(a => a.color === accentColor) ?? liveAccents[0]
 
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
@@ -510,7 +516,7 @@ export function SidebarThemeControls() {
             aria-label="Accent color"
             style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}
           >
-            {accents.map((item, i) => {
+            {liveAccents.map((item, i) => {
               const isActive = accentColor === item.color
               return (
                 <motion.div
