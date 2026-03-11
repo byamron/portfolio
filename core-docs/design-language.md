@@ -600,7 +600,7 @@ The site offers three cursor modes, each expressing a different interaction pers
 | Mode | Visual | Character |
 |------|--------|-----------|
 | Standard | Native browser cursor | Invisible, utilitarian. The site's interactions speak for themselves. |
-| Invert | 80×80px white disc, `mix-blend-mode: difference` | Bold, graphic. The cursor becomes a lens that inverts everything beneath it. |
+| Invert | 80×80px theme-tinted disc, `mix-blend-mode: difference` | Bold, graphic. The cursor becomes a lens that inverts everything beneath it, tinted toward the active accent color. |
 | Figpal | 72×72px trailing companion image | Playful, personal. A small illustrated character follows the cursor with physics-based lag. |
 
 ### Invert mode morphing
@@ -620,6 +620,15 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 - All morphs use opacity and scale transitions, gated on `prefers-reduced-motion` (instant if reduced motion).
 - A 200ms debounce prevents flicker when moving between adjacent project links — the cursor holds its arrow form briefly rather than flickering back to disc and forward to arrow.
 - When arrow and hand compete (e.g., hovering a link card positioned over the image), arrow always wins. On card leave, hand restores if the cursor is still over the image.
+
+**Theme tinting**: The invert disc is not pure white — it uses a theme-tinted color derived from `--accent-hue`. Two intensity levels are available via `cursorTintMode` (persisted to `localStorage`):
+
+| Mode | Formula | Character |
+|------|---------|-----------|
+| `tint-bold` (default) | `hsl(hue, 72%, 78%)` | Noticeable accent warmth in the inversion |
+| `tint-subtle` | `hsl(hue, 45%, 88%)` | Faint accent presence, closer to white |
+
+**Mode-aware hue correction**: In dark mode, the disc hue matches the accent directly. In light mode, the hue is shifted by 180° so that `difference` blending against light backgrounds produces accent-adjacent colors rather than complements. The disc color updates live when the accent or appearance mode changes (via MutationObserver on `data-accent` and `data-theme` attributes).
 
 **Global cursor suppression**: In invert mode, a `<style>` tag injects `* { cursor: none !important; }` to suppress all native cursors. This ensures the custom disc is the only cursor visible.
 

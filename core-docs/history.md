@@ -26,6 +26,24 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-09 — Theme-tinted inverse cursor
+
+**Branch:** `cursor-theme-tint`
+
+**Summary:** The invert cursor disc was pure white — now it carries a theme-specific tint derived from `--accent-hue`, making the cursor feel cohesive with the active accent color.
+
+**What changed:**
+- `src/components/CustomCursor.tsx` — Disc background, arrow color, and hand SVG fill all use `getTintColor(hue, bold, isDarkMode())` instead of `'white'`. Two intensity levels: bold (`hsl(hue, 72%, 78%)`) and subtle (`hsl(hue, 45%, 88%)`). In light mode, hue is shifted by 180° so `difference` blending against light backgrounds produces accent-adjacent (not complementary) colors. MutationObserver extended to watch both `data-accent` and `data-theme` for live updates on accent or mode switch.
+- `src/contexts/CursorContext.tsx` — Added `CursorTintMode` (`'tint-bold' | 'tint-subtle'`), persisted to `localStorage` key `cursorTintMode`, default `'tint-bold'`.
+- `core-docs/design-language.md` — Documented theme tinting formula, mode-aware hue correction, and both intensity levels in the Cursor System section.
+
+**Decisions:**
+- Chose tinted-disc approach over alternatives (two-layer overlay, CSS hue-rotate filter) after comparing all three. Tinted disc is the most direct — it changes the disc color itself, producing predictable results across all backgrounds and staying coherent with the glass highlight system's tint logic.
+- 180° hue shift in light mode is a clean solution to the `difference` blend math: `|light_bg - complement_color|` ≈ accent-adjacent result.
+- Bold default because the tint should be clearly visible, not a barely-perceptible hint. Subtle exists as a user option via localStorage.
+
+---
+
 ## 2026-03-08 — Fix design language audit findings (8 items)
 
 **Branch:** `update-design-language-doc`
@@ -116,7 +134,6 @@ Decision log and completed work, in reverse chronological order.
 - **Nav fixed instead of sticky**: Removes nav from document flow so hero section starts at viewport top, matching homepage RightColumn's `position: fixed; top: 0`. Functionally identical (was sticky at top: 0).
 - **Text zone reservation on left column**: The right column's 120px text zone (for summary text) offsets the image center upward. Adding the same reservation to the left column ensures title and image share the same vertical center. Height is conditional (`summary ? 120 : 0`), matching all 8 case studies correctly.
 - **Padding matches homepage**: Both hero columns keep `padding: var(--layout-padding-top) var(--layout-margin)` to match the homepage RightColumn exactly, preserving the view transition anchor position.
->>>>>>> origin/main
 
 ---
 
