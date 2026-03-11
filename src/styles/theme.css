@@ -33,6 +33,13 @@
 
   /* Accent hue for derived calculations (glass fill, etc.) */
   --accent-hue: 34;
+
+  /* Contribution heatmap levels (derived from accent hue) */
+  --contrib-0: hsla(var(--accent-hue), 10%, 50%, 0.07);
+  --contrib-1: hsla(var(--accent-hue), 40%, 50%, 0.15);
+  --contrib-2: hsla(var(--accent-hue), 45%, 50%, 0.35);
+  --contrib-3: hsla(var(--accent-hue), 50%, 50%, 0.55);
+  --contrib-4: hsla(var(--accent-hue), 55%, 50%, 0.75);
 }
 
 /* ============================================================================
