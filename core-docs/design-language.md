@@ -103,6 +103,22 @@ These are the dots in the accent picker. They don't adapt to appearance mode bec
 
 Panel colors are hardcoded, not tokenized — the panel is a developer tool, not themed content.
 
+### Contribution heatmap colors
+
+The heatmap uses a 5-level intensity scale (0–4) derived from the active accent hue. Colors are computed inline via `contribFill(level, hue, bgIntensity, isDark)` rather than through CSS custom properties, because fills depend on both the discrete level and the continuous `bgIntensity` slider value at render time.
+
+| Parameter | Values | Purpose |
+|-----------|--------|---------|
+| `BASE_SAT` | `[10, 40, 45, 50, 55]` | Saturation per level — level 0 is nearly neutral, level 4 is richly chromatic |
+| `BASE_ALPHA` | `[0.07, 0.15, 0.35, 0.55, 0.75]` | Opacity per level — level 0 is barely visible, level 4 is prominent |
+| `ACCENT_HUES` | `{ table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90 }` | Hue per accent theme |
+
+**Dark mode formula**: `hsla(hue, BASE_SAT[level] + t*15, 50 + t*10, BASE_ALPHA[level])` — brighter and more saturated as `bgIntensity` (`t`) increases.
+
+**Light mode formula**: `hsla(hue, BASE_SAT[level] + t*10, 50 - t*15, BASE_ALPHA[level])` — darker and richer as `bgIntensity` increases.
+
+CSS custom properties `--contrib-0` through `--contrib-4` are defined in `theme.css` as reference tokens but are not used by the component (the inline computation is the canonical source).
+
 ### What changes per accent, and what doesn't
 
 **Changes**: Background hue/tone, glass fill hue (derived from background via HSL extraction), default portrait image, browser chrome color. The entire atmospheric envelope shifts.
@@ -321,6 +337,7 @@ Inline text links (Mochi Health in the hero, email/LinkedIn/resume in the about 
 - Link cards are identified by the `[data-link-card]` selector, with `data-project-id` for hover state matching.
 - Link card layout: `display: inline-block`, `width: fit-content`, padding `24px 16px`, margin `0 -16px`. Arrow `→` is an inline Unicode character — no flex gap, single continuous underline across text and arrow.
 - Coming-soon (non-link) cards: Same `data-link-card` treatment for glass hover, `--text-medium` color, ellipsis `…` at 50% opacity instead of arrow.
+- **Glass break zones**: Elements marked with `data-glass-break` suppress the glass pill when the cursor enters them. When `useGlassHighlight` detects a `mouseover` target inside a `[data-glass-break]` element, the pill immediately clears (no `clearDelay`). Use this for non-card interactive content embedded within a glass container — e.g., the contribution heatmap SVG, where the glass pill would otherwise chase the cursor across hundreds of small rects. The `data-glass-break` attribute goes on a wrapper div, not on individual elements.
 
 ---
 
@@ -561,6 +578,16 @@ When the accent color is cycled (via clicking the portrait image), the sidebar t
 - **Implementation**: CSS class `sidebar-jiggle` applied on event, removed on `animationend`
 
 This creates a cause-and-effect pairing: clicking the image shifts the environment (accent cycle) and the sidebar trigger physically reacts — a small moment of delight that connects two otherwise separate interface elements.
+
+### Data visualizations
+
+Embedded data visualizations (e.g., the contribution heatmap) follow these conventions:
+
+- **SVG with `role="img"`** and a descriptive `aria-label` summarizing the data (e.g., total contributions for the year). This gives screen readers the headline without requiring cell-by-cell traversal.
+- **Keyboard navigation**: The visualization wrapper is focusable (`tabIndex={0}`) with arrow key navigation through cells. A visible focus ring (2px stroke, `--text-dark`) indicates the current cell. An `aria-live="polite"` region announces the focused cell's data to screen readers.
+- **Tooltip**: Positioned absolutely within the container, shown on both mouse hover and keyboard focus. Uses Onest 13px (meta/caption voice), `--bg` background, `--text-light-grey` border.
+- **`data-glass-break` wrapper**: Prevents the glass pill from tracking across the visualization's many small elements. See "Stacking and DOM structure" above.
+- **Footer row**: Contribution count text (Onest 13px, `--text-grey`) plus a `data-link-card` link to the external profile, with `data-border-radius="8"` for a tighter glass pill radius.
 
 ---
 

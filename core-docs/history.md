@@ -2,6 +2,30 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-10 — Add GitHub contribution heatmap
+
+**Branch:** `github-contribution-heatmap`
+
+**Summary:** Added an SVG contribution heatmap to the portfolio's left column, showing a full-year grid of GitHub activity. Includes a data pipeline (fetch script + GitHub Actions) and a glass-break interaction pattern to prevent the glass pill from interfering with the visualization.
+
+**What changed:**
+- `src/components/ContributionHeatmap.tsx` — New component rendering a year-grid SVG heatmap with accent-hued cells, hover tooltips, keyboard navigation (arrow keys), and screen reader support (aria-live announcements).
+- `src/components/Section.tsx` — Added `afterContext` prop to inject content between a section's description and its project links.
+- `src/components/LeftColumn.tsx` — Passes `ContributionHeatmap` as `afterContext` to the last section.
+- `src/hooks/useGlassHighlight.ts` — Added `data-glass-break` escape hatch: when cursor enters a `[data-glass-break]` element inside a glass container, the pill immediately clears.
+- `src/styles/theme.css` — Added `--contrib-0` through `--contrib-4` CSS custom properties for heatmap cell colors.
+- `src/data/contributions.json` — Static contribution data (383 contributions, ~53 weeks).
+- `scripts/fetch-contributions.ts` — Node.js script using GitHub GraphQL API to fetch contribution data.
+- `.github/workflows/update-contributions.yml` — GitHub Actions workflow running the fetch script daily at 6am UTC.
+- `package.json` — Added `tsx` dev dependency and `fetch-contributions` npm script.
+
+**Decisions:**
+- Used `date >= today` (not `>`) for the "future" tooltip check because data is fetched once daily, so today's count may be stale — showing "No contributions (yet)" avoids displaying a misleading zero.
+- Cell colors are computed inline via `contribFill()` rather than using the `--contrib-*` CSS properties, because fills depend on both level and `bgIntensity` at render time.
+- Keyboard navigation uses a single focusable wrapper with arrow keys (slider pattern from `SidebarThemeControls.tsx`) rather than 365 individual `tabIndex` stops on each cell.
+
+---
+
 ## 2026-03-08 — Fix design language audit findings (8 items)
 
 **Branch:** `update-design-language-doc`

@@ -5,6 +5,7 @@ import { useHover } from '@/contexts/HoverContext'
 import { HeroTitle } from '@/components/HeroTitle'
 import { Section } from '@/components/Section'
 import { AboutSection } from '@/components/AboutSection'
+import { ContributionHeatmap } from '@/components/ContributionHeatmap'
 import { sections } from '@/data/projects'
 
 interface LeftColumnProps {
@@ -39,7 +40,11 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
           {sections.map((section, i) => (
-            <Section key={i} section={section} />
+            <Section
+              key={i}
+              section={section}
+              afterContext={i === sections.length - 1 ? <ContributionHeatmap /> : undefined}
+            />
           ))}
           <AboutSection />
         </div>

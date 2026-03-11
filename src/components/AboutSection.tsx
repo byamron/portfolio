@@ -35,8 +35,9 @@ export function AboutSection() {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <p style={textStyle}>
-        I like working through ambiguous problems, leading 0-to-1 efforts, doing product strategy work, and getting in the weeds with engineers.
+        I like working through ambiguous problems, leading 0-to-1 efforts, doing product strategy work, getting in the weeds with engineers, and building my ideas in code.
       </p>
+
       <p style={textStyle}>
         I feel fulfilled working on experiences related to health, community, and other human stuff.
       </p>

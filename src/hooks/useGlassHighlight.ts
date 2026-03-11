@@ -319,6 +319,15 @@ function setupGlassHighlight(
       return
     }
     if (!card) {
+      // Cursor entered a glass-break zone (e.g. heatmap visualization) — force clear
+      const breakEl = (e.target as HTMLElement).closest('[data-glass-break]')
+      if (breakEl && container.contains(breakEl)) {
+        if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+        currentCard = null
+        fadeOut()
+        stopLoop()
+        return
+      }
       // Cursor moved to a non-card area
       const cardTight = currentCard?.hasAttribute('data-tight-bounds')
       const inStack = isCursorInCardStack(e.clientY)

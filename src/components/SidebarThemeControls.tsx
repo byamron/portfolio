@@ -26,8 +26,6 @@ function readSwatchColors(): { color: AccentColor; swatch: string }[] {
   }))
 }
 
-const accents = readSwatchColors()
-
 const motionEase = [0.25, 0.46, 0.45, 0.94]
 
 // Pill: 36×36, centered on each control
@@ -324,7 +322,7 @@ const THUMB_TRAVEL = STRIP_HEIGHT - THUMB_SIZE // usable range for thumb center-
 // [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes  [11] divider  [12-14] cursors
 const DIVIDER_1 = 0
 const SWATCH_BASE = 1
-const DIVIDER_2 = SWATCH_BASE + accents.length        // 5
+const DIVIDER_2 = SWATCH_BASE + ACCENT_ORDER.length    // 5
 const STRIP_IDX = DIVIDER_2 + 1                       // 6
 const DIVIDER_3 = STRIP_IDX + 1                       // 7
 const MODE_BASE = DIVIDER_3 + 1                       // 8
@@ -334,8 +332,16 @@ const CURSOR_BASE = DIVIDER_4 + 1                      // 12
 export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [accents, setAccents] = useState<{ color: AccentColor; swatch: string }[]>(
+    () => ACCENT_ORDER.map(color => ({ color, swatch: 'gray' }))
+  )
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
+
+  // Read swatch colors after CSS has loaded
+  useEffect(() => {
+    setAccents(readSwatchColors())
+  }, [])
   const { cursorMode, setCursorMode } = useCursor()
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>(null)
   const swatchesRef = useRef<HTMLDivElement>(null)
