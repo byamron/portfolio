@@ -2,6 +2,28 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-11 — Fix stale contribution heatmap data
+
+**Branch:** `fix-heatmap-recent-days`
+
+**Summary:** March 9–10 showed 0 contributions in the heatmap. Root cause: the `GH_CONTRIBUTIONS_TOKEN` repo secret was never created, so the GitHub Actions daily sync workflow never ran. The `contributions.json` was last fetched on March 9 during feature development and became stale immediately.
+
+**What changed:**
+- `src/data/contributions.json` — Refreshed via local fetch. Now contains data through March 11.
+- `.github/workflows/update-contributions.yml` — Changed cron from `0 6 * * *` (6 AM UTC) to `0 8 * * *` (midnight PST / 1 AM PDT) to capture the full previous day's contributions.
+
+**Findings:**
+- The `.github/workflows/update-contributions.yml` was only merged to `main` on March 11 (via PR #45). GitHub only runs scheduled workflows from the default branch, so it could not have run before then.
+- Even after merge, the workflow had 0 runs because `GH_CONTRIBUTIONS_TOKEN` repo secret was not configured.
+- The fetch script and component code are correct — the only issue was the missing secret preventing automated data refresh.
+
+**Resolution:**
+- Added `GH_CONTRIBUTIONS_TOKEN` classic PAT (`read:user` scope) as a repo secret.
+- Triggered manual workflow run — confirmed all steps pass (fetch, commit, push).
+- Updated cron schedule to midnight PST for cleaner daily boundary.
+
+---
+
 ## 2026-03-11 — Restructure case study layout to three-zone format
 
 **Branch:** `concise-case-studies`
@@ -47,6 +69,7 @@ Decision log and completed work, in reverse chronological order.
 - `projects.ts` summary fields already aligned with subtitles — no changes needed.
 - Gallery items kept on Mochi Subscriptions — visuals do the showing.
 
+>>>>>>> origin/main
 ## 2026-03-10 — Add GitHub contribution heatmap
 
 **Branch:** `github-contribution-heatmap`
