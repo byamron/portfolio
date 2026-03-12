@@ -45,9 +45,9 @@ export const mochiProgressTracker: CaseStudy = {
   sections: [
     {
       id: 'tracker-problem',
-      heading: 'Patients wanted to track progress \u2014 ours just wasn\u2019t good enough',
+      heading: 'Only 30% of patients had ever used our progress tracker',
       paragraphs: [
-        'Patients were already tracking weight loss with third-party apps like MyFitnessPal and Lose It!. Only 30% of active Mochi patients had ever logged in ours. The company wanted to invest but couldn\u2019t justify it \u2014 no connection to revenue, so it kept getting deprioritized. The design reflected it: unclear data visualization, no mobile support, rigid logging that forced all metrics at once.',
+        'Patients tracked weight loss in third-party apps instead. The company wanted to invest but couldn\u2019t justify it \u2014 no connection to revenue. The design reflected the neglect: unclear data visualization, no mobile support, rigid logging that forced all metrics at once.',
       ],
       visual: null,
     },
@@ -55,8 +55,7 @@ export const mochiProgressTracker: CaseStudy = {
       id: 'visual-refresh',
       heading: 'A visual refresh and mobile support drove a 53% increase in weekly active users',
       paragraphs: [
-        'I gave the tracker a visual refresh with the new design system and made it work on mobile \u2014 where a majority of patients were. I separated logging entry points so patients weren\u2019t forced to log weight before anything else, cleaned up the weight graph with goal visualization, and made log history scannable.',
-        '53% increase in weekly active users and 57% increase in logging frequency within two weeks. Proof that demand existed \u2014 but still not enough to change organizational priority.',
+        'I redesigned the tracker with the new design system, added mobile support, separated logging entry points, and cleaned up the weight graph. 53% increase in weekly active users and 57% increase in logging frequency within two weeks.',
       ],
       visual: {
         id: 'tracker-before-after',
@@ -65,24 +64,14 @@ export const mochiProgressTracker: CaseStudy = {
     },
     {
       id: 'data-unification',
-      heading: 'Patients were doing the work \u2014 they just weren\u2019t getting value from it',
+      heading: 'The tracker\u2019s real value was as a data conduit, not a feature',
       paragraphs: [
-        'Mochi had two separate systems tracking patient weight: the progress tracker (patient-facing, underused) and health checks stored on refills (used for provider review and approval \u2014 the key clinical workflow). Health check data powered refill decisions but wasn\u2019t saved or surfaced to patients. They filled out health checks every cycle and got nothing back from it. Meanwhile, the progress tracker \u2014 built to store and display exactly this kind of data \u2014 sat mostly empty because patients had to log separately.',
-        'I unified them. Both entry points still work, but data flows to one place. Health check data now automatically populates the progress tracker. Patients get a filled-out progress history without any additional effort. Providers get the timestamped weight and side effect data they need to approve refills. Two redundant systems replaced by one \u2014 patients get value from work they were already doing, the provider denial problem is solved, and the backend is significantly simplified.',
-        'Tracker usage increased ~60% on top of the previous 53% gain. The number is partly a technicality \u2014 data now routes there automatically \u2014 but the patient value is real. Their tracker reflects their actual journey without requiring extra effort.',
+        'Mochi had two separate systems tracking patient weight \u2014 one for patients, one for providers \u2014 and neither talked to the other. I unified them so health check data automatically populates the progress tracker. Patients get a filled-out history without extra effort; providers get the timestamped data they need to approve refills. The feature nobody would invest in is now infrastructure they can\u2019t operate without.',
       ],
       visual: {
         id: 'data-flow-diagram',
         caption: 'Data flow diagram \u2014 old state vs. new state showing unified data routing.',
       },
-    },
-    {
-      id: 'tracker-resolution',
-      heading: 'The feature nobody would invest in is now infrastructure they can\u2019t operate without',
-      paragraphs: [
-        'With the tracker tied to the clinical workflow, the backend limitations that previously blocked growth are now in planning \u2014 flexible data models that could expand to nutrition, labs, and physical activity tracking. Visual refresh proved demand. Integration proved strategic value. Investment followed.',
-      ],
-      visual: null,
     },
   ],
   gallery: [],
@@ -102,10 +91,9 @@ export const mochiSubscriptions: CaseStudy = {
     {
       id: 'billing-problem',
       heading:
-        'Patients were getting charged for medication that never shipped',
+        'Billing and fulfillment were two independent systems \u2014 patients paid the price',
       paragraphs: [
-        'Mochi is a telehealth weight loss company where patients subscribe to GLP-1 medications. Billing ran monthly on Stripe\u2019s automation, but actually delivering medication required patients to request a refill, confirm details, complete a health check, and verify again. When everything aligned, it worked. When anything deviated \u2014 a missed step, a pharmacy delay, a supply issue \u2014 patients kept getting charged for medication that never shipped.',
-        'A pharmacy shutdown in spring 2025 made the problem impossible to ignore. Patients went months without medication while charges continued. Fraud claims spiked, churn accelerated, and support was overwhelmed. The outage didn\u2019t create the problem. It revealed it.',
+        'Mochi\u2019s billing ran on Stripe\u2019s monthly automation, but medication delivery depended on a multi-step refill process. When anything deviated \u2014 a missed step, a pharmacy delay, a supply issue \u2014 charges kept going while medication didn\u2019t. A pharmacy shutdown made it impossible to ignore: patients went months without medication while charges continued, fraud claims spiked, and churn accelerated.',
       ],
       visual: {
         id: 'billing-diagram',
@@ -116,21 +104,18 @@ export const mochiSubscriptions: CaseStudy = {
     {
       id: 'event-driven-billing',
       heading:
-        'Billing triggers when an order is processed, not on a calendar',
+        'I replaced calendar-based billing with event-driven logic tied to fulfillment',
       paragraphs: [
-        'I replaced Stripe\u2019s calendar-based scheduling with custom billing logic tied to fulfillment events \u2014 defining timing rules, states, edge cases, and billing triggers that engineering built to spec. Patients only pay when medication is actually on its way.',
-        'This also eliminated $200\u2013300k/month in Stripe scheduling costs. The service was expensive and structurally wrong for how medication fulfillment works \u2014 a lose-lose. Over 90% of users have migrated to the new model.',
+        'Patients only pay when medication is on its way. I defined the timing rules, states, edge cases, and billing triggers that engineering built to spec. This also eliminated $200\u2013300k/month in Stripe scheduling costs. Over 90% of users have migrated.',
       ],
       visual: null,
     },
     {
       id: 'timing-problem',
       heading:
-        'Providers were denying refills because of a timing problem, not a data problem',
+        'Provider denial rates spiked 3x \u2014 a timing problem, not a data problem',
       paragraphs: [
-        'A business decision to remove required health checks \u2014 intended to reduce patient friction \u2014 caused provider denial rates to spike 3x. Without recent weight and side effect data, providers couldn\u2019t confidently approve refills.',
-        'The intuitive fix was to prompt patients to complete health checks. It didn\u2019t work. Refills were created 7 days before send and routed to providers immediately. Health check prompts went out at the same time. Providers could deny before patients ever responded. This wasn\u2019t a compliance problem \u2014 it was a timing problem.',
-        'I moved data collection upstream. Scheduled prompts now start 14 days before a refill is created, feeding weight and side effects into a persistent progress tracker. By the time a provider sees a refill request, the data is already there. I kept the existing health check UI intact and routed data to tracker storage underneath \u2014 infrastructure first, UI migration later.',
+        'Removing required health checks caused providers to deny refills they couldn\u2019t confidently approve. The intuitive fix \u2014 prompting patients \u2014 didn\u2019t work because providers reviewed refills before patients could respond. I moved data collection 14 days upstream so the data is already there when providers see the request.',
       ],
       visual: {
         id: 'timing-diagram',
@@ -143,22 +128,13 @@ export const mochiSubscriptions: CaseStudy = {
       heading:
         'Over 20% of subscription churn was preventable \u2014 patients just wanted a break',
       paragraphs: [
-        'Rigid 28-day cycles didn\u2019t match real patient behavior. If someone wanted to take a break \u2014 missed doses, travel, variable dosing \u2014 they had to cancel and re-onboard as a new user to restart. Delay and pause was one of our most requested features, and the data backed it up: over 20% of medication subscription churn was classified as preventable. These were patients who wanted a break, not an exit.',
-        'Leadership rejected a true pause \u2014 unpredictable revenue and subscription state ambiguity. I designed delay instead: push your next order out up to 3 months, subscription stays active. Delayed revenue rather than full churn. A calendar selector gives patients direct control over their order schedule, with send date, estimated ship, and delivery windows updating based on pharmacy partner turnaround times.',
+        'Rigid 28-day cycles meant patients who wanted a break had to cancel and re-onboard. Leadership rejected a true pause, so I designed delay: push your next order out up to 3 months, subscription stays active. Delayed revenue rather than full churn.',
       ],
       visual: {
         id: 'delay-ui',
         caption:
           'Delay/scheduling calendar UI showing send date, ship estimate, and delivery window.',
       },
-    },
-    {
-      id: 'resolution',
-      heading: 'The system handles edge cases instead of creating them',
-      paragraphs: [
-        'Patients can trust that a charge means medication is on its way. Providers make refill decisions with real, timestamped data. The billing infrastructure that was costing $200\u2013300k/month is gone, and over 90% of users are on the new model. The health data routing I built here is what gave the progress tracker its strategic importance \u2014 that story continues in the next case study.',
-      ],
-      visual: null,
     },
   ],
   gallery: [
@@ -244,17 +220,15 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-research',
       heading: 'People don\u2019t watch together for the content \u2014 they watch together for the connection',
       paragraphs: [
-        'Master\u2019s capstone, 2024. Sony\u2019s TV division asked us to explore how AR/MR might shape home entertainment. We interviewed young adults expecting to hear about picture quality. Instead we heard about compromise: subtitles or not, volume levels, lighting preferences. Someone always loses.',
-        'Despite the compromises, people kept watching together. The value isn\u2019t the content \u2014 it\u2019s laughing at the same moment, discussing afterward, being present together. Current technology makes that connection harder, not easier. The design challenge was clear: give each person what they need without forcing everyone to settle on the same thing.',
+        'Master\u2019s capstone, 2024. Sony\u2019s TV division asked us to explore how AR/MR might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
       ],
       visual: null,
     },
     {
       id: 'sony-wearables',
-      heading: 'Wearables solve personalization by killing the thing that matters',
+      heading: 'We rejected wearables \u2014 a values decision, not a technical one',
       paragraphs: [
-        'Apple Vision Pro had just launched. Wearables were the obvious path \u2014 personalized visuals and audio for each viewer. Technically feasible, proven model, industry momentum. We debated it seriously.',
-        'But our research kept pulling us back: the reason people watch together is presence. You can\u2019t catch someone\u2019s eye during a tense scene through a headset. Even at the smallest form factor, there\u2019s something between you and your people. We weren\u2019t designing separate realities optimized for each person. We were preserving a shared reality that works for everyone. This is a values decision, not a technical one. That\u2019s the point.',
+        'Apple Vision Pro had just launched. Wearables were the obvious path. But you can\u2019t catch someone\u2019s eye during a tense scene through a headset. We weren\u2019t designing separate realities optimized for each person. We were preserving a shared reality that works for everyone.',
       ],
       visual: null,
     },
@@ -262,20 +236,12 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-concept',
       heading: 'Screenless TV: shared space, personalized experience',
       paragraphs: [
-        'A volumetric display projected from a flat device \u2014 no screen on the wall, no headset. The display appears when you want it and disappears when you don\u2019t. Angle-specific imagery means you see subtitles in your language while your partner sees theirs. Directional audio delivers different volumes to different positions. Personalization without isolation.',
+        'A volumetric display projected from a flat device \u2014 no screen, no headset. Angle-specific imagery lets each viewer see their own subtitles. Directional audio delivers different volumes to different positions. Personalization without isolation.',
       ],
       visual: {
         id: 'sony-concept-render',
         caption: 'Concept renders showing the disappearing display and shared-but-personalized viewing.',
       },
-    },
-    {
-      id: 'sony-testing',
-      heading: 'Users didn\u2019t care how it worked \u2014 they cared that it kept them together',
-      paragraphs: [
-        'We tested through video prototypes and AR simulations. Participants connected with the disappearing moment and with familiar touchpoints like a remote control that grounded novel technology in something they already understood. But the strongest response wasn\u2019t to any specific feature \u2014 it was to the idea that technology could facilitate togetherness instead of fragmenting it.',
-      ],
-      visual: null,
     },
   ],
   gallery: [],
@@ -284,26 +250,22 @@ export const sonyScreenlessTv: CaseStudy = {
 export const cipElectionMisinformation: CaseStudy = {
   id: 'cip-election-misinformation',
   title: 'Framing election misinformation',
-  subtitle: 'Publications at CSCW 2025',
-  timeline: '',
+  subtitle: 'Two papers published at CSCW 2025, co-authored with Kate Starbird\u2019s research group at the University of Washington\u2019s Center for an Informed Public.',
+  timeline: '2022\u20132025',
   sections: [
     {
-      id: 'cip-paper-1',
-      heading: 'What is going on? An evidence-frame framework for analyzing online rumors about election integrity',
+      id: 'cip-research',
+      heading: 'Election rumors aren\u2019t about getting the facts wrong \u2014 they\u2019re about framing',
       paragraphs: [
-        'Kate Starbird, Stephen Prochaska, Ben Yamron \u2014 Center for an Informed Public & Human Centered Design & Engineering, University of Washington',
-        'Pervasive falsehoods that erode trust in election processes are of increasing concern to democracies around the world. Misleading claims like these are often understood as simply \u201cgetting the facts wrong\u201d. Using a grounded, interpretative, mixed-method approach to study Twitter activity during the 2022 U.S. Midterm Election in Arizona, our work paints a more nuanced picture. We adapt Klein\u2019s data-frame theory of collective sensemaking to online rumors, demonstrating how misleading claims about election administration take shape online through interactions between (often factual) evidence and frames.',
-        'Our work highlights how rumors are as much about political framing as they are about faulty facts, and locates the crux of the problem of misinformation in the interactions with and between evidence and distorted political frames.',
+        'I did qualitative coding and analysis of rumoring dynamics on Twitter during the 2020 and 2022 U.S. elections. The core finding: misleading claims about election integrity take shape through interactions between often-factual evidence and distorted political frames. We built an evidence-frame framework that makes this process structurally legible \u2014 showing how the same evidence gets assembled into fundamentally different narratives depending on the frame applied to it.',
       ],
       visual: null,
     },
     {
-      id: 'cip-paper-2',
-      heading: 'Deep Storytelling: Collective Sensemaking and Layers of Meaning in U.S. Elections',
+      id: 'cip-impact',
+      heading: 'Published at CSCW 2025 \u2014 the top venue for social computing research',
       paragraphs: [
-        'Stephen Prochaska, Julie Vera, Douglas Lew Tan, Ben Yamron, Sylvie Venuto, Amaya Kejriwal, Sarah Chu, Kate Starbird \u2014 Center for an Informed Public, Human Centered Design & Engineering & Information School, University of Washington',
-        'We examined false and misleading information surrounding the 2020 and 2022 U.S. national elections, focusing on the contextual features of online conversations that fueled various rumors. By integrating multi-layered qualitative coding with thematic analysis and quantitative visualizations, we show how influencers, political elites, and audiences collaboratively told deep stories from 2020 through 2022.',
-        'As these stories were told, audiences interpreted events in 2022 through the lens of the 2020 story, guided by influencers\u2019 cues, leading to an evolution in storytelling style between the two election cycles.',
+        'The work produced two peer-reviewed papers analyzing how influencers, political elites, and audiences collaboratively constructed \u201cdeep stories\u201d across election cycles \u2014 and how the 2020 narrative became the interpretive lens for 2022. This is sociological thinking applied to a design problem: making invisible collective processes visible and analyzable.',
       ],
       visual: null,
     },
@@ -332,7 +294,7 @@ export const duolingoLanguagesFlags: CaseStudy = {
       id: 'duo-known-problem',
       heading: 'A known problem, an unknown priority',
       paragraphs: [
-        'Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against using flags for languages. Duolingo even hired a sensitivity consultant to redesign a character\u2019s body shape to avoid stereotypes \u2014 but this systemic issue remains untouched. It persists because it doesn\u2019t cause measurable pain and it\u2019s an industry-wide convention. Neither is a good reason at this scale.',
+        'Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against it. It persists because it doesn\u2019t cause measurable pain and it\u2019s an industry convention. Neither is a good reason at this scale.',
       ],
       visual: {
         id: 'duo-evidence',
@@ -365,7 +327,7 @@ export const duolingoLanguagesFlags: CaseStudy = {
       id: 'duo-result',
       heading: 'One change removes the problem. The other turns flags into an asset.',
       paragraphs: [
-        'This is a personal project \u2014 but it doesn\u2019t have to be. The solution is low-cost, immediately implementable, and makes the platform better. Duolingo, the ball is in your court.',
+        'Low-cost, immediately implementable, and makes the platform better.',
       ],
       visual: null,
     },

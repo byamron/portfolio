@@ -80,17 +80,16 @@ Write like a senior designer talking to a peer. Trust the reader. Every sentence
 
 ## Case study philosophy
 
-Case studies are arguments, not narratives. Each one should answer: *what was the hardest thing here, and how did you solve it?*
+Case studies are arguments, not narratives — compressed to be scannable in 30 seconds. Nobody reads long case studies. The goal is to earn an interview, not tell the whole story. Show enough to prove judgment, impact, and ability to work cross-functionally — then stop. The conversation happens in person.
 
-Every case study should establish:
-- **The reframe** — what the problem looked like at first, and what it actually was. This is the throughline made concrete: Ben's first move is always finding the structural problem beneath the presented one
-- **The decisions that reveal judgment** — what was chosen, what was given up, and why those tradeoffs were worth making. Not every decision, but the ones that shaped the outcome
-- **The craft detail** — one specific thing done unusually well, explained precisely
-- **What changed** — honest, attributable reflection
+Every case study should be 1-2 paragraphs worth of content (typically 2-4 short sections with declarative headings, 1-2 sentences each). Each should establish:
+- **The reframe** — what the problem actually was, not what it looked like at first
+- **The key decision** — the one that shaped the outcome and reveals judgment
+- **What changed** — specific, attributable impact (numbers where they exist)
 
 Headings should be declarative sentences, not labels. *"The billing system was solving the wrong problem"* beats *"Challenge."*
 
-Visuals are evidence. If you can show it, cut the words describing it.
+Visuals are evidence. If you can show it, cut the words describing it. Let the images carry craft — the text carries thinking.
 
 ---
 

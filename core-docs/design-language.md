@@ -761,21 +761,17 @@ Case study pages follow a distinct layout from the homepage while sharing the sa
 - Fixed 20px gradients at top and bottom edges of viewport
 - Gradient from `var(--bg)` to transparent — creates a soft vignette that prevents hard content clipping during scroll
 
+**Three-zone layout — hook → argument → evidence:**
+
 **Wide layout (≥1200px):**
-- Two-column hero section filling 100vh
-- Left: centered title (Literata 48px, weight 300), subtitle (18px), timeline (14px)
-- Right: preview image with `viewTransitionName: 'project-hero'`
-- Narrative sections: full-width rows with 50/50 text/visual split
-- Visuals are `position: sticky, top: 64px` — they scroll with content but pin when they reach the top
-- Visuals carry forward: if a section has no visual, the previous section's visual remains pinned
+- **Hero (100vh):** Two-column, left: left-aligned title (Literata 48px, weight 300), subtitle (18px), timeline (14px). Right: preview image with `viewTransitionName: 'project-hero'`
+- **Body text:** Left-aligned `width: 50%` column (matching hero left panel), 80px top padding below hero. Section headings at 28px weight 300, 48px spacing between sections, 24px between paragraphs.
+- **Visual evidence grid:** Full-width 2-column CSS grid with `var(--layout-margin)` padding and 40px gap, 80px spacing above and below. Collects section visuals + gallery items (heroVisual excluded). Odd last item spans both columns. 1 visual = full width. 0 visuals = grid skipped.
 
 **Narrow layout (<1200px):**
 - Single column, title at 36px
-- Same content structure, linearized
-
-**Gallery:**
-- Full-width items span the content width
-- Half items pair up in 2-up grid with 40px gap
+- Flowing sections with 40px gap (no inline visuals per section)
+- Visual evidence stacked below text in single column, 64px top margin
 
 ---
 
