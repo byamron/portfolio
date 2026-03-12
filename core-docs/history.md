@@ -24,6 +24,52 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-11 — Restructure case study layout to three-zone format
+
+**Branch:** `concise-case-studies`
+
+**Summary:** Replaced the paginated 100vh-per-section layout with a three-zone structure: hero (100vh) → flowing body text (centered 720px column) → visual evidence grid (2-column, 960px). Optimized for scannability — the reader gets hook, argument, and evidence in a single scroll rather than clicking through viewports.
+
+**What changed:**
+- `src/components/CaseStudyLayoutA.tsx` — Core restructure: removed per-section 100vh rows and visual carry-forward logic. Body text now flows in a centered column. Section visuals + gallery items collected into a 2-column CSS grid below the text. Updated both wide and narrow paths.
+- `src/components/CaseStudySectionText.tsx` — Heading size bumped from 24px to 28px for better visual hierarchy in flowing context.
+- `core-docs/design-language.md` — Rewrote case study page structure section to document the three-zone layout.
+
+**Decisions:**
+- Body text column at 720px for optimal line length at 18px. Visual grid wider at 960px to give visuals breathing room.
+- heroVisual excluded from the evidence grid (already in the hero zone).
+- Odd last visual spans both grid columns. 0 visuals = grid skipped entirely.
+- Narrow layout: sections flow without inline visuals; all visuals stack below text in a single column.
+
+---
+
+## 2026-03-11 — Condense all case studies to 30-second reads
+
+**Branch:** `concise-case-studies`
+
+**Summary:** Condensed all case studies to match the concise format of Acorn/UW (declarative headings, 1-2 sentences per section). Shift in portfolio philosophy: embrace "show, don't tell" — earn an interview in 30 seconds, not tell the whole story.
+
+**What changed:**
+- `src/data/case-study-content.ts` — Rewrote 5 case studies:
+  - **Mochi Subscriptions**: 5 sections/12 paragraphs → 4 sections/4 paragraphs. Cut resolution section, condensed each section to core insight + impact.
+  - **Mochi Progress Tracker**: 4 sections/7 paragraphs → 3 sections/3 paragraphs. Merged data unification + resolution into one section.
+  - **Sony Screenless TV**: 4 sections/6 paragraphs → 3 sections/3 paragraphs. Cut testing section.
+  - **CIP Election Misinformation**: Rewrote from academic abstract format to portfolio voice. 2 sections focused on contribution + outcome.
+  - **Duolingo**: Trimmed "known problem" section and tightened closing.
+- `src/components/CaseStudyLayoutA.tsx` — Layout adjustments: hero title/subtitle shifted from center-aligned to left-aligned, removed sticky positioning from section visuals, added flex vertical centering to both text and visual columns in narrative sections.
+- `core-docs/guidelines.md` — Updated case study philosophy to reflect concise format (30-second scan, 2-4 short sections, show-don't-tell).
+- `core-docs/design-language.md` — Updated case study page structure to reflect layout changes (left-aligned hero, no sticky visuals, flex-centered columns).
+
+**Preserved as historical record (no changes):**
+- All 8 files in `src/data/case-studies/*.md` — original long-form content kept for reference.
+
+**Decisions:**
+- Acorn and UW were already at target length — left unchanged.
+- Mochi AI Tooling left as placeholder — no source content to condense.
+- `projects.ts` summary fields already aligned with subtitles — no changes needed.
+- Gallery items kept on Mochi Subscriptions — visuals do the showing.
+
+>>>>>>> origin/main
 ## 2026-03-10 — Add GitHub contribution heatmap
 
 **Branch:** `github-contribution-heatmap`

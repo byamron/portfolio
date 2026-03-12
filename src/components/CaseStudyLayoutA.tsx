@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import type {
   CaseStudy,
-  CaseStudySection,
   CaseStudyVisual,
 } from '@/data/case-study-content'
 
@@ -16,27 +15,22 @@ interface CaseStudyLayoutAProps {
 }
 
 /**
- * Resolve which visual to show for each section. If a section has its own
- * visual, use that. Otherwise, carry forward the most recent visual.
+ * Collect all visuals for the evidence grid: section visuals + gallery items.
+ * heroVisual is excluded — it's already shown in the hero zone.
  */
-function resolveVisuals(
-  sections: CaseStudySection[],
-  heroVisual?: CaseStudyVisual,
-): (CaseStudyVisual | null)[] {
-  let last: CaseStudyVisual | null = heroVisual ?? null
-  return sections.map((section) => {
-    if (section.visual) last = section.visual
-    return last
-  })
+function collectVisuals(data: CaseStudy): CaseStudyVisual[] {
+  const visuals: CaseStudyVisual[] = []
+  for (const section of data.sections) {
+    if (section.visual) visuals.push(section.visual)
+  }
+  for (const item of data.gallery) {
+    visuals.push({ id: item.id, caption: item.caption ?? '' })
+  }
+  return visuals
 }
 
 export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayoutAProps) {
-  const visuals = useMemo(
-    () => resolveVisuals(data.sections, data.heroVisual),
-    [data.sections, data.heroVisual],
-  )
-
-  const hasGallery = data.gallery.length > 0
+  const allVisuals = useMemo(() => collectVisuals(data), [data])
 
   if (isNarrow) {
     return (
@@ -91,34 +85,30 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
             </div>
           )}
         </motion.header>
+
+        {/* Body text — flowing sections */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
           {data.sections.map((section) => (
-            <div key={section.id}>
-              <CaseStudySectionText
-                heading={section.heading}
-                paragraphs={section.paragraphs}
-              />
-              {section.visual && (
-                <div style={{ marginTop: 32 }}>
-                  <PlaceholderVisual caption={section.visual.caption} />
-                </div>
-              )}
-            </div>
+            <CaseStudySectionText
+              key={section.id}
+              heading={section.heading}
+              paragraphs={section.paragraphs}
+            />
           ))}
         </div>
 
-        {/* Gallery — single column on narrow */}
-        {hasGallery && (
+        {/* Visual evidence — single column on narrow */}
+        {allVisuals.length > 0 && (
           <div
             style={{
-              marginTop: 80,
+              marginTop: 64,
               display: 'flex',
               flexDirection: 'column',
               gap: 40,
             }}
           >
-            {data.gallery.map((item) => (
-              <PlaceholderVisual key={item.id} caption={item.caption} />
+            {allVisuals.map((visual) => (
+              <PlaceholderVisual key={visual.id} caption={visual.caption} />
             ))}
           </div>
         )}
@@ -128,7 +118,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
 
   return (
     <article>
-      {/* Hero: 100vh two-column row matching homepage Layout structure */}
+      {/* Zone 1: Hero — 100vh two-column */}
       <div
         style={{
           display: 'flex',
@@ -143,7 +133,6 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
             padding: 'var(--layout-padding-top) var(--layout-margin)',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
             justifyContent: 'center',
           }}
         >
@@ -151,7 +140,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.35, delay: 0.15 }}
-            style={{ textAlign: 'center' }}
+            style={{ textAlign: 'left' }}
           >
             <h1
               style={{
@@ -180,7 +169,6 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
           </motion.header>
         </div>
 
-        {/* Right panel — matches RightColumn + ImageDisplay structure exactly */}
         <div
           style={{
             width: '50%',
@@ -209,22 +197,19 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
         </div>
       </div>
 
-      {/* Narrative: one section per row, visuals carry forward */}
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {data.sections.map((section, i) => (
-          <div
-            key={section.id}
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 'var(--layout-gap)',
-              minHeight: '100vh',
-            }}
-          >
+      {/* Zone 2: Body text — left-aligned in hero's left column, right column empty */}
+      {data.sections.length > 0 && (
+        <div
+          style={{
+            width: '50%',
+            padding: '80px var(--layout-margin) 0',
+          }}
+        >
+          {data.sections.map((section, i) => (
             <div
+              key={section.id}
               style={{
-                width: '50%',
-                padding: '20px var(--layout-margin) 40px',
+                marginBottom: i < data.sections.length - 1 ? 48 : 0,
               }}
             >
               <CaseStudySectionText
@@ -232,77 +217,32 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
                 paragraphs={section.paragraphs}
               />
             </div>
+          ))}
+        </div>
+      )}
 
-            <div
-              style={{
-                width: '50%',
-                padding: '20px var(--layout-margin) 40px 0',
-              }}
-            >
-              {visuals[i] && (
-                <div style={{ position: 'sticky', top: 64 }}>
-                  <PlaceholderVisual caption={visuals[i]!.caption} />
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Gallery: full-width visual showcase after the narrative */}
-      {hasGallery && (
+      {/* Zone 3: Visual evidence grid — full page width matching hero */}
+      {allVisuals.length > 0 && (
         <div
           style={{
-            marginTop: 80,
-            padding: '0 var(--layout-margin) 64px',
-            display: 'flex',
-            flexDirection: 'column',
+            padding: '80px var(--layout-margin) 80px',
+            display: 'grid',
+            gridTemplateColumns: allVisuals.length === 1 ? '1fr' : 'repeat(2, 1fr)',
             gap: 40,
           }}
         >
-          {/* Render gallery items — full items span the width,
-              half items pair up in a 2-up grid */}
-          {(() => {
-            const elements: React.ReactNode[] = []
-            let i = 0
-            while (i < data.gallery.length) {
-              const item = data.gallery[i]
-              if (item.size === 'full') {
-                elements.push(
-                  <PlaceholderVisual key={item.id} caption={item.caption} />,
-                )
-                i++
-              } else {
-                // Pair consecutive half items
-                const next = data.gallery[i + 1]
-                if (next && next.size === 'half') {
-                  elements.push(
-                    <div
-                      key={item.id}
-                      style={{ display: 'flex', gap: 40 }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <PlaceholderVisual caption={item.caption} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <PlaceholderVisual caption={next.caption} />
-                      </div>
-                    </div>,
-                  )
-                  i += 2
-                } else {
-                  elements.push(
-                    <PlaceholderVisual
-                      key={item.id}
-                      caption={item.caption}
-                    />,
-                  )
-                  i++
-                }
+          {allVisuals.map((visual, i) => (
+            <div
+              key={visual.id}
+              style={
+                allVisuals.length > 1 && allVisuals.length % 2 !== 0 && i === allVisuals.length - 1
+                  ? { gridColumn: 'span 2' }
+                  : undefined
               }
-            }
-            return elements
-          })()}
+            >
+              <PlaceholderVisual caption={visual.caption} />
+            </div>
+          ))}
         </div>
       )}
     </article>
