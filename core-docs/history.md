@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-11 — Fix hover preview image scaling and summary text layout
+
+**Branch:** `fix-hover-preview-scale`
+
+**Summary:** Hover preview images were too large in the right column, and summary description text had layout issues (jerk on crossfade, too narrow, misaligned). Fixed image constraints so previews of any aspect ratio fill available space without overlapping the text zone, while theme portrait images remain completely unaffected.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Preview images now constrained to `maxWidth: 90%` and `maxHeight: calc(100% - 144px)` (reserving TEXT_ZONE_HEIGHT + 24px gap from the spacing hierarchy). Theme portraits remain at 100%/100%. Summary text `<motion.p>` elements made absolutely positioned within the text zone to prevent crossfade layout jerk (during AnimatePresence sync mode, stacked elements no longer push each other). Summary text centered via `left: 0; right: 0; margin: 0 auto` instead of `left: 50%; translateX(-50%)` (the latter limited available width to half the container). Text maxWidth increased from 480px to 540px (~65 chars/line at 15px Literata). Removed 0.15s delay on text fade so image and text animate simultaneously. Lottie container padding updated to reserve same text zone space.
+
+**Decisions:**
+- **24px gap** between image area and text zone — from the spacing hierarchy (80/64/56/40/32/24/8), matching element-to-element spacing tier.
+- **90% maxWidth** for previews — generous enough for landscape images (Sony GIF) to fill width, with minimal breathing room at edges.
+- **`calc(100% - 144px)` maxHeight** for previews — reserves 120px text zone + 24px gap. Tall images (phone mockups) constrained by height; wide images constrained by width + natural aspect ratio. Each preview fills as much space as it can.
+- **540px text maxWidth** — yields ~65 chars/line at 15px Literata (serif at that size averages ~7.5px/char). Previous 480px gave ~42 chars, too narrow.
+- **Absolute positioning on summary `<motion.p>`** — prevents the crossfade jerk where entering text appeared below exiting text, then jumped up when the exiting element was removed from DOM.
+- **No text delay** — the 0.15s delay was previously removed (March 7 fix) but had been re-added; removed again for simultaneous image+text fade.
+
+---
+
 ## 2026-03-11 — Fix stale contribution heatmap data
 
 **Branch:** `fix-heatmap-recent-days`
