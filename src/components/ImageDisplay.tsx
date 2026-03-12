@@ -37,6 +37,7 @@ export function ImageDisplay() {
       : `default-${accentColor}`
 
   const summary = project?.summary ?? null
+  const isPreview = !!project
 
   const showShadow = project && needsShadow.has(project.id)
   const dropShadow = showShadow
@@ -144,6 +145,7 @@ export function ImageDisplay() {
               alignItems: 'center',
               justifyContent: 'center',
               filter: dropShadow,
+              padding: `0 5% ${TEXT_ZONE_HEIGHT + 24}px`,
             }}
           >
             <Lottie
@@ -163,8 +165,8 @@ export function ImageDisplay() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
-              maxWidth: '100%',
-              maxHeight: '100%',
+              maxWidth: isPreview ? '90%' : '100%',
+              maxHeight: isPreview ? `calc(100% - ${TEXT_ZONE_HEIGHT + 24}px)` : '100%',
               objectFit: 'contain',
               borderRadius: 32,
               filter: dropShadow,
@@ -194,17 +196,20 @@ export function ImageDisplay() {
               exit={{ opacity: 0 }}
               transition={{
                 duration: reducedMotion ? 0 : 0.3,
-                delay: reducedMotion ? 0 : 0.15,
                 ease: 'easeInOut',
               }}
               style={{
                 ...summaryStyle,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
                 lineHeight: 1.5,
                 color: 'var(--text-grey)',
-                maxWidth: 480,
+                maxWidth: 540,
                 padding: '0 24px',
                 textAlign: 'left',
-                margin: 0,
+                margin: '0 auto',
               }}
             >
               {summary}
