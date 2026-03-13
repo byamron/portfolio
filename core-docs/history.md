@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-13 — Custom cursor "coming soon" state for non-link project cards
+
+**Branch:** `custom-cursor-coming-soon`
+
+**Summary:** Moved the "(coming soon)" signal from inline card title text to a new invert cursor morph state. When hovering a non-link project card in invert mode, the disc scales to 0 and "coming soon" text fades in — same morph pattern as the arrow on link cards.
+
+**What changed:**
+- `src/data/projects.ts` — Removed "(coming soon)" suffix from three side-project titles. Cards still distinguished by lighter `--text-medium` color, no underline, and trailing ellipsis.
+- `src/components/CustomCursor.tsx` — Added `comingSoonRef` element (22px Literata 300, accent-tinted, `mix-blend-mode: difference`). Introduced `cursorContentRef` to track three morph states (`idle` / `arrow` / `coming-soon`) replacing the boolean `showArrow` check. Morph effect now handles non-link cards: disc→scale(0), "coming soon"→opacity 1. Tint observer updates coming-soon text color on accent/theme changes.
+- `core-docs/design-language.md` — Added "coming soon" as priority 2 in the invert mode morphing hierarchy (between arrow and hand).
+
+**Decisions:**
+- **Literata 300 at 22px** — Matches the section narrative text style (same font, weight, and size). Chosen over Onest (cursor arrow font) after comparing both via dev panel. The serif at light weight creates visual distinction from the Onest arrow while staying cohesive with the page's editorial voice.
+- **Text-only morph (no pill/background)** — Follows the existing arrow pattern: disc scales to 0, text floats with `mix-blend-mode: difference`. Simpler than a filled pill and avoids contrast issues across light/dark modes.
+- **Dev panel stripped before merge** — Font/size/weight comparison panel (`ComingSoonDevPanel.tsx`) used during development, removed per dev panels policy.
+
+---
+
 ## 2026-03-13 — Fix glass hover persistence and cursor morph flicker
 
 **Branch:** `fix-hover-and-heatmap`

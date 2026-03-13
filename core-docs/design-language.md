@@ -614,9 +614,10 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 1. **Arrow** (`→` or `←`): When hovering any navigational link (`[data-link-card]`, `[data-contact-card]`, `[data-back-link]`). The disc scales to 0 and a 36px Onest 400 Unicode arrow fades in at full opacity.
    - `→` (right arrow) for forward navigation (project links, external links)
    - `←` (left arrow) for backward navigation (back button on case study pages)
-2. **Hand** (Phosphor hand-pointing SVG, 48×48px white): When hovering the right-column theme image (`[data-theme-image]`). The disc scales to 0 and the hand icon fades in — communicating "this is clickable" without a traditional pointer cursor.
-3. **Sidebar shrink**: When hovering sidebar controls. The disc shrinks to `scale(0.15)` — a small dot that stays present but doesn't interfere with the compact control surface.
-4. **Default disc**: 80×80px white circle at `scale(1)`. The resting state.
+2. **"Coming soon"** (text label): When hovering a non-link project card (`isLink: false`). The disc scales to 0 and "coming soon" text fades in — 22px Literata 300 (matching the section narrative text style), tinted with the same accent color as the disc. Replaces the previous inline "(coming soon)" suffix in card titles.
+3. **Hand** (Phosphor hand-pointing SVG, 48×48px white): When hovering the right-column theme image (`[data-theme-image]`). The disc scales to 0 and the hand icon fades in — communicating "this is clickable" without a traditional pointer cursor.
+4. **Sidebar shrink**: When hovering sidebar controls. The disc shrinks to `scale(0.15)` — a small dot that stays present but doesn't interfere with the compact control surface.
+5. **Default disc**: 80×80px white circle at `scale(1)`. The resting state.
 
 **Transitions between states:**
 - All morphs use opacity and scale transitions, gated on `prefers-reduced-motion` (instant if reduced motion).
