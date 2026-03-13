@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-13 — De-jargon Mochi case studies for external readability
+
+**Branch:** `review-case-studies`
+
+**Summary:** Systematic review of all 8 case studies for jargon, unclear concepts, and missing context. The Mochi subscriptions and progress tracker studies had the most issues — telehealth domain terms (health checks, refills, provider denials, cycles) assumed internal knowledge that an external reader (recruiter, hiring manager) wouldn't have. Other case studies (Sony, Duolingo, UW, Acorn, CIP) were clean.
+
+**What changed:**
+- `mochi-subscriptions.md` — Added one-sentence telehealth context up front ("Every order requires a doctor to review..."). Replaced jargon: "health checks" → describe actual data (weight and side effects), "provider" → "doctor", "refill" → "order", "Stripe scheduling costs" → "Stripe subscription automation fees". Fixed timing description to clarify order creation vs. pharmacy send. Quick version phrasing aligned with body.
+- `mochi-progress-tracker.md` — Rewrote the data flow section to explain what actually happened instead of using system names ("stored on the order record" instead of "health checks stored on refills"). Replaced "provider" → "doctor", "every cycle" → "every month", "clinical workflow" → "ordering workflow". Title changed from generic ("Empowering weight loss...") to specific ("Turning an unused tracker into clinical infrastructure").
+
+**Decisions:**
+- Principle: use plain language for domain concepts (what patients do, what doctors decide) but keep slightly technical register for architecture (where data lives, how systems connect). This signals systems understanding without requiring a glossary.
+- Each Mochi study should work standalone — removed cross-references that assumed the reader had read the other study.
+
+---
+
 ## 2026-03-11 — Fix stale contribution heatmap data
 
 **Branch:** `fix-heatmap-recent-days`
