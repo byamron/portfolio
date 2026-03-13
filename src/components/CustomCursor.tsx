@@ -10,6 +10,7 @@ const FIGPAL_SIZE = 72
 const FIGPAL_OFFSET_X = 24
 const FIGPAL_OFFSET_Y = 24
 const LERP_RATE = 0.12
+const MORPH_LEAVE_DELAY = 200
 
 // Phosphor fill hand-pointing SVG for theme image hover
 function makeHandSvg(fill: string) {
@@ -62,6 +63,8 @@ export function CustomCursor() {
   const onSidebarRef = useRef(false)
   const onImageRef = useRef(false)
   const onBackLinkRef = useRef(false)
+  const onHeatmapRef = useRef(false)
+  const heatmapSnapRef = useRef<{ x: number; y: number } | null>(null)
   const morphTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cursorAnimRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -142,7 +145,7 @@ export function CustomCursor() {
         inset: '0',
         borderRadius: '50%',
         background: tintColor,
-        transition: reducedMotion.current ? 'none' : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: reducedMotion.current ? 'none' : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 300ms cubic-bezier(0.4, 0, 0.2, 1)',
         transform: 'scale(1)',
       })
       container.appendChild(circle)
@@ -208,6 +211,8 @@ export function CustomCursor() {
     onSidebarRef.current = false
     onImageRef.current = false
     onBackLinkRef.current = false
+    onHeatmapRef.current = false
+    heatmapSnapRef.current = null
 
     if (hadPosition) {
       const t = `translate(${savedPos.x}px, ${savedPos.y}px)`
@@ -234,7 +239,7 @@ export function CustomCursor() {
             if (circleRef.current) {
               circleRef.current.style.transition = reducedMotion.current
                 ? 'none'
-                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 300ms cubic-bezier(0.4, 0, 0.2, 1)'
             }
           })
         } else if (target?.closest('[data-theme-image]')) {
@@ -246,7 +251,7 @@ export function CustomCursor() {
             if (circleRef.current) {
               circleRef.current.style.transition = reducedMotion.current
                 ? 'none'
-                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 300ms cubic-bezier(0.4, 0, 0.2, 1)'
             }
           })
         }
@@ -300,6 +305,64 @@ export function CustomCursor() {
           }
         }
         onBackLinkRef.current = !!(target && target.closest('[data-back-link]'))
+
+        // Heatmap zone: morph circle to cell-sized squircle and snap to cells
+        const isOnHeatmap = !!(target && target.closest('[data-glass-break]'))
+        if (isOnHeatmap !== onHeatmapRef.current) {
+          onHeatmapRef.current = isOnHeatmap
+          if (!isOnHeatmap) {
+            // Leaving heatmap — restore circle
+            heatmapSnapRef.current = null
+            if (!onCardRef.current && !onImageRef.current && !onSidebarRef.current) {
+              if (reducedMotion.current) circleRef.current.style.transition = 'none'
+              circleRef.current.style.transform = 'scale(1)'
+              circleRef.current.style.borderRadius = '50%'
+            }
+          }
+        }
+        // While in heatmap, snap to whichever cell is nearest to cursor
+        if (isOnHeatmap && !onCardRef.current && !onImageRef.current) {
+          let cellRect: DOMRect | null = null
+          if (target?.hasAttribute('data-date')) {
+            cellRect = (target as Element).getBoundingClientRect()
+          } else {
+            // In gap — find nearest cell via SVG coordinate math
+            const svg = (target as Element)?.closest?.('svg')
+              ?? document.querySelector('[data-glass-break] svg')
+            if (svg) {
+              const ctm = (svg as SVGSVGElement).getScreenCTM()
+              if (ctm) {
+                const svgX = (e.clientX - ctm.e) / ctm.a
+                const svgY = (e.clientY - ctm.f) / ctm.d
+                // Constants match ContributionHeatmap: CELL_STEP=12, CELL_SIZE=10, LABEL_TOP=16
+                if (svgY >= 6) { // skip month labels area
+                  const w = Math.max(0, Math.round((svgX - 5) / 12))
+                  const d = Math.max(0, Math.min(6, Math.round((svgY - 16 - 5) / 12)))
+                  const nearestRect = svg.querySelector(`rect[data-week="${w}"][data-day="${d}"]`)
+                  if (nearestRect) {
+                    cellRect = nearestRect.getBoundingClientRect()
+                  } else {
+                    // Past grid bounds — clear snap so cursor reverts to default
+                    heatmapSnapRef.current = null
+                    if (reducedMotion.current) circleRef.current.style.transition = 'none'
+                    circleRef.current.style.transform = 'scale(1)'
+                    circleRef.current.style.borderRadius = '50%'
+                  }
+                }
+              }
+            }
+          }
+          if (cellRect) {
+            const scale = cellRect.width / INVERT_SIZE
+            heatmapSnapRef.current = {
+              x: cellRect.left + cellRect.width / 2 - INVERT_SIZE / 2,
+              y: cellRect.top + cellRect.height / 2 - INVERT_SIZE / 2,
+            }
+            if (reducedMotion.current) circleRef.current.style.transition = 'none'
+            circleRef.current.style.transform = `scale(${scale})`
+            circleRef.current.style.borderRadius = '20%'
+          }
+        }
       }
     }
 
@@ -313,10 +376,16 @@ export function CustomCursor() {
       let targetY: number
 
       if (cursorMode === 'invert') {
-        targetX = mouseRef.current.x - INVERT_SIZE / 2
-        targetY = mouseRef.current.y - INVERT_SIZE / 2
-        posRef.current.x = targetX
-        posRef.current.y = targetY
+        if (onHeatmapRef.current && heatmapSnapRef.current) {
+          // Snap to cell position
+          posRef.current.x = heatmapSnapRef.current.x
+          posRef.current.y = heatmapSnapRef.current.y
+        } else {
+          targetX = mouseRef.current.x - INVERT_SIZE / 2
+          targetY = mouseRef.current.y - INVERT_SIZE / 2
+          posRef.current.x = targetX
+          posRef.current.y = targetY
+        }
       } else {
         targetX = mouseRef.current.x + FIGPAL_OFFSET_X
         targetY = mouseRef.current.y + FIGPAL_OFFSET_Y
@@ -385,10 +454,29 @@ export function CustomCursor() {
           if (circleRef.current) circleRef.current.style.transform = 'scale(0)'
           if (handRef.current) handRef.current.style.opacity = '1'
         } else if (circleRef.current) {
-          circleRef.current.style.transform = onSidebarRef.current ? 'scale(0.15)' : 'scale(1)'
+          if (onHeatmapRef.current && heatmapSnapRef.current) {
+            // Restore squircle at last snap position
+            const snapEl = document.elementFromPoint(
+              heatmapSnapRef.current.x + INVERT_SIZE / 2,
+              heatmapSnapRef.current.y + INVERT_SIZE / 2,
+            )
+            if (snapEl?.hasAttribute('data-date')) {
+              const cellRect = snapEl.getBoundingClientRect()
+              if (reducedMotion.current) circleRef.current.style.transition = 'none'
+              circleRef.current.style.transform = `scale(${cellRect.width / INVERT_SIZE})`
+              circleRef.current.style.borderRadius = '20%'
+            }
+          } else if (onHeatmapRef.current) {
+            // In heatmap but no cell snapped yet — hide
+            circleRef.current.style.transform = 'scale(0)'
+          } else {
+            if (reducedMotion.current) circleRef.current.style.transition = 'none'
+            circleRef.current.style.transform = onSidebarRef.current ? 'scale(0.15)' : 'scale(1)'
+            circleRef.current.style.borderRadius = '50%'
+          }
         }
         morphTimerRef.current = null
-      }, 200)
+      }, MORPH_LEAVE_DELAY)
     }
 
     return () => {

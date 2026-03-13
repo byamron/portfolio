@@ -2,6 +2,26 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-13 — Fix glass hover persistence and cursor morph flicker
+
+**Branch:** `shanghai`
+
+**Summary:** Fixed two related hover issues: (1) the glass highlight pill persisted when the cursor moved horizontally off a project card, and (2) the custom cursor arrow flickered back to a circle when moving between vertically adjacent cards.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — `isCursorInCardStack` now checks horizontal bounds against the *current card's* width instead of the union of all cards. Previously, the widest card in the stack extended the hover zone of every card, keeping the glass visible when the cursor was far to the right of shorter cards.
+- `src/components/ProjectLink.tsx` — Changed card layout from `width: fit-content` to `width: max-content` with `align-self: flex-start` so card elements hug their text content.
+- `src/components/CustomCursor.tsx` — Extracted cursor morph leave delay to `MORPH_LEAVE_DELAY` constant (200ms). This debounce prevents the arrow→circle flicker when crossing gaps between cards.
+- `src/components/ContributionHeatmap.tsx` — Increased heatmap contrast between 0 and 1+ contributions (adjusted `BASE_SAT` and `BASE_ALPHA`). Added `hoveredCell` state with highlight overlay for standard/figpal cursor modes. Tooltip now shows for nearest cell even in gaps via SVG coordinate math.
+- `core-docs/design-language.md` — Updated card stack boundary docs (horizontal bounds use current card, not union), link card layout (max-content), cursor morph debounce.
+
+**Decisions:**
+- Glass `clearDelay` stays at 150ms (glass handles gaps fine via its own lerp animation — no change needed).
+- Cursor morph delay set to 200ms after testing 200ms vs 250ms. 200ms felt snappier and more honest — the cursor reflects reality faster while still preventing most gap-crossing flicker.
+- Horizontal bounds use the current card's width rather than any-card-contains-point, preventing wide cards from extending the hover zone of unrelated narrower cards.
+
+---
+
 ## 2026-03-11 — Fix stale contribution heatmap data
 
 **Branch:** `fix-heatmap-recent-days`

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useCursor } from '@/contexts/CursorContext'
 import contributionData from '@/data/contributions.json'
 
 interface ContributionDay {
@@ -29,8 +30,8 @@ const ACCENT_HUES: Record<string, number> = {
   table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90,
 }
 
-const BASE_SAT = [10, 40, 45, 50, 55]
-const BASE_ALPHA = [0.07, 0.15, 0.35, 0.55, 0.75]
+const BASE_SAT = [10, 45, 48, 52, 55]
+const BASE_ALPHA = [0.06, 0.28, 0.42, 0.58, 0.75]
 
 function contribFill(level: number, hue: number, t: number, isDark: boolean): string {
   if (isDark) {
@@ -122,9 +123,11 @@ export function ContributionHeatmap() {
   const { grid, totalContributions } = useMemo(() => buildYearGrid(2026), [])
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [focusedCell, setFocusedCell] = useState<{ week: number; day: number } | null>(null)
+  const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const { bgIntensity, accentColor, resolvedAppearance } = useTheme()
+  const { cursorMode } = useCursor()
   const hue = ACCENT_HUES[accentColor] ?? 34
   const isDark = resolvedAppearance === 'dark'
 
@@ -206,31 +209,46 @@ export function ContributionHeatmap() {
 
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     setFocusedCell(null)
-    const target = e.target as SVGElement
-    const date = target.getAttribute('data-date')
-    const count = target.getAttribute('data-count')
-    if (!date || count === null) {
-      setTooltip(null)
-      return
-    }
-    const container = containerRef.current
-    if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const rect = target.getBoundingClientRect()
-    const now = new Date()
-    const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
-    const isFuture = date >= today
-    const text = isFuture
-      ? 'No contributions (yet)'
-      : `${count} contribution${count !== '1' ? 's' : ''} on ${formatDate(date)}`
-    setTooltip({
-      text,
-      x: rect.left + rect.width / 2 - containerRect.left,
-      y: rect.top - containerRect.top,
-    })
-  }, [])
+    const svg = svgRef.current
+    if (!svg) return
 
-  const handleMouseLeave = useCallback(() => setTooltip(null), [])
+    // Find which cell the cursor is on or nearest to
+    let week: number, day: number
+    const target = e.target as SVGElement
+    const weekAttr = target.getAttribute('data-week')
+    const dayAttr = target.getAttribute('data-day')
+
+    if (weekAttr !== null && dayAttr !== null) {
+      // Directly on a cell
+      week = parseInt(weekAttr)
+      day = parseInt(dayAttr)
+    } else {
+      // In a gap or on labels — find nearest cell via SVG coordinates
+      const ctm = svg.getScreenCTM()
+      if (!ctm) { setTooltip(null); setHoveredCell(null); return }
+      const svgX = (e.clientX - ctm.e) / ctm.a
+      const svgY = (e.clientY - ctm.f) / ctm.d
+      // Above the grid area (month labels) — no snap
+      if (svgY < LABEL_TOP - CELL_SIZE) {
+        setTooltip(null); setHoveredCell(null); return
+      }
+      week = Math.max(0, Math.min(grid.length - 1, Math.round((svgX - CELL_SIZE / 2) / CELL_STEP)))
+      day = Math.max(0, Math.min(6, Math.round((svgY - LABEL_TOP - CELL_SIZE / 2) / CELL_STEP)))
+    }
+
+    const cell = grid[week]?.[day]
+    if (!cell?.inYear) {
+      setTooltip(null); setHoveredCell(null); return
+    }
+
+    setHoveredCell({ week, day })
+    showTooltipForCell(week, day)
+  }, [grid, showTooltipForCell])
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip(null)
+    setHoveredCell(null)
+  }, [])
 
   if (grid.length === 0) return null
 
@@ -296,9 +314,24 @@ export function ContributionHeatmap() {
                   style={{ fill: contribFill(cell.level, hue, bgIntensity, isDark) }}
                   data-date={cell.date}
                   data-count={cell.count}
+                  data-week={weekIdx}
+                  data-day={dayIdx}
                 />
               )
             })
+          )}
+
+          {/* Mouse hover highlight (standard/figpal cursor modes only) */}
+          {cursorMode !== 'invert' && hoveredCell && grid[hoveredCell.week]?.[hoveredCell.day]?.inYear && (
+            <rect
+              x={hoveredCell.week * CELL_STEP}
+              y={LABEL_TOP + hoveredCell.day * CELL_STEP}
+              width={CELL_SIZE}
+              height={CELL_SIZE}
+              rx={2}
+              fill={isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)'}
+              style={{ pointerEvents: 'none' }}
+            />
           )}
 
           {/* Keyboard focus indicator */}
