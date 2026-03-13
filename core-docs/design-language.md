@@ -458,7 +458,7 @@ In the React implementation, map `accentColor` directly to the image filename.
 
 ### Project preview media
 
-Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, or Lottie JSON animations. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`, no forced container dimensions.
+Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, or Lottie JSON animations. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`. Preview images are constrained to `maxWidth: 90%` and `maxHeight: calc(100% - 144px)` to reserve space for the summary text zone (120px) plus 24px gap. Theme portrait images remain unconstrained at 100%/100%. Different aspect ratios self-size: tall images (phone mockups) are height-constrained, wide images (landscape screenshots) are width-constrained.
 
 | Project | Format | File | Loop | Notes |
 |---------|--------|------|------|-------|
@@ -493,9 +493,11 @@ Clicking the right-column portrait image cycles through accent colors in order (
 Some projects display a short summary below the preview image on hover:
 
 - **Font**: Literata 300 at 15px (serif voice for editorial description) — or Onest 400 at 14px (sans voice for functional description), toggled via `SUMMARY_FONT` constant (currently: serif)
-- **Color**: `var(--text-grey)`, `lineHeight: 1.5`, `maxWidth: 480px`, `padding: 0 24px`
-- **Animation**: Delayed fade — 300ms duration, 150ms delay. Appears slightly after the image swap, creating a staggered reveal hierarchy (image first, text second).
-- **Layout stability**: A fixed `TEXT_ZONE_HEIGHT = 120px` is always allocated below the image, whether or not summary text is shown. This prevents layout shifts when hovering between projects with and without summaries.
+- **Color**: `var(--text-grey)`, `lineHeight: 1.5`, `maxWidth: 540px` (~65 chars/line), `padding: 0 24px`
+- **Centering**: `position: absolute; left: 0; right: 0; margin: 0 auto` within the text zone. Centered horizontally under the preview image, left-aligned text internally.
+- **Animation**: Simultaneous fade with image — 300ms duration, no delay. Image and text appear/disappear together.
+- **Crossfade stability**: Each `<motion.p>` is absolutely positioned within the text zone, so during AnimatePresence crossfades the entering and exiting elements overlay rather than stacking vertically (which would cause a jerk when the exiting element is removed).
+- **Layout stability**: A fixed `TEXT_ZONE_HEIGHT = 120px` is always allocated below the image, whether or not summary text is shown. This prevents layout shifts when hovering between projects with and without summaries. The 24px gap between image area and text zone follows the spacing hierarchy.
 - **Reduced motion**: Instant opacity, no fade.
 
 ---
