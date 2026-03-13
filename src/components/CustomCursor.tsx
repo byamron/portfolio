@@ -53,6 +53,7 @@ export function CustomCursor() {
   const circleRef = useRef<HTMLDivElement | null>(null)
   const arrowRef = useRef<HTMLDivElement | null>(null)
   const handRef = useRef<HTMLDivElement | null>(null)
+  const comingSoonRef = useRef<HTMLDivElement | null>(null)
   const figpalRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
@@ -60,6 +61,7 @@ export function CustomCursor() {
   const initializedRef = useRef(false)
   const reducedMotion = useRef(false)
   const onCardRef = useRef(false)
+  const cursorContentRef = useRef<'idle' | 'arrow' | 'coming-soon'>('idle')
   const onSidebarRef = useRef(false)
   const onImageRef = useRef(false)
   const onBackLinkRef = useRef(false)
@@ -138,7 +140,28 @@ export function CustomCursor() {
       container.appendChild(hand)
       handRef.current = hand
 
-      // Circle — disc that scales down to reveal arrow/hand
+      // "Coming soon" label — hidden by default, shown on non-link card hover
+      const comingSoon = document.createElement('div')
+      Object.assign(comingSoon.style, {
+        position: 'absolute',
+        inset: '0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: tintColor,
+        fontSize: '22px',
+        fontFamily: "'Literata', serif",
+        fontWeight: '300',
+        lineHeight: '1',
+        whiteSpace: 'nowrap',
+        opacity: '0',
+        transition: reducedMotion.current ? 'none' : 'opacity 200ms ease',
+      })
+      comingSoon.textContent = 'coming soon'
+      container.appendChild(comingSoon)
+      comingSoonRef.current = comingSoon
+
+      // Circle — disc that scales down to reveal arrow/hand/coming-soon
       const circle = document.createElement('div')
       Object.assign(circle.style, {
         position: 'absolute',
@@ -161,6 +184,7 @@ export function CustomCursor() {
         const tc = getTintColor(h, bold, isDarkMode())
         circle.style.background = tc
         arrow.style.color = tc
+        comingSoon.style.color = tc
         hand.innerHTML = makeHandSvg(tc)
       }
 
@@ -208,6 +232,7 @@ export function CustomCursor() {
       initializedRef.current = false
     }
     onCardRef.current = false
+    cursorContentRef.current = 'idle'
     onSidebarRef.current = false
     onImageRef.current = false
     onBackLinkRef.current = false
@@ -420,36 +445,50 @@ export function CustomCursor() {
       circleRef.current = null
       arrowRef.current = null
       handRef.current = null
+      comingSoonRef.current = null
       figpalRef.current = null
     }
   }, [cursorMode, cursorTintMode])
 
-  // Morph circle ↔ arrow based on hovered project or external link.
+  // Morph circle ↔ arrow / coming-soon based on hovered project or external link.
   useEffect(() => {
     if (cursorMode !== 'invert' || !circleRef.current) return
 
     const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
     const showArrow = !!(project && project.isLink) || hoveringLink
+    const showComingSoon = !!(project && !project.isLink)
+    const newContent: 'idle' | 'arrow' | 'coming-soon' = showArrow ? 'arrow' : showComingSoon ? 'coming-soon' : 'idle'
 
-    if (showArrow === onCardRef.current) return
+    if (newContent === cursorContentRef.current) return
 
     if (morphTimerRef.current) {
       clearTimeout(morphTimerRef.current)
       morphTimerRef.current = null
     }
 
-    if (showArrow) {
+    if (newContent === 'arrow') {
       onCardRef.current = true
+      cursorContentRef.current = 'arrow'
       circleRef.current.style.transform = 'scale(0)'
       if (arrowRef.current) {
         arrowRef.current.textContent = onBackLinkRef.current ? '\u2190' : '\u2192'
         arrowRef.current.style.opacity = '1'
       }
+      if (comingSoonRef.current) comingSoonRef.current.style.opacity = '0'
+      if (handRef.current) handRef.current.style.opacity = '0'
+    } else if (newContent === 'coming-soon') {
+      onCardRef.current = true
+      cursorContentRef.current = 'coming-soon'
+      circleRef.current.style.transform = 'scale(0)'
+      if (comingSoonRef.current) comingSoonRef.current.style.opacity = '1'
+      if (arrowRef.current) arrowRef.current.style.opacity = '0'
       if (handRef.current) handRef.current.style.opacity = '0'
     } else {
       morphTimerRef.current = setTimeout(() => {
         onCardRef.current = false
+        cursorContentRef.current = 'idle'
         if (arrowRef.current) arrowRef.current.style.opacity = '0'
+        if (comingSoonRef.current) comingSoonRef.current.style.opacity = '0'
         if (onImageRef.current) {
           if (circleRef.current) circleRef.current.style.transform = 'scale(0)'
           if (handRef.current) handRef.current.style.opacity = '1'
