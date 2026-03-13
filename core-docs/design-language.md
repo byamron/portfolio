@@ -335,7 +335,7 @@ Inline text links (Mochi Health in the hero, email/LinkedIn/resume in the about 
 - The glass pill is an `aria-hidden="true"` div with `data-glass-highlight="true"`, absolutely positioned inside the link container.
 - **Z-index**: pill is `z-index: 10`, link card content is `z-index: 1` with `position: relative`. This ensures the pill renders behind the text — the pill is inserted as the first child of the container, before link elements in DOM order.
 - Link cards are identified by the `[data-link-card]` selector, with `data-project-id` for hover state matching.
-- Link card layout: `display: inline-block`, `width: fit-content`, padding `24px 16px`, margin `0 -16px`. Arrow `→` is an inline Unicode character — no flex gap, single continuous underline across text and arrow.
+- Link card layout: `width: max-content`, `align-self: flex-start`, padding `24px 16px`, margin `0 -16px`. Arrow `→` is an inline Unicode character — no flex gap, single continuous underline across text and arrow.
 - Coming-soon (non-link) cards: Same `data-link-card` treatment for glass hover, `--text-medium` color, ellipsis `…` at 50% opacity instead of arrow.
 - **Glass break zones**: Elements marked with `data-glass-break` suppress the glass pill when the cursor enters them. When `useGlassHighlight` detects a `mouseover` target inside a `[data-glass-break]` element, the pill immediately clears (no `clearDelay`). Use this for non-card interactive content embedded within a glass container — e.g., the contribution heatmap SVG, where the glass pill would otherwise chase the cursor across hundreds of small rects. The `data-glass-break` attribute goes on a wrapper div, not on individual elements.
 
@@ -392,7 +392,7 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
 2. No position change — it fades where it is
-3. **Card stack boundary**: The pill only clears when the cursor leaves the vertical bounds of the card stack (above the first card or below the last card). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit.
+3. **Card stack boundary**: The pill only clears when the cursor leaves the bounds of the card stack — vertically (above the first card or below the last card) or horizontally (past the current card's left/right edges). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit. Horizontal bounds use the current card's width, not the union of all cards — this prevents a wide card from extending the hover zone of narrower cards.
 
 ### Directional feedback: lean + tilt
 

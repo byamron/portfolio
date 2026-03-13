@@ -303,13 +303,21 @@ function setupGlassHighlight(
 
   // -- Event handlers --
 
-  function isCursorInCardStack(clientY: number): boolean {
+  function isCursorInCardStack(clientX: number, clientY: number): boolean {
     const sel = configRef.current.cardSelector
     const cards = container.querySelectorAll<HTMLElement>(sel)
     if (cards.length === 0) return false
     const firstRect = cards[0]!.getBoundingClientRect()
     const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
-    return clientY >= firstRect.top && clientY <= lastRect.bottom
+    // Vertical bounds: span the full card stack
+    if (clientY < firstRect.top || clientY > lastRect.bottom) return false
+    // Horizontal bounds: use the current card's width, not the union of all cards.
+    // The union approach let the widest card extend the hover zone of every card.
+    if (currentCard) {
+      const rect = currentCard.getBoundingClientRect()
+      return clientX >= rect.left && clientX <= rect.right
+    }
+    return false
   }
 
   function handleMouseOver(e: MouseEvent): void {
@@ -330,7 +338,7 @@ function setupGlassHighlight(
       }
       // Cursor moved to a non-card area
       const cardTight = currentCard?.hasAttribute('data-tight-bounds')
-      const inStack = isCursorInCardStack(e.clientY)
+      const inStack = isCursorInCardStack(e.clientX, e.clientY)
       const shouldClear = configRef.current.tightBounds || cardTight || !inStack
       if (currentCard && shouldClear) {
         if (!clearTimer) {
