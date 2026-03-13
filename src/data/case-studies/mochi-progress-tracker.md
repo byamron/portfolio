@@ -1,8 +1,8 @@
-# Empowering weight loss through progress tracking
+# Turning an unused tracker into clinical infrastructure
 
 ## The quick version
 
-Mochi's progress tracker existed but nobody used it. I drove a 53% increase in weekly active users, then identified its real value — a single source of truth for patient weight data — and built the integration that made it critical to the clinical workflow.
+Mochi's progress tracker existed but nobody used it. I drove a 53% increase in weekly active users, then identified its real value — a single source of truth for patient weight data — and built the integration that made it critical infrastructure.
 
 ## Timeline
 
@@ -24,16 +24,16 @@ I gave the tracker a visual refresh with the new design system and made it work 
 
 ## Patients were doing the work — they just weren't getting value from it
 
-Mochi had two separate systems tracking patient weight: the progress tracker (patient-facing, underused) and health checks stored on refills (used for provider review and approval — the key clinical workflow). Health check data powered refill decisions but wasn't saved or surfaced to patients. They filled out health checks every cycle and got nothing back from it. Meanwhile, the progress tracker — built to store and display exactly this kind of data — sat mostly empty because patients had to log separately.
+Mochi had two separate systems collecting patient weight. The progress tracker was patient-facing but underused. Separately, every time patients reordered medication, they reported weight and side effects as part of the approval process — but that data was stored on the order record, used for the doctor's review, and never surfaced to patients. They were submitting their data every month and getting nothing back. Meanwhile, the tracker sat mostly empty because it required separate logging.
 
-I unified them. Both entry points still work, but data flows to one place. Health check data now automatically populates the progress tracker. Patients get a filled-out progress history without any additional effort. Providers get the timestamped weight and side effect data they need to approve refills. Two redundant systems replaced by one — patients get value from work they were already doing, the provider denial problem is solved, and the backend is significantly simplified.
+I unified them. Both entry points still work, but data flows to one place. The weight and side-effect data patients submit when reordering now automatically populates their progress tracker. Patients get a complete progress history without extra effort. Doctors get the timestamped data they need to approve orders. Two redundant systems replaced by one — and the backend is significantly simplified.
 
 Tracker usage increased ~60% on top of the previous 53% gain. The number is partly a technicality — data now routes there automatically — but the patient value is real. Their tracker reflects their actual journey without requiring extra effort.
 
-**VISUAL: A simple data flow diagram. Old state: health check data goes to refill review, then disappears; progress tracker sits empty, requires separate logging. New state: both entry points feed one system, serving both the patient view and provider review.**
+**VISUAL: A simple data flow diagram. Old state: weight data submitted during reordering goes to doctor review, then disappears; progress tracker sits empty, requires separate logging. New state: both entry points feed one system, serving both the patient view and doctor review.**
 
 ## The feature nobody would invest in is now infrastructure they can't operate without
 
-With the tracker tied to the clinical workflow, the backend limitations that previously blocked growth are now in planning — flexible data models that could expand to nutrition, labs, and physical activity tracking. Visual refresh proved demand. Integration proved strategic value. Investment followed.
+With the tracker integrated into the ordering workflow, the backend limitations that previously blocked growth are now in planning — flexible data models that could expand to nutrition, labs, and physical activity tracking. Visual refresh proved demand. Integration proved strategic value. Investment followed.
 
 **VISUAL: None. Clean close.**
