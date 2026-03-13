@@ -67,8 +67,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
         onMouseEnter={() => setHoveredProjectId(project.id)}
         onMouseLeave={() => setHoveredProjectId(null)}
         style={{
-          display: 'inline-block',
-          width: 'fit-content',
+          width: 'max-content',
           alignSelf: 'flex-start',
           padding: '24px 16px',
           margin: '0 -16px',
@@ -139,8 +138,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     onBlur: () => setHoveredProjectId(null),
     onClick: handleClick,
     style: {
-      display: 'inline-block' as const,
-      width: 'fit-content' as const,
+      width: 'max-content' as const,
       alignSelf: 'flex-start' as const,
       padding: '24px 16px',
       margin: '0 -16px',

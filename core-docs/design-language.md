@@ -335,7 +335,7 @@ Inline text links (Mochi Health in the hero, email/LinkedIn/resume in the about 
 - The glass pill is an `aria-hidden="true"` div with `data-glass-highlight="true"`, absolutely positioned inside the link container.
 - **Z-index**: pill is `z-index: 10`, link card content is `z-index: 1` with `position: relative`. This ensures the pill renders behind the text — the pill is inserted as the first child of the container, before link elements in DOM order.
 - Link cards are identified by the `[data-link-card]` selector, with `data-project-id` for hover state matching.
-- Link card layout: `display: inline-block`, `width: fit-content`, padding `24px 16px`, margin `0 -16px`. Arrow `→` is an inline Unicode character — no flex gap, single continuous underline across text and arrow.
+- Link card layout: `width: max-content`, `align-self: flex-start`, padding `24px 16px`, margin `0 -16px`. Arrow `→` is an inline Unicode character — no flex gap, single continuous underline across text and arrow.
 - Coming-soon (non-link) cards: Same `data-link-card` treatment for glass hover, `--text-medium` color, ellipsis `…` at 50% opacity instead of arrow.
 - **Glass break zones**: Elements marked with `data-glass-break` suppress the glass pill when the cursor enters them. When `useGlassHighlight` detects a `mouseover` target inside a `[data-glass-break]` element, the pill immediately clears (no `clearDelay`). Use this for non-card interactive content embedded within a glass container — e.g., the contribution heatmap SVG, where the glass pill would otherwise chase the cursor across hundreds of small rects. The `data-glass-break` attribute goes on a wrapper div, not on individual elements.
 
@@ -392,7 +392,7 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
 2. No position change — it fades where it is
-3. **Card stack boundary**: The pill only clears when the cursor leaves the vertical bounds of the card stack (above the first card or below the last card). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit.
+3. **Card stack boundary**: The pill only clears when the cursor leaves the bounds of the card stack — vertically (above the first card or below the last card) or horizontally (past the current card's left/right edges). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit. Horizontal bounds use the current card's width, not the union of all cards — this prevents a wide card from extending the hover zone of narrower cards.
 
 ### Directional feedback: lean + tilt
 
@@ -458,7 +458,7 @@ In the React implementation, map `accentColor` directly to the image filename.
 
 ### Project preview media
 
-Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, or Lottie JSON animations. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`, no forced container dimensions.
+Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, or Lottie JSON animations. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`. Preview images are constrained to `maxWidth: 90%` and `maxHeight: calc(100% - 144px)` to reserve space for the summary text zone (120px) plus 24px gap. Theme portrait images remain unconstrained at 100%/100%. Different aspect ratios self-size: tall images (phone mockups) are height-constrained, wide images (landscape screenshots) are width-constrained.
 
 | Project | Format | File | Loop | Notes |
 |---------|--------|------|------|-------|
@@ -493,9 +493,11 @@ Clicking the right-column portrait image cycles through accent colors in order (
 Some projects display a short summary below the preview image on hover:
 
 - **Font**: Literata 300 at 15px (serif voice for editorial description) — or Onest 400 at 14px (sans voice for functional description), toggled via `SUMMARY_FONT` constant (currently: serif)
-- **Color**: `var(--text-grey)`, `lineHeight: 1.5`, `maxWidth: 480px`, `padding: 0 24px`
-- **Animation**: Delayed fade — 300ms duration, 150ms delay. Appears slightly after the image swap, creating a staggered reveal hierarchy (image first, text second).
-- **Layout stability**: A fixed `TEXT_ZONE_HEIGHT = 120px` is always allocated below the image, whether or not summary text is shown. This prevents layout shifts when hovering between projects with and without summaries.
+- **Color**: `var(--text-grey)`, `lineHeight: 1.5`, `maxWidth: 540px` (~65 chars/line), `padding: 0 24px`
+- **Centering**: `position: absolute; left: 0; right: 0; margin: 0 auto` within the text zone. Centered horizontally under the preview image, left-aligned text internally.
+- **Animation**: Simultaneous fade with image — 300ms duration, no delay. Image and text appear/disappear together.
+- **Crossfade stability**: Each `<motion.p>` is absolutely positioned within the text zone, so during AnimatePresence crossfades the entering and exiting elements overlay rather than stacking vertically (which would cause a jerk when the exiting element is removed).
+- **Layout stability**: A fixed `TEXT_ZONE_HEIGHT = 120px` is always allocated below the image, whether or not summary text is shown. This prevents layout shifts when hovering between projects with and without summaries. The 24px gap between image area and text zone follows the spacing hierarchy.
 - **Reduced motion**: Instant opacity, no fade.
 
 ---
@@ -612,9 +614,10 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 1. **Arrow** (`→` or `←`): When hovering any navigational link (`[data-link-card]`, `[data-contact-card]`, `[data-back-link]`). The disc scales to 0 and a 36px Onest 400 Unicode arrow fades in at full opacity.
    - `→` (right arrow) for forward navigation (project links, external links)
    - `←` (left arrow) for backward navigation (back button on case study pages)
-2. **Hand** (Phosphor hand-pointing SVG, 48×48px white): When hovering the right-column theme image (`[data-theme-image]`). The disc scales to 0 and the hand icon fades in — communicating "this is clickable" without a traditional pointer cursor.
-3. **Sidebar shrink**: When hovering sidebar controls. The disc shrinks to `scale(0.15)` — a small dot that stays present but doesn't interfere with the compact control surface.
-4. **Default disc**: 80×80px white circle at `scale(1)`. The resting state.
+2. **"Coming soon"** (text label): When hovering a non-link project card (`isLink: false`). The disc scales to 0 and "coming soon" text fades in — 22px Literata 300 (matching the section narrative text style), tinted with the same accent color as the disc. Replaces the previous inline "(coming soon)" suffix in card titles.
+3. **Hand** (Phosphor hand-pointing SVG, 48×48px white): When hovering the right-column theme image (`[data-theme-image]`). The disc scales to 0 and the hand icon fades in — communicating "this is clickable" without a traditional pointer cursor.
+4. **Sidebar shrink**: When hovering sidebar controls. The disc shrinks to `scale(0.15)` — a small dot that stays present but doesn't interfere with the compact control surface.
+5. **Default disc**: 80×80px white circle at `scale(1)`. The resting state.
 
 **Transitions between states:**
 - All morphs use opacity and scale transitions, gated on `prefers-reduced-motion` (instant if reduced motion).

@@ -18,6 +18,63 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-13 — Custom cursor "coming soon" state for non-link project cards
+
+**Branch:** `custom-cursor-coming-soon`
+
+**Summary:** Moved the "(coming soon)" signal from inline card title text to a new invert cursor morph state. When hovering a non-link project card in invert mode, the disc scales to 0 and "coming soon" text fades in — same morph pattern as the arrow on link cards.
+
+**What changed:**
+- `src/data/projects.ts` — Removed "(coming soon)" suffix from three side-project titles. Cards still distinguished by lighter `--text-medium` color, no underline, and trailing ellipsis.
+- `src/components/CustomCursor.tsx` — Added `comingSoonRef` element (22px Literata 300, accent-tinted, `mix-blend-mode: difference`). Introduced `cursorContentRef` to track three morph states (`idle` / `arrow` / `coming-soon`) replacing the boolean `showArrow` check. Morph effect now handles non-link cards: disc→scale(0), "coming soon"→opacity 1. Tint observer updates coming-soon text color on accent/theme changes.
+- `core-docs/design-language.md` — Added "coming soon" as priority 2 in the invert mode morphing hierarchy (between arrow and hand).
+
+**Decisions:**
+- **Literata 300 at 22px** — Matches the section narrative text style (same font, weight, and size). Chosen over Onest (cursor arrow font) after comparing both via dev panel. The serif at light weight creates visual distinction from the Onest arrow while staying cohesive with the page's editorial voice.
+- **Text-only morph (no pill/background)** — Follows the existing arrow pattern: disc scales to 0, text floats with `mix-blend-mode: difference`. Simpler than a filled pill and avoids contrast issues across light/dark modes.
+- **Dev panel stripped before merge** — Font/size/weight comparison panel (`ComingSoonDevPanel.tsx`) used during development, removed per dev panels policy.
+
+---
+
+## 2026-03-13 — Fix glass hover persistence and cursor morph flicker
+
+**Branch:** `fix-hover-and-heatmap`
+
+**Summary:** Fixed two related hover issues: (1) the glass highlight pill persisted when the cursor moved horizontally off a project card, and (2) the custom cursor arrow flickered back to a circle when moving between vertically adjacent cards.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — `isCursorInCardStack` now checks horizontal bounds against the *current card's* width instead of the union of all cards. Previously, the widest card in the stack extended the hover zone of every card, keeping the glass visible when the cursor was far to the right of shorter cards.
+- `src/components/ProjectLink.tsx` — Changed card layout from `width: fit-content` to `width: max-content` with `align-self: flex-start` so card elements hug their text content.
+- `src/components/CustomCursor.tsx` — Extracted cursor morph leave delay to `MORPH_LEAVE_DELAY` constant (200ms). This debounce prevents the arrow→circle flicker when crossing gaps between cards.
+- `src/components/ContributionHeatmap.tsx` — Increased heatmap contrast between 0 and 1+ contributions (adjusted `BASE_SAT` and `BASE_ALPHA`). Added `hoveredCell` state with highlight overlay for standard/figpal cursor modes. Tooltip now shows for nearest cell even in gaps via SVG coordinate math.
+- `core-docs/design-language.md` — Updated card stack boundary docs (horizontal bounds use current card, not union), link card layout (max-content), cursor morph debounce.
+
+**Decisions:**
+- Glass `clearDelay` stays at 150ms (glass handles gaps fine via its own lerp animation — no change needed).
+- Cursor morph delay set to 200ms after testing 200ms vs 250ms. 200ms felt snappier and more honest — the cursor reflects reality faster while still preventing most gap-crossing flicker.
+- Horizontal bounds use the current card's width rather than any-card-contains-point, preventing wide cards from extending the hover zone of unrelated narrower cards.
+
+---
+
+## 2026-03-11 — Fix hover preview image scaling and summary text layout
+
+**Branch:** `fix-hover-preview-scale`
+
+**Summary:** Hover preview images were too large in the right column, and summary description text had layout issues (jerk on crossfade, too narrow, misaligned). Fixed image constraints so previews of any aspect ratio fill available space without overlapping the text zone, while theme portrait images remain completely unaffected.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Preview images now constrained to `maxWidth: 90%` and `maxHeight: calc(100% - 144px)` (reserving TEXT_ZONE_HEIGHT + 24px gap from the spacing hierarchy). Theme portraits remain at 100%/100%. Summary text `<motion.p>` elements made absolutely positioned within the text zone to prevent crossfade layout jerk (during AnimatePresence sync mode, stacked elements no longer push each other). Summary text centered via `left: 0; right: 0; margin: 0 auto` instead of `left: 50%; translateX(-50%)` (the latter limited available width to half the container). Text maxWidth increased from 480px to 540px (~65 chars/line at 15px Literata). Removed 0.15s delay on text fade so image and text animate simultaneously. Lottie container padding updated to reserve same text zone space.
+
+**Decisions:**
+- **24px gap** between image area and text zone — from the spacing hierarchy (80/64/56/40/32/24/8), matching element-to-element spacing tier.
+- **90% maxWidth** for previews — generous enough for landscape images (Sony GIF) to fill width, with minimal breathing room at edges.
+- **`calc(100% - 144px)` maxHeight** for previews — reserves 120px text zone + 24px gap. Tall images (phone mockups) constrained by height; wide images constrained by width + natural aspect ratio. Each preview fills as much space as it can.
+- **540px text maxWidth** — yields ~65 chars/line at 15px Literata (serif at that size averages ~7.5px/char). Previous 480px gave ~42 chars, too narrow.
+- **Absolute positioning on summary `<motion.p>`** — prevents the crossfade jerk where entering text appeared below exiting text, then jumped up when the exiting element was removed from DOM.
+- **No text delay** — the 0.15s delay was previously removed (March 7 fix) but had been re-added; removed again for simultaneous image+text fade.
+
+---
+
 ## 2026-03-11 — Fix stale contribution heatmap data
 
 **Branch:** `fix-heatmap-recent-days`
@@ -85,7 +142,8 @@ Decision log and completed work, in reverse chronological order.
 - `projects.ts` summary fields already aligned with subtitles — no changes needed.
 - Gallery items kept on Mochi Subscriptions — visuals do the showing.
 
->>>>>>> origin/main
+---
+
 ## 2026-03-10 — Add GitHub contribution heatmap
 
 **Branch:** `github-contribution-heatmap`

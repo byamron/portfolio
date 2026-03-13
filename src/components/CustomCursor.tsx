@@ -10,6 +10,7 @@ const FIGPAL_SIZE = 72
 const FIGPAL_OFFSET_X = 24
 const FIGPAL_OFFSET_Y = 24
 const LERP_RATE = 0.12
+const MORPH_LEAVE_DELAY = 200
 
 // Phosphor fill hand-pointing SVG for theme image hover
 function makeHandSvg(fill: string) {
@@ -52,6 +53,7 @@ export function CustomCursor() {
   const circleRef = useRef<HTMLDivElement | null>(null)
   const arrowRef = useRef<HTMLDivElement | null>(null)
   const handRef = useRef<HTMLDivElement | null>(null)
+  const comingSoonRef = useRef<HTMLDivElement | null>(null)
   const figpalRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
@@ -59,9 +61,12 @@ export function CustomCursor() {
   const initializedRef = useRef(false)
   const reducedMotion = useRef(false)
   const onCardRef = useRef(false)
+  const cursorContentRef = useRef<'idle' | 'arrow' | 'coming-soon'>('idle')
   const onSidebarRef = useRef(false)
   const onImageRef = useRef(false)
   const onBackLinkRef = useRef(false)
+  const onHeatmapRef = useRef(false)
+  const heatmapSnapRef = useRef<{ x: number; y: number } | null>(null)
   const morphTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cursorAnimRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -135,14 +140,35 @@ export function CustomCursor() {
       container.appendChild(hand)
       handRef.current = hand
 
-      // Circle — disc that scales down to reveal arrow/hand
+      // "Coming soon" label — hidden by default, shown on non-link card hover
+      const comingSoon = document.createElement('div')
+      Object.assign(comingSoon.style, {
+        position: 'absolute',
+        inset: '0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: tintColor,
+        fontSize: '22px',
+        fontFamily: "'Literata', serif",
+        fontWeight: '300',
+        lineHeight: '1',
+        whiteSpace: 'nowrap',
+        opacity: '0',
+        transition: reducedMotion.current ? 'none' : 'opacity 200ms ease',
+      })
+      comingSoon.textContent = 'coming soon'
+      container.appendChild(comingSoon)
+      comingSoonRef.current = comingSoon
+
+      // Circle — disc that scales down to reveal arrow/hand/coming-soon
       const circle = document.createElement('div')
       Object.assign(circle.style, {
         position: 'absolute',
         inset: '0',
         borderRadius: '50%',
         background: tintColor,
-        transition: reducedMotion.current ? 'none' : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: reducedMotion.current ? 'none' : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 300ms cubic-bezier(0.4, 0, 0.2, 1)',
         transform: 'scale(1)',
       })
       container.appendChild(circle)
@@ -158,6 +184,7 @@ export function CustomCursor() {
         const tc = getTintColor(h, bold, isDarkMode())
         circle.style.background = tc
         arrow.style.color = tc
+        comingSoon.style.color = tc
         hand.innerHTML = makeHandSvg(tc)
       }
 
@@ -205,9 +232,12 @@ export function CustomCursor() {
       initializedRef.current = false
     }
     onCardRef.current = false
+    cursorContentRef.current = 'idle'
     onSidebarRef.current = false
     onImageRef.current = false
     onBackLinkRef.current = false
+    onHeatmapRef.current = false
+    heatmapSnapRef.current = null
 
     if (hadPosition) {
       const t = `translate(${savedPos.x}px, ${savedPos.y}px)`
@@ -234,7 +264,7 @@ export function CustomCursor() {
             if (circleRef.current) {
               circleRef.current.style.transition = reducedMotion.current
                 ? 'none'
-                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 300ms cubic-bezier(0.4, 0, 0.2, 1)'
             }
           })
         } else if (target?.closest('[data-theme-image]')) {
@@ -246,7 +276,7 @@ export function CustomCursor() {
             if (circleRef.current) {
               circleRef.current.style.transition = reducedMotion.current
                 ? 'none'
-                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                : 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 300ms cubic-bezier(0.4, 0, 0.2, 1)'
             }
           })
         }
@@ -300,6 +330,64 @@ export function CustomCursor() {
           }
         }
         onBackLinkRef.current = !!(target && target.closest('[data-back-link]'))
+
+        // Heatmap zone: morph circle to cell-sized squircle and snap to cells
+        const isOnHeatmap = !!(target && target.closest('[data-glass-break]'))
+        if (isOnHeatmap !== onHeatmapRef.current) {
+          onHeatmapRef.current = isOnHeatmap
+          if (!isOnHeatmap) {
+            // Leaving heatmap — restore circle
+            heatmapSnapRef.current = null
+            if (!onCardRef.current && !onImageRef.current && !onSidebarRef.current) {
+              if (reducedMotion.current) circleRef.current.style.transition = 'none'
+              circleRef.current.style.transform = 'scale(1)'
+              circleRef.current.style.borderRadius = '50%'
+            }
+          }
+        }
+        // While in heatmap, snap to whichever cell is nearest to cursor
+        if (isOnHeatmap && !onCardRef.current && !onImageRef.current) {
+          let cellRect: DOMRect | null = null
+          if (target?.hasAttribute('data-date')) {
+            cellRect = (target as Element).getBoundingClientRect()
+          } else {
+            // In gap — find nearest cell via SVG coordinate math
+            const svg = (target as Element)?.closest?.('svg')
+              ?? document.querySelector('[data-glass-break] svg')
+            if (svg) {
+              const ctm = (svg as SVGSVGElement).getScreenCTM()
+              if (ctm) {
+                const svgX = (e.clientX - ctm.e) / ctm.a
+                const svgY = (e.clientY - ctm.f) / ctm.d
+                // Constants match ContributionHeatmap: CELL_STEP=12, CELL_SIZE=10, LABEL_TOP=16
+                if (svgY >= 6) { // skip month labels area
+                  const w = Math.max(0, Math.round((svgX - 5) / 12))
+                  const d = Math.max(0, Math.min(6, Math.round((svgY - 16 - 5) / 12)))
+                  const nearestRect = svg.querySelector(`rect[data-week="${w}"][data-day="${d}"]`)
+                  if (nearestRect) {
+                    cellRect = nearestRect.getBoundingClientRect()
+                  } else {
+                    // Past grid bounds — clear snap so cursor reverts to default
+                    heatmapSnapRef.current = null
+                    if (reducedMotion.current) circleRef.current.style.transition = 'none'
+                    circleRef.current.style.transform = 'scale(1)'
+                    circleRef.current.style.borderRadius = '50%'
+                  }
+                }
+              }
+            }
+          }
+          if (cellRect) {
+            const scale = cellRect.width / INVERT_SIZE
+            heatmapSnapRef.current = {
+              x: cellRect.left + cellRect.width / 2 - INVERT_SIZE / 2,
+              y: cellRect.top + cellRect.height / 2 - INVERT_SIZE / 2,
+            }
+            if (reducedMotion.current) circleRef.current.style.transition = 'none'
+            circleRef.current.style.transform = `scale(${scale})`
+            circleRef.current.style.borderRadius = '20%'
+          }
+        }
       }
     }
 
@@ -313,10 +401,16 @@ export function CustomCursor() {
       let targetY: number
 
       if (cursorMode === 'invert') {
-        targetX = mouseRef.current.x - INVERT_SIZE / 2
-        targetY = mouseRef.current.y - INVERT_SIZE / 2
-        posRef.current.x = targetX
-        posRef.current.y = targetY
+        if (onHeatmapRef.current && heatmapSnapRef.current) {
+          // Snap to cell position
+          posRef.current.x = heatmapSnapRef.current.x
+          posRef.current.y = heatmapSnapRef.current.y
+        } else {
+          targetX = mouseRef.current.x - INVERT_SIZE / 2
+          targetY = mouseRef.current.y - INVERT_SIZE / 2
+          posRef.current.x = targetX
+          posRef.current.y = targetY
+        }
       } else {
         targetX = mouseRef.current.x + FIGPAL_OFFSET_X
         targetY = mouseRef.current.y + FIGPAL_OFFSET_Y
@@ -351,44 +445,77 @@ export function CustomCursor() {
       circleRef.current = null
       arrowRef.current = null
       handRef.current = null
+      comingSoonRef.current = null
       figpalRef.current = null
     }
   }, [cursorMode, cursorTintMode])
 
-  // Morph circle ↔ arrow based on hovered project or external link.
+  // Morph circle ↔ arrow / coming-soon based on hovered project or external link.
   useEffect(() => {
     if (cursorMode !== 'invert' || !circleRef.current) return
 
     const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
     const showArrow = !!(project && project.isLink) || hoveringLink
+    const showComingSoon = !!(project && !project.isLink)
+    const newContent: 'idle' | 'arrow' | 'coming-soon' = showArrow ? 'arrow' : showComingSoon ? 'coming-soon' : 'idle'
 
-    if (showArrow === onCardRef.current) return
+    if (newContent === cursorContentRef.current) return
 
     if (morphTimerRef.current) {
       clearTimeout(morphTimerRef.current)
       morphTimerRef.current = null
     }
 
-    if (showArrow) {
+    if (newContent === 'arrow') {
       onCardRef.current = true
+      cursorContentRef.current = 'arrow'
       circleRef.current.style.transform = 'scale(0)'
       if (arrowRef.current) {
         arrowRef.current.textContent = onBackLinkRef.current ? '\u2190' : '\u2192'
         arrowRef.current.style.opacity = '1'
       }
+      if (comingSoonRef.current) comingSoonRef.current.style.opacity = '0'
+      if (handRef.current) handRef.current.style.opacity = '0'
+    } else if (newContent === 'coming-soon') {
+      onCardRef.current = true
+      cursorContentRef.current = 'coming-soon'
+      circleRef.current.style.transform = 'scale(0)'
+      if (comingSoonRef.current) comingSoonRef.current.style.opacity = '1'
+      if (arrowRef.current) arrowRef.current.style.opacity = '0'
       if (handRef.current) handRef.current.style.opacity = '0'
     } else {
       morphTimerRef.current = setTimeout(() => {
         onCardRef.current = false
+        cursorContentRef.current = 'idle'
         if (arrowRef.current) arrowRef.current.style.opacity = '0'
+        if (comingSoonRef.current) comingSoonRef.current.style.opacity = '0'
         if (onImageRef.current) {
           if (circleRef.current) circleRef.current.style.transform = 'scale(0)'
           if (handRef.current) handRef.current.style.opacity = '1'
         } else if (circleRef.current) {
-          circleRef.current.style.transform = onSidebarRef.current ? 'scale(0.15)' : 'scale(1)'
+          if (onHeatmapRef.current && heatmapSnapRef.current) {
+            // Restore squircle at last snap position
+            const snapEl = document.elementFromPoint(
+              heatmapSnapRef.current.x + INVERT_SIZE / 2,
+              heatmapSnapRef.current.y + INVERT_SIZE / 2,
+            )
+            if (snapEl?.hasAttribute('data-date')) {
+              const cellRect = snapEl.getBoundingClientRect()
+              if (reducedMotion.current) circleRef.current.style.transition = 'none'
+              circleRef.current.style.transform = `scale(${cellRect.width / INVERT_SIZE})`
+              circleRef.current.style.borderRadius = '20%'
+            }
+          } else if (onHeatmapRef.current) {
+            // In heatmap but no cell snapped yet — hide
+            circleRef.current.style.transform = 'scale(0)'
+          } else {
+            if (reducedMotion.current) circleRef.current.style.transition = 'none'
+            circleRef.current.style.transform = onSidebarRef.current ? 'scale(0.15)' : 'scale(1)'
+            circleRef.current.style.borderRadius = '50%'
+          }
         }
         morphTimerRef.current = null
-      }, 200)
+      }, MORPH_LEAVE_DELAY)
     }
 
     return () => {
