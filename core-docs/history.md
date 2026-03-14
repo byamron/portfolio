@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-14 — Fix double cursor, transition smoothness, and default cursor mode
+
+**Branch:** `fix-double-cursor-bug`
+
+**Summary:** Fixed multiple custom cursor bugs: duplicate cursor containers appearing on sidebar hover (StrictMode/HMR orphans), hand pointer persisting when quickly moving from theme image to sidebar, and non-smooth transitions between cursor states. Also made invert cursor the default for new users and reduced circle size.
+
+**What changed:**
+- `src/components/CustomCursor.tsx` — Added `data-custom-cursor` attribute to cursor containers and orphan cleanup at effect start (prevents StrictMode double-invoke creating duplicate cursors). Fixed hand pointer persistence on sidebar enter by hiding hand/arrow/comingSoon in sidebar-enter branch. Switched content elements (arrow, hand, comingSoon) from opacity-based to scale-based transitions (`transform: scale(0/1)` instead of `opacity: 0/1`) so state changes morph from center point rather than dissolve-crossfade. Removed rejected `morphViaCircle` two-phase approach. Reduced circle size from 80px to 64px and morph leave delay from 200ms to 150ms. Reverted `injectCursorNoneStyle` to remove inline style on `<html>` that was causing cursor:none regression.
+- `src/contexts/CursorContext.tsx` — Changed default cursor mode from `'standard'` to `'invert'` for new users (persisted preference still honored).
+- `src/components/SidebarThemeControls.tsx` — Reordered cursor options: invert first, then standard, then figpal.
+
+**Decisions:**
+- **Scale-based content transitions** — Using `transform: scale(0/1)` instead of `opacity: 0/1` makes cursor state changes feel like shape morphs rather than dissolve crossfades. All content elements share the same center point, so hiding one while showing another creates a connected visual transition.
+- **Rejected morphViaCircle** — A two-phase grow-then-shrink approach was tried but created an unintended flash (circle grows to full size as bridge, then shrinks to target). Direct state-to-state transitions are better.
+- **64px circle** — Reduced from 80px for a more refined feel.
+- **150ms leave delay** — Slightly faster than 200ms; responsive without gap-crossing flicker.
+
+---
+
 ## 2026-03-13 — De-jargon Mochi case studies for external readability
 
 **Branch:** `review-case-studies`

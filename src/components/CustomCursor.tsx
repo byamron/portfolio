@@ -4,13 +4,14 @@ import { useHover } from '@/contexts/HoverContext'
 import { projectsById } from '@/data/projects'
 import { DIRECTIONAL_SWEEP } from '@/utils/braille'
 
-const INVERT_SIZE = 80
+const INVERT_SIZE = 64
 const ARROW_FONT_SIZE = 36
 const FIGPAL_SIZE = 72
 const FIGPAL_OFFSET_X = 24
 const FIGPAL_OFFSET_Y = 24
 const LERP_RATE = 0.12
-const MORPH_LEAVE_DELAY = 200
+const MORPH_LEAVE_DELAY = 150
+const CIRCLE_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 // Phosphor fill hand-pointing SVG for theme image hover
 function makeHandSvg(fill: string) {
@@ -20,11 +21,12 @@ function makeHandSvg(fill: string) {
 const CURSOR_NONE_STYLE_ID = 'custom-cursor-none'
 
 function injectCursorNoneStyle() {
-  if (document.getElementById(CURSOR_NONE_STYLE_ID)) return
-  const style = document.createElement('style')
-  style.id = CURSOR_NONE_STYLE_ID
-  style.textContent = '* { cursor: none !important; }'
-  document.head.appendChild(style)
+  if (!document.getElementById(CURSOR_NONE_STYLE_ID)) {
+    const style = document.createElement('style')
+    style.id = CURSOR_NONE_STYLE_ID
+    style.textContent = '* { cursor: none !important; }'
+    document.head.appendChild(style)
+  }
 }
 
 function removeCursorNoneStyle() {
@@ -80,6 +82,10 @@ export function CustomCursor() {
       return
     }
 
+    // Remove any orphaned cursor containers from previous effect runs
+    // (guards against StrictMode double-invoke, HMR, or stale cleanup)
+    document.querySelectorAll('[data-custom-cursor]').forEach(el => el.remove())
+
     const elements: HTMLElement[] = []
 
     if (cursorMode === 'invert') {
@@ -91,6 +97,7 @@ export function CustomCursor() {
 
       const container = document.createElement('div')
       container.setAttribute('aria-hidden', 'true')
+      container.setAttribute('data-custom-cursor', 'invert')
       Object.assign(container.style, {
         position: 'fixed',
         pointerEvents: 'none',
@@ -118,8 +125,8 @@ export function CustomCursor() {
         fontFamily: "'Onest', sans-serif",
         fontWeight: '400',
         lineHeight: '1',
-        opacity: '0',
-        transition: reducedMotion.current ? 'none' : 'opacity 200ms ease',
+        transform: 'scale(0)',
+        transition: reducedMotion.current ? 'none' : `transform 300ms ${CIRCLE_EASING}`,
       })
       arrow.textContent = '\u2192'
       container.appendChild(arrow)
@@ -133,8 +140,8 @@ export function CustomCursor() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: '0',
-        transition: reducedMotion.current ? 'none' : 'opacity 200ms ease',
+        transform: 'scale(0)',
+        transition: reducedMotion.current ? 'none' : `transform 300ms ${CIRCLE_EASING}`,
       })
       hand.innerHTML = makeHandSvg(tintColor)
       container.appendChild(hand)
@@ -154,8 +161,8 @@ export function CustomCursor() {
         fontWeight: '300',
         lineHeight: '1',
         whiteSpace: 'nowrap',
-        opacity: '0',
-        transition: reducedMotion.current ? 'none' : 'opacity 200ms ease',
+        transform: 'scale(0)',
+        transition: reducedMotion.current ? 'none' : `transform 300ms ${CIRCLE_EASING}`,
       })
       comingSoon.textContent = 'coming soon'
       container.appendChild(comingSoon)
@@ -200,6 +207,7 @@ export function CustomCursor() {
       removeCursorNoneStyle()
       const el = document.createElement('div')
       el.setAttribute('aria-hidden', 'true')
+      el.setAttribute('data-custom-cursor', 'figpal')
       Object.assign(el.style, {
         position: 'fixed',
         pointerEvents: 'none',
@@ -271,7 +279,7 @@ export function CustomCursor() {
           onImageRef.current = true
           circleRef.current.style.transition = 'none'
           circleRef.current.style.transform = 'scale(0)'
-          if (handRef.current) handRef.current.style.opacity = '1'
+          if (handRef.current) handRef.current.style.transform = 'scale(1)'
           requestAnimationFrame(() => {
             if (circleRef.current) {
               circleRef.current.style.transition = reducedMotion.current
@@ -314,6 +322,9 @@ export function CustomCursor() {
           onSidebarRef.current = isOnSidebar
           if (isOnSidebar) {
             circleRef.current.style.transform = 'scale(0.15)'
+            if (handRef.current) handRef.current.style.transform = 'scale(0)'
+            if (arrowRef.current) arrowRef.current.style.transform = 'scale(0)'
+            if (comingSoonRef.current) comingSoonRef.current.style.transform = 'scale(0)'
           } else if (!onCardRef.current && !onImageRef.current) {
             circleRef.current.style.transform = 'scale(1)'
           }
@@ -323,10 +334,10 @@ export function CustomCursor() {
           onImageRef.current = isOnImage
           if (isOnImage && !onCardRef.current) {
             circleRef.current.style.transform = 'scale(0)'
-            if (handRef.current) handRef.current.style.opacity = '1'
+            if (handRef.current) handRef.current.style.transform = 'scale(1)'
           } else if (!isOnImage && !onCardRef.current && !onSidebarRef.current) {
             circleRef.current.style.transform = 'scale(1)'
-            if (handRef.current) handRef.current.style.opacity = '0'
+            if (handRef.current) handRef.current.style.transform = 'scale(0)'
           }
         }
         onBackLinkRef.current = !!(target && target.closest('[data-back-link]'))
@@ -472,46 +483,52 @@ export function CustomCursor() {
       circleRef.current.style.transform = 'scale(0)'
       if (arrowRef.current) {
         arrowRef.current.textContent = onBackLinkRef.current ? '\u2190' : '\u2192'
-        arrowRef.current.style.opacity = '1'
+        arrowRef.current.style.transform = 'scale(1)'
       }
-      if (comingSoonRef.current) comingSoonRef.current.style.opacity = '0'
-      if (handRef.current) handRef.current.style.opacity = '0'
+      if (comingSoonRef.current) comingSoonRef.current.style.transform = 'scale(0)'
+      if (handRef.current) handRef.current.style.transform = 'scale(0)'
     } else if (newContent === 'coming-soon') {
       onCardRef.current = true
       cursorContentRef.current = 'coming-soon'
       circleRef.current.style.transform = 'scale(0)'
-      if (comingSoonRef.current) comingSoonRef.current.style.opacity = '1'
-      if (arrowRef.current) arrowRef.current.style.opacity = '0'
-      if (handRef.current) handRef.current.style.opacity = '0'
+      if (comingSoonRef.current) comingSoonRef.current.style.transform = 'scale(1)'
+      if (arrowRef.current) arrowRef.current.style.transform = 'scale(0)'
+      if (handRef.current) handRef.current.style.transform = 'scale(0)'
     } else {
       morphTimerRef.current = setTimeout(() => {
         onCardRef.current = false
         cursorContentRef.current = 'idle'
-        if (arrowRef.current) arrowRef.current.style.opacity = '0'
-        if (comingSoonRef.current) comingSoonRef.current.style.opacity = '0'
-        if (onImageRef.current) {
-          if (circleRef.current) circleRef.current.style.transform = 'scale(0)'
-          if (handRef.current) handRef.current.style.opacity = '1'
-        } else if (circleRef.current) {
-          if (onHeatmapRef.current && heatmapSnapRef.current) {
-            // Restore squircle at last snap position
-            const snapEl = document.elementFromPoint(
-              heatmapSnapRef.current.x + INVERT_SIZE / 2,
-              heatmapSnapRef.current.y + INVERT_SIZE / 2,
-            )
-            if (snapEl?.hasAttribute('data-date')) {
-              const cellRect = snapEl.getBoundingClientRect()
+        if (onImageRef.current && circleRef.current) {
+          circleRef.current.style.transform = 'scale(0)'
+          if (arrowRef.current) arrowRef.current.style.transform = 'scale(0)'
+          if (comingSoonRef.current) comingSoonRef.current.style.transform = 'scale(0)'
+          if (handRef.current) handRef.current.style.transform = 'scale(1)'
+        } else if (onSidebarRef.current && circleRef.current) {
+          circleRef.current.style.transform = 'scale(0.15)'
+          if (arrowRef.current) arrowRef.current.style.transform = 'scale(0)'
+          if (comingSoonRef.current) comingSoonRef.current.style.transform = 'scale(0)'
+        } else {
+          if (arrowRef.current) arrowRef.current.style.transform = 'scale(0)'
+          if (comingSoonRef.current) comingSoonRef.current.style.transform = 'scale(0)'
+          if (circleRef.current) {
+            if (onHeatmapRef.current && heatmapSnapRef.current) {
+              const snapEl = document.elementFromPoint(
+                heatmapSnapRef.current.x + INVERT_SIZE / 2,
+                heatmapSnapRef.current.y + INVERT_SIZE / 2,
+              )
+              if (snapEl?.hasAttribute('data-date')) {
+                const cellRect = snapEl.getBoundingClientRect()
+                if (reducedMotion.current) circleRef.current.style.transition = 'none'
+                circleRef.current.style.transform = `scale(${cellRect.width / INVERT_SIZE})`
+                circleRef.current.style.borderRadius = '20%'
+              }
+            } else if (onHeatmapRef.current) {
+              circleRef.current.style.transform = 'scale(0)'
+            } else {
               if (reducedMotion.current) circleRef.current.style.transition = 'none'
-              circleRef.current.style.transform = `scale(${cellRect.width / INVERT_SIZE})`
-              circleRef.current.style.borderRadius = '20%'
+              circleRef.current.style.transform = 'scale(1)'
+              circleRef.current.style.borderRadius = '50%'
             }
-          } else if (onHeatmapRef.current) {
-            // In heatmap but no cell snapped yet — hide
-            circleRef.current.style.transform = 'scale(0)'
-          } else {
-            if (reducedMotion.current) circleRef.current.style.transition = 'none'
-            circleRef.current.style.transform = onSidebarRef.current ? 'scale(0.15)' : 'scale(1)'
-            circleRef.current.style.borderRadius = '50%'
           }
         }
         morphTimerRef.current = null
