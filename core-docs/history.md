@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-14 — Netlify deployment config and TypeScript strict index safety
+
+**Branch:** `netlify-deploy`
+
+**Summary:** Added Netlify deployment configuration for SPA hosting and fixed TypeScript strict index access errors across three files to satisfy `noUncheckedIndexedAccess`.
+
+**What changed:**
+- `netlify.toml` (new) — Build command (`npm run build`), publish directory (`dist`), and catch-all SPA redirect (`/* → /index.html`, status 200).
+- `src/components/ContributionHeatmap.tsx` — Added nullish coalescing fallbacks on `BASE_SAT[level]`, `BASE_ALPHA[level]`, `MONTHS[m]`, and `grid[w]`/`week[d]` access. Extracted `grid[w]` into a local `week` variable with a guard clause.
+- `src/components/SidebarThemeControls.tsx` — Fixed TypeScript error on `webkitBackdropFilter` via type cast. Added `??` fallback on `accents[0]`.
+- `src/contexts/ThemeContext.tsx` — Added `?? 'table'` fallback on `VALID_ACCENTS` index access in `cycleAccent`.
+
+**Decisions:**
+- Used `??` with safe default values rather than non-null assertions (`!`) to satisfy the compiler while keeping runtime behavior safe.
+- `webkitBackdropFilter` cast uses `as unknown as Record<string, string>` since TypeScript's `CSSStyleDeclaration` doesn't include vendor-prefixed properties.
+
+---
+
 ## 2026-03-13 — De-jargon Mochi case studies for external readability
 
 **Branch:** `review-case-studies`

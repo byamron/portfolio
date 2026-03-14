@@ -92,7 +92,7 @@ function setupControlPill(container: HTMLElement): () => void {
     // Frost: matches useGlassHighlight skinPill()
     pill.style.background = `hsla(${hue}, 20%, ${isDark ? '55%' : '40%'}, ${isDark ? 0.12 : 0.08})`
     pill.style.backdropFilter = 'blur(1px)'
-    pill.style.webkitBackdropFilter = 'blur(1px)'
+    ;(pill.style as unknown as Record<string, string>)['webkitBackdropFilter'] = 'blur(1px)'
     pill.style.boxShadow = isDark
       ? 'inset 0 1px 0 0 rgba(255, 255, 255, 0.10)'
       : 'inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)'
@@ -389,7 +389,7 @@ export function SidebarThemeControls() {
     }
   }, [setupPills])
 
-  const activeSwatch = accents.find(a => a.color === accentColor) ?? accents[0]
+  const activeSwatch = accents.find(a => a.color === accentColor) ?? accents[0] ?? { color: 'table' as AccentColor, swatch: 'gray' }
 
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
