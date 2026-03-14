@@ -37,13 +37,13 @@ function contribFill(level: number, hue: number, t: number, isDark: boolean): st
   if (isDark) {
     // Dark mode: brighter/more saturated as intensity increases
     const lightness = 50 + t * 10
-    const sat = BASE_SAT[level] + t * 15
-    return `hsla(${hue}, ${sat}%, ${lightness}%, ${BASE_ALPHA[level]})`
+    const sat = (BASE_SAT[level] ?? 10) + t * 15
+    return `hsla(${hue}, ${sat}%, ${lightness}%, ${BASE_ALPHA[level] ?? 0.06})`
   }
   // Light mode: darker/richer as intensity increases
   const lightness = 50 - t * 15
-  const sat = BASE_SAT[level] + t * 10
-  return `hsla(${hue}, ${sat}%, ${lightness}%, ${BASE_ALPHA[level]})`
+  const sat = (BASE_SAT[level] ?? 10) + t * 10
+  return `hsla(${hue}, ${sat}%, ${lightness}%, ${BASE_ALPHA[level] ?? 0.06})`
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -140,7 +140,7 @@ export function ContributionHeatmap() {
       const firstOfMonth = new Date(2026, m, 1)
       const daysDiff = Math.floor((firstOfMonth.getTime() - gridStartDay.getTime()) / (86400000))
       const col = Math.floor(daysDiff / 7)
-      labels.push({ month: MONTHS[m], col })
+      labels.push({ month: MONTHS[m] ?? '', col })
     }
     return labels
   }, [])
@@ -187,8 +187,10 @@ export function ContributionHeatmap() {
 
   const handleFocus = useCallback(() => {
     for (let w = 0; w < grid.length; w++) {
-      for (let d = 0; d < grid[w].length; d++) {
-        if (grid[w][d].inYear) {
+      const week = grid[w]
+      if (!week) continue
+      for (let d = 0; d < week.length; d++) {
+        if (week[d]?.inYear) {
           setFocusedCell({ week: w, day: d })
           return
         }

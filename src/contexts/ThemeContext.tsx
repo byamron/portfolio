@@ -120,7 +120,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const cycleAccent = useCallback(() => {
     setAccentColorState(prev => {
-      const next = VALID_ACCENTS[(VALID_ACCENTS.indexOf(prev) + 1) % VALID_ACCENTS.length]
+      const next = VALID_ACCENTS[(VALID_ACCENTS.indexOf(prev) + 1) % VALID_ACCENTS.length] ?? 'table'
       localStorage.setItem(ACCENT_KEY, next)
       return next
     })
