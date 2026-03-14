@@ -20,7 +20,7 @@ const TINT_KEY = 'cursorTintMode'
 export function CursorProvider({ children }: { children: ReactNode }) {
   const [cursorMode, setCursorModeState] = useState<CursorMode>(() => {
     const stored = localStorage.getItem(CURSOR_KEY)
-    return VALID_CURSOR_MODES.includes(stored as CursorMode) ? (stored as CursorMode) : 'standard'
+    return VALID_CURSOR_MODES.includes(stored as CursorMode) ? (stored as CursorMode) : 'invert'
   })
 
   const [cursorTintMode] = useState<CursorTintMode>(() => {

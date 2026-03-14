@@ -11,8 +11,8 @@ const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
 ]
 
 const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle' | 'figpal' }[] = [
-  { mode: 'standard', label: 'Standard cursor', icon: 'cursor' },
   { mode: 'invert', label: 'Invert circle cursor', icon: 'circle' },
+  { mode: 'standard', label: 'Standard cursor', icon: 'cursor' },
   { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
 ]
 
