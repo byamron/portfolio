@@ -30,7 +30,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 - **After completing work**: Update `core-docs/history.md` with what was done, decisions made, and technical details (branch, date).
 - **After negative feedback**: Record the lesson in `core-docs/feedback.md` before re-attempting.
 - **When the plan evolves**: Update `core-docs/plan.md` — mark completed phases, add new information, adjust scope. The plan is a living document, not a snapshot.
-- **Deploy awareness**: At the start of every conversation, check `core-docs/deploys.md` and report the current deploy count (e.g., "Deploys this cycle: 5/20, 15 remaining, resets April 14"). Warn before any merge to `main`. Update the tracker after every merge to `main`.
+- **Deploy awareness**: At the start of every conversation, check `core-docs/deploys.md` and report the current deploy count (e.g., "Deploys this cycle: 5/20, 15 remaining, resets April 14"). Warn before any merge to `main`. Update the tracker after every merge to `main`. If `next-update` has 3+ undeployed PRs or 7+ days since the last deploy to `main`, nudge once per conversation (e.g., "Reminder: 4 features on next-update haven't been deployed yet").
 - **Branching**: Feature branches merge into `next-update`, not `main`. Only merge `next-update → main` when intentionally deploying. See `core-docs/workflow.md` § Branching and Deploy Strategy.
 - **Proactive updates**: If you notice a doc is stale, inaccurate, or missing useful context, update it. Don't wait to be asked.
 

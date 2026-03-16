@@ -107,3 +107,4 @@ At the start of every conversation, Claude must:
 3. If the user is about to merge to `main`, remind them of the deploy cost and remaining credits.
 4. After any merge to `main`, update `core-docs/deploys.md` with the new entry.
 5. When a new billing cycle starts (current date ≥ 14th and no current-cycle table exists), archive the previous cycle and start a fresh table.
+6. **Pending deploy nudge**: If `next-update` is ahead of `main` by 3+ merged PRs, or if 7+ days have passed since the last deploy to `main`, mention it once — e.g., "Reminder: 4 features on next-update haven't been deployed yet. Last deploy was 9 days ago." Don't repeat this every message — once per conversation is enough.
