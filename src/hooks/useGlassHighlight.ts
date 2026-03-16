@@ -72,6 +72,10 @@ function setupGlassHighlight(
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
   let clearTimer: ReturnType<typeof setTimeout> | null = null
   let currentBorderRadius = configRef.current.borderRadius
+  let cachedContainerRect: DOMRect | null = null
+  let scrollDirty = false
+  let lastPillW = -1
+  let lastPillH = -1
 
   // All pill geometry is driven by this state object.
   // The RAF loop lerps `current` toward `target` every frame.
@@ -182,8 +186,17 @@ function setupGlassHighlight(
   ): void {
     if (!pill) return
     pill.style.transform = `translate(${x + leanX}px, ${y + leanY}px) rotate(${rotate}deg) scale(${scaleX}, ${scaleY})`
-    pill.style.width = `${w}px`
-    pill.style.height = `${h}px`
+    // Only write width/height when they actually change — these trigger layout
+    const roundedW = Math.round(w)
+    const roundedH = Math.round(h)
+    if (roundedW !== lastPillW) {
+      pill.style.width = `${roundedW}px`
+      lastPillW = roundedW
+    }
+    if (roundedH !== lastPillH) {
+      pill.style.height = `${roundedH}px`
+      lastPillH = roundedH
+    }
   }
 
   // -- Fade (the ONLY thing using CSS transitions) --
@@ -224,6 +237,17 @@ function setupGlassHighlight(
     rafId = null
     if (!currentCard || !pill) return
 
+    // Handle deferred scroll repositioning
+    if (scrollDirty) {
+      scrollDirty = false
+      const pos = getCardPosition(currentCard)
+      state.baseX = state.currentX = state.targetX = pos.x
+      state.baseY = state.currentY = state.targetY = pos.y
+      state.baseW = state.currentW = state.targetW = pos.w
+      state.baseH = state.currentH = state.targetH = pos.h
+      applyPillPosition(pos.x, pos.y, pos.w, pos.h)
+    }
+
     const cfg = configRef.current
     const lr = cfg.lerpSpeed
 
@@ -259,9 +283,9 @@ function setupGlassHighlight(
     let rotateDeg = 0
 
     if (cfg.maxPull > 0) {
-      const containerRect = container.getBoundingClientRect()
-      const pillVpX = containerRect.left + state.currentX - container.scrollLeft
-      const pillVpY = containerRect.top + state.currentY - container.scrollTop
+      if (!cachedContainerRect) cachedContainerRect = container.getBoundingClientRect()
+      const pillVpX = cachedContainerRect.left + state.currentX - container.scrollLeft
+      const pillVpY = cachedContainerRect.top + state.currentY - container.scrollTop
       const relX = state.mouseX - pillVpX - state.currentW / 2
       const relY = state.mouseY - pillVpY - state.currentH / 2
       const nx = state.currentW > 0 ? relX / (state.currentW / 2) : 0
@@ -388,9 +412,8 @@ function setupGlassHighlight(
       pill!.style.transition = 'none'
 
       applyPillPosition(pos.x, pos.y, pos.w, pos.h)
-      void pill!.offsetHeight // force reflow
-
-      fadeIn()
+      // Double-rAF: separate the "no transition" write from the fade-in
+      requestAnimationFrame(() => { requestAnimationFrame(() => { fadeIn() }) })
     } else {
       // Slide: update base and target, current stays where it is — lerp does the rest
       state.baseX = pos.x
@@ -451,9 +474,8 @@ function setupGlassHighlight(
       pill!.style.transition = 'none'
 
       applyPillPosition(pos.x, pos.y, pos.w, pos.h)
-      void pill!.offsetHeight
-
-      fadeIn()
+      // Double-rAF: separate the "no transition" write from the fade-in
+      requestAnimationFrame(() => { requestAnimationFrame(() => { fadeIn() }) })
     } else {
       state.baseX = pos.x
       state.baseY = pos.y
@@ -477,20 +499,19 @@ function setupGlassHighlight(
 
   function handleScroll(): void {
     if (!currentCard || !isVisible || !pill) return
-    const pos = getCardPosition(currentCard)
-
-    state.baseX = state.currentX = state.targetX = pos.x
-    state.baseY = state.currentY = state.targetY = pos.y
-    state.baseW = state.currentW = state.targetW = pos.w
-    state.baseH = state.currentH = state.targetH = pos.h
-
-    applyPillPosition(pos.x, pos.y, pos.w, pos.h)
+    cachedContainerRect = null
+    scrollDirty = true
+    startLoop()
   }
 
   function handleResize(): void {
     if (resizeTimer) clearTimeout(resizeTimer)
     resizeTimer = setTimeout(() => {
-      if (currentCard && isVisible) handleScroll()
+      cachedContainerRect = null
+      if (currentCard && isVisible) {
+        scrollDirty = true
+        startLoop()
+      }
     }, 100)
   }
 

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import Lottie from 'lottie-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+
+const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { projectsById, projectImageMap, defaultImageMap } from '@/data/projects'
@@ -148,11 +149,13 @@ export function ImageDisplay() {
               padding: `0 5% ${TEXT_ZONE_HEIGHT + 24}px`,
             }}
           >
-            <Lottie
-              animationData={lottieData}
-              loop={false}
-              style={{ maxWidth: '100%', maxHeight: '100%' }}
-            />
+            <Suspense fallback={null}>
+              <Lottie
+                animationData={lottieData}
+                loop={false}
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+              />
+            </Suspense>
           </motion.div>
         ) : (
           <motion.img

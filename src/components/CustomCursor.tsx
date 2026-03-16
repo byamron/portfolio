@@ -402,7 +402,16 @@ export function CustomCursor() {
       }
     }
 
+    let loopRunning = false
+
+    const startLoop = () => {
+      if (loopRunning) return
+      loopRunning = true
+      rafRef.current = requestAnimationFrame(loop)
+    }
+
     const loop = () => {
+      rafRef.current = null
       if (!initializedRef.current) {
         rafRef.current = requestAnimationFrame(loop)
         return
@@ -410,6 +419,7 @@ export function CustomCursor() {
 
       let targetX: number
       let targetY: number
+      let settled = false
 
       if (cursorMode === 'invert') {
         if (onHeatmapRef.current && heatmapSnapRef.current) {
@@ -422,15 +432,24 @@ export function CustomCursor() {
           posRef.current.x = targetX
           posRef.current.y = targetY
         }
+        settled = true // invert mode has no lerp — always settled after one frame
       } else {
         targetX = mouseRef.current.x + FIGPAL_OFFSET_X
         targetY = mouseRef.current.y + FIGPAL_OFFSET_Y
         if (reducedMotion.current) {
           posRef.current.x = targetX
           posRef.current.y = targetY
+          settled = true
         } else {
           posRef.current.x += (targetX - posRef.current.x) * LERP_RATE
           posRef.current.y += (targetY - posRef.current.y) * LERP_RATE
+          settled =
+            Math.abs(posRef.current.x - targetX) < 0.5 &&
+            Math.abs(posRef.current.y - targetY) < 0.5
+          if (settled) {
+            posRef.current.x = targetX
+            posRef.current.y = targetY
+          }
         }
       }
 
@@ -438,14 +457,24 @@ export function CustomCursor() {
       for (const el of elements) {
         el.style.transform = t
       }
-      rafRef.current = requestAnimationFrame(loop)
+
+      if (settled) {
+        loopRunning = false
+      } else {
+        rafRef.current = requestAnimationFrame(loop)
+      }
     }
 
-    document.addEventListener('pointermove', handlePointerMove)
+    const handlePointerMoveAndLoop = (e: PointerEvent) => {
+      handlePointerMove(e)
+      startLoop()
+    }
+    document.addEventListener('pointermove', handlePointerMoveAndLoop)
+    loopRunning = true
     rafRef.current = requestAnimationFrame(loop)
 
     return () => {
-      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointermove', handlePointerMoveAndLoop)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       removeCursorNoneStyle()
       for (const el of elements) {

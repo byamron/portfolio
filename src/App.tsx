@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
@@ -6,8 +7,11 @@ import { CustomCursor } from '@/components/CustomCursor'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
+import { preloadPortraitImages } from '@/utils/preloadImages'
 
 function App() {
+  useEffect(() => { preloadPortraitImages() }, [])
+
   return (
     <ThemeProvider>
       <HoverProvider>
