@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-15 — Deploy tracking and next-update branching strategy
+
+**Branch:** `deploy-tracking-workflow`
+**PR:** #57
+
+**Summary:** Introduced a staging branch (`next-update`) and deploy tracking system to manage Netlify's 20 deploys/month limit (billing cycle resets on the 14th). Feature branches now merge into `next-update` instead of `main`. Only intentional `next-update → main` merges trigger deploys. Created `core-docs/deploys.md` to track deploy count per cycle.
+
+**What changed:**
+- `core-docs/deploys.md` (new) — Deploy tracker with current cycle table, branching strategy reference, and archive section for previous cycles. Seeded with 5 deploys from the current cycle (PRs #53–#56 + one automated commit).
+- `core-docs/workflow.md` — Added steps 11 (Branching and Deploy Strategy) and 12 (Deploy Awareness). Claude must report deploy count at conversation start, warn before merges to `main`, update the tracker after merges, and nudge if `next-update` has 3+ undeployed PRs or 7+ days since last deploy.
+- `CLAUDE.md` — Added `deploys.md` to the core docs table. Added deploy awareness and branching rules to the "Rules for core docs" section.
+
+**Decisions:**
+- **`next-update` as staging branch** — Simpler than per-environment branches. All feature work accumulates here; batching multiple features into one `main` merge conserves deploy credits.
+- **Nudge thresholds (3 PRs or 7 days)** — Balances between not nagging and not letting features sit undeployed too long.
+- **Billing cycle tracking in a doc** — Lightweight, no tooling needed. Claude updates it as part of workflow.
+
+---
+
 ## 2026-03-15 — Fix preview image overlap in right column
 
 **Branch:** `fix-preview-image-overlap`
