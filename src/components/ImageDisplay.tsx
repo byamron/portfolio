@@ -158,24 +158,34 @@ export function ImageDisplay() {
             </Suspense>
           </motion.div>
         ) : (
-          <motion.img
+          <motion.div
             key={contentKey}
-            src={imageSrc}
-            alt={project ? project.title : 'Ben Yamron portrait'}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
-              maxWidth: isPreview ? '90%' : '100%',
-              maxHeight: isPreview ? `calc(100% - ${TEXT_ZONE_HEIGHT + 24}px)` : '100%',
-              objectFit: 'contain',
-              borderRadius: 32,
-              filter: dropShadow,
-              viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: isPreview ? `0 5% ${TEXT_ZONE_HEIGHT + 24}px` : undefined,
             }}
-          />
+          >
+            <img
+              src={imageSrc}
+              alt={project ? project.title : 'Ben Yamron portrait'}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: 32,
+                filter: dropShadow,
+                viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
+              }}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 
