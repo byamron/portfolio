@@ -29,6 +29,21 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-15 — Cursor fixes: GitHub arrow morph and sidebar order
+
+**Branch:** `cursor-fixes`
+
+**Summary:** Fixed the custom cursor showing the large invert circle on the GitHub link instead of the arrow morph, and reordered the cursor style options in the sidebar.
+
+**What changed:**
+- `src/components/ContributionHeatmap.tsx` — Imported `useHover` and added `onMouseEnter`/`onMouseLeave`/`onFocus`/`onBlur` handlers to the GitHub link that set `hoveringLink` via HoverContext. This triggers the arrow cursor morph (same pattern as LinkedIn/email/resume links in AboutSection).
+- `src/components/SidebarThemeControls.tsx` — Reordered `cursorOptions` array from circle → standard → figpal to circle → figpal → standard, matching the desired top-to-bottom sidebar order.
+
+**Decisions:**
+- Followed the existing `AboutSection` pattern for link hover detection rather than adding `data-contact-card` to the GitHub link, since the heatmap section has its own glass highlight setup with `data-link-card`.
+
+---
+
 ## 2026-03-14 — Netlify deployment config and TypeScript strict index safety
 
 **Branch:** `netlify-deploy`

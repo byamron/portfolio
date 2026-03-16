@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useCursor } from '@/contexts/CursorContext'
+import { useHover } from '@/contexts/HoverContext'
 import contributionData from '@/data/contributions.json'
 
 interface ContributionDay {
@@ -128,6 +129,9 @@ export function ContributionHeatmap() {
   const svgRef = useRef<SVGSVGElement>(null)
   const { bgIntensity, accentColor, resolvedAppearance } = useTheme()
   const { cursorMode } = useCursor()
+  const { setHoveringLink } = useHover()
+  const onLinkEnter = useCallback(() => setHoveringLink(true), [setHoveringLink])
+  const onLinkLeave = useCallback(() => setHoveringLink(false), [setHoveringLink])
   const hue = ACCENT_HUES[accentColor] ?? 34
   const isDark = resolvedAppearance === 'dark'
 
@@ -410,6 +414,10 @@ export function ContributionHeatmap() {
           rel="noopener noreferrer"
           data-link-card
           data-border-radius="8"
+          onMouseEnter={onLinkEnter}
+          onMouseLeave={onLinkLeave}
+          onFocus={onLinkEnter}
+          onBlur={onLinkLeave}
           style={{
             fontFamily: "'Onest', sans-serif",
             fontSize: 13,
