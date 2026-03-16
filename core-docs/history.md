@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-15 — Fix preview image overlap in right column
+
+**Branch:** `fix-preview-image-overlap`
+
+**Summary:** Fixed preview images overflowing their container and overlapping the summary text zone in the right column. The static image path (`<motion.img>`) was using `maxWidth`/`maxHeight` constraints directly on the `<img>` element, which didn't reliably contain the image within the text zone reservation. Wrapped the image in a flex-centering `<motion.div>` container (matching the Lottie path's approach) so padding-based containment works consistently.
+
+**What changed:**
+- `src/components/ImageDisplay.tsx` — Replaced the bare `<motion.img>` with a `<motion.div>` wrapper using `position: absolute; inset: 0` and `display: flex; alignItems: center; justifyContent: center`. Preview padding (`0 5% ${TEXT_ZONE_HEIGHT + 24}px`) is applied to the wrapper div. The inner `<img>` uses `maxWidth: 100%; maxHeight: 100%` to fill available space without overflow. This matches the Lottie container's pattern for consistent sizing.
+
+**Decisions:**
+- **Wrapper div approach** — Using a flex container with padding is more reliable than `maxWidth`/`maxHeight` calc constraints on the image itself. The Lottie path already used this pattern; now both paths are consistent.
+- **Changed `<motion.img>` to plain `<img>` inside `<motion.div>`** — The animation (opacity fade) is handled by the wrapper, so the inner image doesn't need Framer Motion props.
+
+---
+
 ## 2026-03-15 — Performance audit: image compression, preloading, RAF optimizations, bundle splitting
 
 **Branch:** `perf-audit-optimize`
