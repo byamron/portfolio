@@ -75,16 +75,35 @@ Present the work for feedback. Show what was built, why, and how.
 
 ### 9. Pre-Merge Cleanup
 
-Before merging any branch into `main`, check for and remove dev control panels:
+Before merging any branch into `main` or `next-update`, check for and remove dev control panels:
 - Font/typography comparison panels
 - Glass mode/configurator switchers
 - Layout tuning panels
 - Any other floating dev tools with sliders, toggles, or debug UI
 
-Remove the component files, their imports, their render calls, and any hook/CSS plumbing that exists solely to support them. Dev panels are welcome on feature branches for experimentation but must never ship to `main`.
+Remove the component files, their imports, their render calls, and any hook/CSS plumbing that exists solely to support them. Dev panels are welcome on feature branches for experimentation but must never ship to `main` or `next-update`.
 
 ### 10. Commit and Push
 
 - Commit changes with a clear, descriptive message
 - Push to the relevant remote branch on GitHub
 - Reference any related issues in the commit message if applicable
+
+### 11. Branching and Deploy Strategy
+
+Netlify auto-deploys every push to `main`. The free tier allows **20 deploys/month** (resets on the 14th). To avoid burning deploys on every PR:
+
+- **Feature branches → `next-update`**: All new work is merged into `next-update` via PR. This does NOT trigger a deploy.
+- **`next-update` → `main`**: Only merge when intentionally ready to deploy. Each merge costs 1 deploy.
+- **Batching**: Accumulate multiple features on `next-update` and deploy them together in a single merge to conserve credits.
+
+**Deploy tracking** is maintained in `core-docs/deploys.md`. Every merge to `main` must be logged there.
+
+### 12. Deploy Awareness (Claude Responsibility)
+
+At the start of every conversation, Claude must:
+1. Check `core-docs/deploys.md` for the current deploy count.
+2. Report: **"Deploys this cycle: X / 20 (Y remaining, resets [date])"**.
+3. If the user is about to merge to `main`, remind them of the deploy cost and remaining credits.
+4. After any merge to `main`, update `core-docs/deploys.md` with the new entry.
+5. When a new billing cycle starts (current date ≥ 14th and no current-cycle table exists), archive the previous cycle and start a fresh table.
