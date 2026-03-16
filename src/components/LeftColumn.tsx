@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { useHover } from '@/contexts/HoverContext'
@@ -7,6 +7,7 @@ import { Section } from '@/components/Section'
 import { AboutSection } from '@/components/AboutSection'
 import { ContributionHeatmap } from '@/components/ContributionHeatmap'
 import { sections } from '@/data/projects'
+import { preloadPreviewImages } from '@/utils/preloadImages'
 
 interface LeftColumnProps {
   fullWidth?: boolean
@@ -16,11 +17,19 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   useGlassHighlight(contentRef)
   const { navigatingProjectId } = useHover()
+  const previewsPreloaded = useRef(false)
+  const handleMouseEnter = useCallback(() => {
+    if (!previewsPreloaded.current) {
+      previewsPreloaded.current = true
+      preloadPreviewImages()
+    }
+  }, [])
 
   return (
     <main
       ref={contentRef}
       className="left-column"
+      onMouseEnter={handleMouseEnter}
       style={{
         width: fullWidth ? '100%' : '50%',
         padding:

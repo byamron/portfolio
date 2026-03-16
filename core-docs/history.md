@@ -2,6 +2,33 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-15 — Performance audit: image compression, preloading, RAF optimizations, bundle splitting
+
+**Branch:** `perf-audit-optimize`
+
+**Summary:** Comprehensive performance optimization pass — compressed all portrait images (~5 MB total savings), added image preloading for instant theme switching and hover previews, optimized CustomCursor and glass highlight animation loops to avoid idle CPU usage and layout thrash, split vendor bundles for better caching, and lazy-loaded the Lottie library.
+
+**What changed:**
+- **Image compression** — All 5 portrait images in both `public/images/` and `src/assets/images/` re-compressed (e.g., `portrait-portrait.jpeg` 1.98 MB → 165 KB, `portrait-pizza.jpeg` 1.81 MB → 299 KB).
+- `src/utils/preloadImages.ts` (new) — Shared preload utility with deduplication via module-level `Set`. `preloadPortraitImages()` called on mount in `App.tsx`; `preloadPreviewImages()` called on first `mouseEnter` in `LeftColumn.tsx`.
+- `index.html` — Added `<link rel="preload">` for the default table-theme portrait for earliest possible load.
+- `src/components/CustomCursor.tsx` — Animation RAF loop now runs only when needed: stops when cursor settles (delta < 0.5px), restarts on `pointermove`. Fixed orphaned animation frame bug by setting `loopRunning = true` before initial `requestAnimationFrame` schedule.
+- `src/hooks/useGlassHighlight.ts` — Cached `container.getBoundingClientRect()` (invalidated on scroll/resize instead of every frame). Width/height style writes gated on actual pixel change. Scroll handler defers recalc to next RAF via dirty flag. Fixed single-rAF bug: replaced with actual double-rAF to ensure paint boundary between `transition: 'none'` and `fadeIn()`.
+- `vite.config.ts` — Manual Rollup chunk splitting: `react`/`react-dom`/`react-router-dom` → `vendor-react`, `framer-motion` → `vendor-motion`.
+- `src/components/ImageDisplay.tsx` — `lottie-react` changed from static import to `React.lazy()` + `<Suspense>` for deferred loading.
+
+**Decisions:**
+- Image preload functions share a module-level `preloaded` Set for deduplication across callers, justifying co-location in `src/utils/`.
+- Cursor loop uses a `loopRunning` guard + `startLoop()` pattern to avoid continuous RAF when cursor is stationary.
+- Glass highlight uses `scrollDirty` flag to batch scroll-triggered recalcs into RAF ticks rather than synchronous `getBoundingClientRect` in scroll handlers.
+- Double-rAF chosen over forced reflow (`void offsetHeight`) to separate style write batches across paint boundaries without blocking the main thread.
+
+**Bugs fixed during review:**
+- `CustomCursor.tsx` — Initial RAF schedule didn't set `loopRunning = true`, allowing `startLoop()` to create a second concurrent loop on early `pointermove`. Fixed by setting flag before schedule.
+- `useGlassHighlight.ts` — Comment said "Double-rAF" but code was single `requestAnimationFrame`. Fixed to actual nested double-rAF in both `handleMouseOver` and `handleFocusIn` paths.
+
+---
+
 ## 2026-03-14 — Netlify deployment config and TypeScript strict index safety
 
 **Branch:** `netlify-deploy`
