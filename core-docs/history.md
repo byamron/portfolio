@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-16 — Fix glass pill persisting across hover gaps
+
+**Branch:** `fix-hover-gap-behavior`
+
+**Summary:** Fixed the glass highlight pill staying alive when the cursor moved through gaps between unrelated content areas. The "Mochi Health" inline link in the hero shares the project card pill container (so the pill can slide between them), but its inclusion in the `isCursorInCardStack` bounds calculation extended the "stack" from the hero text all the way down to the last project card — keeping the pill alive in the large gap between the hero and the projects section.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — `isCursorInCardStack` now filters out cards with `data-tight-bounds` from the stack span calculation. These cards (e.g. "Mochi Health") aren't adjacent to the project card list and would stretch the stack bounds across unrelated content. The pill can still slide to/from tight-bounds cards via the existing `handleMouseOver` logic; this only affects the "is the cursor still in the stack?" check that prevents premature clearing.
+
+**Decisions:**
+- **Filter by `data-tight-bounds` attribute** rather than by position or a separate selector. The attribute already exists for per-card tight bounds behavior, so reusing it here keeps the system consistent.
+- **Kept `clearDelay` at 150ms** — the original documented value. Tested 350ms as an alternative but it offered no perceptible improvement once the stack bounds were fixed. The filter was the real fix; the delay increase was unnecessary.
+
+---
+
 ## 2026-03-15 — Deploy tracking and next-update branching strategy
 
 **Branch:** `deploy-tracking-workflow`

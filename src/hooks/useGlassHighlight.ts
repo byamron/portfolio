@@ -329,7 +329,11 @@ function setupGlassHighlight(
 
   function isCursorInCardStack(clientX: number, clientY: number): boolean {
     const sel = configRef.current.cardSelector
-    const cards = container.querySelectorAll<HTMLElement>(sel)
+    const allCards = container.querySelectorAll<HTMLElement>(sel)
+    // Exclude tight-bounds cards (e.g. inline links like "Mochi Health") from the
+    // stack span — they aren't adjacent to project cards and would extend the
+    // stack bounds across unrelated content, keeping the pill alive in gaps.
+    const cards = Array.from(allCards).filter(c => !c.hasAttribute('data-tight-bounds'))
     if (cards.length === 0) return false
     const firstRect = cards[0]!.getBoundingClientRect()
     const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
