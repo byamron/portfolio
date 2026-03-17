@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
@@ -332,6 +332,8 @@ const CURSOR_BASE = DIVIDER_4 + 1                      // 12
 export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
+  const slideProps = { x: hovered ? 0 : 20, y: 0 }
   const [accents, setAccents] = useState<{ color: AccentColor; swatch: string }[]>(
     () => ACCENT_ORDER.map(color => ({ color, swatch: 'gray' }))
   )
@@ -468,14 +470,43 @@ export function SidebarThemeControls() {
         zIndex: 100,
       }}
     >
+      {/* Sidebar backdrop — mount/unmount to avoid compositing cost at rest */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            key="sidebar-backdrop"
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.35, ease: motionEase }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: 300,
+              background: 'linear-gradient(to right, transparent 0%, color-mix(in srgb, var(--bg) 10%, transparent) 30%, color-mix(in srgb, var(--bg) 30%, transparent) 50%, color-mix(in srgb, var(--bg) 55%, transparent) 70%, color-mix(in srgb, var(--bg) 80%, transparent) 100%)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              maskImage: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 15%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,1) 80%)',
+              WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 15%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,1) 80%)',
+              pointerEvents: 'none',
+              willChange: 'opacity',
+              contain: 'strict',
+            } as React.CSSProperties}
+          />
+        )}
+      </AnimatePresence>
       <div
         style={{
           position: 'absolute',
-          top: 64,
           right: 16,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
+          top: 64,
+          flexDirection: 'column' as const,
+          filter: 'drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 90%, transparent))',
         }}
       >
         {/* Fixed trigger — always visible, glow + opacity reflect intensity */}
@@ -501,7 +532,7 @@ export function SidebarThemeControls() {
         >
           {/* Divider: trigger ↔ swatches */}
           <motion.div
-            animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
+            animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
             transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * 0.04 : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
@@ -521,7 +552,7 @@ export function SidebarThemeControls() {
               return (
                 <motion.div
                   key={item.color}
-                  animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
+                  animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
                   transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * 0.04 : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
@@ -545,7 +576,7 @@ export function SidebarThemeControls() {
 
           {/* Divider: swatches ↔ intensity */}
           <motion.div
-            animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
+            animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
             transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * 0.04 : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
@@ -554,82 +585,82 @@ export function SidebarThemeControls() {
           />
 
           {/* Intensity gradient strip */}
-          <motion.div
-            animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
-            transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * 0.04 : 0, ease: motionEase }}
-            style={{ pointerEvents: hovered ? 'auto' : 'none' }}
-          >
-            <div
-              aria-label="Background intensity"
-              role="slider"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(bgIntensity * 100)}
-              aria-valuetext={`${Math.round(bgIntensity * 100)}%`}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                  e.preventDefault()
-                  setBgIntensity(Math.min(1, bgIntensity + KEYBOARD_STEP))
-                } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                  e.preventDefault()
-                  setBgIntensity(Math.max(0, bgIntensity - KEYBOARD_STEP))
-                }
-              }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onDragStart={(e) => e.preventDefault()}
-              style={{
-                position: 'relative',
-                width: 24,
-                height: STRIP_HEIGHT,
-                display: 'flex',
-                justifyContent: 'center',
-                cursor: isDragging ? 'grabbing' : 'grab',
-                touchAction: 'none',
-                userSelect: 'none',
-              }}
-            >
-              {/* The visual gradient strip */}
-              <div
-                style={{
-                  width: 8,
-                  height: STRIP_HEIGHT,
-                  borderRadius: 4,
-                  background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
-                  transition: 'background 500ms ease-in-out',
-                  pointerEvents: 'none',
-                }}
-              />
-              {/* Active level indicator — thumb dot */}
-              <div
-                ref={thumbRef}
-                style={{
-                  position: 'absolute',
-                  width: 11,
-                  height: 11,
-                  borderRadius: '50%',
-                  background: 'var(--swatch)',
-                  border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  top: bgIntensity * THUMB_TRAVEL,
-                  transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
-                }}
-              />
-            </div>
-          </motion.div>
+              <motion.div
+                animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
+                transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * 0.04 : 0, ease: motionEase }}
+                style={{ pointerEvents: hovered ? 'auto' : 'none' }}
+              >
+                <div
+                  aria-label="Background intensity"
+                  role="slider"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(bgIntensity * 100)}
+                  aria-valuetext={`${Math.round(bgIntensity * 100)}%`}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                      e.preventDefault()
+                      setBgIntensity(Math.min(1, bgIntensity + KEYBOARD_STEP))
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                      e.preventDefault()
+                      setBgIntensity(Math.max(0, bgIntensity - KEYBOARD_STEP))
+                    }
+                  }}
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onDragStart={(e) => e.preventDefault()}
+                  style={{
+                    position: 'relative',
+                    width: 24,
+                    height: STRIP_HEIGHT,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    touchAction: 'none',
+                    userSelect: 'none',
+                  }}
+                >
+                  {/* The visual gradient strip */}
+                  <div
+                    style={{
+                      width: 8,
+                      height: STRIP_HEIGHT,
+                      borderRadius: 4,
+                      background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
+                      transition: 'background 500ms ease-in-out',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  {/* Active level indicator — thumb dot */}
+                  <div
+                    ref={thumbRef}
+                    style={{
+                      position: 'absolute',
+                      width: 11,
+                      height: 11,
+                      borderRadius: '50%',
+                      background: 'var(--swatch)',
+                      border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      top: bgIntensity * THUMB_TRAVEL,
+                      transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
+                    }}
+                  />
+                </div>
+              </motion.div>
 
-          {/* Divider: intensity ↔ modes */}
-          <motion.div
-            animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
-            transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * 0.04 : 0, ease: motionEase }}
-            style={{
-              width: 20, height: 1, background: 'var(--text-dark)',
-              margin: '18px 0', pointerEvents: 'none',
-            }}
+              {/* Divider: intensity ↔ modes */}
+              <motion.div
+                animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
+                transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * 0.04 : 0, ease: motionEase }}
+                style={{
+                  width: 20, height: 1, background: 'var(--text-dark)',
+                  margin: '18px 0', pointerEvents: 'none',
+                }}
           />
 
           {/* Mode icons — own pill container */}
@@ -644,7 +675,7 @@ export function SidebarThemeControls() {
               return (
                 <motion.div
                   key={mode}
-                  animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
+                  animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
                   transition={{ duration: 0.22, delay: hovered ? (MODE_BASE + i) * 0.04 : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
@@ -679,7 +710,7 @@ export function SidebarThemeControls() {
 
           {/* Divider: modes ↔ cursors */}
           <motion.div
-            animate={{ opacity: hovered ? 0.15 : 0, x: hovered ? 0 : 20 }}
+            animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
             transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
@@ -699,7 +730,7 @@ export function SidebarThemeControls() {
               return (
                 <motion.div
                   key={mode}
-                  animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 20 }}
+                  animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
                   transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * 0.04 : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
