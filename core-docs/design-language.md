@@ -633,7 +633,7 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse â
 
 **Mode-aware hue correction**: In dark mode, the disc hue matches the accent directly. In light mode, the hue is shifted by 180Â° so that `difference` blending against light backgrounds produces accent-adjacent colors rather than complements. The disc color updates live when the accent or appearance mode changes (via MutationObserver on `data-accent` and `data-theme` attributes).
 
-**Global cursor suppression**: In invert mode, a `<style>` tag injects `* { cursor: none !important; }` to suppress all native cursors. This ensures the custom disc is the only cursor visible.
+**Global cursor suppression**: In invert mode, a `cursor-none` CSS class is toggled on `<html>` via `document.documentElement.classList`, activating a static CSS rule (`html.cursor-none, html.cursor-none body, html.cursor-none *, html.cursor-none *::before, html.cursor-none *::after { cursor: none !important; }`) defined in `globals.css`. This ensures the custom disc is the only cursor visible.
 
 ### Figpal mode
 
