@@ -168,6 +168,15 @@ p a {
   animation: sidebar-jiggle 400ms ease-in-out;
 }
 
+/* Hide default cursor when custom cursor is active */
+html.cursor-none,
+html.cursor-none body,
+html.cursor-none *,
+html.cursor-none *::before,
+html.cursor-none *::after {
+  cursor: none !important;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

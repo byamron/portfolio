@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-17 — Fix double cursor bug
+
+**Branch:** `fix-double-cursor`
+
+**Summary:** Fixed double-cursor issue where both the native OS cursor and the custom cursor were visible simultaneously. The root cause was the dynamic `<style>` tag injection approach for hiding the native cursor — race conditions or specificity conflicts could cause the injected style to fail or be duplicated.
+
+**What changed:**
+- `src/components/CustomCursor.tsx` — Replaced `document.createElement('style')` / `document.head.appendChild()` approach with `document.documentElement.classList.add('cursor-none')` / `.remove('cursor-none')`. Simpler, no DOM element creation/removal.
+- `src/styles/globals.css` — Added static CSS rule targeting `html.cursor-none` and descendants (including `::before`/`::after` pseudo-elements) with `cursor: none !important`.
+- `core-docs/design-language.md` — Updated "Global cursor suppression" description to reflect the new class-toggle mechanism.
+
+**Decisions:**
+- **CSS class toggle over style injection** — Static CSS rules are more reliable than dynamically injected `<style>` elements. No race conditions, no duplicate elements, easier to debug in DevTools.
+- **Broader selector coverage** — New rule explicitly targets `::before` and `::after` pseudo-elements, which the old `*` selector didn't cover.
+
+---
+
 ## 2026-03-16 — Sidebar backdrop (variant E) chosen for sidebar-image overlap
 
 **Branch:** `sidebar-overlap-fix`
