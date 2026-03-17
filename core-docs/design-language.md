@@ -581,6 +581,22 @@ When the accent color is cycled (via clicking the portrait image), the sidebar t
 
 This creates a cause-and-effect pairing: clicking the image shifts the environment (accent cycle) and the sidebar trigger physically reacts — a small moment of delight that connects two otherwise separate interface elements.
 
+### Sidebar atmospheric zone
+
+When the sidebar opens on hover, a feathered backdrop-blur zone materializes behind the controls. Its purpose is contrast — providing legibility against the right-column image content without relocating controls from their designated position.
+
+**Implementation:**
+
+- **Element**: A 300px-wide absolutely-positioned div extending leftward from the sidebar. It exists only when the sidebar is hovered; at rest, no backdrop is present (mounted/unmounted via `AnimatePresence` to avoid compositing cost).
+- **Blur**: `backdrop-filter: blur(10px)` across the full element. This frosted layer softens whatever image content sits behind the controls.
+- **Background tint**: A 5-stop `linear-gradient` mixing `var(--bg)` at increasing opacity — `0% → 10% → 30% → 55% → 80%` — to wash the blurred area with the current theme color.
+- **Mask curve**: A 6-stop `mask-image` gradient using `rgba(0,0,0,...)` values — `0 → 0.02 → 0.1 → 0.3 → 0.65 → 1.0` — distributed across 0% to 80% of the element width. This S-curve produces a gradual feathered falloff with no visible hard edge.
+- **Animation**: Framer Motion opacity `0 → 1` over 350ms with smooth easing, matching the stagger reveal timing. Uses `useReducedMotion()` hook — duration set to `0` when user prefers reduced motion.
+- **Control shadows**: A subtle `drop-shadow` filter on the controls container for additional readability as a secondary measure.
+- **Performance**: `will-change: opacity`, `contain: strict`. `prefers-reduced-motion` disables blur entirely via CSS (background tint still provides contrast), and the JS opacity animation is instant via `useReducedMotion()`.
+
+**Design rationale:** This extends the site's glass vocabulary. The glass pill on project cards, the glass pill on sidebar controls, and the sidebar backdrop all share the same material philosophy: frosted, accent-tinted, momentary. They appear when interaction demands them and disappear at rest. The backdrop solves the sidebar-image overlap through design craft rather than avoidance.
+
 ### Data visualizations
 
 Embedded data visualizations (e.g., the contribution heatmap) follow these conventions:

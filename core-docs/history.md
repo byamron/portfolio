@@ -2,6 +2,28 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-16 — Sidebar backdrop (variant E) chosen for sidebar-image overlap
+
+**Branch:** `sidebar-overlap-fix`
+
+**Summary:** At narrow two-column widths (1200–1439px), the sidebar controls overlap the right-column portrait image. After prototyping five approaches with a dev toggle panel, chose variant E (sidebar atmospheric zone — a feathered blur zone behind controls on hover) as the permanent solution.
+
+**Why variant E wins:**
+
+- **Preserves the full sidebar design language.** Vertical layout, intensity strip, stagger animations, 64px trigger alignment — all intact.
+- **Extends the existing glass vocabulary.** The backdrop is another frosted, accent-tinted, momentary surface — same material philosophy as the glass pill on project cards and sidebar controls.
+- **Solves through craft, not avoidance.** A 300px-wide element with a 6-stop `mask-image` S-curve produces a smooth blur falloff with no visible hard edge.
+- **Performance-safe.** Uses `AnimatePresence` to mount/unmount the backdrop (zero compositing cost at rest), `will-change: opacity`, `contain: strict`, and `prefers-reduced-motion` disables blur entirely. Framer Motion's `useReducedMotion()` hook sets the opacity animation duration to `0` for reduced-motion users.
+
+**Rejected alternatives:**
+
+- **Variant A** (extra right padding) — wasted space at wider viewports.
+- **Variant C** (fluid column split) — over-engineered for a narrow viewport range.
+- **Variant D** (top bar) — required removing the intensity strip (dealbreaker), introduced a foreign layout pattern.
+- **Original D** (left sidebar) — replaced by top bar, itself rejected.
+
+---
+
 ## 2026-03-15 — Performance audit: image compression, preloading, RAF optimizations, bundle splitting
 
 **Branch:** `perf-audit-optimize`
