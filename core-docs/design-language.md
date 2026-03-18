@@ -398,15 +398,15 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 
 When the cursor moves toward the edge of a hovered card, the glass pill responds with two subtle CSS transform effects. This replaces the earlier clip-path pentagon deformation system with a simpler, GPU-composited approach that's free of visual artifacts.
 
-**Lean** — The pill translates 3px toward the cursor direction, creating a "drawn toward" feeling.
+**Lean** — The pill translates up to 2.5px toward the cursor direction, creating a "drawn toward" feeling. The effect is intentionally subtle — it should reward deliberate edge-seeking, not distract during casual browsing.
 
-**Tilt** — The pill rotates up to 1.0° to provide cross-axis positional feedback. When the cursor is in the top-right corner, the top-right corner of the pill visually follows. This communicates spatial awareness beyond simple attraction.
+**Tilt** — The pill rotates up to 0.75° to provide cross-axis positional feedback. When the cursor is in the top-right corner, the top-right corner of the pill visually follows. This communicates spatial awareness beyond simple attraction.
 
-- **Dead zone**: Inner 70% of the card (`deadZone: 0.7`). Cursor in the center of the card produces no lean or tilt. Effect activates in the outer 30%.
-- **Pull curve**: `t = 1 - exp(-rawD * 1.5)` — exponential approach from 0 to 1. Smooth onset, asymptotically approaches maximum.
-- **Lean formula**: `leanX = dirX * t * maxLean`, `leanY = dirY * t * maxLean` where `maxLean = 3px` and `dir` is the unit vector from card center to cursor.
+- **Dead zone**: Inner 78% of the card (`deadZone: 0.78`). Cursor in the center and middle area of the card produces no lean or tilt. Effect activates only in the outer 22% — the cursor must be near the edge to trigger any movement. For a typical 60px-tall card, the cursor must be within ~6.6px of the edge. Casual vertical movement through a card should not trigger the effect.
+- **Pull curve**: `t = 1 - exp(-rawD * 2.0)` — exponential approach from 0 to 1. Moderate onset that ramps up toward the boundary, reinforcing the "barely-there until you notice it" principle.
+- **Lean formula**: `leanX = dirX * t * maxLean`, `leanY = dirY * t * maxLean` where `maxLean = 2.5px` and `dir` is the unit vector from card center to cursor.
 - **Tilt formula**: `rotateDeg = (cnx * dirY * |dirY| + cny * dirX * |dirX|) * maxTilt * t` — uses `dirY * |dirY|` (preserving sign, squaring magnitude) to ensure symmetric rotation in all quadrants. `cnx`/`cny` are clamped normalized cursor positions.
-- **Config**: `maxPull` controls activation. `maxPull: 0` disables lean + tilt entirely (no directional feedback). Any positive value activates lean (3px) + tilt (1.0°).
+- **Config**: `maxPull` controls activation. `maxPull: 0` disables lean + tilt entirely (no directional feedback). Any positive value activates lean (2.5px) + tilt (0.75°).
 - **Lerp rate**: 0.12 per frame — creates a "chasing" feel. Animated via `requestAnimationFrame` loop, not CSS transitions.
 - **Settle threshold**: 0.3px — when all four dimensions (x, y, width, height) are within 0.3px of target, the loop snaps to exact values and stops.
 - **No clip-path**: The pill uses only `transform: translate() rotate()` — no SVG path generation, no clip-path manipulation. This is GPU-composited and never triggers layout or paint.
