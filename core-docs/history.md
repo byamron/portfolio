@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-17 — Reduce glass highlight wiggle
+
+**Branch:** `reduce-glass-wiggle`
+
+**Summary:** Tuned 4 physics constants in the glass highlight hook to make the pill's edge-responsive lean and tilt more subtle. The effect should reward deliberate edge-seeking without distracting during casual browsing.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — Updated 4 constants: `deadZone` 0.7→0.78, pull curve exponent 1.5→2.0, `maxLean` 3→2.5px, `maxTilt` 1.0°→0.75°.
+- `core-docs/design-language.md` — Updated glass pill lean/tilt spec to match the new constants with clarifying editorial framing.
+
+**Decisions:**
+- **Larger dead zone (0.78)** — The cursor must now be within ~22% of the edge to trigger any movement, reducing accidental activation.
+- **Steeper pull curve (2.0)** — Response ramps up more steeply near the boundary rather than easing in early, creating a "barely-there until you notice it" feel.
+- **Lower maxLean/maxTilt** — Reduced from 3px/1.0° to 2.5px/0.75° for a subtler overall effect.
+
+---
+
 ## 2026-03-15 — Deploy tracking and next-update branching strategy
 
 **Branch:** `deploy-tracking-workflow`
