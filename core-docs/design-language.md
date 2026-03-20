@@ -688,7 +688,7 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 **Global cursor suppression**: In invert mode, a `cursor-none` CSS class hides the OS cursor. Three layers ensure zero flash of the native cursor:
 
 1. **HTML-level**: `index.html` ships with `class="cursor-none"` on `<html>` so the OS cursor is hidden from the very first paint. A tiny inline `<script>` checks `localStorage('cursorMode')` and removes the class if the user chose standard or figpal mode.
-2. **CSS-level**: The rule in `globals.css` uses a 1×1 transparent SVG as the primary cursor value (`cursor: url("data:image/svg+xml,...") 0 0, none !important`) rather than bare `cursor: none`. This is more reliable across macOS trackpad edge-cases and browser focus changes.
+2. **CSS-level**: The rule in `globals.css` uses `cursor: none !important` on `html.cursor-none` and all descendants (including `::before`/`::after`). Note: a transparent SVG data URI approach was tried but caused regressions — browsers handle `cursor: url(transparent-image)` inconsistently, and macOS can still render the OS cursor underneath. Bare `cursor: none` is the reliable path.
 3. **JS-level**: The `CustomCursor` effect cleanup does NOT remove the `cursor-none` class — only the setup code manages it (invert adds, standard/figpal removes). This prevents a one-frame OS cursor flash during effect re-runs when tint or mode dependencies change. A separate empty-deps effect handles full unmount cleanup.
 
 ### Figpal mode

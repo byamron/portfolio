@@ -2,22 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
-## 2026-03-19 — Fix persistent double cursor
+## 2026-03-19 — Fix persistent double cursor (v2)
 
-**Branch:** `next-update`
+**Branch:** `fix-double-cursor-v2`
 
-**Summary:** Fixed the double cursor issue (OS cursor + custom cursor both visible) that persisted even after the earlier style-injection → class-toggle migration. Root cause was three compounding timing issues, not a CSS specificity problem.
+**Summary:** Fixed the double cursor issue (OS cursor + custom cursor both visible) that persisted even after the earlier style-injection → class-toggle migration. Root cause was two compounding timing issues. An initial attempt also introduced a transparent SVG data URI as a `cursor` value, which caused a regression and was reverted.
 
 **What changed:**
 - `index.html` — Added `class="cursor-none"` to `<html>` so OS cursor is hidden from first paint. Inline `<script>` checks localStorage and removes the class for standard/figpal users.
-- `src/styles/globals.css` — Replaced bare `cursor: none` with a 1×1 transparent SVG cursor as primary value (`cursor: url(...) 0 0, none !important`). More reliable across macOS trackpad edge-cases.
+- `src/styles/globals.css` — Kept `cursor: none !important` (bare). A transparent SVG data URI was tried but reverted — browsers handle `cursor: url(transparent-image)` inconsistently on macOS, sometimes still rendering the OS cursor underneath.
 - `src/components/CustomCursor.tsx` — Removed `removeCursorNoneStyle()` from effect cleanup to prevent one-frame flash during re-runs. Added empty-deps unmount cleanup effect.
-- `core-docs/design-language.md` — Updated cursor suppression docs to describe the three-layer approach.
+- `core-docs/design-language.md` — Updated cursor suppression docs to describe the three-layer approach, with a note about the SVG data URI failure.
 
 **Root causes identified:**
 1. **Page-load race**: `cursor-none` class only added after React mount + effect. OS cursor visible until then.
 2. **Effect re-run gap**: Cleanup removed class, then setup re-added it. Browser could flash OS cursor between.
-3. **`cursor: none` unreliability**: Bare `cursor: none` has edge-case failures on macOS during trackpad gestures and window focus changes.
+
+**What did NOT work:**
+- **Transparent SVG data URI** (`cursor: url("data:image/svg+xml,...") 0 0, none`): Intended to be more reliable than bare `cursor: none`, but actually caused a regression. macOS/browsers may still show the system cursor or refuse to use a 1×1 transparent image as a valid cursor. Reverted back to `cursor: none !important`.
 
 ---
 

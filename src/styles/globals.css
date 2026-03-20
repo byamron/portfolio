@@ -221,16 +221,13 @@ p a {
   animation: sidebar-jiggle 400ms ease-in-out;
 }
 
-/* Hide default cursor when custom cursor is active.
- * Uses a 1×1 transparent SVG as primary value — more reliable than bare
- * `cursor: none` across browsers and macOS trackpad edge-cases. The `none`
- * fallback catches any browser that rejects the data-URI. */
+/* Hide default cursor when custom cursor is active */
 html.cursor-none,
 html.cursor-none body,
 html.cursor-none *,
 html.cursor-none *::before,
 html.cursor-none *::after {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E") 0 0, none !important;
+  cursor: none !important;
 }
 
 /* Reduced motion */
