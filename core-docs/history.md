@@ -2,6 +2,16 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Responsive sidebar theme controls
+
+**Branch:** `theme-sidebar-responsive`
+
+**Summary:** Made the sidebar theme controls responsive to viewport height. Controls compress smoothly between 740px and 500px viewport (swatch sizes, gaps, button sizes, intensity strip all scale via linear interpolation). Below max compression, the toolbar becomes scrollable with a hidden scrollbar. Added horizontal padding to prevent outline clipping within the scroll container.
+
+**Decisions:** Tried a collapsible toggle approach first (hide cursor section behind a `...` button below 500px) — rejected because expanding the toggle just added content off-screen without shifting anything. Compression + scroll is simpler and handles all viewport heights without hiding controls. Also discovered `DotsThreeVertical` doesn't exist in the installed Phosphor icons version — caused a silent module failure in Vite dev mode.
+
+---
+
 ## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
 
 **Branch:** `fix-double-cursor-v2`
