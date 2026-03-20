@@ -301,6 +301,8 @@ export const cipElectionMisinformation: CaseStudy = {
       heading: 'Published at CSCW 2025 \u2014 the top venue for social computing research',
       paragraphs: [
         'The work produced two peer-reviewed papers analyzing how influencers, political elites, and audiences collaboratively constructed \u201cdeep stories\u201d across election cycles \u2014 and how the 2020 narrative became the interpretive lens for 2022. This is sociological thinking applied to a design problem: making invisible collective processes visible and analyzable.',
+        '<a href="https://doi.org/10.1145/3757522" target="_blank" rel="noopener noreferrer" style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px;">What is going on? An evidence-frame framework for analyzing online rumors about election integrity</a> — Starbird, Prochaska, Yamron',
+        '<a href="https://doi.org/10.1145/3757576" target="_blank" rel="noopener noreferrer" style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px;">Deep Storytelling: Collective Sensemaking and Layers of Meaning in U.S. Elections</a> — Prochaska, Vera, Tan, Yamron, Venuto, Kejriwal, Chu, Starbird',
       ],
       visual: null,
     },
@@ -416,6 +418,57 @@ export const acornEatLocalVt: CaseStudy = {
   gallery: [],
 }
 
+export const trioTodoList: CaseStudy = {
+  id: 'trio-todo-list',
+  title: 'A todo list that keeps tasks perfectly prioritized',
+  subtitle:
+    'I designed and built a native iOS/macOS app to solve my own priority problem\u2009\u2014\u2009using AI tools as a design partner, going deep on craft that personal projects rarely get.',
+  timeline: 'Jan \u2013 Mar 2026',
+  sections: [
+    {
+      id: 'trio-product',
+      heading: 'Three tasks. That\u2019s the whole product.',
+      paragraphs: [
+        'Most todo apps show you everything. Trio forces one question: what are the three things that matter today? A queue of three, a ranked backlog behind it, and a comparison-based ranking flow that makes prioritization a decision\u2009\u2014\u2009not a scroll through 40 items hoping the right one jumps out. Small surface area, deep design space.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'trio-design-language',
+      heading: 'A design language from first principles',
+      paragraphs: [
+        'I studied 40+ screens across seven apps\u2009\u2014\u2009Claude, Linear, Waymo, Notion, Asana, Apple Notes, Slack\u2009\u2014\u2009and extracted 10 visual patterns. Those became an 8-principle design language: tasks are the only elements that get containers; everything else sits flat on surfaces. Content sits above navigation in a 3-layer depth model. Typography carries the entire hierarchy\u2009\u2014\u2009pushing page titles from 20pt SemiBold to 28pt Bold transformed how the app feels. Five hand-tuned color themes with per-hue HSB saturation curves, because different hues need different saturation to look equally colorful.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'trio-ai-partner',
+      heading: 'AI as design partner, not autocomplete',
+      paragraphs: [
+        'Claude operates as five specialized agents\u2009\u2014\u2009planner, domain architect, UI engineer, tester, docs writer\u2009\u2014\u2009each with its own markdown spec and strict rules about which files to read before touching code. The workflow is as designed as the product: file-based context management, mandatory doc updates before every commit, structured handoff notes between sessions. When AI silently reverted a safety fix during an unrelated refactor\u2009\u2014\u2009reintroducing a silent data loss path that went undetected for 19 days\u2009\u2014\u2009that incident became a commit-tracing protection system with mandatory review rules. The tooling became part of the craft.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'trio-craft',
+      heading: 'Craft shows up where nobody\u2019s looking',
+      paragraphs: [
+        'Seven iterations on a single drawer animation. Root cause: two-phase state changes split across SwiftUI transactions. A backlog panel that morphs from a capsule button to a full-width sheet, driven by one CGFloat\u2009\u2014\u2009corner radius, width, height, opacity all interpolated from a single progress value. Spring presets tuned with a live debug slider panel, then locked as constants. Each spring has a name, a damping ratio that communicates personality, and a documented reason for existing. The font switcher went through seven iterations of its own just on the swatch picker interaction\u2009\u2014\u2009fixed-position selections, staggered fan animations, per-item offset calculations because <code>.move(edge:)</code> gives every item the same travel distance.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'trio-depth',
+      heading: 'Small surface, deep space',
+      paragraphs: [
+        'Three-task queue, one app, one person. But each constraint generated real design questions: what happens when you add a fourth task? (Bump the lowest-priority to backlog, show a toast.) Should the backlog live on its own page? (No\u2009\u2014\u2009merge it into Today so the user sees queue and backlog as one prioritized list.) How should ranking comparisons feel physically? (Haptic \u201cta-da\u201d on completion, light taps on each comparison, success notification when ranking finishes.) Going deep on a narrow product\u2009\u2014\u2009with AI tools that let one person maintain production-grade craft\u2009\u2014\u2009is where the interesting design problems live.',
+      ],
+      visual: null,
+    },
+  ],
+  gallery: [],
+}
+
 export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'mochi-ai-tooling': mochiAiTooling,
   'mochi-progress-tracker': mochiProgressTracker,
@@ -425,4 +478,5 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'cip-election-misinformation': cipElectionMisinformation,
   'duolingo-languages-flags': duolingoLanguagesFlags,
   'acorn-eat-local-vt': acornEatLocalVt,
+  'trio-todo-list': trioTodoList,
 }
