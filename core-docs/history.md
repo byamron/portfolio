@@ -2,6 +2,16 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Video hover preview for Mochi Subscriptions
+
+**Branch:** `mochi-hover-video`
+
+**Summary:** Added video preview support to `ImageDisplay` and set the Mochi Subscriptions project to show an MP4 on hover. Video renders with autoplay, muted, loop, playsInline — same contain-mode layout and 300ms cross-fade as other preview types.
+
+**Changes:** Added `videoPreview` field to `Project` interface, video rendering branch in `ImageDisplay.tsx` (priority: video > Lottie > static image), and `preview-mochi-subs.mp4` in `public/images/`.
+
+---
+
 ## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
 
 **Branch:** `fix-double-cursor-v2`
