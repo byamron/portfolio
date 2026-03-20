@@ -493,15 +493,19 @@ In the React implementation, map `accentColor` directly to the image filename.
 
 ### Project preview media
 
-Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, or Lottie JSON animations. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`. Preview images are constrained to `maxWidth: 90%` and `maxHeight: calc(100% - 144px)` to reserve space for the summary text zone (120px) plus 24px gap. Theme portrait images remain unconstrained at 100%/100%. Different aspect ratios self-size: tall images (phone mockups) are height-constrained, wide images (landscape screenshots) are width-constrained.
+Hovering a project link swaps the right-column image to a project-specific preview. Previews can be static images, animated GIFs, Lottie JSON animations, or looping videos. Each preserves its native aspect ratio — centered in the right column with `object-fit: contain`. Preview images are constrained to `maxWidth: 90%` and `maxHeight: calc(100% - 144px)` to reserve space for the summary text zone (120px) plus 24px gap. Theme portrait images remain unconstrained at 100%/100%. Different aspect ratios self-size: tall images (phone mockups) are height-constrained, wide images (landscape screenshots) are width-constrained.
 
 | Project | Format | File | Loop | Notes |
 |---------|--------|------|------|-------|
 | Screenless TV | GIF | `preview-sony.gif` | Yes (native) | Animated TV concept |
 | Eat Local VT | PNG | `preview-acorn.png` | — | Mobile app screenshot |
 | CSCW Misinformation | Lottie JSON | `preview-cip.json` | No (plays once) | Fan-in network animation |
+| Mochi Subscriptions | MP4 video | `preview-mochi-subs.mp4` | Yes (autoplay) | Subscription flow walkthrough |
+| Todo List | MP4 video | `preview-todo-priority.mp4` | Yes (autoplay) | Task prioritization demo |
 
 **Lottie support**: Projects can specify `lottiePreview` in project data to override the default `projectImageMap` image. Lottie JSON is fetched on hover and rendered via `lottie-react`. The `loop` behavior is per-animation (currently only CSCW uses Lottie, set to play once).
+
+**Video support**: Projects can specify `videoPreview` in project data to override the default `projectImageMap` image. Videos render as `<video autoPlay muted loop playsInline>` — silent, autoplaying, and looping like an animated GIF but with much better compression. Video takes priority over Lottie in the render chain. Encode videos at display size (528px width) using H.264 Main profile with CRF 18 (visually lossless) and `faststart` for immediate playback.
 
 **Shadows for light-background previews**: Previews with white/light backgrounds (eat local PNG, CSCW Lottie) use a subtle `drop-shadow` filter to create separation from the page background. The shadow follows the pixel shape (not the bounding box) and is mode-aware:
 - **Dark mode**: `drop-shadow(0 2px 40px rgba(255, 255, 255, 0.1))` — soft white glow
