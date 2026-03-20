@@ -14,6 +14,48 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-20 — Responsive sidebar theme controls
+
+**Branch:** `theme-sidebar-responsive`
+
+**Summary:** Made the sidebar theme controls responsive to viewport height. Controls compress smoothly between 740px and 500px viewport (swatch sizes, gaps, button sizes, intensity strip all scale via linear interpolation). Below max compression, the toolbar becomes scrollable with a hidden scrollbar. Added horizontal padding to prevent outline clipping within the scroll container.
+
+**Decisions:** Tried a collapsible toggle approach first (hide cursor section behind a `...` button below 500px) — rejected because expanding the toggle just added content off-screen without shifting anything. Compression + scroll is simpler and handles all viewport heights without hiding controls. Also discovered `DotsThreeVertical` doesn't exist in the installed Phosphor icons version — caused a silent module failure in Vite dev mode.
+
+---
+
+## 2026-03-20 — UW Alert prototype + video hover preview support
+
+**Branch:** `uw-alert-prototype`
+
+**Summary:** Built a self-contained HTML prototype of a "Solstice" design system Alert component documentation page (`public/prototypes/uw-alert.html`) as a portfolio case study artifact for the UW Design System project. Also added video (.mp4) support to the hover preview system so the UW project shows a screen recording on hover.
+
+**What changed:**
+- `public/prototypes/uw-alert.html` — Full design system documentation page prototype: alert component variants (critical, warning, info), props table, do/don't guidelines, code snippets with framework switcher (HTML/Vue/Angular), sidebar navigation, TOC with scroll tracking, draggable resizable sidebar. Uses exact Solstice component styling (pill-shaped alerts, thin uniform borders, ghost CTA buttons).
+- `public/prototypes/uw-preview.mp4` — Screen recording video for UW project hover preview.
+- `src/data/projects.ts` — Added `videoPreview` optional field to `Project` interface. Set `videoPreview: '/prototypes/uw-preview.mp4'` on the `uw-system` project entry.
+- `src/components/ImageDisplay.tsx` — Added video rendering path: `<motion.video>` with autoPlay, muted, loop, playsInline. Video takes priority over Lottie, which takes priority over static images. Same cross-fade animation and border-radius as other preview types.
+
+**Key decisions:**
+- **Video as third media type** alongside Lottie and static images, using the same per-project override pattern (`videoPreview` field, like `lottiePreview`).
+- **Self-contained prototype** — single HTML file with inline CSS + JS, no build step. Lives in `public/prototypes/` so it's served directly by Vite.
+- **Draggable sidebar** in prototype for flexible viewing.
+- **Exact color palette** from Solstice design system for alert variants.
+
+**Files changed:** ImageDisplay.tsx, projects.ts, public/prototypes/uw-alert.html, public/prototypes/uw-preview.mp4
+
+---
+
+## 2026-03-20 — Video hover preview for Mochi Subscriptions
+
+**Branch:** `mochi-hover-video`
+
+**Summary:** Added video preview support to `ImageDisplay` and set the Mochi Subscriptions project to show an MP4 on hover. Video renders with autoplay, muted, loop, playsInline — same contain-mode layout and 300ms cross-fade as other preview types.
+
+**Changes:** Added `videoPreview` field to `Project` interface, video rendering branch in `ImageDisplay.tsx` (priority: video > Lottie > static image), and `preview-mochi-subs.mp4` in `public/images/`.
+
+---
+
 ## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
 
 **Branch:** `fix-double-cursor-v2`
@@ -53,6 +95,17 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-19 — Add UW design system hover preview image
+
+**Branch:** `uw-hover-image`
+
+**Summary:** Added hover preview image for the UW design system case study (`preview-uw.png`). Previously the `projectImageMap` referenced a non-existent `preview-uw.jpg`. Copied the exported Alert component screenshot and updated the file extension in `projects.ts`.
+
+**Decisions:**
+- **Kept shared `uw` projectId** — Multiple projects share this ID, and this is the first preview image for it. No need to split IDs yet.
+- **PNG format** — Source export was PNG; updated the reference from `.jpg` to `.png`.
+
+---
 ## 2026-03-19 — Responsive image alignment + cover portrait
 
 **Branch:** `expand-two-column-range`

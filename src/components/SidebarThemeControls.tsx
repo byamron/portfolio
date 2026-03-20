@@ -354,6 +354,30 @@ export function SidebarThemeControls() {
   const cleanupCursorPill = useRef<(() => void) | null>(null)
   const draggingRef = useRef(false)
 
+  // ---- Viewport-responsive layout ----
+  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight)
+
+  useEffect(() => {
+    const handler = () => setViewportHeight(window.innerHeight)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  // Compression: full-size at 740px+, linearly compressed down to 500px
+  const FULL_VP = 740
+  const MIN_VP = 500
+  const compressT = Math.min(1, Math.max(0, (viewportHeight - MIN_VP) / (FULL_VP - MIN_VP)))
+  const swatchSize = Math.round(lerp(18, 24, compressT))
+  const swatchGap = Math.round(lerp(6, 14, compressT))
+  const dividerMargin = Math.round(lerp(8, 18, compressT))
+  const buttonSize = Math.round(lerp(30, 40, compressT))
+  const buttonGap = Math.round(lerp(2, 6, compressT))
+  const stripHeight = Math.round(lerp(44, 72, compressT))
+  const thumbTravel = stripHeight - THUMB_SIZE
+
+  // Max height for the expandable toolbar: viewport - top offset - trigger - bottom padding
+  const toolbarMaxHeight = viewportHeight - 64 - 16 - 16
+
   const handleEnter = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current)
     setHovered(true)
@@ -414,13 +438,14 @@ export function SidebarThemeControls() {
   // Gradient strip pointer handlers (continuous drag support)
   const updateFromPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    const y = Math.max(0, Math.min(STRIP_HEIGHT, e.clientY - rect.top))
-    const t = y / STRIP_HEIGHT
+    const h = rect.height
+    const y = Math.max(0, Math.min(h, e.clientY - rect.top))
+    const t = y / h
     setBgIntensity(t)
     // Direct DOM updates for zero-lag visual feedback during drag
     if (draggingRef.current) {
       const bg = computeBg(accentColor, resolvedAppearance, t)
-      if (thumbRef.current) thumbRef.current.style.top = `${t * THUMB_TRAVEL}px`
+      if (thumbRef.current) thumbRef.current.style.top = `${t * (h - THUMB_SIZE)}px`
       document.documentElement.style.setProperty('--bg', bg)
       // Sync trigger dot and meta theme-color in the same frame
       if (triggerRef.current) {
@@ -526,9 +551,15 @@ export function SidebarThemeControls() {
           }}
         />
 
-        {/* Expandable toolbar */}
+        {/* Expandable toolbar — scrollable when controls exceed viewport */}
         <div
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          className="sidebar-scroll"
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            maxHeight: toolbarMaxHeight, overflowY: 'auto',
+            scrollbarWidth: 'none' as React.CSSProperties['scrollbarWidth'],
+            padding: '0 6px',
+          }}
         >
           {/* Divider: trigger ↔ swatches */}
           <motion.div
@@ -536,7 +567,7 @@ export function SidebarThemeControls() {
             transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * 0.04 : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
-              margin: '18px 0', pointerEvents: 'none',
+              margin: `${dividerMargin}px 0`, pointerEvents: 'none',
             }}
           />
 
@@ -545,7 +576,7 @@ export function SidebarThemeControls() {
             ref={swatchesRef}
             role="radiogroup"
             aria-label="Accent color"
-            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: swatchGap }}
           >
             {accents.map((item, i) => {
               const isActive = accentColor === item.color
@@ -563,7 +594,7 @@ export function SidebarThemeControls() {
                     aria-label={`${item.color} theme`}
                     onClick={() => setAccentColor(item.color)}
                     style={{
-                      width: 24, height: 24, borderRadius: 6,
+                      width: swatchSize, height: swatchSize, borderRadius: 6,
                       background: item.swatch, border: 'none', cursor: 'pointer', padding: 0,
                       outline: isActive ? `1.5px solid color-mix(in srgb, ${item.swatch} 50%, transparent)` : 'none',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
@@ -580,7 +611,7 @@ export function SidebarThemeControls() {
             transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * 0.04 : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
-              margin: '18px 0', pointerEvents: 'none',
+              margin: `${dividerMargin}px 0`, pointerEvents: 'none',
             }}
           />
 
@@ -614,7 +645,7 @@ export function SidebarThemeControls() {
                   style={{
                     position: 'relative',
                     width: 24,
-                    height: STRIP_HEIGHT,
+                    height: stripHeight,
                     display: 'flex',
                     justifyContent: 'center',
                     cursor: isDragging ? 'grabbing' : 'grab',
@@ -626,7 +657,7 @@ export function SidebarThemeControls() {
                   <div
                     style={{
                       width: 8,
-                      height: STRIP_HEIGHT,
+                      height: stripHeight,
                       borderRadius: 4,
                       background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
                       transition: 'background 500ms ease-in-out',
@@ -646,7 +677,7 @@ export function SidebarThemeControls() {
                       boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      top: bgIntensity * THUMB_TRAVEL,
+                      top: bgIntensity * thumbTravel,
                       transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
                     }}
                   />
@@ -659,7 +690,7 @@ export function SidebarThemeControls() {
                 transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * 0.04 : 0, ease: motionEase }}
                 style={{
                   width: 20, height: 1, background: 'var(--text-dark)',
-                  margin: '18px 0', pointerEvents: 'none',
+                  margin: `${dividerMargin}px 0`, pointerEvents: 'none',
                 }}
           />
 
@@ -668,7 +699,7 @@ export function SidebarThemeControls() {
             ref={modesRef}
             role="radiogroup"
             aria-label="Appearance mode"
-            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: buttonGap }}
           >
             {modes.map(({ mode, Icon, label }, i) => {
               const isActive = appearanceMode === mode
@@ -686,7 +717,7 @@ export function SidebarThemeControls() {
                     aria-label={label}
                     onClick={() => setAppearanceMode(mode)}
                     style={{
-                      width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
                       opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
                       transition: 'opacity 200ms ease-in-out',
@@ -714,7 +745,7 @@ export function SidebarThemeControls() {
             transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
-              margin: '18px 0', pointerEvents: 'none',
+              margin: `${dividerMargin}px 0`, pointerEvents: 'none',
             }}
           />
 
@@ -723,7 +754,7 @@ export function SidebarThemeControls() {
             ref={cursorsRef}
             role="radiogroup"
             aria-label="Cursor style"
-            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: buttonGap }}
           >
             {cursorOptions.map(({ mode, label, icon }, i) => {
               const isActive = cursorMode === mode
@@ -741,7 +772,7 @@ export function SidebarThemeControls() {
                     aria-label={label}
                     onClick={() => setCursorMode(mode)}
                     style={{
-                      width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
                       opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
                       transition: 'opacity 200ms ease-in-out',

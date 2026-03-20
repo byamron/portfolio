@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alert — Solstice Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Encode+Sans:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --uw-purple: #4B2E83;
+      --uw-purple-dark: #33206B;
+      --uw-purple-light: #6B52A3;
+      --sidebar-width: 220px;
+      --right-sidebar-width: 220px;
+      --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+      --critical-bg: #F3D8DB; --critical-border: #E7B1B6; --critical-icon: #511A1E; --critical-text: #511A1E;
+      --warning-bg: #FDF3D1; --warning-border: #FCE6A5; --warning-icon: #634E17; --warning-text: #634E17;
+      --info-bg: #D2E2FD; --info-border: #A5C5F9; --info-icon: #0F2D62; --info-text: #0F2D62;
+
+      --text-primary: #1a1a2e; --text-secondary: #555; --text-muted: #6b6b6b;
+      --border-color: #e4e4e7; --bg-code: #f5f5f5; --bg-page: #fff;
+      --font-body: 'Encode Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Source Code Pro', 'Menlo', monospace;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--bg-page);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--uw-purple); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Focus ring for keyboard navigation */
+    :focus-visible {
+      outline: 2px solid var(--uw-purple);
+      outline-offset: 2px;
+    }
+
+    .page-wrapper { display: flex; min-height: 100vh; }
+
+    /* ===== Left Sidebar ===== */
+    .sidebar {
+      width: var(--sidebar-width); min-width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--uw-purple) 0%, var(--uw-purple-dark) 100%);
+      color: #fff; display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+    }
+    .sidebar-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .sidebar-brand { display: flex; flex-direction: column; }
+    .sidebar-brand-name { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+    .sidebar-brand-version { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .sidebar-close {
+      background: none; border: none; color: rgba(255,255,255,0.6);
+      cursor: pointer; font-size: 18px; padding: 8px; line-height: 1;
+      border-radius: 4px; transition: color 0.15s var(--ease-out), background 0.15s var(--ease-out);
+    }
+    .sidebar-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+    /* Sidebar search */
+    .sidebar-search {
+      padding: 12px 16px; position: relative;
+    }
+    .sidebar-search input {
+      width: 100%; padding: 8px 12px; padding-right: 48px;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; color: #fff; font-size: 13px;
+      font-family: var(--font-body);
+      transition: background 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+    }
+    .sidebar-search input::placeholder { color: rgba(255,255,255,0.4); }
+    .sidebar-search input:focus {
+      outline: none; background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .sidebar-search kbd {
+      position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px; padding: 2px 6px; font-size: 11px;
+      color: rgba(255,255,255,0.4); font-family: var(--font-body);
+      pointer-events: none;
+    }
+
+    .sidebar-nav { padding: 8px 0; flex: 1; }
+    .nav-section { margin-bottom: 2px; }
+    .nav-section-title {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 20px; font-size: 11px; font-weight: 600;
+      color: rgba(255,255,255,0.5); cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      transition: color 0.15s var(--ease-out); user-select: none;
+    }
+    .nav-section-title:hover { color: rgba(255,255,255,0.7); }
+    .nav-section-title .chevron { font-size: 10px; opacity: 0.5; transition: transform 0.2s var(--ease-out); }
+    .nav-section.open .chevron { transform: rotate(90deg); }
+    .nav-items { display: none; padding: 2px 0; }
+    .nav-section.open .nav-items { display: block; }
+    .nav-item {
+      display: block; padding: 6px 20px 6px 33px; font-size: 13px;
+      color: rgba(255,255,255,0.6); cursor: pointer;
+      transition: color 0.15s var(--ease-out), background 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+      text-decoration: none; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); text-decoration: none; }
+    .nav-item.active {
+      color: #fff; background: rgba(255,255,255,0.1);
+      font-weight: 600; border-left-color: #fff;
+    }
+
+    /* ===== Main Content ===== */
+    .main-area { flex: 1; margin-left: var(--sidebar-width); display: flex; }
+    .content { flex: 1; max-width: 820px; padding: 32px 48px 64px; }
+
+    .breadcrumb { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .breadcrumb a { color: var(--text-muted); transition: color 0.15s var(--ease-out); }
+    .breadcrumb a:hover { color: var(--uw-purple); }
+    .breadcrumb .sep { margin: 0 4px; color: #ccc; }
+
+    .page-header { margin-bottom: 8px; }
+    .page-title { font-size: 32px; font-weight: 700; line-height: 1.2; }
+    .page-subtitle { font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .page-description { font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin-bottom: 24px; max-width: 640px; }
+
+    /* Alert previews */
+    .alert-previews {
+      display: flex; flex-direction: column; gap: 12px; margin-bottom: 48px;
+      background: #f8f9fa; border: 1px solid var(--border-color);
+      border-radius: 8px; padding: 24px;
+    }
+
+    /* Sections */
+    .doc-section { margin-bottom: 48px; }
+    .doc-section h2 {
+      font-size: 24px; font-weight: 700; margin-bottom: 16px;
+      padding-top: 48px; scroll-margin-top: 24px;
+      color: var(--text-primary); letter-spacing: -0.01em;
+    }
+    .doc-section:first-child h2 { padding-top: 0; }
+    .doc-section h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; margin-top: 32px; scroll-margin-top: 24px; }
+    .doc-section h4 { font-size: 16px; font-weight: 600; margin-bottom: 8px; margin-top: 24px; }
+    .doc-section p { font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin-bottom: 16px; max-width: 640px; }
+    .doc-section ul { padding-left: 24px; margin-bottom: 16px; }
+    .doc-section li { font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin-bottom: 4px; }
+
+    /* ===== Alert Component ===== */
+    .uw-alert {
+      display: flex; align-items: center; border-radius: 24px;
+      padding: 14px 20px; gap: 12px; font-size: 14px; line-height: 1.5;
+      position: relative; border: 1.5px solid;
+      min-height: 48px;
+    }
+    .uw-alert--critical { background: var(--critical-bg); border-color: var(--critical-border); color: var(--critical-text); }
+    .uw-alert--critical .alert-icon { color: var(--critical-icon); }
+    .uw-alert--warning { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-text); }
+    .uw-alert--warning .alert-icon { color: var(--warning-icon); }
+    .uw-alert--info { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+    .uw-alert--info .alert-icon { color: var(--info-icon); }
+
+    .alert-icon { flex-shrink: 0; width: 20px; height: 20px; }
+    .alert-body { flex: 1; min-width: 0; }
+    .alert-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .alert-btn {
+      padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+      background: transparent; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s var(--ease-out);
+    }
+    .alert-btn--critical { border: 1.5px solid var(--critical-text); color: var(--critical-text); }
+    .alert-btn--critical:hover { background: rgba(81, 26, 30, 0.08); }
+    .alert-btn--warning { border: 1.5px solid var(--warning-text); color: var(--warning-text); }
+    .alert-btn--warning:hover { background: rgba(99, 78, 23, 0.08); }
+    .alert-btn--info { border: 1.5px solid var(--info-text); color: var(--info-text); }
+    .alert-btn--info:hover { background: rgba(15, 45, 98, 0.08); }
+    .alert-dismiss {
+      background: none; border: none; color: inherit;
+      opacity: 0.5; font-size: 18px; padding: 8px; line-height: 1; flex-shrink: 0;
+      cursor: default;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ===== Demo Block ===== */
+    .demo-block {
+      margin: 24px 0; border: 1px solid var(--border-color);
+      border-radius: 8px; overflow: hidden;
+    }
+    .demo-preview {
+      background: #f8f9fa; padding: 24px;
+    }
+    .demo-code {
+      max-height: 0; overflow: hidden; opacity: 0;
+      transition: max-height 0.3s var(--ease-out), opacity 0.2s var(--ease-out);
+    }
+    .code-visible .demo-code {
+      max-height: 600px; opacity: 1;
+    }
+
+    /* ===== Code Block ===== */
+    .code-block {
+      background: #f5f5f5; overflow: hidden;
+      border-top: 1px solid var(--border-color);
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .code-lang {
+      font-size: 11px; font-family: var(--font-mono);
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .code-copy {
+      background: none; border: 1px solid var(--border-color);
+      color: var(--text-muted); font-size: 0; padding: 6px 8px;
+      border-radius: 4px; cursor: pointer; font-family: var(--font-body);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s var(--ease-out), color 0.15s var(--ease-out), background 0.15s var(--ease-out);
+      min-width: 32px; min-height: 28px;
+    }
+    .code-copy:hover { border-color: var(--text-secondary); color: var(--text-primary); background: rgba(0,0,0,0.03); }
+    .code-copy svg { width: 14px; height: 14px; }
+    .code-copy.copied { border-color: #2E7D32; }
+    .code-copy.copied svg { color: #2E7D32; }
+    .code-content { padding: 16px; overflow-x: auto; }
+    .code-content pre {
+      font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+      color: #333; white-space: pre;
+    }
+    .code-content .tag { color: #9C27B0; }
+    .code-content .attr { color: #E65100; }
+    .code-content .str { color: #2E7D32; }
+    .code-content .kw { color: #9C27B0; }
+    .code-content .comment { color: #999; font-style: italic; }
+    .code-content .fn { color: #1565C0; }
+    .code-content .imp { color: #C62828; }
+
+    /* ===== Do / Don't ===== */
+    .do-dont-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 24px; margin: 24px 0 32px; align-items: stretch;
+    }
+    .do-dont { margin: 0; display: flex; flex-direction: column; }
+    .do-dont-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .do-dont-label .icon {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff;
+    }
+    .do-dont--do .icon { background: #2E7D32; }
+    .do-dont--dont .icon { background: #C62828; }
+    .do-dont--do .do-dont-label { color: #2E7D32; }
+    .do-dont--dont .do-dont-label { color: #C62828; }
+    .do-dont-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.55; }
+    .do-dont-example {
+      border-radius: 8px; padding: 16px; background: #fafafa; flex: 1;
+    }
+    .do-dont--do .do-dont-example {
+      border: 1px solid #c3e6c8;
+    }
+    .do-dont--dont .do-dont-example {
+      border: 1px solid #f5c6cb;
+    }
+
+    /* ===== Properties Table Card ===== */
+    .props-card {
+      border: 1px solid var(--border-color); border-radius: 8px;
+      overflow: hidden; margin: 24px 0; background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .props-table-wrap { overflow-x: auto; }
+    .props-card-note {
+      font-size: 13px; color: var(--text-muted); margin-bottom: 16px;
+      font-style: italic;
+    }
+    .props-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .props-table th {
+      text-align: left; font-weight: 600; padding: 12px 20px;
+      border-bottom: 1px solid var(--border-color); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+      background: #fafafa;
+    }
+    .props-table td {
+      padding: 14px 20px; border-bottom: 1px solid #f0f0f0;
+      color: var(--text-secondary); vertical-align: top; line-height: 1.55;
+      transition: background 0.15s var(--ease-out);
+    }
+    .props-table tr:last-child td { border-bottom: none; }
+    .props-table tr:hover td { background: #fafbfc; }
+    .prop-name {
+      font-family: var(--font-mono); font-size: 13px; color: var(--uw-purple); font-weight: 500;
+    }
+    .prop-required {
+      display: inline-block; font-family: var(--font-body); font-size: 10px;
+      color: #C62828; font-weight: 600; margin-left: 6px;
+      background: #FDEDED; padding: 1px 6px; border-radius: 4px;
+    }
+    .prop-type {
+      font-family: var(--font-mono); font-size: 12px; color: #2E7D32; font-weight: 500;
+    }
+    .prop-default {
+      font-family: var(--font-mono); font-size: 12px;
+    }
+    .prop-default code {
+      background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 4px; padding: 1px 6px;
+      font-family: var(--font-mono); font-size: 11px;
+    }
+    .prop-val-badge {
+      display: inline-block;
+      font-family: var(--font-mono); font-size: 11px;
+      background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 4px; padding: 1px 6px; margin: 1px 2px;
+      color: var(--uw-purple);
+    }
+    .prop-val-badge.is-default { font-weight: 700; }
+    .prop-desc { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .prop-desc code {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--uw-purple); background: var(--bg-code);
+      padding: 1px 5px; border-radius: 3px;
+    }
+
+    .changelog-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+    .changelog-table th { text-align: left; font-weight: 600; padding: 10px 16px; border-bottom: 2px solid var(--border-color); font-size: 13px; }
+    .changelog-table td { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; color: var(--text-secondary); }
+
+    /* ===== Right Sidebar ===== */
+    .right-sidebar {
+      width: var(--right-sidebar-width); min-width: var(--right-sidebar-width);
+      padding: 160px 24px 32px 16px; position: sticky; top: 0;
+      height: fit-content; max-height: 100vh; overflow-y: auto;
+      border-left: 1px solid var(--border-color);
+    }
+
+    /* TOC */
+    .toc-title {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 16px;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .toc-list { list-style: none; }
+    .toc-list li { margin-bottom: 0; }
+    .toc-list a {
+      display: block; padding: 5px 8px 5px 12px; font-size: 13px;
+      color: var(--text-muted); text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.12s var(--ease-out), border-color 0.12s var(--ease-out);
+    }
+    .toc-list a:hover { color: var(--text-primary); text-decoration: none; }
+    .toc-list a.active {
+      color: var(--text-primary); border-left-color: var(--uw-purple);
+      font-weight: 500;
+    }
+
+    /* Sidebar controls */
+    .sidebar-controls { margin-bottom: 24px; }
+    .sidebar-control { margin-bottom: 16px; }
+    .sidebar-control-label {
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      margin-bottom: 8px; display: block;
+    }
+    .code-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .code-toggle-switch {
+      position: relative; width: 36px; height: 20px;
+      background: #d4d4d8; border-radius: 10px;
+      transition: background 0.15s var(--ease-out);
+      flex-shrink: 0;
+    }
+    .code-toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; background: #fff;
+      border-radius: 50%; transition: transform 0.15s var(--ease-out);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+    .code-toggle.active .code-toggle-switch { background: var(--uw-purple); }
+    .code-toggle.active .code-toggle-switch::after { transform: translateX(16px); }
+    .code-toggle-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .sidebar-framework-select {
+      width: 100%; padding: 6px 28px 6px 10px; border: 1px solid var(--border-color);
+      border-radius: 6px; font-size: 13px; font-family: var(--font-body);
+      color: var(--text-primary); background: #fff;
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23555' d='M2 3l3 4 3-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+    }
+    .sidebar-framework-select:focus-visible {
+      outline: none; border-color: var(--uw-purple);
+      box-shadow: 0 0 0 2px rgba(75, 46, 131, 0.15);
+    }
+    .framework-control { display: none; }
+    .framework-control.visible { display: block; }
+
+    /* Use this component */
+    .use-component { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    .use-component-title {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .use-component-links { display: flex; gap: 12px; }
+    .use-component-link {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; transition: background 0.15s var(--ease-out); color: var(--text-primary);
+    }
+    .use-component-link:hover { background: #f0f0f0; }
+    .use-component-link svg { width: 24px; height: 24px; }
+
+    /* Inline code */
+    code:not(.code-content code):not(.props-table code):not(.prop-default code) {
+      font-family: var(--font-mono); font-size: 0.88em;
+      background: var(--bg-code); padding: 2px 6px; border-radius: 3px; color: var(--uw-purple);
+    }
+
+    /* Color links */
+    .color-link {
+      font-family: var(--font-mono); font-size: 0.88em;
+      text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px;
+    }
+    .color-link:hover { text-decoration-style: solid; }
+
+    /* Placement example */
+    .placement-example { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #fff; }
+    .placement-header { background: #f5f5f5; padding: 12px 16px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border-color); }
+    .placement-body { padding: 16px; }
+    .placement-body .fake-text { height: 10px; background: #e8e8e8; border-radius: 3px; margin-bottom: 6px; }
+    .placement-body .fake-text.short { width: 60%; }
+
+    /* Footer */
+    .page-footer { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; border-top: 1px solid var(--border-color); margin-top: 48px; }
+    .footer-note { font-size: 11px; color: var(--text-muted); max-width: 400px; line-height: 1.5; }
+    .footer-logo svg { width: 32px; height: 32px; fill: var(--uw-purple); }
+
+    @media (max-width: 1100px) { .right-sidebar { display: none; } }
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-area { margin-left: 0; }
+      .content { padding: 24px; }
+      .do-dont-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .page-title { font-size: 24px; }
+      .content { padding: 16px 16px 48px; }
+      .doc-section h2 { font-size: 20px; padding-top: 32px; }
+      .doc-section h3 { font-size: 16px; }
+      .alert-previews { padding: 16px; }
+      .demo-preview { padding: 16px; }
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    /* Sidebar resize handle */
+    .sidebar-resize {
+      position: fixed; top: 0; bottom: 0; width: 6px;
+      left: var(--sidebar-width); z-index: 101;
+      cursor: col-resize; background: transparent;
+      transition: background 0.15s;
+    }
+    .sidebar-resize:hover, .sidebar-resize.dragging {
+      background: rgba(75, 46, 131, 0.15);
+    }
+    .sidebar-resize::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px; height: 32px; border-radius: 1px;
+      background: rgba(75, 46, 131, 0); transition: background 0.15s;
+    }
+    .sidebar-resize:hover::after, .sidebar-resize.dragging::after {
+      background: rgba(75, 46, 131, 0.4);
+    }
+  </style>
+</head>
+
+<body>
+<div class="page-wrapper">
+
+  <!-- ===== Left Sidebar ===== -->
+  <nav class="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-name">Solstice</span>
+        <span class="sidebar-brand-version">v 1.1.2</span>
+      </div>
+      <button class="sidebar-close" aria-label="Close navigation menu">&times;</button>
+    </div>
+    <div class="sidebar-search">
+      <input type="search" placeholder="Search..." aria-label="Search documentation" />
+      <kbd>&#8984;K</kbd>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title" role="button" aria-expanded="false">Getting Started <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item" href="#">Overview</a>
+          <a class="nav-item" href="#">Installation</a>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" role="button" aria-expanded="false">Content Guidelines <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item" href="#">Voice & Tone</a>
+          <a class="nav-item" href="#">Writing Style</a>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" role="button" aria-expanded="false">Design Principles <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item" href="#">Overview</a>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" role="button" aria-expanded="false">Foundations <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item" href="#">Color</a>
+          <a class="nav-item" href="#">Typography</a>
+          <a class="nav-item" href="#">Spacing</a>
+        </div>
+      </div>
+      <div class="nav-section open">
+        <div class="nav-section-title" role="button" aria-expanded="true">Components <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item active" href="#" aria-current="page">Alert</a>
+          <a class="nav-item" href="#">Badge</a>
+          <a class="nav-item" href="#">Banner</a>
+          <a class="nav-item" href="#">Button</a>
+          <a class="nav-item" href="#">Card</a>
+          <a class="nav-item" href="#">Checkbox</a>
+          <a class="nav-item" href="#">Dialog</a>
+          <a class="nav-item" href="#">Disclosure</a>
+          <a class="nav-item" href="#">Input</a>
+          <a class="nav-item" href="#">Modal</a>
+          <a class="nav-item" href="#">Pagination</a>
+          <a class="nav-item" href="#">Radio</a>
+          <a class="nav-item" href="#">Select</a>
+          <a class="nav-item" href="#">Table</a>
+          <a class="nav-item" href="#">Tabs</a>
+          <a class="nav-item" href="#">Toast</a>
+          <a class="nav-item" href="#">Tooltip</a>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" role="button" aria-expanded="false">CSS <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item" href="#">Utilities</a>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" role="button" aria-expanded="false">Examples <span class="chevron">&#9654;</span></div>
+        <div class="nav-items">
+          <a class="nav-item" href="#">Layouts</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-resize" id="sidebarResize"></div>
+
+  <!-- ===== Main Area ===== -->
+  <div class="main-area">
+    <main class="content">
+
+      <div class="breadcrumb">
+        <a href="#">Components</a><span class="sep">/</span><span>Alert</span>
+      </div>
+
+      <div class="page-header">
+        <h1 class="page-title">Alert</h1>
+        <div class="page-subtitle">&lt;uw-alert&gt;</div>
+      </div>
+
+      <p class="page-description">
+        Alerts are semantic messages that intentionally disrupt a user's workflow to
+        notify users about statuses that require action or provide information relevant to
+        a particular task or page section.
+      </p>
+
+      <!-- Alert Previews -->
+      <div class="alert-previews">
+        <div class="uw-alert uw-alert--critical">
+          <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          <div class="alert-body">You have a past-due balance on your account.</div>
+          <div class="alert-actions"><button class="alert-btn alert-btn--critical">View statement</button></div>
+        </div>
+        <div class="uw-alert uw-alert--warning">
+          <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          <div class="alert-body">Class meeting times overlap. Adjust your schedule to avoid conflicts.</div>
+          <div class="alert-actions"><button class="alert-btn alert-btn--warning">Go to MyPlan</button></div>
+        </div>
+        <div class="uw-alert uw-alert--info">
+          <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          <div class="alert-body">Registration opens at 6:00AM.</div>
+        </div>
+      </div>
+
+      <!-- ===== Variants ===== -->
+      <section class="doc-section" id="variants">
+        <h2>Variants</h2>
+
+        <h3 id="variant-critical">Critical</h3>
+        <p>Alerts with the <code>critical</code> variant are of the highest importance, and communicate that an item needs immediate attention or action from the user.</p>
+        <div class="demo-block" data-snippet="critical">
+          <div class="demo-preview">
+            <div class="uw-alert uw-alert--critical">
+              <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <div class="alert-body">You have a past-due balance on your account.</div>
+              <div class="alert-actions"><button class="alert-btn alert-btn--critical">View statement</button></div>
+            </div>
+          </div>
+          <div class="demo-code">
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">HTML</span>
+                <button class="code-copy" aria-label="Copy code to clipboard">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5V3a1.5 1.5 0 0 1 1.5-1.5H10.5"/></svg>
+                </button>
+              </div>
+              <div class="code-content"><pre></pre></div>
+            </div>
+          </div>
+        </div>
+
+        <h3 id="variant-warning">Warning</h3>
+        <p>Alerts with the <code>warning</code> variant communicate extra caution before or during an in-progress activity, helping users avoid undesired results from the activity in progress.</p>
+        <div class="demo-block" data-snippet="warning">
+          <div class="demo-preview">
+            <div class="uw-alert uw-alert--warning">
+              <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <div class="alert-body">Class meeting times overlap. Adjust your schedule to avoid conflicts.</div>
+              <div class="alert-actions"><button class="alert-btn alert-btn--warning">Go to MyPlan</button></div>
+            </div>
+          </div>
+          <div class="demo-code">
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">HTML</span>
+                <button class="code-copy" aria-label="Copy code to clipboard">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5V3a1.5 1.5 0 0 1 1.5-1.5H10.5"/></svg>
+                </button>
+              </div>
+              <div class="code-content"><pre></pre></div>
+            </div>
+          </div>
+        </div>
+
+        <h3 id="variant-info">Info</h3>
+        <p>Alerts with the <code>info</code> variant communicate useful information to help the user during certain tasks or situations without requiring immediate action.</p>
+        <div class="demo-block" data-snippet="info">
+          <div class="demo-preview">
+            <div class="uw-alert uw-alert--info">
+              <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+              <div class="alert-body">Registration opens at 6:00AM.</div>
+            </div>
+          </div>
+          <div class="demo-code">
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">HTML</span>
+                <button class="code-copy" aria-label="Copy code to clipboard">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5V3a1.5 1.5 0 0 1 1.5-1.5H10.5"/></svg>
+                </button>
+              </div>
+              <div class="code-content"><pre></pre></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Anatomy ===== -->
+      <section class="doc-section" id="anatomy">
+        <h2>Anatomy</h2>
+        <h4>Sizing</h4>
+        <p>Alerts should occupy the full width of their parent container, usually a section or module on a page.</p>
+        <h4>Text</h4>
+        <p>Each alert contains a message which should communicate the following:</p>
+        <ul>
+          <li>Why the alert is firing, in what context and what's affected</li>
+          <li>(Critical / Warning alerts) What the user must or should do to fix the problem, or relevant steps to resolve</li>
+          <li>Where to go for more information, if the alert's text is not self-explanatory, use relevant links</li>
+        </ul>
+        <h4>Color</h4>
+        <p>Alerts convey a semantic meaning with a corresponding color: <a href="#" class="color-link" style="color:#511A1E;">#511A1E</a> (critical, deep red), <a href="#" class="color-link" style="color:#634E17;">#634E17</a> (warning, warm amber), and <a href="#" class="color-link" style="color:#0F2D62;">#0F2D62</a> (info, navy blue). Do not repurpose the alert colors for unrelated semantic meaning.</p>
+        <h4>Call to Action</h4>
+        <p>Whenever possible, alerts should provide inline access or relevant context needed to resolve them. Critical alerts should always contain a call to action. Warning and info alerts should provide one when the resolution is direct.</p>
+        <h4>Dismissibility</h4>
+        <p>Where practical and contextually appropriate, alerts should be dismissible and include an inline "x" on the right. In general, an <code>info</code> and <code>warning</code> alert should be dismissible. A <code>critical</code> alert should not be dismissible unless the issue has been resolved.</p>
+        <h4>States</h4>
+        <p>Alerts, when visible, only have one state. When an Alert has a call-to-action, the embedded action buttons should have a standard button pressed state.</p>
+      </section>
+
+      <!-- ===== Best Practices ===== -->
+      <section class="doc-section" id="best-practices">
+        <h2>Best Practices</h2>
+
+        <h3 id="bp-when-to-use">When to use Alerts</h3>
+        <p>Alerts are important, interruptive messages that draw attention and disrupt the user's workflow. They are persistent during active page loads, and will remain on the page until they are dismissed or the triggering condition is resolved.</p>
+        <ul>
+          <li>Use for messages that interrupt the user.</li>
+          <li>For timely, important information or announcements; consider these characteristics.</li>
+        </ul>
+
+        <div class="do-dont-grid">
+          <div class="do-dont do-dont--do">
+            <div class="do-dont-label"><span class="icon">&#10003;</span> Do</div>
+            <div class="do-dont-text">Use Alerts for temporary, timely messages.</div>
+            <div class="do-dont-example">
+              <div class="uw-alert uw-alert--warning" style="font-size:13px;">
+                <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div class="alert-body">Registration Period 0 opens for adults and Degree/Graduate students at 6 AM.</div>
+              </div>
+            </div>
+          </div>
+          <div class="do-dont do-dont--dont">
+            <div class="do-dont-label"><span class="icon">&times;</span> Don't</div>
+            <div class="do-dont-text">Don't use alerts to call out permanent content on the page.</div>
+            <div class="do-dont-example">
+              <div class="uw-alert uw-alert--warning" style="font-size:13px;">
+                <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div class="alert-body">A tuition hold has been placed on your account. Contact Student Fiscal Services.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 id="bp-messaging">Messaging</h3>
+        <p>Alert messages should be succinct. Give enough context to understand the Alert and direct the user to the right place to resolve it.</p>
+
+        <div class="do-dont-grid">
+          <div class="do-dont do-dont--do">
+            <div class="do-dont-label"><span class="icon">&#10003;</span> Do</div>
+            <div class="do-dont-text">Explain what caused the Alert and direct the user to the right place to resolve it.</div>
+            <div class="do-dont-example">
+              <div class="uw-alert uw-alert--critical" style="font-size:13px;">
+                <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div class="alert-body">Your account balance is past due. Registration is on hold.</div>
+                <div class="alert-actions"><button class="alert-btn alert-btn--critical" style="font-size:12px;padding:4px 10px;">View statement</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="do-dont do-dont--dont">
+            <div class="do-dont-label"><span class="icon">&times;</span> Don't</div>
+            <div class="do-dont-text">Don't use vague language or tell the reader things that are not actionable to the user.</div>
+            <div class="do-dont-example">
+              <div class="uw-alert uw-alert--warning" style="font-size:13px;">
+                <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div class="alert-body">Registration hold: please resolve the issue in order to register.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="do-dont-grid">
+          <div class="do-dont do-dont--do">
+            <div class="do-dont-label"><span class="icon">&#10003;</span> Do</div>
+            <div class="do-dont-text">Add clear message controls and link to a reference page for more details.</div>
+            <div class="do-dont-example">
+              <div class="uw-alert uw-alert--critical" style="font-size:13px;">
+                <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div class="alert-body">Digital course materials have been charged to your account. <a href="#" style="color:var(--critical-icon);text-decoration:underline;">Learn more.</a></div>
+                <div class="alert-actions"><button class="alert-btn alert-btn--critical" style="font-size:12px;padding:4px 10px;">View account</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="do-dont do-dont--dont">
+            <div class="do-dont-label"><span class="icon">&times;</span> Don't</div>
+            <div class="do-dont-text">Don't use multiple, long sentences or mention multiple issues.</div>
+            <div class="do-dont-example">
+              <div class="uw-alert uw-alert--critical" style="font-size:13px;">
+                <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div class="alert-body">UW Bookstore Says that Digital Materials course charges for has a list of your courses enrolled and all of the digital materials. To manually access the required digital materials you can go through your husky card (or student account). Some courses enroll students in a trial group under the Inclusive Access program. Per University of Washington policy, UW Bookstore is charging the first 10th day after the 14th class day of the first day of classes.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 id="bp-placement">Placement</h3>
+        <p>Alerts should appear in the section or area in which they are relevant, directly under the appropriate section heading. If a page contains a global alert, it should appear at the top of the content area.</p>
+        <div class="do-dont-grid">
+          <div class="do-dont do-dont--do">
+            <div class="do-dont-label"><span class="icon">&#10003;</span> Do</div>
+            <div class="do-dont-text">Place Alerts at the top of the section to which it's relevant.</div>
+            <div class="do-dont-example">
+              <div class="placement-example">
+                <div class="placement-header">Winter 2024 Schedule</div>
+                <div class="placement-body">
+                  <div class="uw-alert uw-alert--warning" style="font-size:12px;margin-bottom:12px;">
+                    <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <div class="alert-body">Course meeting times overlap.</div>
+                  </div>
+                  <div class="fake-text" style="width:90%;"></div><div class="fake-text" style="width:75%;"></div><div class="fake-text short"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="do-dont do-dont--dont">
+            <div class="do-dont-label"><span class="icon">&times;</span> Don't</div>
+            <div class="do-dont-text">Don't place alerts buried in content where they might be missed.</div>
+            <div class="do-dont-example">
+              <div class="placement-example">
+                <div class="placement-header">Winter 2024 Schedule</div>
+                <div class="placement-body">
+                  <div class="fake-text" style="width:90%;"></div><div class="fake-text" style="width:75%;"></div>
+                  <div class="uw-alert uw-alert--warning" style="font-size:12px;margin:12px 0;">
+                    <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <div class="alert-body">Course meeting times overlap.</div>
+                  </div>
+                  <div class="fake-text short"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Assistive technology ===== -->
+      <section class="doc-section" id="assistive-technology">
+        <h2>Assistive technology &amp; keyboard functionality</h2>
+        <p>Alerts include the <code>role="alert"</code> or <code>role="status"</code> attribute by default to screen readers and assistive technology. This ensures the content is announced immediately without requiring user interaction.</p>
+        <p>Alerts with call-to-action buttons should be completely navigable by keyboard alone. The Alert itself will not receive focus, but the interactive children must. The focus order is:</p>
+        <ul>
+          <li>Hyperlink or call-to-action button</li>
+          <li>Dismiss button (if present)</li>
+        </ul>
+        <p>The dismiss action is triggered with the <code>Enter</code> or <code>Space</code> key. The Alert component is configured to set focus to the top of the section in which it was placed if dismissed.</p>
+      </section>
+
+      <!-- ===== Technical Implementation ===== -->
+      <section class="doc-section" id="implementation">
+        <h2>Technical Implementation</h2>
+        <p class="props-card-note">*Default values in <strong>bold</strong></p>
+        <div class="props-card">
+          <div class="props-table-wrap">
+          <table class="props-table">
+            <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="prop-name">variant</span>
+                  <span class="prop-required">required</span>
+                </td>
+                <td>
+                  <span class="prop-val-badge">critical</span>
+                  <span class="prop-val-badge">warning</span>
+                  <span class="prop-val-badge">info</span>
+                </td>
+                <td><span style="color:var(--text-muted);">—</span></td>
+                <td>
+                  <div class="prop-desc">Sets the semantic importance of the alert, which determines the color scheme, icon, and ARIA role.</div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="prop-name">is-dismissible</span></td>
+                <td><span class="prop-type">boolean</span></td>
+                <td>
+                  <span class="prop-val-badge">true</span>
+                  <span class="prop-val-badge is-default">false</span>
+                </td>
+                <td>
+                  <div class="prop-desc">When <code>true</code>, renders a close button that allows the user to dismiss the alert.</div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="prop-name">has-cta</span></td>
+                <td><span class="prop-type">boolean</span></td>
+                <td>
+                  <span class="prop-val-badge">true</span>
+                  <span class="prop-val-badge is-default">false</span>
+                </td>
+                <td>
+                  <div class="prop-desc">When <code>true</code>, renders a call-to-action button using the values from <code>cta-url</code> and <code>cta-label</code>.</div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="prop-name">cta-url</span></td>
+                <td><span class="prop-type">string</span></td>
+                <td><span class="prop-default"><code>""</code></span></td>
+                <td>
+                  <div class="prop-desc">The URL the call-to-action button navigates to. Only rendered when <code>has-cta="true"</code>.</div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="prop-name">cta-label</span></td>
+                <td><span class="prop-type">string</span></td>
+                <td><span class="prop-default"><code>"Learn more"</code></span></td>
+                <td>
+                  <div class="prop-desc">The visible text label on the call-to-action button. Only rendered when <code>has-cta="true"</code>.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Changelog ===== -->
+      <section class="doc-section" id="changelog">
+        <h2>Changelog</h2>
+        <table class="changelog-table">
+          <thead><tr><th>Date</th><th>Version</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>3/15/2024</td><td>1.4</td><td>Added <code>cta-url</code> and <code>cta-label</code> properties for inline call-to-action buttons.</td></tr>
+            <tr><td>11/20/2023</td><td>1.0</td><td>Initial release with critical, warning, and info variants.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer class="page-footer">
+        <div class="footer-note"><strong>PLEASE NOTE:</strong> This page is a portfolio prototype and does not represent the actual UW Design System documentation.</div>
+        <div class="footer-logo">
+          <svg viewBox="0 0 100 67" fill="var(--uw-purple)" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.8 0L15.2 42.2L7.6 0H0L10.2 67H20.2L27.8 24.8L35.4 67H45.4L55.6 0H48L40.4 42.2L32.8 0H22.8Z"/>
+            <path d="M72.8 0L65.2 42.2L57.6 0H50L60.2 67H70.2L77.8 24.8L85.4 67H95.4L100 40.8V0H92.4V37.2L87.8 0H72.8Z"/>
+          </svg>
+        </div>
+      </footer>
+    </main>
+
+    <!-- ===== Right Sidebar ===== -->
+    <aside class="right-sidebar" role="complementary" aria-label="Page navigation">
+
+      <!-- Code controls -->
+      <div class="sidebar-controls">
+        <div class="sidebar-control">
+          <div class="code-toggle" id="codeToggle" role="switch" aria-checked="false" tabindex="0" aria-label="Show code snippets">
+            <span class="code-toggle-text">Show Code</span>
+            <div class="code-toggle-switch"></div>
+          </div>
+        </div>
+        <div class="sidebar-control framework-control" id="frameworkControl">
+          <label class="sidebar-control-label" for="frameworkSelect">Framework</label>
+          <select class="sidebar-framework-select" id="frameworkSelect" aria-label="Select framework">
+            <option value="html">HTML</option>
+            <option value="vue">Vue</option>
+            <option value="angular">Angular</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TOC -->
+      <div class="toc-title">On this page</div>
+      <ul class="toc-list">
+        <li><a href="#variants" class="active">Variants</a></li>
+        <li><a href="#anatomy">Anatomy</a></li>
+        <li><a href="#best-practices">Best Practices</a></li>
+        <li><a href="#assistive-technology">Assistive technology</a></li>
+        <li><a href="#implementation">Technical Implementation</a></li>
+        <li><a href="#changelog">Changelog</a></li>
+      </ul>
+
+      <!-- Use this component -->
+      <div class="use-component">
+        <div class="use-component-title">Use this component</div>
+        <div class="use-component-links">
+          <!-- Figma -->
+          <a href="#" class="use-component-link" aria-label="Open in Figma">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 24c2.2 0 4-1.8 4-4v-4H8c-2.2 0-4 1.8-4 4s1.8 4 4 4z" fill="#0ACF83"/>
+              <path d="M4 12c0-2.2 1.8-4 4-4h4v8H8c-2.2 0-4-1.8-4-4z" fill="#A259FF"/>
+              <path d="M4 4c0-2.2 1.8-4 4-4h4v8H8C5.8 8 4 6.2 4 4z" fill="#F24E1E"/>
+              <path d="M12 0h4c2.2 0 4 1.8 4 4s-1.8 4-4 4h-4V0z" fill="#FF7262"/>
+              <path d="M20 12c0 2.2-1.8 4-4 4s-4-1.8-4-4 1.8-4 4-4 4 1.8 4 4z" fill="#1ABCFE"/>
+            </svg>
+          </a>
+          <!-- GitHub -->
+          <a href="#" class="use-component-link" aria-label="View on GitHub">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  // ===== Code Snippets (all frameworks) =====
+  const snippets = {
+    critical: {
+      html: {
+        lang: 'HTML',
+        code: `<span class="tag">&lt;uw-alert</span> <span class="attr">variant</span>=<span class="str">"critical"</span> <span class="attr">role</span>=<span class="str">"alert"</span> <span class="attr">aria-label</span>=<span class="str">"Critical"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;p</span> <span class="attr">slot</span>=<span class="str">"content"</span><span class="tag">&gt;</span>You have a past-due balance on your account.
+    If you have already submitted payment, allow 3-5 business
+    days for the balance to update.<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">slot</span>=<span class="str">"action"</span> <span class="attr">href</span>=<span class="str">"/account/balance"</span><span class="tag">&gt;</span>View statement<span class="tag">&lt;/a&gt;</span>
+<span class="tag">&lt;/uw-alert&gt;</span>`
+      },
+      vue: {
+        lang: 'Vue',
+        code: `<span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;UwAlert</span> <span class="attr">variant</span>=<span class="str">"critical"</span> <span class="attr">aria-label</span>=<span class="str">"Critical"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;template</span> <span class="attr">#content</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;p&gt;</span>You have a past-due balance on your account.
+        If you have already submitted payment, allow 3-5
+        business days for the balance to update.<span class="tag">&lt;/p&gt;</span>
+    <span class="tag">&lt;/template&gt;</span>
+    <span class="tag">&lt;template</span> <span class="attr">#action</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;router-link</span> <span class="attr">to</span>=<span class="str">"/account/balance"</span><span class="tag">&gt;</span>View statement<span class="tag">&lt;/router-link&gt;</span>
+    <span class="tag">&lt;/template&gt;</span>
+  <span class="tag">&lt;/UwAlert&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span><span class="tag">&gt;</span>
+<span class="kw">import</span> { <span class="fn">UwAlert</span> } <span class="kw">from</span> <span class="str">'@uw-it/solstice-vue'</span>
+<span class="tag">&lt;/script&gt;</span>`
+      },
+      angular: {
+        lang: 'Angular',
+        code: `<span class="comment">// alert-critical.component.ts</span>
+<span class="kw">import</span> { <span class="fn">Component</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="fn">UwAlertModule</span> } <span class="kw">from</span> <span class="str">'@uw-it/solstice-angular'</span>;
+
+<span class="fn">@Component</span>({
+  <span class="attr">selector</span>: <span class="str">'app-alert-critical'</span>,
+  <span class="attr">standalone</span>: <span class="kw">true</span>,
+  <span class="attr">imports</span>: [<span class="fn">UwAlertModule</span>],
+  <span class="attr">template</span>: <span class="str">\`
+    &lt;uw-alert variant="critical" aria-label="Critical"&gt;
+      &lt;p uwAlertContent&gt;You have a past-due balance.
+        Allow 3-5 business days for the balance
+        to update.&lt;/p&gt;
+      &lt;a uwAlertAction routerLink="/account/balance"&gt;
+        View statement&lt;/a&gt;
+    &lt;/uw-alert&gt;
+  \`</span>
+})
+<span class="kw">export class</span> <span class="fn">AlertCriticalComponent</span> {}`
+      }
+    },
+    warning: {
+      html: {
+        lang: 'HTML',
+        code: `<span class="tag">&lt;uw-alert</span> <span class="attr">variant</span>=<span class="str">"warning"</span> <span class="attr">role</span>=<span class="str">"alert"</span> <span class="attr">aria-label</span>=<span class="str">"Warning"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;p</span> <span class="attr">slot</span>=<span class="str">"content"</span><span class="tag">&gt;</span>Course meeting times overlap.
+    MATH 124 and CHEM 142 share meeting times on Tuesdays.
+    Adjust your schedule to avoid the conflict.<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/uw-alert&gt;</span>`
+      },
+      vue: {
+        lang: 'Vue',
+        code: `<span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;UwAlert</span> <span class="attr">variant</span>=<span class="str">"warning"</span> <span class="attr">aria-label</span>=<span class="str">"Warning"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;template</span> <span class="attr">#content</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;p&gt;</span>Course meeting times overlap.
+        MATH 124 and CHEM 142 share meeting times
+        on Tuesdays. Adjust your schedule.<span class="tag">&lt;/p&gt;</span>
+    <span class="tag">&lt;/template&gt;</span>
+  <span class="tag">&lt;/UwAlert&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span><span class="tag">&gt;</span>
+<span class="kw">import</span> { <span class="fn">UwAlert</span> } <span class="kw">from</span> <span class="str">'@uw-it/solstice-vue'</span>
+<span class="tag">&lt;/script&gt;</span>`
+      },
+      angular: {
+        lang: 'Angular',
+        code: `<span class="comment">// alert-warning.component.ts</span>
+<span class="kw">import</span> { <span class="fn">Component</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="fn">UwAlertModule</span> } <span class="kw">from</span> <span class="str">'@uw-it/solstice-angular'</span>;
+
+<span class="fn">@Component</span>({
+  <span class="attr">selector</span>: <span class="str">'app-alert-warning'</span>,
+  <span class="attr">standalone</span>: <span class="kw">true</span>,
+  <span class="attr">imports</span>: [<span class="fn">UwAlertModule</span>],
+  <span class="attr">template</span>: <span class="str">\`
+    &lt;uw-alert variant="warning" aria-label="Warning"&gt;
+      &lt;p uwAlertContent&gt;Course meeting times overlap.
+        MATH 124 and CHEM 142 share meeting times
+        on Tuesdays.&lt;/p&gt;
+    &lt;/uw-alert&gt;
+  \`</span>
+})
+<span class="kw">export class</span> <span class="fn">AlertWarningComponent</span> {}`
+      }
+    },
+    info: {
+      html: {
+        lang: 'HTML',
+        code: `<span class="tag">&lt;uw-alert</span> <span class="attr">variant</span>=<span class="str">"info"</span> <span class="attr">aria-label</span>=<span class="str">"Info"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;p</span> <span class="attr">slot</span>=<span class="str">"content"</span><span class="tag">&gt;</span>Registration opens at 6:00 AM
+    on November 4. Check your registration period
+    on the academic calendar.<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/uw-alert&gt;</span>`
+      },
+      vue: {
+        lang: 'Vue',
+        code: `<span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;UwAlert</span> <span class="attr">variant</span>=<span class="str">"info"</span> <span class="attr">aria-label</span>=<span class="str">"Info"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;template</span> <span class="attr">#content</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;p&gt;</span>Registration opens at 6:00 AM on November 4.
+        Check your registration period on the
+        academic calendar.<span class="tag">&lt;/p&gt;</span>
+    <span class="tag">&lt;/template&gt;</span>
+  <span class="tag">&lt;/UwAlert&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span><span class="tag">&gt;</span>
+<span class="kw">import</span> { <span class="fn">UwAlert</span> } <span class="kw">from</span> <span class="str">'@uw-it/solstice-vue'</span>
+<span class="tag">&lt;/script&gt;</span>`
+      },
+      angular: {
+        lang: 'Angular',
+        code: `<span class="comment">// alert-info.component.ts</span>
+<span class="kw">import</span> { <span class="fn">Component</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="fn">UwAlertModule</span> } <span class="kw">from</span> <span class="str">'@uw-it/solstice-angular'</span>;
+
+<span class="fn">@Component</span>({
+  <span class="attr">selector</span>: <span class="str">'app-alert-info'</span>,
+  <span class="attr">standalone</span>: <span class="kw">true</span>,
+  <span class="attr">imports</span>: [<span class="fn">UwAlertModule</span>],
+  <span class="attr">template</span>: <span class="str">\`
+    &lt;uw-alert variant="info" aria-label="Info"&gt;
+      &lt;p uwAlertContent&gt;Registration opens at
+        6:00 AM on November 4.&lt;/p&gt;
+    &lt;/uw-alert&gt;
+  \`</span>
+})
+<span class="kw">export class</span> <span class="fn">AlertInfoComponent</span> {}`
+      }
+    }
+  };
+
+  // ===== SVG icons =====
+  const clipboardIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5V3a1.5 1.5 0 0 1 1.5-1.5H10.5"/></svg>';
+  const checkIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3.5 3.5L13 5"/></svg>';
+
+  // ===== Render code into all demo blocks =====
+  function renderAllCode(framework) {
+    document.querySelectorAll('.demo-block[data-snippet]').forEach(block => {
+      const key = block.dataset.snippet;
+      const snippet = snippets[key]?.[framework];
+      if (!snippet) return;
+
+      const codeLang = block.querySelector('.code-lang');
+      const pre = block.querySelector('pre');
+      if (codeLang) codeLang.textContent = snippet.lang;
+      if (pre) pre.innerHTML = snippet.code;
+    });
+  }
+
+  // Initial render
+  let currentFramework = 'html';
+  let codeVisible = false;
+  renderAllCode(currentFramework);
+
+  // ===== Global code toggle =====
+  const codeToggle = document.getElementById('codeToggle');
+  const frameworkControl = document.getElementById('frameworkControl');
+  const frameworkSelect = document.getElementById('frameworkSelect');
+
+  function setCodeVisible(visible) {
+    codeVisible = visible;
+    codeToggle.classList.toggle('active', visible);
+    codeToggle.setAttribute('aria-checked', visible);
+    frameworkControl.classList.toggle('visible', visible);
+    document.querySelectorAll('.demo-block').forEach(block => {
+      block.classList.toggle('code-visible', visible);
+    });
+  }
+
+  codeToggle.addEventListener('click', () => setCodeVisible(!codeVisible));
+  codeToggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setCodeVisible(!codeVisible);
+    }
+  });
+
+  // ===== Framework selector =====
+  frameworkSelect.addEventListener('change', () => {
+    currentFramework = frameworkSelect.value;
+    renderAllCode(currentFramework);
+  });
+
+  // ===== Copy button =====
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.code-copy');
+    if (!btn) return;
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.textContent).then(() => {
+      btn.innerHTML = checkIcon;
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = clipboardIcon;
+        btn.classList.remove('copied');
+      }, 1500);
+    });
+  });
+
+  // ===== Sidebar nav toggle =====
+  document.querySelectorAll('.nav-section-title').forEach(title => {
+    title.addEventListener('click', () => {
+      const section = title.parentElement;
+      if (section.querySelector('.nav-items')) {
+        const isOpen = section.classList.toggle('open');
+        title.setAttribute('aria-expanded', isOpen);
+      }
+    });
+  });
+
+  // ===== TOC scroll tracking =====
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const id = entry.target.id;
+        const link = document.querySelector(`.toc-list a[href="#${id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -60% 0px' });
+
+  document.querySelectorAll('.doc-section').forEach(s => observer.observe(s));
+
+  // ===== Cmd+K to focus search =====
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      document.querySelector('.sidebar-search input')?.focus();
+    }
+  });
+
+  // ===== Draggable sidebar resize =====
+  const resizeHandle = document.getElementById('sidebarResize');
+  const root = document.documentElement;
+  let isDragging = false;
+
+  resizeHandle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    isDragging = true;
+    resizeHandle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const width = Math.min(Math.max(e.clientX, 160), 400);
+    root.style.setProperty('--sidebar-width', width + 'px');
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    resizeHandle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+</script>
+</body>
+</html>
