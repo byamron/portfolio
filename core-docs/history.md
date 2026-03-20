@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Updated resume PDF
+
+**Branch:** `update-resume-file`
+
+**Summary:** Replaced `public/ben-yamron-resume.pdf` with the March 26, 2026 version. Straightforward file swap — no code changes.
+
+---
+
 ## 2026-03-20 — Polish case studies for public launch
 
 **Branch:** `polish-case-studies`
@@ -119,6 +127,7 @@ Decision log and completed work, in reverse chronological order.
 - **PNG format** — Source export was PNG; updated the reference from `.jpg` to `.png`.
 
 ---
+
 
 ## 2026-03-19 — Responsive image alignment + cover portrait
 
