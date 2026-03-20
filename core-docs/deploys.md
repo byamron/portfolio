@@ -13,8 +13,9 @@ Netlify auto-deploys when `main` is updated. Monthly limit: **20 deploys**. Bill
 | 5 | 2026-03-15 | `9f7b4a6` | Update contribution data (automated) |
 | 6 | 2026-03-15 | PR #57 | Deploy tracking and next-update branching strategy |
 | 7 | 2026-03-19 | PR #59 | Batch deploy: glass pill fix, double cursor fix, sidebar backdrop, glass wiggle, responsive two-column |
+| 8 | 2026-03-20 | PR #68 | Batch deploy: case study polish, prototypes, video previews, Trio case study |
 
-**Deploys used: 7 / 20** — 13 remaining
+**Deploys used: 8 / 20** — 12 remaining
 
 ---
 
