@@ -685,7 +685,15 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 
 **Mode-aware hue correction**: In dark mode, the disc hue matches the accent directly. In light mode, the hue is shifted by 180° so that `difference` blending against light backgrounds produces accent-adjacent colors rather than complements. The disc color updates live when the accent or appearance mode changes (via MutationObserver on `data-accent` and `data-theme` attributes).
 
-**Global cursor suppression**: In invert mode, a `cursor-none` CSS class is toggled on `<html>` via `document.documentElement.classList`, activating a static CSS rule (`html.cursor-none, html.cursor-none body, html.cursor-none *, html.cursor-none *::before, html.cursor-none *::after { cursor: none !important; }`) defined in `globals.css`. This ensures the custom disc is the only cursor visible.
+**Global cursor suppression**: In invert mode, the `CustomCursor` effect adds a `cursor-none` class to `<html>`, paired with a CSS rule in `globals.css` that applies `cursor: none !important` to all elements. Standard and figpal modes remove the class.
+
+**Known limitation — Chromium on macOS Tahoe (26+)**: `cursor: none` is ignored by Chromium-based browsers (Chrome, Brave, Dia, Arc, etc.) on macOS 26. The OS cursor remains visible alongside the custom cursor. This is a browser/OS-level bug, not a code issue — the same CSS property works correctly in Safari. Extensive testing confirmed:
+- `cursor: none !important` via stylesheet, `<style>` injection, and inline styles all fail
+- Transparent cursor images (`cursor: url(transparent.png)`) also fail
+- The issue reproduces on old commits where the cursor previously worked — ruling out a code regression
+- Safari handles `cursor: none` correctly (minor flicker during active scroll momentum only)
+
+This will likely be resolved by a future Chromium or macOS update. No code-level workaround exists. If a fix becomes available, the current implementation (class toggle + CSS rule) should work without changes.
 
 ### Figpal mode
 

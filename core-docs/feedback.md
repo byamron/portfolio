@@ -22,6 +22,16 @@ Additionally, any code that looks up a value from an array using `.find()` shoul
 
 **Scope:** This applies to ALL localStorage reads in the codebase — accent color, appearance mode, cursor mode, bg intensity, and any future persisted state. When adding new persisted values, always define a `VALID_*` array and validate on read.
 
+## 2026-03-20 — Verify browser/OS behavior before assuming code bugs
+
+**What was attempted:** Spent extensive effort trying to fix a "double cursor" issue (OS cursor visible alongside custom cursor). Tried 7 different CSS/JS approaches, none worked.
+
+**What went wrong:** The investigation assumed the issue was a code regression because "it wasn't happening before." Every fix targeted CSS cascade, timing, or specificity. In reality, `cursor: none` is broken at the browser/OS level in Chromium on macOS 26 (Tahoe). Building and testing the original "working" commit confirmed the same bug — no code change could fix it.
+
+**Lesson learned:** When a CSS property that fundamentally should work doesn't, test across browsers early. If the same behavior reproduces on an old known-good commit, it's an environment change (browser update, OS update), not a code regression. Don't iterate on increasingly complex CSS workarounds without first isolating whether the issue is code vs. browser vs. OS. A 2-minute cross-browser test would have saved hours of investigation.
+
+---
+
 ## 2026-02-21 — backdrop-filter requires correct z-index stacking
 
 **What was attempted:** Glass pill for sidebar controls was placed at z-index 0 (behind the controls) with backdrop-filter: blur(1px). Expected the blur to be visible through the transparent mode buttons above.

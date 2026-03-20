@@ -2,6 +2,55 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Video hover preview for Mochi Subscriptions
+
+**Branch:** `mochi-hover-video`
+
+**Summary:** Added video preview support to `ImageDisplay` and set the Mochi Subscriptions project to show an MP4 on hover. Video renders with autoplay, muted, loop, playsInline — same contain-mode layout and 300ms cross-fade as other preview types.
+
+**Changes:** Added `videoPreview` field to `Project` interface, video rendering branch in `ImageDisplay.tsx` (priority: video > Lottie > static image), and `preview-mochi-subs.mp4` in `public/images/`.
+
+---
+
+## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
+
+**Branch:** `fix-double-cursor-v2`
+
+**Summary:** Investigated the persistent double cursor issue (OS cursor visible alongside custom cursor). After exhaustive testing, determined this is a browser/OS-level bug in Chromium on macOS 26 (Tahoe), not a code issue. No code changes shipped — all experimental fixes were reverted.
+
+**Investigation findings:**
+- `cursor: none !important` is completely ignored by Chromium-based browsers (Chrome, Brave, Dia) on macOS 26 once the user moves the mouse
+- Tested every CSS cascade approach: stylesheet rules, `<style>` tag injection, inline `!important` via `setProperty`, `mouseover` enforcement on every element — all fail
+- Transparent cursor images (`cursor: url(transparent.png)`) also fail
+- Built and tested the original working commit (`b889dc6`) — same bug. Confirms no code regression.
+- **Safari handles `cursor: none` correctly** (minor flicker during active scroll momentum only)
+
+**What did NOT work:**
+1. CSS class toggle + `globals.css` rule
+2. Dynamic `<style>` injection (`* { cursor: none !important; }`)
+3. Transparent SVG data URI cursor
+4. `<style>` tag in HTML `<head>` (before all CSS/JS)
+5. Inline `!important` via `element.style.setProperty('cursor', 'none', 'important')`
+6. `mouseover` event listener enforcing inline `!important` on every hovered element
+7. 32×32 transparent PNG cursor image
+
+**Decision:** Accept the limitation. The current class-toggle implementation works correctly in Safari. Chromium will likely fix this in a future update. Documented in `design-language.md`.
+
+---
+
+## 2026-03-19 — Add /push custom command for Claude Code
+
+**Branch:** `push-skill`
+
+**Summary:** Created a `/push` slash command (`.claude/commands/push.md`) that automates the full ship workflow: update core docs, commit, open a PR to `next-update`, and merge. Reduces manual steps when shipping feature work.
+
+**Decisions:**
+- **Targets `next-update` by default** — Follows the branching strategy from `core-docs/workflow.md`. Deploys only happen on `next-update → main`.
+- **Squash merge + delete branch** — Keeps `next-update` history clean.
+- **Committed directly to `main`** — This is project tooling, not a feature. Needs to be available to all branches immediately.
+
+---
+
 ## 2026-03-19 — Add UW design system hover preview image
 
 **Branch:** `uw-hover-image`
@@ -101,19 +150,6 @@ Decision log and completed work, in reverse chronological order.
 **Decisions:**
 - **Filter by `data-tight-bounds` attribute** rather than by position or a separate selector. The attribute already exists for per-card tight bounds behavior, so reusing it here keeps the system consistent.
 - **Kept `clearDelay` at 150ms** — the original documented value. Tested 350ms as an alternative but it offered no perceptible improvement once the stack bounds were fixed. The filter was the real fix; the delay increase was unnecessary.
-
----
-
-## 2026-03-19 — Add /push custom command for Claude Code
-
-**Branch:** `push-skill`
-
-**Summary:** Created a `/push` slash command (`.claude/commands/push.md`) that automates the full ship workflow: update core docs, commit, open a PR to `next-update`, and merge. Reduces manual steps when shipping feature work.
-
-**Decisions:**
-- **Targets `next-update` by default** — Follows the branching strategy from `core-docs/workflow.md`. Deploys only happen on `next-update → main`.
-- **Squash merge + delete branch** — Keeps `next-update` history clean.
-- **Committed directly to `main`** — This is project tooling, not a feature. Needs to be available to all branches immediately.
 
 ---
 
