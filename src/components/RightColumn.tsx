@@ -1,6 +1,9 @@
 import { ImageDisplay } from '@/components/ImageDisplay'
+import { useIsCompactTwoColumn } from '@/hooks/useMediaQuery'
 
 export function RightColumn() {
+  const isCompact = useIsCompactTwoColumn()
+
   return (
     <div
       className="right-column"
@@ -15,7 +18,7 @@ export function RightColumn() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: isCompact ? 'flex-start' : 'center',
       }}
     >
       <ImageDisplay />

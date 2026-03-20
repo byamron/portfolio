@@ -156,16 +156,37 @@ The pairing was chosen to be a "nod to those with an eye for taste" — both fon
 
 ### Scale
 
-| Element | Font | Size | Line height | Color role |
-|---------|------|------|-------------|------------|
-| Display (case study hero h1) | Literata | 48px | 1.2 | Heading (high contrast) |
-| Title (h1) | Literata | 36px | 1.2 | Heading (high contrast) |
-| Section heading (case study h2) | Literata | 24px | 1.2 | Heading (high contrast) |
-| Narrative (section intros, about) | Literata | 22px | 1.4 | Tertiary (muted) |
-| Project links | Onest | 18px | 1.4 | Heading (high contrast) |
-| Meta / captions | Onest | 14px | 1.4 | Grey (low contrast) |
+All sizes are defined as CSS custom properties (`--text-size-*`) in `src/styles/theme.css`, with responsive overrides in `src/styles/globals.css`. Components reference tokens, never hardcoded pixel values.
 
-The main page uses a 3-tier scale: 36px heading → 22px narrative → 18px links. The heading is the identity statement, the narrative sets editorial context, and the links are navigational. The 36→22 step (1.64×) is large enough to maintain clear heading dominance. The 22→18 step (1.22×) is subtle — narrative and links are differentiated primarily by font, weight, and color rather than dramatic size contrast. Case study pages extend the scale with a 48px display size for the hero, 24px section headings, and 14px for captions. The full scale follows a roughly 1.2–1.33× progression: 14 → 18 → 22 → 24 → 36 → 48.
+| Element | Token | Font | Default | Line height | Color role |
+|---------|-------|------|---------|-------------|------------|
+| Display (case study hero h1) | `--text-size-display` | Literata | 48px | 1.2 | Heading (high contrast) |
+| Title (h1) | `--text-size-title` | Literata | 36px | 1.2 | Heading (high contrast) |
+| Section heading (case study h2) | `--text-size-section-heading` | Literata | 28px | 1.2 | Heading (high contrast) |
+| Narrative (section intros, about) | `--text-size-narrative` | Literata | 22px | 1.4 | Tertiary (muted) |
+| Project links / body | `--text-size-body` | Onest | 18px | 1.4 | Heading (high contrast) |
+| Image summary | `--text-size-summary` | Literata | 15px | 1.5 | Tertiary (muted) |
+| Meta / captions | `--text-size-caption` | Onest | 14px | 1.4 | Grey (low contrast) |
+| Legend / tooltips | `--text-size-small` | Onest | 13px | 1.3 | Grey (low contrast) |
+
+The main page uses a 3-tier scale: 36px heading → 22px narrative → 18px links. The heading is the identity statement, the narrative sets editorial context, and the links are navigational. The 36→22 step (1.64×) is large enough to maintain clear heading dominance. The 22→18 step (1.22×) is subtle — narrative and links are differentiated primarily by font, weight, and color rather than dramatic size contrast. Case study pages extend the scale with a 48px display size for the hero, 28px section headings, and 14px for captions. The full scale follows a roughly 1.2–1.33× progression: 13 → 14 → 15 → 18 → 22 → 28 → 36 → 48.
+
+### Responsive typography scaling
+
+The type scale adapts proportionally at narrower two-column viewports to maintain readability in tighter layouts. Below the two-column breakpoint (900px), sizes reset to full scale since single-column layout provides ample width.
+
+| Token | Full (1200+) | Standard (1024–1199) | Compact (900–1023) | Single column (<900) |
+|-------|-------------|---------------------|-------------------|---------------------|
+| `--text-size-display` | 48px | 42px | 36px | 48px |
+| `--text-size-title` | 36px | 32px | 28px | 36px |
+| `--text-size-section-heading` | 28px | 26px | 24px | 28px |
+| `--text-size-narrative` | 22px | 20px | 19px | 22px |
+| `--text-size-body` | 18px | 17px | 16px | 18px |
+| `--text-size-summary` | 15px | 14px | 14px | 15px |
+| `--text-size-caption` | 14px | 13px | 13px | 14px |
+| `--text-size-small` | 13px | 12px | 12px | 13px |
+
+**Scaling principle**: Proportional reduction (~88–94%) that preserves the relative hierarchy. The ratios between sizes stay consistent — the heading still dominates the narrative, narrative still reads larger than links. Scaling is gentle enough that no size drops below readable thresholds.
 
 ### Link treatment
 
@@ -175,7 +196,7 @@ Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238
 
 - No text-transform (no uppercase labels or small caps)
 - No decorative letter-spacing on content text
-- No variable sizing for responsive — the scale is fixed (layout adapts, type doesn't)
+- Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.
 - No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence
 - No weight variation within a role — all headings share one weight, all body text shares one weight
 
@@ -210,7 +231,21 @@ The fixed right column creates a "magazine spread" feel — the image is always 
 
 ### Responsive behavior
 
-Below 1200px, the right column disappears entirely. It doesn't stack below or collapse — it's simply not part of the mobile experience. This is an opinionated choice: the hover-to-swap interaction doesn't translate to touch, and a stacked image would change the page's character. Better to let the content stand alone than to compromise the interaction model.
+The two-column layout persists down to **900px** — covering non-maximized browser windows, split-screen scenarios on 1920px+ displays, and most desktop-class viewports. Below 900px, the right column disappears entirely. It doesn't stack below or collapse — it's simply not part of the narrow/mobile experience. This is an opinionated choice: the hover-to-swap interaction doesn't translate to touch, and a stacked image would change the page's character.
+
+**Right-column alignment** shifts responsively. At **1200px+** the image is vertically centered — at these widths the portrait fills 89–93% of the column height, so centering produces a balanced composition. At **900–1199px** the image is top-aligned (`justifyContent: flex-start`) — the portrait's top edge aligns with the heading baseline in the left column, grounding the two columns as a single composition. Dead space moves to the bottom where the summary text zone lives. The `useIsCompactTwoColumn()` hook (true at 900–1199px) drives this switch.
+
+Spacing and typography scale together across three two-column tiers:
+
+| Viewport | Tier | Margins | Gap | Padding-top | Content max-width |
+|----------|------|---------|-----|-------------|-------------------|
+| 1440+ | Full | 64px | 48px | 64px | 528px |
+| 1200–1439 | Wide | 48px | 32px | 64px | 528px |
+| 1024–1199 | Standard | 28px | 16px | 56px | 480px |
+| 900–1023 | Compact | 20px | 0px | 48px | 440px |
+| <900 | Single column | 32px | — | 64px | 528px |
+
+Typography sizes reduce proportionally at the Standard and Compact tiers (see Typography § Responsive typography scaling).
 
 ### Image container
 
@@ -474,8 +509,9 @@ Hovering a project link swaps the right-column image to a project-specific previ
 
 ### Image rules
 
-- Portrait images use `object-fit: cover` with `border-radius: 32px` — they fill the space
-- Project previews use `object-fit: contain` — aspect ratio is preserved, centered in the right column
+- **Portrait images** use `object-fit: cover` with `border-radius: 32px` in a container with `overflow: hidden`. They fill the entire right-column area edge-to-edge (within padding). At compact widths this means slight side cropping (~11% at 1024px, ~17% at 900px) — acceptable because the subject is centered. At wide viewports the column proportions closely match the portrait's 3:4 ratio, so cropping is negligible.
+- **Project previews** use `object-fit: contain` — aspect ratio is preserved, centered in the right column with bottom padding reserved for the summary text zone.
+- **Same container, different fit**: Both portrait and preview images live in the same absolute-fill container (`position: absolute; inset: 0`). The only difference is `object-fit`. This means no layout shift when transitioning between portrait and preview — just a cross-fade.
 - Images transition via opacity cross-fade only. No scale, no slide, no clip-path reveals.
 
 ### Click-to-cycle accent

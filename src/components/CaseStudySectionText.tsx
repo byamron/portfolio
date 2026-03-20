@@ -11,7 +11,7 @@ export function CaseStudySectionText({
     <section>
       <h2
         style={{
-          fontSize: 28,
+          fontSize: 'var(--text-size-section-heading)',
           fontWeight: 300,
           lineHeight: 1.2,
           color: 'var(--text-dark)',
@@ -24,7 +24,7 @@ export function CaseStudySectionText({
         <p
           key={i}
           style={{
-            fontSize: 18,
+            fontSize: 'var(--text-size-body)',
             lineHeight: 1.4,
             color: 'var(--text-medium)',
             marginBottom: i < paragraphs.length - 1 ? 24 : 0,

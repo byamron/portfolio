@@ -17,7 +17,12 @@ function useMediaQuery(query: string): boolean {
   return matches
 }
 
-/** True when viewport is >= 1200px (two-column layout) */
+/** True when viewport is >= 900px (two-column layout) */
 export function useIsWide(): boolean {
-  return useMediaQuery('(min-width: 1200px)')
+  return useMediaQuery('(min-width: 900px)')
+}
+
+/** True when two-column but below the wide tier (900–1199px) */
+export function useIsCompactTwoColumn(): boolean {
+  return useMediaQuery('(min-width: 900px) and (max-width: 1199px)')
 }

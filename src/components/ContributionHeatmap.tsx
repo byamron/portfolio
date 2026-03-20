@@ -382,7 +382,7 @@ export function ContributionHeatmap() {
               transform: 'translate(-50%, -100%)',
               padding: '6px 10px',
               borderRadius: 6,
-              fontSize: 13,
+              fontSize: 'var(--text-size-small)',
               fontFamily: "'Onest', sans-serif",
               fontWeight: 400,
               lineHeight: 1.3,
@@ -402,7 +402,7 @@ export function ContributionHeatmap() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <span style={{
           fontFamily: "'Onest', sans-serif",
-          fontSize: 13,
+          fontSize: 'var(--text-size-small)',
           fontWeight: 400,
           color: 'var(--text-grey)',
         }}>
@@ -420,7 +420,7 @@ export function ContributionHeatmap() {
           onBlur={onLinkLeave}
           style={{
             fontFamily: "'Onest', sans-serif",
-            fontSize: 13,
+            fontSize: 'var(--text-size-small)',
             fontWeight: 400,
             color: 'var(--text-grey)',
             textDecoration: 'underline',

@@ -79,7 +79,7 @@ export function CaseStudyPage() {
             display: 'inline-block',
             padding: '8px 12px',
             margin: '0 -12px 40px',
-            fontSize: 18,
+            fontSize: 'var(--text-size-body)',
             fontFamily: "'Onest', sans-serif",
             fontWeight: 400,
             color: 'var(--text-dark)',
@@ -90,7 +90,7 @@ export function CaseStudyPage() {
         >
           {'\u2190'} Back
         </Link>
-        <p style={{ color: 'var(--text-grey)', fontSize: 18 }}>
+        <p style={{ color: 'var(--text-grey)', fontSize: 'var(--text-size-body)' }}>
           Case study not found.
         </p>
       </main>
@@ -159,7 +159,7 @@ export function CaseStudyPage() {
             borderRadius: 8,
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
-            fontSize: 18,
+            fontSize: 'var(--text-size-body)',
             fontFamily: "'Onest', sans-serif",
             fontWeight: 400,
             color: 'var(--text-dark)',

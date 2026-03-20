@@ -43,7 +43,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
         >
           <h1
             style={{
-              fontSize: 36,
+              fontSize: 'var(--text-size-title)',
               fontWeight: 300,
               lineHeight: 1.2,
               color: 'var(--text-dark)',
@@ -54,7 +54,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
           </h1>
           <p
             style={{
-              fontSize: 18,
+              fontSize: 'var(--text-size-body)',
               lineHeight: 1.4,
               color: 'var(--text-medium)',
               marginBottom: 8,
@@ -62,7 +62,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
           >
             {data.subtitle}
           </p>
-          <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
+          <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
             {data.timeline}
           </p>
           {(previewImage || data.heroVisual) && (
@@ -144,7 +144,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
           >
             <h1
               style={{
-                fontSize: 48,
+                fontSize: 'var(--text-size-display)',
                 fontWeight: 300,
                 lineHeight: 1.2,
                 color: 'var(--text-dark)',
@@ -155,7 +155,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
             </h1>
             <p
               style={{
-                fontSize: 18,
+                fontSize: 'var(--text-size-body)',
                 lineHeight: 1.4,
                 color: 'var(--text-medium)',
                 marginBottom: 8,
@@ -163,7 +163,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
             >
               {data.subtitle}
             </p>
-            <p style={{ fontSize: 14, color: 'var(--text-grey)' }}>
+            <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
               {data.timeline}
             </p>
           </motion.header>
