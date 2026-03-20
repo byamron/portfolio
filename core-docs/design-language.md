@@ -156,16 +156,37 @@ The pairing was chosen to be a "nod to those with an eye for taste" — both fon
 
 ### Scale
 
-| Element | Font | Size | Line height | Color role |
-|---------|------|------|-------------|------------|
-| Display (case study hero h1) | Literata | 48px | 1.2 | Heading (high contrast) |
-| Title (h1) | Literata | 36px | 1.2 | Heading (high contrast) |
-| Section heading (case study h2) | Literata | 24px | 1.2 | Heading (high contrast) |
-| Narrative (section intros, about) | Literata | 22px | 1.4 | Tertiary (muted) |
-| Project links | Onest | 18px | 1.4 | Heading (high contrast) |
-| Meta / captions | Onest | 14px | 1.4 | Grey (low contrast) |
+All sizes are defined as CSS custom properties (`--text-size-*`) in `src/styles/theme.css`, with responsive overrides in `src/styles/globals.css`. Components reference tokens, never hardcoded pixel values.
 
-The main page uses a 3-tier scale: 36px heading → 22px narrative → 18px links. The heading is the identity statement, the narrative sets editorial context, and the links are navigational. The 36→22 step (1.64×) is large enough to maintain clear heading dominance. The 22→18 step (1.22×) is subtle — narrative and links are differentiated primarily by font, weight, and color rather than dramatic size contrast. Case study pages extend the scale with a 48px display size for the hero, 24px section headings, and 14px for captions. The full scale follows a roughly 1.2–1.33× progression: 14 → 18 → 22 → 24 → 36 → 48.
+| Element | Token | Font | Default | Line height | Color role |
+|---------|-------|------|---------|-------------|------------|
+| Display (case study hero h1) | `--text-size-display` | Literata | 48px | 1.2 | Heading (high contrast) |
+| Title (h1) | `--text-size-title` | Literata | 36px | 1.2 | Heading (high contrast) |
+| Section heading (case study h2) | `--text-size-section-heading` | Literata | 28px | 1.2 | Heading (high contrast) |
+| Narrative (section intros, about) | `--text-size-narrative` | Literata | 22px | 1.4 | Tertiary (muted) |
+| Project links / body | `--text-size-body` | Onest | 18px | 1.4 | Heading (high contrast) |
+| Image summary | `--text-size-summary` | Literata | 15px | 1.5 | Tertiary (muted) |
+| Meta / captions | `--text-size-caption` | Onest | 14px | 1.4 | Grey (low contrast) |
+| Legend / tooltips | `--text-size-small` | Onest | 13px | 1.3 | Grey (low contrast) |
+
+The main page uses a 3-tier scale: 36px heading → 22px narrative → 18px links. The heading is the identity statement, the narrative sets editorial context, and the links are navigational. The 36→22 step (1.64×) is large enough to maintain clear heading dominance. The 22→18 step (1.22×) is subtle — narrative and links are differentiated primarily by font, weight, and color rather than dramatic size contrast. Case study pages extend the scale with a 48px display size for the hero, 28px section headings, and 14px for captions. The full scale follows a roughly 1.2–1.33× progression: 13 → 14 → 15 → 18 → 22 → 28 → 36 → 48.
+
+### Responsive typography scaling
+
+The type scale adapts proportionally at narrower two-column viewports to maintain readability in tighter layouts. Below the two-column breakpoint (900px), sizes reset to full scale since single-column layout provides ample width.
+
+| Token | Full (1200+) | Standard (1024–1199) | Compact (900–1023) | Single column (<900) |
+|-------|-------------|---------------------|-------------------|---------------------|
+| `--text-size-display` | 48px | 42px | 36px | 48px |
+| `--text-size-title` | 36px | 32px | 28px | 36px |
+| `--text-size-section-heading` | 28px | 26px | 24px | 28px |
+| `--text-size-narrative` | 22px | 20px | 19px | 22px |
+| `--text-size-body` | 18px | 17px | 16px | 18px |
+| `--text-size-summary` | 15px | 14px | 14px | 15px |
+| `--text-size-caption` | 14px | 13px | 13px | 14px |
+| `--text-size-small` | 13px | 12px | 12px | 13px |
+
+**Scaling principle**: Proportional reduction (~88–94%) that preserves the relative hierarchy. The ratios between sizes stay consistent — the heading still dominates the narrative, narrative still reads larger than links. Scaling is gentle enough that no size drops below readable thresholds.
 
 ### Link treatment
 
@@ -175,7 +196,7 @@ Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238
 
 - No text-transform (no uppercase labels or small caps)
 - No decorative letter-spacing on content text
-- No variable sizing for responsive — the scale is fixed (layout adapts, type doesn't)
+- Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.
 - No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence
 - No weight variation within a role — all headings share one weight, all body text shares one weight
 
@@ -210,7 +231,21 @@ The fixed right column creates a "magazine spread" feel — the image is always 
 
 ### Responsive behavior
 
-Below 1200px, the right column disappears entirely. It doesn't stack below or collapse — it's simply not part of the mobile experience. This is an opinionated choice: the hover-to-swap interaction doesn't translate to touch, and a stacked image would change the page's character. Better to let the content stand alone than to compromise the interaction model.
+The two-column layout persists down to **900px** — covering non-maximized browser windows, split-screen scenarios on 1920px+ displays, and most desktop-class viewports. Below 900px, the right column disappears entirely. It doesn't stack below or collapse — it's simply not part of the narrow/mobile experience. This is an opinionated choice: the hover-to-swap interaction doesn't translate to touch, and a stacked image would change the page's character.
+
+**Right-column alignment** shifts responsively. At **1200px+** the image is vertically centered — at these widths the portrait fills 89–93% of the column height, so centering produces a balanced composition. At **900–1199px** the image is top-aligned (`justifyContent: flex-start`) — the portrait's top edge aligns with the heading baseline in the left column, grounding the two columns as a single composition. Dead space moves to the bottom where the summary text zone lives. The `useIsCompactTwoColumn()` hook (true at 900–1199px) drives this switch.
+
+Spacing and typography scale together across three two-column tiers:
+
+| Viewport | Tier | Margins | Gap | Padding-top | Content max-width |
+|----------|------|---------|-----|-------------|-------------------|
+| 1440+ | Full | 64px | 48px | 64px | 528px |
+| 1200–1439 | Wide | 48px | 32px | 64px | 528px |
+| 1024–1199 | Standard | 28px | 16px | 56px | 480px |
+| 900–1023 | Compact | 20px | 0px | 48px | 440px |
+| <900 | Single column | 32px | — | 64px | 528px |
+
+Typography sizes reduce proportionally at the Standard and Compact tiers (see Typography § Responsive typography scaling).
 
 ### Image container
 
@@ -398,15 +433,15 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 
 When the cursor moves toward the edge of a hovered card, the glass pill responds with two subtle CSS transform effects. This replaces the earlier clip-path pentagon deformation system with a simpler, GPU-composited approach that's free of visual artifacts.
 
-**Lean** — The pill translates 3px toward the cursor direction, creating a "drawn toward" feeling.
+**Lean** — The pill translates up to 2.5px toward the cursor direction, creating a "drawn toward" feeling. The effect is intentionally subtle — it should reward deliberate edge-seeking, not distract during casual browsing.
 
-**Tilt** — The pill rotates up to 1.0° to provide cross-axis positional feedback. When the cursor is in the top-right corner, the top-right corner of the pill visually follows. This communicates spatial awareness beyond simple attraction.
+**Tilt** — The pill rotates up to 0.75° to provide cross-axis positional feedback. When the cursor is in the top-right corner, the top-right corner of the pill visually follows. This communicates spatial awareness beyond simple attraction.
 
-- **Dead zone**: Inner 70% of the card (`deadZone: 0.7`). Cursor in the center of the card produces no lean or tilt. Effect activates in the outer 30%.
-- **Pull curve**: `t = 1 - exp(-rawD * 1.5)` — exponential approach from 0 to 1. Smooth onset, asymptotically approaches maximum.
-- **Lean formula**: `leanX = dirX * t * maxLean`, `leanY = dirY * t * maxLean` where `maxLean = 3px` and `dir` is the unit vector from card center to cursor.
+- **Dead zone**: Inner 78% of the card (`deadZone: 0.78`). Cursor in the center and middle area of the card produces no lean or tilt. Effect activates only in the outer 22% — the cursor must be near the edge to trigger any movement. For a typical 60px-tall card, the cursor must be within ~6.6px of the edge. Casual vertical movement through a card should not trigger the effect.
+- **Pull curve**: `t = 1 - exp(-rawD * 2.0)` — exponential approach from 0 to 1. Moderate onset that ramps up toward the boundary, reinforcing the "barely-there until you notice it" principle.
+- **Lean formula**: `leanX = dirX * t * maxLean`, `leanY = dirY * t * maxLean` where `maxLean = 2.5px` and `dir` is the unit vector from card center to cursor.
 - **Tilt formula**: `rotateDeg = (cnx * dirY * |dirY| + cny * dirX * |dirX|) * maxTilt * t` — uses `dirY * |dirY|` (preserving sign, squaring magnitude) to ensure symmetric rotation in all quadrants. `cnx`/`cny` are clamped normalized cursor positions.
-- **Config**: `maxPull` controls activation. `maxPull: 0` disables lean + tilt entirely (no directional feedback). Any positive value activates lean (3px) + tilt (1.0°).
+- **Config**: `maxPull` controls activation. `maxPull: 0` disables lean + tilt entirely (no directional feedback). Any positive value activates lean (2.5px) + tilt (0.75°).
 - **Lerp rate**: 0.12 per frame — creates a "chasing" feel. Animated via `requestAnimationFrame` loop, not CSS transitions.
 - **Settle threshold**: 0.3px — when all four dimensions (x, y, width, height) are within 0.3px of target, the loop snaps to exact values and stops.
 - **No clip-path**: The pill uses only `transform: translate() rotate()` — no SVG path generation, no clip-path manipulation. This is GPU-composited and never triggers layout or paint.
@@ -474,8 +509,9 @@ Hovering a project link swaps the right-column image to a project-specific previ
 
 ### Image rules
 
-- Portrait images use `object-fit: cover` with `border-radius: 32px` — they fill the space
-- Project previews use `object-fit: contain` — aspect ratio is preserved, centered in the right column
+- **Portrait images** use `object-fit: cover` with `border-radius: 32px` in a container with `overflow: hidden`. They fill the entire right-column area edge-to-edge (within padding). At compact widths this means slight side cropping (~11% at 1024px, ~17% at 900px) — acceptable because the subject is centered. At wide viewports the column proportions closely match the portrait's 3:4 ratio, so cropping is negligible.
+- **Project previews** use `object-fit: contain` — aspect ratio is preserved, centered in the right column with bottom padding reserved for the summary text zone.
+- **Same container, different fit**: Both portrait and preview images live in the same absolute-fill container (`position: absolute; inset: 0`). The only difference is `object-fit`. This means no layout shift when transitioning between portrait and preview — just a cross-fade.
 - Images transition via opacity cross-fade only. No scale, no slide, no clip-path reveals.
 
 ### Click-to-cycle accent
@@ -581,6 +617,22 @@ When the accent color is cycled (via clicking the portrait image), the sidebar t
 
 This creates a cause-and-effect pairing: clicking the image shifts the environment (accent cycle) and the sidebar trigger physically reacts — a small moment of delight that connects two otherwise separate interface elements.
 
+### Sidebar atmospheric zone
+
+When the sidebar opens on hover, a feathered backdrop-blur zone materializes behind the controls. Its purpose is contrast — providing legibility against the right-column image content without relocating controls from their designated position.
+
+**Implementation:**
+
+- **Element**: A 300px-wide absolutely-positioned div extending leftward from the sidebar. It exists only when the sidebar is hovered; at rest, no backdrop is present (mounted/unmounted via `AnimatePresence` to avoid compositing cost).
+- **Blur**: `backdrop-filter: blur(10px)` across the full element. This frosted layer softens whatever image content sits behind the controls.
+- **Background tint**: A 5-stop `linear-gradient` mixing `var(--bg)` at increasing opacity — `0% → 10% → 30% → 55% → 80%` — to wash the blurred area with the current theme color.
+- **Mask curve**: A 6-stop `mask-image` gradient using `rgba(0,0,0,...)` values — `0 → 0.02 → 0.1 → 0.3 → 0.65 → 1.0` — distributed across 0% to 80% of the element width. This S-curve produces a gradual feathered falloff with no visible hard edge.
+- **Animation**: Framer Motion opacity `0 → 1` over 350ms with smooth easing, matching the stagger reveal timing. Uses `useReducedMotion()` hook — duration set to `0` when user prefers reduced motion.
+- **Control shadows**: A subtle `drop-shadow` filter on the controls container for additional readability as a secondary measure.
+- **Performance**: `will-change: opacity`, `contain: strict`. `prefers-reduced-motion` disables blur entirely via CSS (background tint still provides contrast), and the JS opacity animation is instant via `useReducedMotion()`.
+
+**Design rationale:** This extends the site's glass vocabulary. The glass pill on project cards, the glass pill on sidebar controls, and the sidebar backdrop all share the same material philosophy: frosted, accent-tinted, momentary. They appear when interaction demands them and disappear at rest. The backdrop solves the sidebar-image overlap through design craft rather than avoidance.
+
 ### Data visualizations
 
 Embedded data visualizations (e.g., the contribution heatmap) follow these conventions:
@@ -633,7 +685,15 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 
 **Mode-aware hue correction**: In dark mode, the disc hue matches the accent directly. In light mode, the hue is shifted by 180° so that `difference` blending against light backgrounds produces accent-adjacent colors rather than complements. The disc color updates live when the accent or appearance mode changes (via MutationObserver on `data-accent` and `data-theme` attributes).
 
-**Global cursor suppression**: In invert mode, a `<style>` tag injects `* { cursor: none !important; }` to suppress all native cursors. This ensures the custom disc is the only cursor visible.
+**Global cursor suppression**: In invert mode, the `CustomCursor` effect adds a `cursor-none` class to `<html>`, paired with a CSS rule in `globals.css` that applies `cursor: none !important` to all elements. Standard and figpal modes remove the class.
+
+**Known limitation — Chromium on macOS Tahoe (26+)**: `cursor: none` is ignored by Chromium-based browsers (Chrome, Brave, Dia, Arc, etc.) on macOS 26. The OS cursor remains visible alongside the custom cursor. This is a browser/OS-level bug, not a code issue — the same CSS property works correctly in Safari. Extensive testing confirmed:
+- `cursor: none !important` via stylesheet, `<style>` injection, and inline styles all fail
+- Transparent cursor images (`cursor: url(transparent.png)`) also fail
+- The issue reproduces on old commits where the cursor previously worked — ruling out a code regression
+- Safari handles `cursor: none` correctly (minor flicker during active scroll momentum only)
+
+This will likely be resolved by a future Chromium or macOS update. No code-level workaround exists. If a fix becomes available, the current implementation (class toggle + CSS rule) should work without changes.
 
 ### Figpal mode
 

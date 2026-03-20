@@ -12,7 +12,7 @@ const needsShadow = new Set(['cip-misinfo', 'acorn-covid'])
 const summaryStyle: React.CSSProperties = {
   fontFamily: "'Literata', serif",
   fontWeight: 300,
-  fontSize: 15,
+  fontSize: 'var(--text-size-summary)',
 }
 
 const reducedMotion =
@@ -93,6 +93,43 @@ export function ImageDisplay() {
     return () => { cancelled = true }
   }, [lottieUrl])
 
+  // Portrait fills with cover, previews use contain (no cropping)
+  const usePortraitCover = !isPreview
+
+  const imgStyle: React.CSSProperties = usePortraitCover
+    ? {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        borderRadius: 32,
+        filter: dropShadow,
+        viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
+      }
+    : {
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain',
+        borderRadius: 32,
+        filter: dropShadow,
+        viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
+      }
+
+  const imageWrapperStyle: React.CSSProperties = usePortraitCover
+    ? {
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+        borderRadius: 32,
+      }
+    : {
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: `0 5% ${TEXT_ZONE_HEIGHT + 24}px`,
+      }
+
   return (
     <div
       ref={containerRef}
@@ -112,7 +149,7 @@ export function ImageDisplay() {
         cursor: 'pointer',
       }}
     >
-      {/* Live region for screen reader announcements — must be separate from interactive elements */}
+      {/* Live region for screen reader announcements */}
       <div
         aria-live="polite"
         aria-atomic="true"
@@ -130,7 +167,8 @@ export function ImageDisplay() {
       >
         {project ? project.title : `Portrait, ${accentColor} theme`}
       </div>
-      {/* Image — fills available space */}
+
+      {/* Image */}
       <AnimatePresence mode="sync">
         {lottieUrl && lottieData ? (
           <motion.div
@@ -164,26 +202,12 @@ export function ImageDisplay() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: isPreview ? `0 5% ${TEXT_ZONE_HEIGHT + 24}px` : undefined,
-            }}
+            style={imageWrapperStyle}
           >
             <img
               src={imageSrc}
               alt={project ? project.title : 'Ben Yamron portrait'}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 32,
-                filter: dropShadow,
-                viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
-              }}
+              style={imgStyle}
             />
           </motion.div>
         )}

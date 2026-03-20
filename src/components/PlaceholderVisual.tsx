@@ -20,7 +20,7 @@ export function PlaceholderVisual({ caption, style }: PlaceholderVisualProps) {
       {caption && (
         <figcaption
           style={{
-            fontSize: 14,
+            fontSize: 'var(--text-size-caption)',
             lineHeight: 1.4,
             color: 'var(--text-grey)',
           }}

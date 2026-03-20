@@ -292,12 +292,12 @@ function setupGlassHighlight(
       const ny = state.currentH > 0 ? relY / (state.currentH / 2) : 0
       const d = Math.sqrt(nx * nx + ny * ny)
 
-      const deadZone = 0.7
+      const deadZone = 0.78
       const rawD = Math.max(0, d - deadZone) / (1 - deadZone)
-      const t = 1 - Math.exp(-rawD * 1.5)
+      const t = 1 - Math.exp(-rawD * 2.0)
 
       // Lean: offset toward cursor
-      const maxLean = 3
+      const maxLean = 2.5
       const dirX = d > 0.001 ? nx / d : 0
       const dirY = d > 0.001 ? ny / d : 0
       leanX = dirX * t * maxLean
@@ -306,7 +306,7 @@ function setupGlassHighlight(
       // Tilt: cross-axis positional hint via rotation
       // Uses dirY * |dirY| (not just |dirY|) so the rotation sign flips correctly
       // when pulling from opposite sides. Symmetric in all quadrants.
-      const maxTilt = 1.0 // degrees
+      const maxTilt = 0.75 // degrees
       const cnx = Math.max(-1, Math.min(1, nx))
       const cny = Math.max(-1, Math.min(1, ny))
       rotateDeg = (cnx * dirY * Math.abs(dirY) + cny * dirX * Math.abs(dirX)) * maxTilt * t
@@ -329,7 +329,11 @@ function setupGlassHighlight(
 
   function isCursorInCardStack(clientX: number, clientY: number): boolean {
     const sel = configRef.current.cardSelector
-    const cards = container.querySelectorAll<HTMLElement>(sel)
+    const allCards = container.querySelectorAll<HTMLElement>(sel)
+    // Exclude tight-bounds cards (e.g. inline links like "Mochi Health") from the
+    // stack span — they aren't adjacent to project cards and would extend the
+    // stack bounds across unrelated content, keeping the pill alive in gaps.
+    const cards = Array.from(allCards).filter(c => !c.hasAttribute('data-tight-bounds'))
     if (cards.length === 0) return false
     const firstRect = cards[0]!.getBoundingClientRect()
     const lastRect = cards[cards.length - 1]!.getBoundingClientRect()

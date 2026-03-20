@@ -59,11 +59,11 @@ The project uses **Subframe** (component library) and **Tailwind CSS v4** for bu
 
 ### Typography:
 
-- **Font**: Manrope (Google Fonts), weight 400 throughout, sans-serif fallback
-- **Title/Headings**: 36px, weight 400, line-height 1.2
-- **Body/description**: 18px, weight 400, line-height 1.2
-- **Project links**: 18px, weight 400, line-height 1.4
-- Nuances (scale, secondary sizes, weights) to be refined later
+- **Fonts**: Literata (serif, 300) for headings/narrative, Onest (sans, 400) for body/links
+- **Tokenized**: All sizes use CSS custom properties (`--text-size-*`) defined in `src/styles/theme.css`
+- **Scale**: display 48px → title 36px → section-heading 28px → narrative 22px → body 18px → summary 15px → caption 14px → small 13px
+- **Responsive**: Sizes scale down proportionally in narrower two-column tiers (1024–1199px, 900–1023px), reset to full at <900px single column
+- See `core-docs/design-language.md` § Typography for full token table and responsive scaling values
 
 ### Dev panels policy:
 
@@ -98,7 +98,7 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 - **Layout**: Two-column flex — left 50% scrollable (`padding: 64px 40px`), right 50% fixed (`padding: 64px 16px`)
 - **Image container**: 528×720px, `border-radius: 32px`, `object-fit: cover`
 - **Spacing hierarchy**: 80px (content↔footer) → 64px (title↔sections) → 40px (between sections) → 24px (between links)
-- **Responsive**: Right column hidden below 1200px
+- **Responsive**: Two-column layout from 900px+, right column hidden below 900px. Spacing and typography scale across 4 tiers (see design-language.md).
 
 ## Project Structure (Target)
 

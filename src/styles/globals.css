@@ -38,10 +38,63 @@ body {
   }
 }
 
+/* Two-column, standard density */
 @media (max-width: 1199px) {
+  :root {
+    --layout-margin: 28px;
+    --layout-gap: 16px;
+    --layout-padding-top: 56px;
+    --content-max-width: 480px;
+
+    /* Typography: mild reduction */
+    --text-size-display: 42px;
+    --text-size-title: 32px;
+    --text-size-section-heading: 26px;
+    --text-size-narrative: 20px;
+    --text-size-body: 17px;
+    --text-size-summary: 14px;
+    --text-size-caption: 13px;
+    --text-size-small: 12px;
+  }
+}
+
+/* Two-column, compact */
+@media (max-width: 1023px) {
+  :root {
+    --layout-margin: 20px;
+    --layout-gap: 0px;
+    --layout-padding-top: 48px;
+    --content-max-width: 440px;
+
+    /* Typography: tighter reduction */
+    --text-size-display: 36px;
+    --text-size-title: 28px;
+    --text-size-section-heading: 24px;
+    --text-size-narrative: 19px;
+    --text-size-body: 16px;
+    --text-size-summary: 14px;
+    --text-size-caption: 13px;
+    --text-size-small: 12px;
+  }
+}
+
+/* Single-column: below two-column breakpoint */
+@media (max-width: 899px) {
   :root {
     --layout-margin: 32px;
     --layout-gap: 0px;
+    --layout-padding-top: 64px;
+    --content-max-width: 528px;
+
+    /* Typography: back to full scale (single column has plenty of room) */
+    --text-size-display: 48px;
+    --text-size-title: 36px;
+    --text-size-section-heading: 28px;
+    --text-size-narrative: 22px;
+    --text-size-body: 18px;
+    --text-size-summary: 15px;
+    --text-size-caption: 14px;
+    --text-size-small: 13px;
   }
 }
 
@@ -122,8 +175,8 @@ p a {
   border-color: transparent;
 }
 
-/* Responsive: hide right column below 1200px */
-@media (max-width: 1199px) {
+/* Responsive: hide right column below 900px */
+@media (max-width: 899px) {
   .layout-root {
     flex-direction: column;
   }
@@ -168,6 +221,15 @@ p a {
   animation: sidebar-jiggle 400ms ease-in-out;
 }
 
+/* Hide default cursor when custom cursor is active */
+html.cursor-none,
+html.cursor-none body,
+html.cursor-none *,
+html.cursor-none *::before,
+html.cursor-none *::after {
+  cursor: none !important;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -183,5 +245,11 @@ p a {
   ::view-transition-new(project-hero) {
     animation-duration: 0ms !important;
     animation-delay: 0ms !important;
+  }
+
+  /* Disable sidebar atmospheric zone blur — visual enhancement, not functional */
+  [data-sidebar] [aria-hidden="true"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 }

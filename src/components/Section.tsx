@@ -15,7 +15,7 @@ export function Section({ section, afterContext }: SectionProps) {
             key={i}
             style={{
               fontFamily: "'Literata', serif",
-              fontSize: 22,
+              fontSize: 'var(--text-size-narrative)',
               fontWeight: 300,
               lineHeight: 1.4,
               color: 'var(--text-grey)',

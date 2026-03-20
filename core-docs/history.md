@@ -2,6 +2,32 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
+
+**Branch:** `fix-double-cursor-v2`
+
+**Summary:** Investigated the persistent double cursor issue (OS cursor visible alongside custom cursor). After exhaustive testing, determined this is a browser/OS-level bug in Chromium on macOS 26 (Tahoe), not a code issue. No code changes shipped — all experimental fixes were reverted.
+
+**Investigation findings:**
+- `cursor: none !important` is completely ignored by Chromium-based browsers (Chrome, Brave, Dia) on macOS 26 once the user moves the mouse
+- Tested every CSS cascade approach: stylesheet rules, `<style>` tag injection, inline `!important` via `setProperty`, `mouseover` enforcement on every element — all fail
+- Transparent cursor images (`cursor: url(transparent.png)`) also fail
+- Built and tested the original working commit (`b889dc6`) — same bug. Confirms no code regression.
+- **Safari handles `cursor: none` correctly** (minor flicker during active scroll momentum only)
+
+**What did NOT work:**
+1. CSS class toggle + `globals.css` rule
+2. Dynamic `<style>` injection (`* { cursor: none !important; }`)
+3. Transparent SVG data URI cursor
+4. `<style>` tag in HTML `<head>` (before all CSS/JS)
+5. Inline `!important` via `element.style.setProperty('cursor', 'none', 'important')`
+6. `mouseover` event listener enforcing inline `!important` on every hovered element
+7. 32×32 transparent PNG cursor image
+
+**Decision:** Accept the limitation. The current class-toggle implementation works correctly in Safari. Chromium will likely fix this in a future update. Documented in `design-language.md`.
+
+---
+
 ## 2026-03-19 — Add /push custom command for Claude Code
 
 **Branch:** `push-skill`
@@ -12,6 +38,96 @@ Decision log and completed work, in reverse chronological order.
 - **Targets `next-update` by default** — Follows the branching strategy from `core-docs/workflow.md`. Deploys only happen on `next-update → main`.
 - **Squash merge + delete branch** — Keeps `next-update` history clean.
 - **Committed directly to `main`** — This is project tooling, not a feature. Needs to be available to all branches immediately.
+
+---
+
+## 2026-03-19 — Responsive image alignment + cover portrait
+
+**Branch:** `expand-two-column-range`
+
+**Summary:** Improved right-column image alignment across viewport sizes. Portrait images now fill the column with `object-fit: cover` (slight side cropping at compact widths), while hover previews stay `contain` (no cropping). The right column switches from centered to top-aligned at compact two-column widths (900–1199px) so the portrait's top edge aligns with the heading baseline.
+
+**What changed:**
+- `src/components/RightColumn.tsx` — Responsive `justifyContent`: centered at 1200px+, `flex-start` at 900–1199px via `useIsCompactTwoColumn()` hook.
+- `src/components/ImageDisplay.tsx` — Portrait uses `object-fit: cover` with `overflow: hidden` + `borderRadius: 32` wrapper. Previews use `object-fit: contain` with centered flex + bottom padding for text zone. Same absolute-fill container for both — no layout shift on hover.
+- `src/hooks/useMediaQuery.ts` — Added `useIsCompactTwoColumn()` hook (true at 900–1199px).
+- `core-docs/design-language.md` — Updated responsive behavior and image rules sections.
+
+**Decisions:**
+- **Cover for portraits, contain for previews** — Portraits are controlled assets with centered subjects; side cropping at compact widths (~11–17%) is acceptable. Previews vary in aspect ratio and should never be cropped.
+- **Responsive alignment, not universal** — Centering works at wide viewports (image fills 89–93% of height). Top-alignment only kicks in at compact widths where the centering gap becomes visually disconnected from the left column's heading.
+- **Same container for both** — No layout shifting between portrait and preview states. The cross-fade handles the transition between the large cover portrait and the smaller contained preview.
+
+---
+
+## 2026-03-17 — Reduce glass highlight wiggle
+
+**Branch:** `reduce-glass-wiggle`
+
+**Summary:** Tuned 4 physics constants in the glass highlight hook to make the pill's edge-responsive lean and tilt more subtle. The effect should reward deliberate edge-seeking without distracting during casual browsing.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — Updated 4 constants: `deadZone` 0.7→0.78, pull curve exponent 1.5→2.0, `maxLean` 3→2.5px, `maxTilt` 1.0°→0.75°.
+- `core-docs/design-language.md` — Updated glass pill lean/tilt spec to match the new constants with clarifying editorial framing.
+
+**Decisions:**
+- **Larger dead zone (0.78)** — The cursor must now be within ~22% of the edge to trigger any movement, reducing accidental activation.
+- **Steeper pull curve (2.0)** — Response ramps up more steeply near the boundary rather than easing in early, creating a "barely-there until you notice it" feel.
+- **Lower maxLean/maxTilt** — Reduced from 3px/1.0° to 2.5px/0.75° for a subtler overall effect.
+
+---
+
+## 2026-03-17 — Fix double cursor bug
+
+**Branch:** `fix-double-cursor`
+
+**Summary:** Fixed double-cursor issue where both the native OS cursor and the custom cursor were visible simultaneously. The root cause was the dynamic `<style>` tag injection approach for hiding the native cursor — race conditions or specificity conflicts could cause the injected style to fail or be duplicated.
+
+**What changed:**
+- `src/components/CustomCursor.tsx` — Replaced `document.createElement('style')` / `document.head.appendChild()` approach with `document.documentElement.classList.add('cursor-none')` / `.remove('cursor-none')`. Simpler, no DOM element creation/removal.
+- `src/styles/globals.css` — Added static CSS rule targeting `html.cursor-none` and descendants (including `::before`/`::after` pseudo-elements) with `cursor: none !important`.
+- `core-docs/design-language.md` — Updated "Global cursor suppression" description to reflect the new class-toggle mechanism.
+
+**Decisions:**
+- **CSS class toggle over style injection** — Static CSS rules are more reliable than dynamically injected `<style>` elements. No race conditions, no duplicate elements, easier to debug in DevTools.
+- **Broader selector coverage** — New rule explicitly targets `::before` and `::after` pseudo-elements, which the old `*` selector didn't cover.
+
+---
+
+## 2026-03-16 — Sidebar backdrop (variant E) chosen for sidebar-image overlap
+
+**Branch:** `sidebar-overlap-fix`
+
+**Summary:** At narrow two-column widths (1200–1439px), the sidebar controls overlap the right-column portrait image. After prototyping five approaches with a dev toggle panel, chose variant E (sidebar atmospheric zone — a feathered blur zone behind controls on hover) as the permanent solution.
+
+**Why variant E wins:**
+
+- **Preserves the full sidebar design language.** Vertical layout, intensity strip, stagger animations, 64px trigger alignment — all intact.
+- **Extends the existing glass vocabulary.** The backdrop is another frosted, accent-tinted, momentary surface — same material philosophy as the glass pill on project cards and sidebar controls.
+- **Solves through craft, not avoidance.** A 300px-wide element with a 6-stop `mask-image` S-curve produces a smooth blur falloff with no visible hard edge.
+- **Performance-safe.** Uses `AnimatePresence` to mount/unmount the backdrop (zero compositing cost at rest), `will-change: opacity`, `contain: strict`, and `prefers-reduced-motion` disables blur entirely. Framer Motion's `useReducedMotion()` hook sets the opacity animation duration to `0` for reduced-motion users.
+
+**Rejected alternatives:**
+
+- **Variant A** (extra right padding) — wasted space at wider viewports.
+- **Variant C** (fluid column split) — over-engineered for a narrow viewport range.
+- **Variant D** (top bar) — required removing the intensity strip (dealbreaker), introduced a foreign layout pattern.
+- **Original D** (left sidebar) — replaced by top bar, itself rejected.
+
+---
+
+## 2026-03-16 — Fix glass pill persisting across hover gaps
+
+**Branch:** `fix-hover-gap-behavior`
+
+**Summary:** Fixed the glass highlight pill staying alive when the cursor moved through gaps between unrelated content areas. The "Mochi Health" inline link in the hero shares the project card pill container (so the pill can slide between them), but its inclusion in the `isCursorInCardStack` bounds calculation extended the "stack" from the hero text all the way down to the last project card — keeping the pill alive in the large gap between the hero and the projects section.
+
+**What changed:**
+- `src/hooks/useGlassHighlight.ts` — `isCursorInCardStack` now filters out cards with `data-tight-bounds` from the stack span calculation. These cards (e.g. "Mochi Health") aren't adjacent to the project card list and would stretch the stack bounds across unrelated content. The pill can still slide to/from tight-bounds cards via the existing `handleMouseOver` logic; this only affects the "is the cursor still in the stack?" check that prevents premature clearing.
+
+**Decisions:**
+- **Filter by `data-tight-bounds` attribute** rather than by position or a separate selector. The attribute already exists for per-card tight bounds behavior, so reusing it here keeps the system consistent.
+- **Kept `clearDelay` at 150ms** — the original documented value. Tested 350ms as an alternative but it offered no perceptible improvement once the stack bounds were fixed. The filter was the real fix; the delay increase was unnecessary.
 
 ---
 

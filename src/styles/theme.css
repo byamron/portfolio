@@ -131,6 +131,27 @@
 }
 
 /* ============================================================================
+ * TYPOGRAPHY SCALE TOKENS
+ * Two-voice system: Literata (serif, 300) for headings + narrative,
+ * Onest (sans, 400) for body + links. Responsive scaling via media queries
+ * in globals.css overrides these defaults for narrower two-column viewports.
+ * ============================================================================ */
+
+:root {
+  --text-size-display: 48px;          /* Case study hero h1 */
+  --text-size-title: 36px;            /* Homepage h1 */
+  --text-size-section-heading: 28px;  /* Case study h2 */
+  --text-size-narrative: 22px;        /* Section intros, about text */
+  --text-size-body: 18px;             /* Project links, body text */
+  --text-size-summary: 15px;          /* Image summary text */
+  --text-size-caption: 14px;          /* Meta, timeline, captions */
+  --text-size-small: 13px;            /* Heatmap legend, tooltips */
+
+  /* Content max-width (left column inner content) */
+  --content-max-width: 528px;
+}
+
+/* ============================================================================
  * SUBFRAME THEME OVERRIDES
  * Maps Subframe's semantic tokens to portfolio values so Subframe components
  * (Button, Badge, etc.) match the portfolio's visual language.
