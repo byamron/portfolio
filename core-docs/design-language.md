@@ -685,11 +685,15 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 
 **Mode-aware hue correction**: In dark mode, the disc hue matches the accent directly. In light mode, the hue is shifted by 180° so that `difference` blending against light backgrounds produces accent-adjacent colors rather than complements. The disc color updates live when the accent or appearance mode changes (via MutationObserver on `data-accent` and `data-theme` attributes).
 
-**Global cursor suppression**: In invert mode, a `cursor-none` CSS class hides the OS cursor. Three layers ensure zero flash of the native cursor:
+**Global cursor suppression**: In invert mode, the `CustomCursor` effect adds a `cursor-none` class to `<html>`, paired with a CSS rule in `globals.css` that applies `cursor: none !important` to all elements. Standard and figpal modes remove the class.
 
-1. **HTML-level**: `index.html` ships with `class="cursor-none"` on `<html>` so the OS cursor is hidden from the very first paint. A tiny inline `<script>` checks `localStorage('cursorMode')` and removes the class if the user chose standard or figpal mode.
-2. **CSS-level**: The rule in `globals.css` uses `cursor: none !important` on `html.cursor-none` and all descendants (including `::before`/`::after`). Note: a transparent SVG data URI approach was tried but caused regressions — browsers handle `cursor: url(transparent-image)` inconsistently, and macOS can still render the OS cursor underneath. Bare `cursor: none` is the reliable path.
-3. **JS-level**: The `CustomCursor` effect cleanup does NOT remove the `cursor-none` class — only the setup code manages it (invert adds, standard/figpal removes). This prevents a one-frame OS cursor flash during effect re-runs when tint or mode dependencies change. A separate empty-deps effect handles full unmount cleanup.
+**Known limitation — Chromium on macOS Tahoe (26+)**: `cursor: none` is ignored by Chromium-based browsers (Chrome, Brave, Dia, Arc, etc.) on macOS 26. The OS cursor remains visible alongside the custom cursor. This is a browser/OS-level bug, not a code issue — the same CSS property works correctly in Safari. Extensive testing confirmed:
+- `cursor: none !important` via stylesheet, `<style>` injection, and inline styles all fail
+- Transparent cursor images (`cursor: url(transparent.png)`) also fail
+- The issue reproduces on old commits where the cursor previously worked — ruling out a code regression
+- Safari handles `cursor: none` correctly (minor flicker during active scroll momentum only)
+
+This will likely be resolved by a future Chromium or macOS update. No code-level workaround exists. If a fix becomes available, the current implementation (class toggle + CSS rule) should work without changes.
 
 ### Figpal mode
 

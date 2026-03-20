@@ -2,24 +2,29 @@
 
 Decision log and completed work, in reverse chronological order.
 
-## 2026-03-19 — Fix persistent double cursor (v2)
+## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
 
 **Branch:** `fix-double-cursor-v2`
 
-**Summary:** Fixed the double cursor issue (OS cursor + custom cursor both visible) that persisted even after the earlier style-injection → class-toggle migration. Root cause was two compounding timing issues. An initial attempt also introduced a transparent SVG data URI as a `cursor` value, which caused a regression and was reverted.
+**Summary:** Investigated the persistent double cursor issue (OS cursor visible alongside custom cursor). After exhaustive testing, determined this is a browser/OS-level bug in Chromium on macOS 26 (Tahoe), not a code issue. No code changes shipped — all experimental fixes were reverted.
 
-**What changed:**
-- `index.html` — Added `class="cursor-none"` to `<html>` so OS cursor is hidden from first paint. Inline `<script>` checks localStorage and removes the class for standard/figpal users.
-- `src/styles/globals.css` — Kept `cursor: none !important` (bare). A transparent SVG data URI was tried but reverted — browsers handle `cursor: url(transparent-image)` inconsistently on macOS, sometimes still rendering the OS cursor underneath.
-- `src/components/CustomCursor.tsx` — Removed `removeCursorNoneStyle()` from effect cleanup to prevent one-frame flash during re-runs. Added empty-deps unmount cleanup effect.
-- `core-docs/design-language.md` — Updated cursor suppression docs to describe the three-layer approach, with a note about the SVG data URI failure.
-
-**Root causes identified:**
-1. **Page-load race**: `cursor-none` class only added after React mount + effect. OS cursor visible until then.
-2. **Effect re-run gap**: Cleanup removed class, then setup re-added it. Browser could flash OS cursor between.
+**Investigation findings:**
+- `cursor: none !important` is completely ignored by Chromium-based browsers (Chrome, Brave, Dia) on macOS 26 once the user moves the mouse
+- Tested every CSS cascade approach: stylesheet rules, `<style>` tag injection, inline `!important` via `setProperty`, `mouseover` enforcement on every element — all fail
+- Transparent cursor images (`cursor: url(transparent.png)`) also fail
+- Built and tested the original working commit (`b889dc6`) — same bug. Confirms no code regression.
+- **Safari handles `cursor: none` correctly** (minor flicker during active scroll momentum only)
 
 **What did NOT work:**
-- **Transparent SVG data URI** (`cursor: url("data:image/svg+xml,...") 0 0, none`): Intended to be more reliable than bare `cursor: none`, but actually caused a regression. macOS/browsers may still show the system cursor or refuse to use a 1×1 transparent image as a valid cursor. Reverted back to `cursor: none !important`.
+1. CSS class toggle + `globals.css` rule
+2. Dynamic `<style>` injection (`* { cursor: none !important; }`)
+3. Transparent SVG data URI cursor
+4. `<style>` tag in HTML `<head>` (before all CSS/JS)
+5. Inline `!important` via `element.style.setProperty('cursor', 'none', 'important')`
+6. `mouseover` event listener enforcing inline `!important` on every hovered element
+7. 32×32 transparent PNG cursor image
+
+**Decision:** Accept the limitation. The current class-toggle implementation works correctly in Safari. Chromium will likely fix this in a future update. Documented in `design-language.md`.
 
 ---
 
