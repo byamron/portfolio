@@ -66,7 +66,11 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
           </p>
           {data.heroVisual && (
             <div style={{ marginTop: 32 }}>
-              <PlaceholderVisual caption={data.heroVisual.caption} />
+              <PlaceholderVisual
+                caption={data.heroVisual.caption}
+                prototypeSrc={data.heroVisual.prototypeSrc}
+                aspectRatio={data.heroVisual.aspectRatio}
+              />
             </div>
           )}
         </header>
@@ -79,7 +83,11 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
               />
               {section.visual && (
                 <div style={{ marginTop: 32 }}>
-                  <PlaceholderVisual caption={section.visual.caption} />
+                  <PlaceholderVisual
+                    caption={section.visual.caption}
+                    prototypeSrc={section.visual.prototypeSrc}
+                    aspectRatio={section.visual.aspectRatio}
+                  />
                 </div>
               )}
             </div>
@@ -97,7 +105,7 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
             }}
           >
             {data.gallery.map((item) => (
-              <PlaceholderVisual key={item.id} caption={item.caption} />
+              <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />
             ))}
           </div>
         )}
@@ -163,7 +171,11 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
           }}
         >
           {data.heroVisual && (
-            <PlaceholderVisual caption={data.heroVisual.caption} />
+            <PlaceholderVisual
+              caption={data.heroVisual.caption}
+              prototypeSrc={data.heroVisual.prototypeSrc}
+              aspectRatio={data.heroVisual.aspectRatio}
+            />
           )}
         </div>
       </div>
@@ -200,7 +212,11 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
             >
               {visuals[i] && (
                 <div style={{ position: 'sticky', top: 64 }}>
-                  <PlaceholderVisual caption={visuals[i]!.caption} />
+                  <PlaceholderVisual
+                    caption={visuals[i]!.caption}
+                    prototypeSrc={visuals[i]!.prototypeSrc}
+                    aspectRatio={visuals[i]!.aspectRatio}
+                  />
                 </div>
               )}
             </div>
@@ -228,7 +244,7 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
               const item = data.gallery[i]
               if (item.size === 'full') {
                 elements.push(
-                  <PlaceholderVisual key={item.id} caption={item.caption} />,
+                  <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />,
                 )
                 i++
               } else {
@@ -241,10 +257,10 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
                       style={{ display: 'flex', gap: 40 }}
                     >
                       <div style={{ flex: 1 }}>
-                        <PlaceholderVisual caption={item.caption} />
+                        <PlaceholderVisual caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <PlaceholderVisual caption={next.caption} />
+                        <PlaceholderVisual caption={next.caption} prototypeSrc={next.prototypeSrc} aspectRatio={next.aspectRatio} />
                       </div>
                     </div>,
                   )
@@ -254,6 +270,8 @@ export function CaseStudyLayoutA({ data, isNarrow }: CaseStudyLayoutAProps) {
                     <PlaceholderVisual
                       key={item.id}
                       caption={item.caption}
+                      prototypeSrc={item.prototypeSrc}
+                      aspectRatio={item.aspectRatio}
                     />,
                   )
                   i++

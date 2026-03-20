@@ -14,14 +14,17 @@ export function ImageDisplay() {
 
   const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
   const lottieUrl = project?.lottiePreview ?? null
+  const videoUrl = project?.videoPreview ?? null
   const imageSrc = project
     ? projectImageMap[project.projectId]
     : defaultImageMap[accentColor]
-  const contentKey = lottieUrl
-    ? `lottie-${project!.id}`
-    : project
-      ? project.projectId
-      : `default-${accentColor}`
+  const contentKey = videoUrl
+    ? `video-${project!.id}`
+    : lottieUrl
+      ? `lottie-${project!.id}`
+      : project
+        ? project.projectId
+        : `default-${accentColor}`
 
   const showShadow = project && needsShadow.has(project.id)
   const dropShadow = showShadow
@@ -62,7 +65,28 @@ export function ImageDisplay() {
       }}
     >
       <AnimatePresence mode="sync">
-        {lottieUrl && lottieData ? (
+        {videoUrl ? (
+          <motion.video
+            key={contentKey}
+            src={videoUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              borderRadius: 32,
+              filter: dropShadow,
+            }}
+          />
+        ) : lottieUrl && lottieData ? (
           <motion.div
             key={contentKey}
             initial={{ opacity: 0 }}

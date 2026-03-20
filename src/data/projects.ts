@@ -8,6 +8,7 @@ export interface Project {
   isLink: boolean
   caseStudySlug?: string // maps to markdown filename in data/case-studies/
   lottiePreview?: string // optional Lottie JSON path (overrides projectImageMap)
+  videoPreview?: string // optional video path (overrides projectImageMap)
 }
 
 export interface Section {
@@ -31,7 +32,7 @@ export const sections: Section[] = [
       'Before Mochi, I took on design and research problems across different domains.',
     ],
     projects: [
-      { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system' },
+      { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system', videoPreview: '/prototypes/uw-preview.mp4' },
       { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv' },
       { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json' },
       { id: 'duo-flags', title: 'Languages \u2260 Flags', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags' },
