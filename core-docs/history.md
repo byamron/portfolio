@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-19 — Add UW design system hover preview image
+
+**Branch:** `uw-hover-image`
+
+**Summary:** Added hover preview image for the UW design system case study (`preview-uw.png`). Previously the `projectImageMap` referenced a non-existent `preview-uw.jpg`. Copied the exported Alert component screenshot and updated the file extension in `projects.ts`.
+
+**Decisions:**
+- **Kept shared `uw` projectId** — Multiple projects share this ID, and this is the first preview image for it. No need to split IDs yet.
+- **PNG format** — Source export was PNG; updated the reference from `.jpg` to `.png`.
+
+---
+
 ## 2026-03-19 — Responsive image alignment + cover portrait
 
 **Branch:** `expand-two-column-range`
@@ -89,6 +101,19 @@ Decision log and completed work, in reverse chronological order.
 **Decisions:**
 - **Filter by `data-tight-bounds` attribute** rather than by position or a separate selector. The attribute already exists for per-card tight bounds behavior, so reusing it here keeps the system consistent.
 - **Kept `clearDelay` at 150ms** — the original documented value. Tested 350ms as an alternative but it offered no perceptible improvement once the stack bounds were fixed. The filter was the real fix; the delay increase was unnecessary.
+
+---
+
+## 2026-03-19 — Add /push custom command for Claude Code
+
+**Branch:** `push-skill`
+
+**Summary:** Created a `/push` slash command (`.claude/commands/push.md`) that automates the full ship workflow: update core docs, commit, open a PR to `next-update`, and merge. Reduces manual steps when shipping feature work.
+
+**Decisions:**
+- **Targets `next-update` by default** — Follows the branching strategy from `core-docs/workflow.md`. Deploys only happen on `next-update → main`.
+- **Squash merge + delete branch** — Keeps `next-update` history clean.
+- **Committed directly to `main`** — This is project tooling, not a feature. Needs to be available to all branches immediately.
 
 ---
 

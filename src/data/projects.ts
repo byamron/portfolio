@@ -53,7 +53,7 @@ export const sections: Section[] = [
 
 // projectId → preview image (only 4 unique previews, not 11)
 export const projectImageMap: Record<string, string> = {
-  uw: '/images/preview-uw.jpg',
+  uw: '/images/preview-uw.png',
   sony: '/images/preview-sony.gif',
   cip: '/images/preview-cip.jpg',
   acorn: '/images/preview-acorn.png',
