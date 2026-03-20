@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import type {
   CaseStudy,
@@ -8,29 +8,42 @@ import type {
 import { CaseStudySectionText } from './CaseStudySectionText'
 import { PlaceholderVisual } from './PlaceholderVisual'
 
+const Lottie = lazy(() => import('lottie-react'))
+
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 interface CaseStudyLayoutAProps {
   data: CaseStudy
   isNarrow: boolean
   previewImage?: string
+  lottiePreview?: string
 }
 
-/**
- * Collect all visuals for the evidence grid: section visuals + gallery items.
- * heroVisual is excluded — it's already shown in the hero zone.
- */
-function collectVisuals(data: CaseStudy): CaseStudyVisual[] {
-  const visuals: CaseStudyVisual[] = []
-  for (const section of data.sections) {
-    if (section.visual) visuals.push(section.visual)
-  }
-  for (const item of data.gallery) {
-    visuals.push({ id: item.id, caption: item.caption ?? '' })
-  }
-  return visuals
+/** Only render visuals that have real content (prototype iframes), not empty gray boxes */
+function hasRealContent(visual: CaseStudyVisual | null | undefined): visual is CaseStudyVisual {
+  return !!visual?.prototypeSrc
 }
 
-export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayoutAProps) {
-  const allVisuals = useMemo(() => collectVisuals(data), [data])
+export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }: CaseStudyLayoutAProps) {
+  const [lottieData, setLottieData] = useState<object | null>(null)
+
+  useEffect(() => {
+    if (!lottiePreview) {
+      setLottieData(null)
+      return
+    }
+    let cancelled = false
+    fetch(lottiePreview)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setLottieData(d) })
+      .catch(() => { if (!cancelled) setLottieData(null) })
+    return () => { cancelled = true }
+  }, [lottiePreview])
+
+  const hasHero = !!(previewImage || (lottiePreview && lottieData))
+  const realGalleryItems = data.gallery.filter(item => item.prototypeSrc)
 
   if (isNarrow) {
     return (
@@ -65,9 +78,17 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
           <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
             {data.timeline}
           </p>
-          {(previewImage || data.heroVisual) && (
+          {hasHero && (
             <div style={{ marginTop: 32 }}>
-              {previewImage ? (
+              {lottiePreview && lottieData ? (
+                <Suspense fallback={null}>
+                  <Lottie
+                    animationData={lottieData}
+                    loop={false}
+                    style={{ maxWidth: '100%', borderRadius: 32 }}
+                  />
+                </Suspense>
+              ) : previewImage ? (
                 <img
                   src={previewImage}
                   alt={data.title}
@@ -79,36 +100,52 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
                     viewTransitionName: 'project-hero',
                   }}
                 />
-              ) : (
-                <PlaceholderVisual caption={data.heroVisual!.caption} />
-              )}
+              ) : null}
             </div>
           )}
         </motion.header>
 
-        {/* Body text — flowing sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          {data.sections.map((section) => (
-            <CaseStudySectionText
-              key={section.id}
-              heading={section.heading}
-              paragraphs={section.paragraphs}
-            />
-          ))}
-        </div>
+        {/* Body text with inline prototype visuals */}
+        {data.sections.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 48, paddingBottom: 80 }}>
+            {data.sections.map((section) => (
+              <div key={section.id}>
+                <CaseStudySectionText
+                  heading={section.heading}
+                  paragraphs={section.paragraphs}
+                />
+                {hasRealContent(section.visual) && (
+                  <div style={{ marginTop: 32 }}>
+                    <PlaceholderVisual
+                      caption={section.visual.caption}
+                      prototypeSrc={section.visual.prototypeSrc}
+                      aspectRatio={section.visual.aspectRatio}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
-        {/* Visual evidence — single column on narrow */}
-        {allVisuals.length > 0 && (
+        {/* Gallery — only items with real content */}
+        {realGalleryItems.length > 0 && (
           <div
             style={{
               marginTop: 64,
               display: 'flex',
               flexDirection: 'column',
               gap: 40,
+              paddingBottom: 80,
             }}
           >
-            {allVisuals.map((visual) => (
-              <PlaceholderVisual key={visual.id} caption={visual.caption} />
+            {realGalleryItems.map((item) => (
+              <PlaceholderVisual
+                key={item.id}
+                caption={item.caption}
+                prototypeSrc={item.prototypeSrc}
+                aspectRatio={item.aspectRatio}
+              />
             ))}
           </div>
         )}
@@ -117,69 +154,111 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
   }
 
   return (
-    <article>
-      {/* Zone 1: Hero — 100vh two-column */}
+    <article style={{ display: 'flex', flexDirection: 'row' }}>
+      {/* Left column — header + body text */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'row',
-          minHeight: '100vh',
+          width: '50%',
+          padding: '0 var(--layout-margin)',
         }}
       >
-        <div
+        {/* Header area — vertically centered in first viewport */}
+        <motion.header
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
           style={{
-            width: '50%',
-            height: '100vh',
-            padding: 'var(--layout-padding-top) var(--layout-margin)',
+            minHeight: '100vh',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
+            textAlign: 'left',
           }}
         >
-          <motion.header
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
-            style={{ textAlign: 'left' }}
+          <h1
+            style={{
+              fontSize: 'var(--text-size-display)',
+              fontWeight: 300,
+              lineHeight: 1.2,
+              color: 'var(--text-dark)',
+              marginBottom: 16,
+            }}
           >
-            <h1
-              style={{
-                fontSize: 'var(--text-size-display)',
-                fontWeight: 300,
-                lineHeight: 1.2,
-                color: 'var(--text-dark)',
-                marginBottom: 16,
-              }}
-            >
-              {data.title}
-            </h1>
-            <p
-              style={{
-                fontSize: 'var(--text-size-body)',
-                lineHeight: 1.4,
-                color: 'var(--text-medium)',
-                marginBottom: 8,
-              }}
-            >
-              {data.subtitle}
-            </p>
-            <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
-              {data.timeline}
-            </p>
-          </motion.header>
-        </div>
+            {data.title}
+          </h1>
+          <p
+            style={{
+              fontSize: 'var(--text-size-body)',
+              lineHeight: 1.4,
+              color: 'var(--text-medium)',
+              marginBottom: 8,
+            }}
+          >
+            {data.subtitle}
+          </p>
+          <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
+            {data.timeline}
+          </p>
+        </motion.header>
 
+        {/* Body sections */}
+        {data.sections.length > 0 && (
+          <div
+            style={{
+              paddingTop: 80,
+              paddingBottom: 80,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 48,
+            }}
+          >
+            {data.sections.map((section) => (
+              <div key={section.id}>
+                <CaseStudySectionText
+                  heading={section.heading}
+                  paragraphs={section.paragraphs}
+                />
+                {hasRealContent(section.visual) && (
+                  <div style={{ marginTop: 32 }}>
+                    <PlaceholderVisual
+                      caption={section.visual.caption}
+                      prototypeSrc={section.visual.prototypeSrc}
+                      aspectRatio={section.visual.aspectRatio}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Right column — sticky hero image */}
+      <div style={{ width: '50%' }}>
         <div
           style={{
-            width: '50%',
+            position: 'sticky',
+            top: 0,
             height: '100vh',
-            padding: 'var(--layout-padding-top) var(--layout-margin)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            padding: 'var(--layout-padding-top) var(--layout-margin)',
           }}
         >
-          {previewImage ? (
+          {lottiePreview && lottieData ? (
+            <Suspense fallback={null}>
+              <Lottie
+                animationData={lottieData}
+                loop={false}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  borderRadius: 32,
+                }}
+              />
+            </Suspense>
+          ) : previewImage ? (
             <img
               src={previewImage}
               alt={data.title}
@@ -191,58 +270,58 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage }: CaseStudyLayo
                 viewTransitionName: 'project-hero',
               }}
             />
-          ) : data.heroVisual ? (
-            <PlaceholderVisual caption={data.heroVisual.caption} />
           ) : null}
         </div>
       </div>
 
-      {/* Zone 2: Body text — left-aligned in hero's left column, right column empty */}
-      {data.sections.length > 0 && (
+      {/* Gallery — only items with real content, full width below the two-column area */}
+      {realGalleryItems.length > 0 && (
         <div
           style={{
-            width: '50%',
-            padding: '80px var(--layout-margin) 0',
-          }}
-        >
-          {data.sections.map((section, i) => (
-            <div
-              key={section.id}
-              style={{
-                marginBottom: i < data.sections.length - 1 ? 48 : 0,
-              }}
-            >
-              <CaseStudySectionText
-                heading={section.heading}
-                paragraphs={section.paragraphs}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Zone 3: Visual evidence grid — full page width matching hero */}
-      {allVisuals.length > 0 && (
-        <div
-          style={{
+            width: '100%',
             padding: '80px var(--layout-margin) 80px',
             display: 'grid',
-            gridTemplateColumns: allVisuals.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+            gridTemplateColumns: realGalleryItems.length === 1 ? '1fr' : 'repeat(2, 1fr)',
             gap: 40,
           }}
         >
-          {allVisuals.map((visual, i) => (
-            <div
-              key={visual.id}
-              style={
-                allVisuals.length > 1 && allVisuals.length % 2 !== 0 && i === allVisuals.length - 1
-                  ? { gridColumn: 'span 2' }
-                  : undefined
+          {(() => {
+            const elements: React.ReactNode[] = []
+            let i = 0
+            while (i < realGalleryItems.length) {
+              const item = realGalleryItems[i]
+              if (item.size === 'full') {
+                elements.push(
+                  <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />,
+                )
+                i++
+              } else {
+                const next = realGalleryItems[i + 1]
+                if (next && next.size === 'half') {
+                  elements.push(
+                    <div
+                      key={item.id}
+                      style={{ display: 'flex', gap: 40 }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <PlaceholderVisual caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <PlaceholderVisual caption={next.caption} prototypeSrc={next.prototypeSrc} aspectRatio={next.aspectRatio} />
+                      </div>
+                    </div>,
+                  )
+                  i += 2
+                } else {
+                  elements.push(
+                    <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />,
+                  )
+                  i++
+                }
               }
-            >
-              <PlaceholderVisual caption={visual.caption} />
-            </div>
-          ))}
+            }
+            return elements
+          })()}
         </div>
       )}
     </article>

@@ -221,6 +221,11 @@ p a {
   animation: sidebar-jiggle 400ms ease-in-out;
 }
 
+/* Sidebar toolbar — hidden scrollbar for overflow at short viewports */
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hide default cursor when custom cursor is active */
 html.cursor-none,
 html.cursor-none body,

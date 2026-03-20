@@ -2,6 +2,24 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-20 — Verify Phosphor icon exports before using them
+
+**What was attempted:** Added `DotsThreeVertical` import from `@phosphor-icons/react` for a toggle button in the sidebar.
+
+**What went wrong:** `DotsThreeVertical` doesn't exist in the installed version — the export resolves to `undefined`. In Vite dev mode, this silently broke the entire component module, causing the cursor section to disappear even when the toggle branch wasn't being rendered. The build (`vite build`) succeeded, masking the issue.
+
+**Lesson learned:** Always verify icon exports exist before using them: `ls node_modules/@phosphor-icons/react/dist/csr/ | grep -i <name>`. Named imports that resolve to `undefined` can cause silent failures in Vite's dev server that don't reproduce in production builds. When a component partially fails to render in dev but builds fine, check for undefined imports first.
+
+## 2026-03-20 — Toggle-to-expand doesn't work in fixed-height containers
+
+**What was attempted:** Below 500px viewport, hid the cursor section behind a `...` toggle button. Clicking expanded the cursor section in-place.
+
+**What went wrong:** The sidebar is `position: fixed` with no overflow handling. Expanding the toggle just appended controls below the visible area — they extended off-screen with no way to reach them. The toggle added content without making room for it.
+
+**Lesson learned:** In fixed containers, showing/hiding content via toggle only works if the container can accommodate the expanded state (scrollable, or other content shifts to make room). If the container is already at capacity, a toggle just pushes content off-screen. Scroll is the correct overflow strategy for fixed containers — it handles any content length without hiding or shifting.
+
+---
+
 ## 2026-03-05 — localStorage values must be validated against known sets
 
 **What was attempted:** `ThemeContext` initialized `accentColor` from localStorage with `(stored as AccentColor) || 'table'`. `SidebarThemeControls` then did `accents.find(a => a.color === accentColor)!` to look up the active swatch.

@@ -172,7 +172,7 @@ export function CaseStudyPage() {
         </Link>
       </nav>
 
-      <CaseStudyLayoutA data={caseStudy} isNarrow={!isWide} previewImage={previewImage} />
+      <CaseStudyLayoutA data={caseStudy} isNarrow={!isWide} previewImage={previewImage} lottiePreview={projectData?.lottiePreview} />
     </motion.div>
   )
 }

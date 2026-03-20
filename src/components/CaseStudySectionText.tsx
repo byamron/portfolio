@@ -25,13 +25,12 @@ export function CaseStudySectionText({
           key={i}
           style={{
             fontSize: 'var(--text-size-body)',
-            lineHeight: 1.4,
+            lineHeight: 1.5,
             color: 'var(--text-medium)',
-            marginBottom: i < paragraphs.length - 1 ? 24 : 0,
+            marginBottom: i < paragraphs.length - 1 ? 32 : 0,
           }}
-        >
-          {text}
-        </p>
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
       ))}
     </section>
   )
