@@ -471,7 +471,10 @@ export function CustomCursor() {
     return () => {
       document.removeEventListener('pointermove', handlePointerMoveAndLoop)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-      removeCursorNoneStyle()
+      // Don't remove cursor-none here — the new effect setup will manage it.
+      // Removing and re-adding in the same tick can cause a one-frame OS cursor
+      // flash on browsers that defer cursor style recalculation.
+      // The setup code handles both adding (invert) and removing (standard/figpal).
       for (const el of elements) {
         ;(el as any).__tintCleanup?.()
         el.remove()
@@ -597,6 +600,11 @@ export function CustomCursor() {
       }
     }
   }, [navigatingProjectId, cursorMode])
+
+  // Final cleanup: restore OS cursor if the component tree fully unmounts
+  useEffect(() => {
+    return () => removeCursorNoneStyle()
+  }, [])
 
   return null
 }

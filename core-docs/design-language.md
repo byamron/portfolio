@@ -685,7 +685,11 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 
 **Mode-aware hue correction**: In dark mode, the disc hue matches the accent directly. In light mode, the hue is shifted by 180° so that `difference` blending against light backgrounds produces accent-adjacent colors rather than complements. The disc color updates live when the accent or appearance mode changes (via MutationObserver on `data-accent` and `data-theme` attributes).
 
-**Global cursor suppression**: In invert mode, a `cursor-none` CSS class is toggled on `<html>` via `document.documentElement.classList`, activating a static CSS rule (`html.cursor-none, html.cursor-none body, html.cursor-none *, html.cursor-none *::before, html.cursor-none *::after { cursor: none !important; }`) defined in `globals.css`. This ensures the custom disc is the only cursor visible.
+**Global cursor suppression**: In invert mode, a `cursor-none` CSS class hides the OS cursor. Three layers ensure zero flash of the native cursor:
+
+1. **HTML-level**: `index.html` ships with `class="cursor-none"` on `<html>` so the OS cursor is hidden from the very first paint. A tiny inline `<script>` checks `localStorage('cursorMode')` and removes the class if the user chose standard or figpal mode.
+2. **CSS-level**: The rule in `globals.css` uses a 1×1 transparent SVG as the primary cursor value (`cursor: url("data:image/svg+xml,...") 0 0, none !important`) rather than bare `cursor: none`. This is more reliable across macOS trackpad edge-cases and browser focus changes.
+3. **JS-level**: The `CustomCursor` effect cleanup does NOT remove the `cursor-none` class — only the setup code manages it (invert adds, standard/figpal removes). This prevents a one-frame OS cursor flash during effect re-runs when tint or mode dependencies change. A separate empty-deps effect handles full unmount cleanup.
 
 ### Figpal mode
 

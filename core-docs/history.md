@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-19 — Fix persistent double cursor
+
+**Branch:** `next-update`
+
+**Summary:** Fixed the double cursor issue (OS cursor + custom cursor both visible) that persisted even after the earlier style-injection → class-toggle migration. Root cause was three compounding timing issues, not a CSS specificity problem.
+
+**What changed:**
+- `index.html` — Added `class="cursor-none"` to `<html>` so OS cursor is hidden from first paint. Inline `<script>` checks localStorage and removes the class for standard/figpal users.
+- `src/styles/globals.css` — Replaced bare `cursor: none` with a 1×1 transparent SVG cursor as primary value (`cursor: url(...) 0 0, none !important`). More reliable across macOS trackpad edge-cases.
+- `src/components/CustomCursor.tsx` — Removed `removeCursorNoneStyle()` from effect cleanup to prevent one-frame flash during re-runs. Added empty-deps unmount cleanup effect.
+- `core-docs/design-language.md` — Updated cursor suppression docs to describe the three-layer approach.
+
+**Root causes identified:**
+1. **Page-load race**: `cursor-none` class only added after React mount + effect. OS cursor visible until then.
+2. **Effect re-run gap**: Cleanup removed class, then setup re-added it. Browser could flash OS cursor between.
+3. **`cursor: none` unreliability**: Bare `cursor: none` has edge-case failures on macOS during trackpad gestures and window focus changes.
+
+---
+
 ## 2026-03-19 — Responsive image alignment + cover portrait
 
 **Branch:** `expand-two-column-range`
