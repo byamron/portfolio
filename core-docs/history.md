@@ -51,6 +51,18 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-19 — Add UW design system hover preview image
+
+**Branch:** `uw-hover-image`
+
+**Summary:** Added hover preview image for the UW design system case study (`preview-uw.png`). Previously the `projectImageMap` referenced a non-existent `preview-uw.jpg`. Copied the exported Alert component screenshot and updated the file extension in `projects.ts`.
+
+**Decisions:**
+- **Kept shared `uw` projectId** — Multiple projects share this ID, and this is the first preview image for it. No need to split IDs yet.
+- **PNG format** — Source export was PNG; updated the reference from `.jpg` to `.png`.
+
+---
+
 ## 2026-03-19 — Responsive image alignment + cover portrait
 
 **Branch:** `expand-two-column-range`
