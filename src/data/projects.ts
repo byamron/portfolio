@@ -45,7 +45,7 @@ export const sections: Section[] = [
       'On the side, I design and build tools that solve my own problems in life and work.',
     ],
     projects: [
-      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'uw', href: '', isLink: false },
+      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'uw', href: '', isLink: false, videoPreview: '/images/preview-todo-priority.mp4' },
       { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'cip', href: '', isLink: false },
       { id: 'ai-search', title: 'New patterns for AI search with personal context', projectId: 'uw', href: '', isLink: false },
     ],

@@ -17,6 +17,6 @@ export function preloadPortraitImages(): void {
 /** Preload project preview images (excluding Lottie JSON). */
 export function preloadPreviewImages(): void {
   Object.values(projectImageMap).forEach(src => {
-    if (!src.endsWith('.json')) preload(src)
+    if (!src.endsWith('.json') && !src.endsWith('.mp4')) preload(src)
   })
 }

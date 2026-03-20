@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Add video hover preview for todo list project
+
+**Branch:** `todo-list-hover-video`
+
+**Summary:** Added `preview-todo-priority.mp4` as the hover preview for the "A todo list that keeps tasks perfectly prioritized" side project. Used the existing `videoPreview` field on the Project interface (established by the Mochi Subscriptions video PR).
+
+**Encoding:** Source was a 982×736 .mov (7.3MB). Encoded to 528px width (matching the display container) using H.264 Main profile, CRF 18 (visually lossless), `faststart` flag. Final size: 460KB — 16× smaller than source, smaller than the mochi-subs preview (632KB).
+
+**Encoding note:** macOS `avconvert` only remuxes containers without recompressing. Used `ffmpeg-static` (npm) for proper CRF encoding. `avconvert` at 640×480 still produced 4.7MB; ffmpeg at 528px with CRF 18 achieved 460KB.
+
+---
+
 ## 2026-03-20 — Responsive sidebar theme controls
 
 **Branch:** `theme-sidebar-responsive`
@@ -94,8 +106,6 @@ Decision log and completed work, in reverse chronological order.
 - **PNG format** — Source export was PNG; updated the reference from `.jpg` to `.png`.
 
 ---
-
-
 ## 2026-03-19 — Responsive image alignment + cover portrait
 
 **Branch:** `expand-two-column-range`
