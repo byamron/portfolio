@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Polish case studies for public launch
+
+**Branch:** `polish-case-studies`
+
+**Summary:** Cleaned up case study pages so the site looks finished for publicizing. Removed all gray placeholder images. Settled on sticky-hero two-column layout (title+description left, hero image sticky right, body text scrolls underneath). Added Trio todo list as a full case study. Added Lottie animation as hero for the CIP misinfo case study with linked papers. Commented out progress tracker project.
+
+**Decisions:**
+- PlaceholderVisual and gallery zones removed entirely from case study layout — visuals will be added later as real images, not gray boxes.
+- Paragraphs in case study body now support inline HTML (via `dangerouslySetInnerHTML`) matching the pattern used in the home page `Section` component, enabling paper links in the CIP study.
+- Paragraph spacing increased (24→32px margin, 1.4→1.5 line-height) for better readability.
+
+---
+
 ## 2026-03-20 — Double cursor: diagnosed as Chromium/macOS Tahoe bug
 
 **Branch:** `fix-double-cursor-v2`
