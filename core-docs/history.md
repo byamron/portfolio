@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-19 — Add /push custom command for Claude Code
+
+**Branch:** `push-skill`
+
+**Summary:** Created a `/push` slash command (`.claude/commands/push.md`) that automates the full ship workflow: update core docs, commit, open a PR to `next-update`, and merge. Reduces manual steps when shipping feature work.
+
+**Decisions:**
+- **Targets `next-update` by default** — Follows the branching strategy from `core-docs/workflow.md`. Deploys only happen on `next-update → main`.
+- **Squash merge + delete branch** — Keeps `next-update` history clean.
+- **Committed directly to `main`** — This is project tooling, not a feature. Needs to be available to all branches immediately.
+
+---
+
 ## 2026-03-15 — Deploy tracking and next-update branching strategy
 
 **Branch:** `deploy-tracking-workflow`
