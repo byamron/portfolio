@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-19 — Responsive image alignment + cover portrait
+
+**Branch:** `expand-two-column-range`
+
+**Summary:** Improved right-column image alignment across viewport sizes. Portrait images now fill the column with `object-fit: cover` (slight side cropping at compact widths), while hover previews stay `contain` (no cropping). The right column switches from centered to top-aligned at compact two-column widths (900–1199px) so the portrait's top edge aligns with the heading baseline.
+
+**What changed:**
+- `src/components/RightColumn.tsx` — Responsive `justifyContent`: centered at 1200px+, `flex-start` at 900–1199px via `useIsCompactTwoColumn()` hook.
+- `src/components/ImageDisplay.tsx` — Portrait uses `object-fit: cover` with `overflow: hidden` + `borderRadius: 32` wrapper. Previews use `object-fit: contain` with centered flex + bottom padding for text zone. Same absolute-fill container for both — no layout shift on hover.
+- `src/hooks/useMediaQuery.ts` — Added `useIsCompactTwoColumn()` hook (true at 900–1199px).
+- `core-docs/design-language.md` — Updated responsive behavior and image rules sections.
+
+**Decisions:**
+- **Cover for portraits, contain for previews** — Portraits are controlled assets with centered subjects; side cropping at compact widths (~11–17%) is acceptable. Previews vary in aspect ratio and should never be cropped.
+- **Responsive alignment, not universal** — Centering works at wide viewports (image fills 89–93% of height). Top-alignment only kicks in at compact widths where the centering gap becomes visually disconnected from the left column's heading.
+- **Same container for both** — No layout shifting between portrait and preview states. The cross-fade handles the transition between the large cover portrait and the smaller contained preview.
+
+---
+
 ## 2026-03-17 — Reduce glass highlight wiggle
 
 **Branch:** `reduce-glass-wiggle`

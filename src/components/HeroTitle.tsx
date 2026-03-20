@@ -9,7 +9,7 @@ export function HeroTitle() {
   return (
     <h1
       style={{
-        fontSize: 36,
+        fontSize: 'var(--text-size-title)',
         fontWeight: 300,
         lineHeight: 1.2,
         color: 'var(--text-dark)',

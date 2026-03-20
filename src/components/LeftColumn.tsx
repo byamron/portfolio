@@ -44,7 +44,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
           ? { duration: 0.28, delay: 0.15 }
           : { duration: 0.35, delay: 0.12 }
         }
-        style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 528, margin: '0 auto' }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}
       >
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
