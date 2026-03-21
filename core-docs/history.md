@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Reorder sections: side projects between Mochi and earlier work
+
+**Branch:** `reorder-side-projects`
+
+**Summary:** Moved side projects and GitHub contribution graph to appear between the Mochi section and the earlier work section. Updated the "Before Mochi" context text to "Since I started designing in 2020, I've explored challenges across different domains." Updated `afterContext` in LeftColumn to render `ContributionHeatmap` after the side projects section (index 1) instead of the last section.
+
+---
+
 ## 2026-03-20 — Fix case study hero transitions and cleanup
 
 **Branch:** `fix-case-study-heroes`
