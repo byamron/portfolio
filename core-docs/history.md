@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Coming soon labels, glass hover scoping, resume update
+
+**Branch:** `coming-soon-label`
+
+**Summary:** Replaced `…` ellipsis with `(coming soon)` on unlinked project cards. Fixed glass hover pill persisting on the last card when cursor moves to narrative text between sections. Updated resume PDF.
+
+**Decisions:**
+- Glass `isCursorInCardStack` now scopes to the `<section>` containing the current card, so narrative paragraphs between sections properly clear the pill while card-to-card transitions within a section remain smooth.
+- Removed `aria-hidden` from the "(coming soon)" span since it's meaningful text for screen readers.
+
+---
+
 ## 2026-03-21 — Trim and reorder contribution heatmap
 
 **Branch:** `trim-contribution-grid`
