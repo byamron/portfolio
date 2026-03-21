@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Fix figpal sidebar image rendering
+
+**Branch:** `fix-figpal-sidebar-image`
+
+**Summary:** Fixed the figpal icon in the sidebar theme controls not displaying correctly. The image (192×222 PNG) was forced into an 18×18 box with `objectFit: 'contain'`, making the character unrecognizable at that size. Changed to `height: 22, width: 'auto'` to let the image maintain its natural aspect ratio, matching the pattern used in `CustomCursor.tsx`.
+
+---
+
 ## 2026-03-20 — Polish case studies for public launch
 
 **Branch:** `polish-case-studies`
