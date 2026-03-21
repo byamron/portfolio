@@ -30,7 +30,7 @@ export function ImageDisplay() {
   const lottieUrl = project?.lottiePreview ?? null
   const videoUrl = project?.videoPreview ?? null
   const imageSrc = project
-    ? projectImageMap[project.projectId]
+    ? (projectImageMap[project.projectId] ?? defaultImageMap[accentColor])
     : defaultImageMap[accentColor]
   const contentKey = videoUrl
     ? `video-${project!.id}`
@@ -101,8 +101,9 @@ export function ImageDisplay() {
 
   const imgStyle: React.CSSProperties = usePortraitCover
     ? {
-        width: '100%',
         height: '100%',
+        maxWidth: '100%',
+        aspectRatio: '528 / 720',
         objectFit: 'cover',
         borderRadius: 32,
         filter: dropShadow,
@@ -121,6 +122,9 @@ export function ImageDisplay() {
     ? {
         position: 'absolute',
         inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden',
         borderRadius: 32,
       }
@@ -202,6 +206,7 @@ export function ImageDisplay() {
                 objectFit: 'contain',
                 borderRadius: 32,
                 filter: dropShadow,
+                viewTransitionName: 'project-hero',
               }}
             />
           </motion.div>
@@ -223,11 +228,13 @@ export function ImageDisplay() {
             }}
           >
             <Suspense fallback={null}>
-              <Lottie
-                animationData={lottieData}
-                loop={false}
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
-              />
+              <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
+                <Lottie
+                  animationData={lottieData}
+                  loop={false}
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              </div>
             </Suspense>
           </motion.div>
         ) : (

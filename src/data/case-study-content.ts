@@ -181,7 +181,7 @@ export const mochiSubscriptions: CaseStudy = {
 
 export const uwDesignSystem: CaseStudy = {
   id: 'uw-design-system',
-  title: 'Kickstarting a design system',
+  title: 'Building the system that builds the system',
   subtitle:
     'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.',
   timeline: '',
@@ -297,12 +297,20 @@ export const cipElectionMisinformation: CaseStudy = {
       visual: null,
     },
     {
-      id: 'cip-impact',
-      heading: 'Published at CSCW 2025 \u2014 the top venue for social computing research',
+      id: 'cip-paper-1',
+      heading: '<a href="https://dl.acm.org/doi/10.1145/3757522" target="_blank" rel="noopener noreferrer" style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px;">What is going on? An evidence-frame framework for analyzing online rumors about election integrity</a>',
       paragraphs: [
-        'The work produced two peer-reviewed papers analyzing how influencers, political elites, and audiences collaboratively constructed \u201cdeep stories\u201d across election cycles \u2014 and how the 2020 narrative became the interpretive lens for 2022. This is sociological thinking applied to a design problem: making invisible collective processes visible and analyzable.',
-        '<a href="https://doi.org/10.1145/3757522" target="_blank" rel="noopener noreferrer" style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px;">What is going on? An evidence-frame framework for analyzing online rumors about election integrity</a> — Starbird, Prochaska, Yamron',
-        '<a href="https://doi.org/10.1145/3757576" target="_blank" rel="noopener noreferrer" style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px;">Deep Storytelling: Collective Sensemaking and Layers of Meaning in U.S. Elections</a> — Prochaska, Vera, Tan, Yamron, Venuto, Kejriwal, Chu, Starbird',
+        '<em>Kate Starbird, Stephen Prochaska, Ben Yamron \u00b7 Proceedings of the ACM on Human-Computer Interaction, Volume 9, Issue 7</em>',
+        'Pervasive falsehoods that erode trust in election processes are of increasing concern to democracies around the world. Misleading claims like these are often understood as simply \u201cgetting the facts wrong\u201d. Using a grounded, interpretative, mixed-method approach to study Twitter activity during the 2022 U.S. Midterm Election in Arizona, our work paints a more nuanced picture. We adapt Klein\u2019s data-frame theory of collective sensemaking to online rumors, demonstrating how misleading claims about election administration take shape online through interactions between (often factual) evidence and frames. We introduce a methodological approach for analyzing rumors through this evidence-frame lens and provide insights into the dynamics of online rumoring around claims of \u201crigged elections\u201d. Our work highlights how rumors are as much about political framing as they are about faulty facts, and locates the crux of the problem of misinformation in the interactions with and between evidence and distorted political frames.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'cip-paper-2',
+      heading: '<a href="https://dl.acm.org/doi/10.1145/3757576" target="_blank" rel="noopener noreferrer" style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px;">Deep Storytelling: Collective Sensemaking and Layers of Meaning in U.S. Elections</a>',
+      paragraphs: [
+        '<em>Stephen Prochaska, Julie Vera, Douglas Lew Tan, Ben Yamron, Sylvie Venuto, Amaya Kejriwal, Sarah Chu, Kate Starbird \u00b7 Proceedings of the ACM on Human-Computer Interaction, Volume 9, Issue 7</em>',
+        'Misinformation and disinformation about elections remain pressing concerns for researchers, policymakers, and the public. Critics, however, argue that fears surrounding these issues are exaggerated due to a lack of evidence of impact. This debate highlights the challenges inherent in assessing the impacts of misinformation, as the drivers of false and misleading content often exist in the context of a specific claim. To address this issue, we examined false and misleading information surrounding the 2020 and 2022 U.S. national elections, focusing on the contextual features of online conversations that fueled various rumors. We developed two qualitative codebooks, creating the second after realizing that the first, which labeled individual tweets, failed to capture broader rumoring dynamics. By integrating multi-layered qualitative coding with thematic analysis and quantitative visualizations, we show how influencers, political elites, and audiences collaboratively told deep stories from 2020 through 2022. As these stories were told, audiences interpreted events in 2022 through the lens of the 2020 story, guided by influencers\u2019 cues, leading to an evolution in storytelling style between the two election cycles. This ongoing performance was tailored to align with the incentive structures, affordances, and attention economy of social media. We combine deep stories with theories of collective sensemaking and rumoring, creating a framework to better assess the contextual features surrounding false and misleading information.',
       ],
       visual: null,
     },
