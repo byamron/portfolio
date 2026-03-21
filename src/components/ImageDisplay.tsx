@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { projectsById, projectImageMap, defaultImageMap } from '@/data/projects'
 
 // Projects whose previews need a subtle shadow to separate from the background
-const needsShadow = new Set(['cip-misinfo', 'acorn-covid'])
+const needsShadow = new Set(['cip-misinfo', 'acorn-covid', 'duo-flags'])
 
 const summaryStyle: React.CSSProperties = {
   fontFamily: "'Literata', serif",

@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Add Duo hover preview image
+
+**Branch:** `duo-hover-preview`
+
+**Summary:** Added `preview-duo.png` (Duolingo loading screen device frame) as the hover preview for the "Making Duolingo's use of flags more inclusive" project link. Changed the project's `projectId` from `'cip'` to `'duo'` so it gets its own preview image instead of sharing CIP's. Added `'duo-flags'` to the `needsShadow` set in ImageDisplay since the white device frame background needs separation in light mode.
+
+**Decisions:**
+- Gave Duo its own `projectId: 'duo'` rather than sharing `'cip'` — each project with a distinct preview needs its own ID.
+- Added to `needsShadow` set to match Acorn's treatment (same device frame style, same white background concern).
+
+---
+
 ## 2026-03-20 — Polish case studies for public launch
 
 **Branch:** `polish-case-studies`
