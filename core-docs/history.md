@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Trim and reorder contribution heatmap
+
+**Branch:** `trim-contribution-grid`
+
+**Summary:** Contribution grid now trims to the last week with data (no empty future columns), making cells scale up responsively to fill width. Month labels moved from SVG to HTML so they stay at a fixed 11px regardless of column count. Reordered layout: context text ("807 contributions...") and GitHub link moved above the grid, month labels below.
+
+**Decisions:**
+- Month labels rendered as HTML `<span>` elements with percentage-based positioning rather than SVG `<text>` — prevents labels from scaling with the viewBox when column count is low.
+- Tooltip container ref moved from `<section>` to `data-glass-break` div to keep tooltip positioning correct after reordering.
+- Updated CustomCursor hardcoded SVG coordinate math to match new grid origin (y=0, no LABEL_TOP offset).
+
+---
+
 ## 2026-03-21 — Starbird honorific + glass links on paper citations
 
 **Branch:** `starbird-hero-glass-links`
