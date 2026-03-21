@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Rive signature color fix
+
+**Branch:** `rive-signature-dark-text`
+
+**Summary:** Fixed Rive signature animation color to match the `--text-dark` token. Changed `invert()` filter from 0.75/0.45 to 0.99/0.07 (dark/light) so the signature reads as near-white in dark mode and near-black in light mode, consistent with primary text.
+
+---
+
 ## 2026-03-21 — Video previews + title sync
 
 **Branch:** `mochi-video-preview`
