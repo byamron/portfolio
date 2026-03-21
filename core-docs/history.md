@@ -2,6 +2,106 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Trim and reorder contribution heatmap
+
+**Branch:** `trim-contribution-grid`
+
+**Summary:** Contribution grid now trims to the last week with data (no empty future columns), making cells scale up responsively to fill width. Month labels moved from SVG to HTML so they stay at a fixed 11px regardless of column count. Reordered layout: context text ("807 contributions...") and GitHub link moved above the grid, month labels below.
+
+**Decisions:**
+- Month labels rendered as HTML `<span>` elements with percentage-based positioning rather than SVG `<text>` — prevents labels from scaling with the viewBox when column count is low.
+- Tooltip container ref moved from `<section>` to `data-glass-break` div to keep tooltip positioning correct after reordering.
+- Updated CustomCursor hardcoded SVG coordinate math to match new grid origin (y=0, no LABEL_TOP offset).
+
+---
+
+## 2026-03-21 — Starbird honorific + glass links on paper citations
+
+**Branch:** `starbird-hero-glass-links`
+
+**Summary:** Changed "Kate Starbird" to "Dr. Kate Starbird" in the CIP election misinfo case study subtitle. Added glass highlight hover effect to the two paper citation links, matching the treatment used on home page contact links (email, LinkedIn, resume).
+
+**Decisions:**
+- Reused `useGlassHighlight` hook in `CaseStudySectionText` with `data-paper-link` selector — same pattern as `AboutSection`'s contact cards. Safe for all case study sections since the hook is inert when no matching elements exist.
+- Paper links get `padding: 4px 8px` + negative margin + `display: inline-block` so the glass pill has space to render around them.
+
+---
+
+## 2026-03-21 — Add favicon, meta assets, and signature animation
+
+**Branch:** `update-favicon`
+
+**Summary:** Added site favicon (64px signature mark), Apple touch icon (180px), Open Graph image with social meta tags, and a Rive signature path animation at the bottom of the home page that triggers on scroll — like signing a letter.
+
+**Decisions:**
+- Rive animation color matched to `--text-grey` via CSS `invert()` filter, adapting to light/dark mode without editing the .riv binary.
+- Signature placed after AboutSection with 24px top padding (between-links spacing tier) to feel like a natural sign-off, not a separate section.
+- OG image hardcoded to `https://benyamron.com/og-image.png` for social previews.
+
+---
+
+## 2026-03-21 — Add Duo hover preview image
+
+**Branch:** `duo-hover-preview`
+
+**Summary:** Added `preview-duo.png` (Duolingo loading screen device frame) as the hover preview for the "Making Duolingo's use of flags more inclusive" project link. Added `'duo-flags'` to the `needsShadow` set in ImageDisplay since the white device frame background needs separation in light mode.
+
+**Decisions:**
+- Added to `needsShadow` set to match Acorn's treatment (same device frame style, same white background concern).
+
+---
+
+## 2026-03-21 — Fix figpal sidebar image rendering
+
+**Branch:** `fix-figpal-sidebar-image`
+
+**Summary:** Fixed the figpal icon in the sidebar theme controls not displaying correctly. The image file was deleted in a prior PR (fix-case-study-heroes) as "unused" but the sidebar and custom cursor still reference it. Restored `figpal.png` to `public/images/` and improved rendering from fixed 18×18 box to `height: 22, width: auto` for natural aspect ratio.
+
+---
+
+## 2026-03-21 — Reorder sections: side projects between Mochi and earlier work
+
+**Branch:** `reorder-side-projects`
+
+**Summary:** Moved side projects and GitHub contribution graph to appear between the Mochi section and the earlier work section. Updated the "Before Mochi" context text to "Since I started designing in 2020, I've explored challenges across different domains." Updated `afterContext` in LeftColumn to render `ContributionHeatmap` after the side projects section (index 1) instead of the last section.
+
+---
+
+## 2026-03-20 — Fix case study hero transitions and cleanup
+
+**Branch:** `fix-case-study-heroes`
+
+**Summary:** Fixed hero images/videos not transferring from home to case study pages. Added video rendering support to CaseStudyLayoutA (Mochi Subs, UW, Todo). Fixed Lottie replay on CIP page (shows final frame via `initialSegment`). Added `viewTransitionName` to video and Lottie elements for smooth View Transition morphing. Fixed gallery layout breaking UW page (was inside flex-row, now outside). Cleaned up shared projectIds and removed unused assets.
+
+**Decisions:**
+- Gave every project a unique `projectId` — no more borrowing images across case studies. Projects without dedicated images fall back to the accent portrait.
+- Deleted `preview-uw.png` (UW uses its video preview) and `figpal.png` (unused). Removed `uw`, `cip`, `mochi-tracker` entries from `projectImageMap`.
+- Used Lottie's `initialSegment` prop (reading `op` from JSON data) instead of ref-based `goToAndStop` — avoids timing issues with lazy-loaded components.
+- UW case study title updated to match home page: "Building the system that builds the system".
+- CIP case study restructured: first paragraph + two papers with linked titles, full abstracts, italic author/journal lines.
+- Added `preview-duo.png` as Duolingo hover image with drop shadow.
+
+---
+
+## 2026-03-20 — Fix portrait image aspect ratio and update resume
+
+**Branch:** `fix-theme-image-aspect`
+
+**Summary:** Fixed the right-column portrait image appearing wider than intended at large breakpoints. Added `aspectRatio: '528 / 720'` to the portrait style so the image maintains its original proportions regardless of container width — height drives sizing, width follows the ratio. Also updated the resume PDF to the March 26 version.
+
+**Decisions:**
+- Portrait uses `height: 100%` + `maxWidth: 100%` + `aspectRatio: 528/720` with `object-fit: cover` — this ensures the image fills available height while staying at the correct ratio, only scaling down width at smaller sizes.
+
+---
+
+## 2026-03-20 — Updated resume PDF
+
+**Branch:** `update-resume-file`
+
+**Summary:** Replaced `public/ben-yamron-resume.pdf` with the March 26, 2026 version. Straightforward file swap — no code changes.
+
+---
+
 ## 2026-03-20 — Polish case studies for public launch
 
 **Branch:** `polish-case-studies`
@@ -119,6 +219,7 @@ Decision log and completed work, in reverse chronological order.
 - **PNG format** — Source export was PNG; updated the reference from `.jpg` to `.png`.
 
 ---
+
 
 ## 2026-03-19 — Responsive image alignment + cover portrait
 

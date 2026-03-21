@@ -5,6 +5,7 @@ import { useHover } from '@/contexts/HoverContext'
 import { HeroTitle } from '@/components/HeroTitle'
 import { Section } from '@/components/Section'
 import { AboutSection } from '@/components/AboutSection'
+import { SignatureAnimation } from '@/components/SignatureAnimation'
 import { ContributionHeatmap } from '@/components/ContributionHeatmap'
 import { sections } from '@/data/projects'
 import { preloadPreviewImages } from '@/utils/preloadImages'
@@ -52,10 +53,11 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
             <Section
               key={i}
               section={section}
-              afterContext={i === sections.length - 1 ? <ContributionHeatmap /> : undefined}
+              afterContext={i === 1 ? <ContributionHeatmap /> : undefined}
             />
           ))}
           <AboutSection />
+          <SignatureAnimation />
         </div>
       </motion.div>
     </main>

@@ -365,10 +365,10 @@ export function CustomCursor() {
               if (ctm) {
                 const svgX = (e.clientX - ctm.e) / ctm.a
                 const svgY = (e.clientY - ctm.f) / ctm.d
-                // Constants match ContributionHeatmap: CELL_STEP=12, CELL_SIZE=10, LABEL_TOP=16
-                if (svgY >= 6) { // skip month labels area
+                // Constants match ContributionHeatmap: CELL_STEP=12, CELL_SIZE=10 (labels now in HTML, grid starts at y=0)
+                if (svgY >= 0) {
                   const w = Math.max(0, Math.round((svgX - 5) / 12))
-                  const d = Math.max(0, Math.min(6, Math.round((svgY - 16 - 5) / 12)))
+                  const d = Math.max(0, Math.min(6, Math.round((svgY - 5) / 12)))
                   const nearestRect = svg.querySelector(`rect[data-week="${w}"][data-day="${d}"]`)
                   if (nearestRect) {
                     cellRect = nearestRect.getBoundingClientRect()
