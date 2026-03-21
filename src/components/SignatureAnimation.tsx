@@ -5,7 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 export function SignatureAnimation() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasTriggered, setHasTriggered] = useState(false)
-  const { resolvedMode } = useTheme()
+  const { resolvedAppearance } = useTheme()
 
   const { rive, RiveComponent } = useRive({
     src: '/signature.riv',
@@ -18,8 +18,9 @@ export function SignatureAnimation() {
     if (!containerRef.current || hasTriggered) return
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && rive) {
+      (entries) => {
+        const entry = entries[0]
+        if (entry?.isIntersecting && rive) {
           rive.play()
           setHasTriggered(true)
           observer.disconnect()
@@ -46,7 +47,7 @@ export function SignatureAnimation() {
         style={{
           width: 120,
           height: 120,
-          filter: resolvedMode === 'dark' ? 'invert(0.75)' : 'invert(0.45)',
+          filter: resolvedAppearance === 'dark' ? 'invert(0.75)' : 'invert(0.45)',
         }}
       >
         <RiveComponent aria-label="Ben Yamron's signature" />

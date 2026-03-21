@@ -10,10 +10,6 @@ import { PlaceholderVisual } from './PlaceholderVisual'
 
 const Lottie = lazy(() => import('lottie-react'))
 
-const reducedMotion =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 // Match ImageDisplay's bottom padding for consistent hero sizing during View Transitions
 const HERO_BOTTOM_RESERVE = 144 // TEXT_ZONE_HEIGHT (120) + 24
 
@@ -339,7 +335,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
             const elements: React.ReactNode[] = []
             let i = 0
             while (i < realGalleryItems.length) {
-              const item = realGalleryItems[i]
+              const item = realGalleryItems[i]!
               if (item.size === 'full') {
                 elements.push(
                   <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />,
