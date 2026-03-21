@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Starbird honorific + glass links on paper citations
+
+**Branch:** `starbird-hero-glass-links`
+
+**Summary:** Changed "Kate Starbird" to "Dr. Kate Starbird" in the CIP election misinfo case study subtitle. Added glass highlight hover effect to the two paper citation links, matching the treatment used on home page contact links (email, LinkedIn, resume).
+
+**Decisions:**
+- Reused `useGlassHighlight` hook in `CaseStudySectionText` with `data-paper-link` selector — same pattern as `AboutSection`'s contact cards. Safe for all case study sections since the hook is inert when no matching elements exist.
+- Paper links get `padding: 4px 8px` + negative margin + `display: inline-block` so the glass pill has space to render around them.
+
+---
+
 ## 2026-03-21 — Add favicon, meta assets, and signature animation
 
 **Branch:** `update-favicon`
@@ -74,7 +86,6 @@ Decision log and completed work, in reverse chronological order.
 **Branch:** `update-resume-file`
 
 **Summary:** Replaced `public/ben-yamron-resume.pdf` with the March 26, 2026 version. Straightforward file swap — no code changes.
->>>>>>> origin/next-update
 
 ---
 
