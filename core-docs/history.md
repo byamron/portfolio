@@ -18,6 +18,17 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-20 — Fix portrait image aspect ratio and update resume
+
+**Branch:** `fix-theme-image-aspect`
+
+**Summary:** Fixed the right-column portrait image appearing wider than intended at large breakpoints. Added `aspectRatio: '528 / 720'` to the portrait style so the image maintains its original proportions regardless of container width — height drives sizing, width follows the ratio. Also updated the resume PDF to the March 26 version.
+
+**Decisions:**
+- Portrait uses `height: 100%` + `maxWidth: 100%` + `aspectRatio: 528/720` with `object-fit: cover` — this ensures the image fills available height while staying at the correct ratio, only scaling down width at smaller sizes.
+
+---
+
 ## 2026-03-20 — Updated resume PDF
 
 **Branch:** `update-resume-file`

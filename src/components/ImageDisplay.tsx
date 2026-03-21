@@ -101,8 +101,9 @@ export function ImageDisplay() {
 
   const imgStyle: React.CSSProperties = usePortraitCover
     ? {
-        width: '100%',
         height: '100%',
+        maxWidth: '100%',
+        aspectRatio: '528 / 720',
         objectFit: 'cover',
         borderRadius: 32,
         filter: dropShadow,
@@ -121,6 +122,9 @@ export function ImageDisplay() {
     ? {
         position: 'absolute',
         inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden',
         borderRadius: 32,
       }
