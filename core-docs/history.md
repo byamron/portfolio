@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Video previews + title sync
+
+**Branch:** `mochi-video-preview`
+
+**Summary:** Added video hover preview for the Mochi AI tooling project (with summary text). Replaced Mochi subscriptions and UW design system preview videos with updated cuts. Synced all case study page titles to match their home page counterparts.
+
+**Decisions:**
+- AI tooling video preview works on hover even though the project link is inactive (coming soon).
+- Case study titles made authoritative from `projects.ts` (home page) — 5 titles updated in `case-study-content.ts`.
+
+---
+
 ## 2026-03-21 — Coming soon labels, glass hover scoping, resume update
 
 **Branch:** `coming-soon-label`

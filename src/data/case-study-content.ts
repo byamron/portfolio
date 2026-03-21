@@ -87,7 +87,7 @@ export const mochiProgressTracker: CaseStudy = {
 
 export const mochiSubscriptions: CaseStudy = {
   id: 'mochi-subscriptions',
-  title: 'Redesigning Mochi\u2019s medication subscription experience',
+  title: 'Improving billing UX for our core subscriptions model',
   subtitle:
     'Mochi billed its patients for monthly medication whether it shipped or not. I rebuilt subscriptions so billing triggers when an order is processed, gave patients control over their schedule, and eliminated $200\u2013300k/month in infrastructure costs. 90%+ of patients have been successfully migrated.',
   timeline: 'Q3 2025 \u2013 Q1 2026',
@@ -246,7 +246,7 @@ export const uwDesignSystem: CaseStudy = {
 
 export const sonyScreenlessTv: CaseStudy = {
   id: 'sony-screenless-tv',
-  title: 'Screenless TV: Designing for Shared Reality',
+  title: 'Screenless TV: Designing for shared reality',
   subtitle:
     'Vision concept for Sony\u2019s TV division. My team explored how immersive technology could shape home entertainment \u2014 and found that the real design challenge wasn\u2019t personalization, it was preserving the shared experience that makes watching together meaningful.',
   timeline: 'Q1 \u2013 Q3 2024',
@@ -284,7 +284,7 @@ export const sonyScreenlessTv: CaseStudy = {
 
 export const cipElectionMisinformation: CaseStudy = {
   id: 'cip-election-misinformation',
-  title: 'Framing election misinformation',
+  title: 'Framing election misinformation (CSCW 2025)',
   subtitle: 'Two papers published at CSCW 2025, co-authored with Dr. Kate Starbird\u2019s research group at the University of Washington\u2019s Center for an Informed Public.',
   timeline: '2022\u20132025',
   sections: [
@@ -320,7 +320,7 @@ export const cipElectionMisinformation: CaseStudy = {
 
 export const duolingoLanguagesFlags: CaseStudy = {
   id: 'duolingo-languages-flags',
-  title: 'Languages \u2260 Flags',
+  title: 'Making Duolingo\u2019s use of flags more inclusive',
   subtitle: 'Duolingo redesign \u00b7 Personal project, 2020',
   timeline: 'Personal project, 2020',
   sections: [
@@ -382,7 +382,7 @@ export const duolingoLanguagesFlags: CaseStudy = {
 
 export const acornEatLocalVt: CaseStudy = {
   id: 'acorn-eat-local-vt',
-  title: 'Where it started',
+  title: 'Connecting farmers and customers during COVID-19',
   subtitle:
     'COVID-19 shut down farmers markets across Vermont. As a college student with no design experience, I gathered eight engineers and taught myself product design to solve a problem I could see.',
   timeline: '2020\u20132021',
