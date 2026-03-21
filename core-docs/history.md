@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-20 — Fix case study hero transitions and cleanup
+
+**Branch:** `fix-case-study-heroes`
+
+**Summary:** Fixed hero images/videos not transferring from home to case study pages. Added video rendering support to CaseStudyLayoutA (Mochi Subs, UW, Todo). Fixed Lottie replay on CIP page (shows final frame via `initialSegment`). Added `viewTransitionName` to video and Lottie elements for smooth View Transition morphing. Fixed gallery layout breaking UW page (was inside flex-row, now outside). Cleaned up shared projectIds and removed unused assets.
+
+**Decisions:**
+- Gave every project a unique `projectId` — no more borrowing images across case studies. Projects without dedicated images fall back to the accent portrait.
+- Deleted `preview-uw.png` (UW uses its video preview) and `figpal.png` (unused). Removed `uw`, `cip`, `mochi-tracker` entries from `projectImageMap`.
+- Used Lottie's `initialSegment` prop (reading `op` from JSON data) instead of ref-based `goToAndStop` — avoids timing issues with lazy-loaded components.
+- UW case study title updated to match home page: "Building the system that builds the system".
+- CIP case study restructured: first paragraph + two papers with linked titles, full abstracts, italic author/journal lines.
+- Added `preview-duo.png` as Duolingo hover image with drop shadow.
+
+---
+
 ## 2026-03-20 — Fix portrait image aspect ratio and update resume
 
 **Branch:** `fix-theme-image-aspect`

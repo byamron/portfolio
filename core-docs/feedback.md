@@ -2,6 +2,16 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-20 — lottie-react refs aren't available in onDOMLoaded with React.lazy
+
+**What was attempted:** Used `lottieRef` + `onDOMLoaded` callback to call `goToAndStop(lastFrame)` on a lazy-loaded Lottie component, to show the final frame without replaying.
+
+**What went wrong:** `lottieRef.current` was null when `onDOMLoaded` fired — the ref assignment happens after the callback due to React.lazy + Suspense timing. The Lottie rendered at frame 0 (initial state) instead of the last frame. A second attempt using a `useEffect` on `lottieData` had the same issue.
+
+**Lesson learned:** For lazy-loaded lottie-react components, don't rely on ref timing. Instead, read the `op` (out-point) field directly from the Lottie JSON data and use the `initialSegment` prop: `initialSegment={[op - 1, op]}`. This declaratively clamps the animation to its final frame with no ref or callback needed.
+
+---
+
 ## 2026-03-20 — Verify Phosphor icon exports before using them
 
 **What was attempted:** Added `DotsThreeVertical` import from `@phosphor-icons/react` for a toggle button in the sidebar.

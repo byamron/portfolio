@@ -14,11 +14,15 @@ const reducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+// Match ImageDisplay's bottom padding for consistent hero sizing during View Transitions
+const HERO_BOTTOM_RESERVE = 144 // TEXT_ZONE_HEIGHT (120) + 24
+
 interface CaseStudyLayoutAProps {
   data: CaseStudy
   isNarrow: boolean
   previewImage?: string
   lottiePreview?: string
+  videoPreview?: string
 }
 
 /** Only render visuals that have real content (prototype iframes), not empty gray boxes */
@@ -26,7 +30,7 @@ function hasRealContent(visual: CaseStudyVisual | null | undefined): visual is C
   return !!visual?.prototypeSrc
 }
 
-export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }: CaseStudyLayoutAProps) {
+export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, videoPreview }: CaseStudyLayoutAProps) {
   const [lottieData, setLottieData] = useState<object | null>(null)
 
   useEffect(() => {
@@ -42,7 +46,11 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }
     return () => { cancelled = true }
   }, [lottiePreview])
 
-  const hasHero = !!(previewImage || (lottiePreview && lottieData))
+  // Read the last frame from Lottie data so we can show the final frame
+  // without replaying (it already played on the home page)
+  const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
+
+  const hasHero = !!(videoPreview || previewImage || (lottiePreview && lottieData))
   const realGalleryItems = data.gallery.filter(item => item.prototypeSrc)
 
   if (isNarrow) {
@@ -80,13 +88,33 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }
           </p>
           {hasHero && (
             <div style={{ marginTop: 32 }}>
-              {lottiePreview && lottieData ? (
+              {videoPreview ? (
+                <video
+                  src={videoPreview}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  aria-label={data.title}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    borderRadius: 32,
+                    viewTransitionName: 'project-hero',
+                  }}
+                />
+              ) : lottiePreview && lottieData ? (
                 <Suspense fallback={null}>
-                  <Lottie
-                    animationData={lottieData}
-                    loop={false}
-                    style={{ maxWidth: '100%', borderRadius: 32 }}
-                  />
+                  <div style={{ maxWidth: '100%', viewTransitionName: 'project-hero' }}>
+                    <Lottie
+                      animationData={lottieData}
+                      autoplay={false}
+                      loop={false}
+                      initialSegment={lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
+                      style={{ maxWidth: '100%', borderRadius: 32 }}
+                    />
+                  </div>
                 </Suspense>
               ) : previewImage ? (
                 <img
@@ -154,7 +182,8 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }
   }
 
   return (
-    <article style={{ display: 'flex', flexDirection: 'row' }}>
+    <article>
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
       {/* Left column — header + body text */}
       <div
         style={{
@@ -243,20 +272,40 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 'var(--layout-padding-top) var(--layout-margin)',
+            padding: `var(--layout-padding-top) var(--layout-margin) ${HERO_BOTTOM_RESERVE}px`,
           }}
         >
-          {lottiePreview && lottieData ? (
+          {videoPreview ? (
+            <video
+              src={videoPreview}
+              autoPlay
+              muted
+              loop
+              playsInline
+              aria-label={data.title}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: 32,
+                viewTransitionName: 'project-hero',
+              }}
+            />
+          ) : lottiePreview && lottieData ? (
             <Suspense fallback={null}>
-              <Lottie
-                animationData={lottieData}
-                loop={false}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  borderRadius: 32,
-                }}
-              />
+              <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
+                <Lottie
+                  animationData={lottieData}
+                  autoplay={false}
+                  loop={false}
+                  initialSegment={lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    borderRadius: 32,
+                  }}
+                />
+              </div>
             </Suspense>
           ) : previewImage ? (
             <img
@@ -272,6 +321,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview }
             />
           ) : null}
         </div>
+      </div>
       </div>
 
       {/* Gallery — only items with real content, full width below the two-column area */}
