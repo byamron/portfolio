@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Hover preview debounce (no flash between cards)
+
+**Branch:** `hover-preview-debounce`
+
+**Summary:** Added a 150ms debounce to `HoverContext.setHoveredProjectId` so that clearing hover state (`null`) is delayed, while setting a new project ID is immediate. This prevents the preview image from flashing back to the default portrait when moving the cursor between project cards.
+
+**Decisions:**
+- Implemented in HoverContext (option 1: centralized) rather than per-ProjectLink, so all consumers benefit automatically.
+- 150ms delay matches the glass pill's `clearDelay` to keep both systems in sync.
+
+---
+
 ## 2026-03-21 — Video previews + title sync
 
 **Branch:** `mochi-video-preview`
