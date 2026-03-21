@@ -30,7 +30,17 @@ export const sections: Section[] = [
   },
   {
     context: [
-      'Before Mochi, I took on design and research problems across different domains.',
+      'On the side, I design and build tools that solve my own problems in life and work.',
+    ],
+    projects: [
+      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'uw', href: '/project/trio-todo-list', isLink: true, caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'A native iOS/macOS app that forces one question each day: what are the three things that matter? Comparison-based ranking, five hand-tuned color themes, and AI as a design partner across five specialized agents\u2009\u2014\u2009proving personal projects can get production-grade craft.' },
+      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'cip', href: '', isLink: false },
+      { id: 'ai-search', title: 'New patterns for AI search with personal context', projectId: 'uw', href: '', isLink: false },
+    ],
+  },
+  {
+    context: [
+      'Since I started designing in 2020, I’ve explored challenges across different domains.',
     ],
     projects: [
       { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system', videoPreview: '/prototypes/uw-preview.mp4', summary: 'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.' },
@@ -38,16 +48,6 @@ export const sections: Section[] = [
       { id: 'cip-misinfo', title: 'Framing election misinformation (CSCW 2025)', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json' },
       { id: 'duo-flags', title: 'Making Duolingo\u2019s use of flags more inclusive', projectId: 'cip', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags', summary: 'Languages don\u2019t map to flags. I redesigned Duolingo\u2019s course selection to fix a system that excludes, confuses, and can\u2019t follow its own logic.' },
       { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/acorn-eat-local-vt', isLink: true, caseStudySlug: 'acorn-eat-local-vt', summary: 'As a college student with no design experience, I gathered eight engineers and taught myself product design to solve a problem I could see.' },
-    ],
-  },
-  {
-    context: [
-      'On the side, I design and build tools that solve my own problems in life and work.',
-    ],
-    projects: [
-      { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'uw', href: '/project/trio-todo-list', isLink: true, caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'A native iOS/macOS app that forces one question each day: what are the three things that matter? Comparison-based ranking, five hand-tuned color themes, and AI as a design partner across five specialized agents\u2009\u2014\u2009proving personal projects can get production-grade craft.' },
-      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'cip', href: '', isLink: false },
-      { id: 'ai-search', title: 'New patterns for AI search with personal context', projectId: 'uw', href: '', isLink: false },
     ],
   },
 ]
