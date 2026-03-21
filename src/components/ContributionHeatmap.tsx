@@ -25,7 +25,7 @@ const data = contributionData as ContributionData
 const CELL_SIZE = 10
 const CELL_GAP = 2
 const CELL_STEP = CELL_SIZE + CELL_GAP
-const LABEL_TOP = 16
+const LABEL_HEIGHT = 20
 
 const ACCENT_HUES: Record<string, number> = {
   table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90,
@@ -111,7 +111,19 @@ function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: 
     grid.push(week)
   }
 
-  return { grid, totalContributions: total }
+  // Trim to the week containing today (no empty future columns)
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
+  let lastFilledWeek = 0
+  for (let w = 0; w < grid.length; w++) {
+    const week = grid[w]
+    if (week?.some(cell => cell.date <= todayStr && cell.inYear)) {
+      lastFilledWeek = w
+    }
+  }
+  const trimmed = grid.slice(0, lastFilledWeek + 1)
+
+  return { grid: trimmed, totalContributions: total }
 }
 
 interface TooltipState {
@@ -139,15 +151,17 @@ export function ContributionHeatmap() {
     const jan1 = new Date(2026, 0, 1)
     const gridStartDay = new Date(2026, 0, 1 - jan1.getDay())
     const labels: { month: string; col: number }[] = []
+    const maxCol = grid.length - 1
 
     for (let m = 0; m < 12; m++) {
       const firstOfMonth = new Date(2026, m, 1)
       const daysDiff = Math.floor((firstOfMonth.getTime() - gridStartDay.getTime()) / (86400000))
       const col = Math.floor(daysDiff / 7)
+      if (col > maxCol) break
       labels.push({ month: MONTHS[m] ?? '', col })
     }
     return labels
-  }, [])
+  }, [grid.length])
 
   const showTooltipForCell = useCallback((week: number, day: number) => {
     const cell = grid[week]?.[day]
@@ -229,17 +243,16 @@ export function ContributionHeatmap() {
       week = parseInt(weekAttr)
       day = parseInt(dayAttr)
     } else {
-      // In a gap or on labels — find nearest cell via SVG coordinates
+      // In a gap — find nearest cell via SVG coordinates
       const ctm = svg.getScreenCTM()
       if (!ctm) { setTooltip(null); setHoveredCell(null); return }
       const svgX = (e.clientX - ctm.e) / ctm.a
       const svgY = (e.clientY - ctm.f) / ctm.d
-      // Above the grid area (month labels) — no snap
-      if (svgY < LABEL_TOP - CELL_SIZE) {
+      if (svgY < -CELL_SIZE) {
         setTooltip(null); setHoveredCell(null); return
       }
       week = Math.max(0, Math.min(grid.length - 1, Math.round((svgX - CELL_SIZE / 2) / CELL_STEP)))
-      day = Math.max(0, Math.min(6, Math.round((svgY - LABEL_TOP - CELL_SIZE / 2) / CELL_STEP)))
+      day = Math.max(0, Math.min(6, Math.round((svgY - CELL_SIZE / 2) / CELL_STEP)))
     }
 
     const cell = grid[week]?.[day]
@@ -263,14 +276,50 @@ export function ContributionHeatmap() {
   const gridWidth = cols * CELL_STEP - CELL_GAP
   const gridHeight = rows * CELL_STEP - CELL_GAP
   const svgWidth = gridWidth
-  const svgHeight = LABEL_TOP + gridHeight
+  const svgHeight = gridHeight
 
   return (
     <section
-      ref={containerRef}
       style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', marginTop: 32 }}
     >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{
+          fontFamily: "'Onest', sans-serif",
+          fontSize: 'var(--text-size-small)',
+          fontWeight: 400,
+          color: 'var(--text-grey)',
+        }}>
+          {totalContributions} contributions in 2026. Most repos are private (sorry).
+        </span>
+        <a
+          href="https://github.com/byamron"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-link-card
+          data-border-radius="8"
+          onMouseEnter={onLinkEnter}
+          onMouseLeave={onLinkLeave}
+          onFocus={onLinkEnter}
+          onBlur={onLinkLeave}
+          style={{
+            fontFamily: "'Onest', sans-serif",
+            fontSize: 'var(--text-size-small)',
+            fontWeight: 400,
+            color: 'var(--text-grey)',
+            textDecoration: 'underline',
+            textDecorationColor: 'var(--text-underline)',
+            textUnderlineOffset: 3,
+            padding: '6px 10px',
+            margin: '0 -10px',
+            borderRadius: 8,
+            border: '0.1px solid transparent',
+          }}
+        >
+          GitHub
+        </a>
+      </div>
       <div
+        ref={containerRef}
         data-glass-break
         tabIndex={0}
         aria-label="Contribution heatmap. Use arrow keys to navigate days."
@@ -289,22 +338,6 @@ export function ContributionHeatmap() {
           onMouseLeave={handleMouseLeave}
           style={{ display: 'block' }}
         >
-          {/* Month labels */}
-          {monthLabels.map(({ month, col }) => (
-            <text
-              key={month}
-              x={col * CELL_STEP}
-              y={LABEL_TOP - 5}
-              style={{
-                fill: 'var(--text-grey)',
-                fontSize: 12,
-                fontFamily: "'Onest', sans-serif",
-              }}
-            >
-              {month}
-            </text>
-          ))}
-
           {/* Grid cells */}
           {grid.map((week, weekIdx) =>
             week.map((cell, dayIdx) => {
@@ -313,7 +346,7 @@ export function ContributionHeatmap() {
                 <rect
                   key={cell.date}
                   x={weekIdx * CELL_STEP}
-                  y={LABEL_TOP + dayIdx * CELL_STEP}
+                  y={dayIdx * CELL_STEP}
                   width={CELL_SIZE}
                   height={CELL_SIZE}
                   rx={2}
@@ -331,7 +364,7 @@ export function ContributionHeatmap() {
           {cursorMode !== 'invert' && hoveredCell && grid[hoveredCell.week]?.[hoveredCell.day]?.inYear && (
             <rect
               x={hoveredCell.week * CELL_STEP}
-              y={LABEL_TOP + hoveredCell.day * CELL_STEP}
+              y={hoveredCell.day * CELL_STEP}
               width={CELL_SIZE}
               height={CELL_SIZE}
               rx={2}
@@ -344,7 +377,7 @@ export function ContributionHeatmap() {
           {focusedCell && grid[focusedCell.week]?.[focusedCell.day]?.inYear && (
             <rect
               x={focusedCell.week * CELL_STEP - 1}
-              y={LABEL_TOP + focusedCell.day * CELL_STEP - 1}
+              y={focusedCell.day * CELL_STEP - 1}
               width={CELL_SIZE + 2}
               height={CELL_SIZE + 2}
               rx={3}
@@ -398,42 +431,25 @@ export function ContributionHeatmap() {
             {tooltip.text}
           </div>
         )}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{
-          fontFamily: "'Onest', sans-serif",
-          fontSize: 'var(--text-size-small)',
-          fontWeight: 400,
-          color: 'var(--text-grey)',
-        }}>
-          {totalContributions} contributions in 2026. Most repos are private (sorry).
-        </span>
-        <a
-          href="https://github.com/byamron"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-link-card
-          data-border-radius="8"
-          onMouseEnter={onLinkEnter}
-          onMouseLeave={onLinkLeave}
-          onFocus={onLinkEnter}
-          onBlur={onLinkLeave}
-          style={{
-            fontFamily: "'Onest', sans-serif",
-            fontSize: 'var(--text-size-small)',
-            fontWeight: 400,
-            color: 'var(--text-grey)',
-            textDecoration: 'underline',
-            textDecorationColor: 'var(--text-underline)',
-            textUnderlineOffset: 3,
-            padding: '6px 10px',
-            margin: '0 -10px',
-            borderRadius: 8,
-            border: '0.1px solid transparent',
-          }}
-        >
-          GitHub
-        </a>
+        {/* Month labels below the grid */}
+        <div style={{ position: 'relative', height: LABEL_HEIGHT, pointerEvents: 'none' }}>
+          {monthLabels.map(({ month, col }) => (
+            <span
+              key={month}
+              style={{
+                position: 'absolute',
+                left: `${(col * CELL_STEP / svgWidth) * 100}%`,
+                top: 4,
+                fontSize: 11,
+                fontFamily: "'Onest', sans-serif",
+                color: 'var(--text-grey)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {month}
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   )

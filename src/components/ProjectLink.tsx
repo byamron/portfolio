@@ -79,7 +79,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
           border: '0.1px solid transparent',
         }}
       >
-        {project.title}{' '}<span aria-hidden="true" style={{ opacity: 0.5 }}>{'\u2026'}</span>
+        {project.title}{' '}<span style={{ opacity: 0.5 }}>(coming soon)</span>
       </div>
     )
   }
