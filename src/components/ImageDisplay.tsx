@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { projectsById, projectImageMap, defaultImageMap } from '@/data/projects'
 
 // Projects whose previews need a subtle shadow to separate from the background
-const needsShadow = new Set(['cip-misinfo', 'acorn-covid'])
+const needsShadow = new Set(['cip-misinfo', 'acorn-covid', 'duo-flags'])
 
 const summaryStyle: React.CSSProperties = {
   fontFamily: "'Literata', serif",
@@ -30,7 +30,7 @@ export function ImageDisplay() {
   const lottieUrl = project?.lottiePreview ?? null
   const videoUrl = project?.videoPreview ?? null
   const imageSrc = project
-    ? projectImageMap[project.projectId]
+    ? (projectImageMap[project.projectId] ?? defaultImageMap[accentColor])
     : defaultImageMap[accentColor]
   const contentKey = videoUrl
     ? `video-${project!.id}`
@@ -202,6 +202,7 @@ export function ImageDisplay() {
                 objectFit: 'contain',
                 borderRadius: 32,
                 filter: dropShadow,
+                viewTransitionName: 'project-hero',
               }}
             />
           </motion.div>
@@ -223,11 +224,13 @@ export function ImageDisplay() {
             }}
           >
             <Suspense fallback={null}>
-              <Lottie
-                animationData={lottieData}
-                loop={false}
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
-              />
+              <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
+                <Lottie
+                  animationData={lottieData}
+                  loop={false}
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              </div>
             </Suspense>
           </motion.div>
         ) : (
