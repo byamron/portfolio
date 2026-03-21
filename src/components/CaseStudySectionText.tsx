@@ -17,9 +17,8 @@ export function CaseStudySectionText({
           color: 'var(--text-dark)',
           marginBottom: 16,
         }}
-      >
-        {heading}
-      </h2>
+        dangerouslySetInnerHTML={{ __html: heading }}
+      />
       {paragraphs.map((text, i) => (
         <p
           key={i}
