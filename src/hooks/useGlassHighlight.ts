@@ -328,8 +328,13 @@ function setupGlassHighlight(
   // -- Event handlers --
 
   function isCursorInCardStack(clientX: number, clientY: number): boolean {
+    if (!currentCard) return false
     const sel = configRef.current.cardSelector
-    const allCards = container.querySelectorAll<HTMLElement>(sel)
+    // Scope to the same <section> as the current card so narrative text
+    // between sections properly clears the glass pill.
+    const section = currentCard.closest('section')
+    const scope = section && container.contains(section) ? section : container
+    const allCards = scope.querySelectorAll<HTMLElement>(sel)
     // Exclude tight-bounds cards (e.g. inline links like "Mochi Health") from the
     // stack span — they aren't adjacent to project cards and would extend the
     // stack bounds across unrelated content, keeping the pill alive in gaps.
@@ -337,15 +342,11 @@ function setupGlassHighlight(
     if (cards.length === 0) return false
     const firstRect = cards[0]!.getBoundingClientRect()
     const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
-    // Vertical bounds: span the full card stack
+    // Vertical bounds: span only the section's card stack
     if (clientY < firstRect.top || clientY > lastRect.bottom) return false
     // Horizontal bounds: use the current card's width, not the union of all cards.
-    // The union approach let the widest card extend the hover zone of every card.
-    if (currentCard) {
-      const rect = currentCard.getBoundingClientRect()
-      return clientX >= rect.left && clientX <= rect.right
-    }
-    return false
+    const rect = currentCard.getBoundingClientRect()
+    return clientX >= rect.left && clientX <= rect.right
   }
 
   function handleMouseOver(e: MouseEvent): void {
