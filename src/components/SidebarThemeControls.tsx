@@ -314,9 +314,7 @@ function setupControlPill(container: HTMLElement): () => void {
 // Component
 // ---------------------------------------------------------------------------
 
-const STRIP_HEIGHT = 72
 const THUMB_SIZE = 11
-const THUMB_TRAVEL = STRIP_HEIGHT - THUMB_SIZE // usable range for thumb center-to-edge
 
 // Stagger delay indices (fixed layout: swatches → intensity → modes → cursors)
 // [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes  [11] divider  [12-14] cursors
