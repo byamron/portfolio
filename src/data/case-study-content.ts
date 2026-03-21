@@ -192,12 +192,7 @@ export const uwDesignSystem: CaseStudy = {
       paragraphs: [
         'Their design system existed as colors and principles \u2014 no components, no documentation, no established process for building either.',
       ],
-      visual: {
-        id: 'uw-alert-overview',
-        caption: 'Component documentation page \u2014 title, description, and live alert previews.',
-        prototypeSrc: '/prototypes/uw-alert.html?view=overview',
-        aspectRatio: '1 / 1',
-      },
+      visual: null,
     },
     {
       id: 'uw-components',
@@ -205,12 +200,7 @@ export const uwDesignSystem: CaseStudy = {
       paragraphs: [
         'But the real deliverable was building the system that builds the system: a documentation template accommodating engineers and non-technical designers, a process for translating Bootstrap patterns into opinionated, constrained components, and clear guidance on what the system shouldn\u2019t do.',
       ],
-      visual: {
-        id: 'uw-alert-dosdonts',
-        caption: 'Best practices \u2014 do\u2019s and don\u2019ts with live alert examples.',
-        prototypeSrc: '/prototypes/uw-alert.html?view=dosdonts',
-        aspectRatio: '3 / 4',
-      },
+      visual: null,
     },
     {
       id: 'uw-insight',
@@ -218,30 +208,10 @@ export const uwDesignSystem: CaseStudy = {
       paragraphs: [
         'Code snippets toggled on or off depending on your role. A framework dropdown let teams grab code in their stack. Infinite customization isn\u2019t flexibility \u2014 it\u2019s abdication. A system needs opinions.',
       ],
-      visual: {
-        id: 'uw-alert-code',
-        caption: 'Toggle code visibility and switch between HTML, Vue, and Angular.',
-        prototypeSrc: '/prototypes/uw-alert.html?view=code',
-        aspectRatio: '3 / 4',
-      },
+      visual: null,
     },
   ],
-  gallery: [
-    {
-      id: 'uw-alert-a11y',
-      caption: 'Accessibility guidance \u2014 ARIA roles, keyboard navigation, and focus management.',
-      size: 'half',
-      prototypeSrc: '/prototypes/uw-alert.html?view=a11y',
-      aspectRatio: '3 / 4',
-    },
-    {
-      id: 'uw-alert-props',
-      caption: 'Properties reference \u2014 component API with types, values, and defaults.',
-      size: 'half',
-      prototypeSrc: '/prototypes/uw-alert.html?view=props',
-      aspectRatio: '3 / 4',
-    },
-  ],
+  gallery: [],
 }
 
 export const sonyScreenlessTv: CaseStudy = {

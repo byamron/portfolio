@@ -2,6 +2,37 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Rive signature color fix
+
+**Branch:** `rive-signature-dark-text`
+
+**Summary:** Fixed Rive signature animation color to match the `--text-dark` token. Changed `invert()` filter from 0.75/0.45 to 0.99/0.07 (dark/light) so the signature reads as near-white in dark mode and near-black in light mode, consistent with primary text.
+
+---
+
+## 2026-03-21 — Hover preview debounce (no flash between cards)
+
+**Branch:** `hover-preview-debounce`
+
+**Summary:** Added a 150ms debounce to `HoverContext.setHoveredProjectId` so that clearing hover state (`null`) is delayed, while setting a new project ID is immediate. This prevents the preview image from flashing back to the default portrait when moving the cursor between project cards.
+
+**Decisions:**
+- Implemented in HoverContext (option 1: centralized) rather than per-ProjectLink, so all consumers benefit automatically.
+- 150ms delay matches the glass pill's `clearDelay` to keep both systems in sync.
+
+---
+
+## 2026-03-21 — Remove visuals from UW case study left column
+
+**Branch:** `uw-remove-left-visuals`
+
+**Summary:** Removed all prototype iframes and gallery items from the UW Design System case study. The left column now shows text-only sections, matching the presentation of other case studies.
+
+**Decisions:**
+- Set all three section visuals to `null` and emptied the gallery array. Consistent with Trio, CIP, Sony, and Acorn case studies.
+
+---
+
 ## 2026-03-21 — Video previews + title sync
 
 **Branch:** `mochi-video-preview`

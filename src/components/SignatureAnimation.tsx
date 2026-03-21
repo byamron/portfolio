@@ -47,7 +47,7 @@ export function SignatureAnimation() {
         style={{
           width: 120,
           height: 120,
-          filter: resolvedAppearance === 'dark' ? 'invert(0.75)' : 'invert(0.45)',
+          filter: resolvedAppearance === 'dark' ? 'invert(0.99)' : 'invert(0.07)',
         }}
       >
         <RiveComponent aria-label="Ben Yamron's signature" />
