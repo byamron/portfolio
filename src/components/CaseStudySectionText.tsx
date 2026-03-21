@@ -1,3 +1,6 @@
+import { useRef } from 'react'
+import { useGlassHighlight } from '../hooks/useGlassHighlight'
+
 interface CaseStudySectionTextProps {
   heading: string
   paragraphs: string[]
@@ -7,8 +10,17 @@ export function CaseStudySectionText({
   heading,
   paragraphs,
 }: CaseStudySectionTextProps) {
+  const sectionRef = useRef<HTMLElement>(null)
+  useGlassHighlight(sectionRef, {
+    borderRadius: 8,
+    maxPull: 3,
+    tightBounds: true,
+    clearDelay: 300,
+    cardSelector: '[data-paper-link]',
+  })
+
   return (
-    <section>
+    <section ref={sectionRef} style={{ position: 'relative' }}>
       <h2
         style={{
           fontSize: 'var(--text-size-section-heading)',
