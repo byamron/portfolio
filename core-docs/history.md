@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Remove visuals from UW case study left column
+
+**Branch:** `uw-remove-left-visuals`
+
+**Summary:** Removed all prototype iframes and gallery items from the UW Design System case study. The left column now shows text-only sections, matching the presentation of other case studies.
+
+**Decisions:**
+- Set all three section visuals to `null` and emptied the gallery array. Consistent with Trio, CIP, Sony, and Acorn case studies.
+
+---
+
 ## 2026-03-21 — Video previews + title sync
 
 **Branch:** `mochi-video-preview`
