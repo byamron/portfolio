@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Add favicon, meta assets, and signature animation
+
+**Branch:** `update-favicon`
+
+**Summary:** Added site favicon (64px signature mark), Apple touch icon (180px), Open Graph image with social meta tags, and a Rive signature path animation at the bottom of the home page that triggers on scroll — like signing a letter.
+
+**Decisions:**
+- Rive animation color matched to `--text-grey` via CSS `invert()` filter, adapting to light/dark mode without editing the .riv binary.
+- Signature placed after AboutSection with 24px top padding (between-links spacing tier) to feel like a natural sign-off, not a separate section.
+- OG image hardcoded to `https://benyamron.com/og-image.png` for social previews.
+
+---
+
 ## 2026-03-20 — Polish case studies for public launch
 
 **Branch:** `polish-case-studies`
