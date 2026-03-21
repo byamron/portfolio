@@ -792,7 +792,7 @@ export function SidebarThemeControls() {
                         <img
                           src="/images/figpal.png"
                           alt=""
-                          style={{ width: 18, height: 18, objectFit: 'contain' }}
+                          style={{ height: 22, width: 'auto' }}
                         />
                       )}
                     </span>

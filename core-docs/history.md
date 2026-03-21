@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-21 — Fix figpal sidebar image rendering
+
+**Branch:** `fix-figpal-sidebar-image`
+
+**Summary:** Fixed the figpal icon in the sidebar theme controls not displaying correctly. The image file was deleted in a prior PR (fix-case-study-heroes) as "unused" but the sidebar and custom cursor still reference it. Restored `figpal.png` to `public/images/` and improved rendering from fixed 18×18 box to `height: 22, width: auto` for natural aspect ratio.
+
+---
+
 ## 2026-03-21 — Reorder sections: side projects between Mochi and earlier work
 
 **Branch:** `reorder-side-projects`
