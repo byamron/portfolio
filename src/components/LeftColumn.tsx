@@ -53,7 +53,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
             <Section
               key={i}
               section={section}
-              afterContext={i === sections.length - 1 ? <ContributionHeatmap /> : undefined}
+              afterContext={i === 1 ? <ContributionHeatmap /> : undefined}
             />
           ))}
           <AboutSection />
