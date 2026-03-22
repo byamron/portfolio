@@ -20,7 +20,7 @@ export interface Section {
 export const sections: Section[] = [
   {
     context: [
-      'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. These days, I\u2019m deep in AI workflows across design and dev.',
+      'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. Lately, that means building AI into how my team designs and ships.',
     ],
     projects: [
       // { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, caseStudySlug: 'mochi-progress-tracker', summary: 'Mochi\u2019s progress tracker existed but nobody used it. I drove a 53% increase in weekly active users, then identified its real value\u2009\u2014\u2009a single source of truth for patient weight data\u2009\u2014\u2009and built the integration that made it critical to the clinical workflow.' },
@@ -30,7 +30,7 @@ export const sections: Section[] = [
   },
   {
     context: [
-      'On the side, I design and build tools that solve my own problems in life and work.',
+      'When I\u2019m off the clock, I spend a lot of time building things\u2009—\u2009usually tools that solve my own problems in life and work.',
     ],
     projects: [
       { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'A native iOS/macOS app that forces one question each day: what are the three things that matter? Comparison-based ranking, five hand-tuned color themes, and AI as a design partner across five specialized agents\u2009\u2014\u2009proving personal projects can get production-grade craft.' },
