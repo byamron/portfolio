@@ -89,29 +89,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mql.removeEventListener('change', handler)
   }, [])
 
-  // Sync data-theme and data-accent attributes on <html>
+  // Sync attributes, --bg, and meta theme-color in one pass
   useEffect(() => {
     const html = document.documentElement
     html.setAttribute('data-theme', resolvedAppearance)
     html.setAttribute('data-accent', accentColor)
-  }, [resolvedAppearance, accentColor])
 
-  // Apply dynamic --bg when intensity > 0; remove override at 0 so CSS values are used
-  useEffect(() => {
-    if (bgIntensity < 0.001) {
-      document.documentElement.style.removeProperty('--bg')
-    } else {
-      const bg = computeBg(accentColor, resolvedAppearance, bgIntensity)
-      document.documentElement.style.setProperty('--bg', bg)
-    }
-  }, [accentColor, resolvedAppearance, bgIntensity])
-
-  // Update <meta name="theme-color"> for browser chrome
-  useEffect(() => {
     const bg = computeBg(accentColor, resolvedAppearance, bgIntensity)
+    if (bgIntensity < 0.001) {
+      html.style.removeProperty('--bg')
+    } else {
+      html.style.setProperty('--bg', bg)
+    }
     const meta = document.querySelector('meta[name="theme-color"]')
     if (meta) meta.setAttribute('content', bg)
-  }, [resolvedAppearance, accentColor, bgIntensity])
+
+    document.dispatchEvent(new CustomEvent('theme-changed'))
+  }, [accentColor, resolvedAppearance, bgIntensity])
 
   const setAccentColor = useCallback((color: AccentColor) => {
     setAccentColorState(color)

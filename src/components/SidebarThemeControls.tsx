@@ -282,11 +282,8 @@ function setupControlPill(container: HTMLElement): () => void {
     showPillForControl(control, null)
   }
 
-  const observer = new MutationObserver(() => skinPill())
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-accent', 'data-theme'],
-  })
+  const handleThemeChange = () => skinPill()
+  document.addEventListener('theme-changed', handleThemeChange)
 
   pill = createPill()
   skinPill()
@@ -305,7 +302,7 @@ function setupControlPill(container: HTMLElement): () => void {
     container.removeEventListener('mouseover', handleMouseOver)
     container.removeEventListener('mouseleave', handleMouseLeave)
     container.removeEventListener('mousemove', trackMouse)
-    observer.disconnect()
+    document.removeEventListener('theme-changed', handleThemeChange)
     pill?.remove()
   }
 }
@@ -351,6 +348,7 @@ export function SidebarThemeControls() {
   const cleanupModePill = useRef<(() => void) | null>(null)
   const cleanupCursorPill = useRef<(() => void) | null>(null)
   const draggingRef = useRef(false)
+  const pendingIntensity = useRef<number | null>(null)
 
   // ---- Viewport-responsive layout ----
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight)
@@ -439,8 +437,13 @@ export function SidebarThemeControls() {
     const h = rect.height
     const y = Math.max(0, Math.min(h, e.clientY - rect.top))
     const t = y / h
-    setBgIntensity(t)
-    // Direct DOM updates for zero-lag visual feedback during drag
+    // During drag: skip React state updates, use direct DOM for zero-lag feedback.
+    // Commit final value on pointer up.
+    if (draggingRef.current) {
+      pendingIntensity.current = t
+    } else {
+      setBgIntensity(t)
+    }
     if (draggingRef.current) {
       const bg = computeBg(accentColor, resolvedAppearance, t)
       if (thumbRef.current) thumbRef.current.style.top = `${t * (h - THUMB_SIZE)}px`
@@ -475,9 +478,14 @@ export function SidebarThemeControls() {
   const handlePointerUp = useCallback(() => {
     draggingRef.current = false
     setIsDragging(false)
+    // Commit deferred intensity to React state + localStorage
+    if (pendingIntensity.current !== null) {
+      setBgIntensity(pendingIntensity.current)
+      pendingIntensity.current = null
+    }
     // Restore body bg transition
     document.body.style.transition = ''
-  }, [])
+  }, [setBgIntensity])
 
   return (
     <div

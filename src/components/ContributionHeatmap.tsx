@@ -150,6 +150,12 @@ export function ContributionHeatmap() {
   const hue = ACCENT_HUES[accentColor] ?? 34
   const isDark = resolvedAppearance === 'dark'
 
+  const cellFills = useMemo(() => {
+    return grid.map(week =>
+      week.map(cell => contribFill(cell.count, maxCount, hue, bgIntensity, isDark))
+    )
+  }, [grid, maxCount, hue, bgIntensity, isDark])
+
   const monthLabels = useMemo(() => {
     const jan1 = new Date(2026, 0, 1)
     const gridStartDay = new Date(2026, 0, 1 - jan1.getDay())
@@ -354,7 +360,7 @@ export function ContributionHeatmap() {
                   width={CELL_SIZE}
                   height={CELL_SIZE}
                   rx={2}
-                  style={{ fill: contribFill(cell.count, maxCount, hue, bgIntensity, isDark) }}
+                  style={{ fill: cellFills[weekIdx]?.[dayIdx] }}
                   data-date={cell.date}
                   data-count={cell.count}
                   data-week={weekIdx}
