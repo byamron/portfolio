@@ -15,6 +15,20 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-21 — Narrative copy refresh + tooltip clamp
+
+**Branch:** `lean-into-building`
+
+**Summary:** Revised all left-column narrative text to better communicate: solid job with responsibility, prolific personal building, and range of prior experience. Also fixed contribution heatmap tooltip clipping on left/right edge cells.
+
+**Changes:**
+- Section 1: "These days" → "Lately" + concrete AI framing ("building AI into how my team designs and ships")
+- Section 2: "On the side..." → "When I'm off the clock, I spend a lot of time building things..."
+- About p1: "I like working through..." → "I do my best work shaping early stage ideas..."
+- Heatmap tooltip: left-aligns near left edge, right-aligns near right edge instead of always centering
+
+---
+
 ## 2026-03-21 — Rive signature color fix
 
 **Branch:** `rive-signature-dark-text`
