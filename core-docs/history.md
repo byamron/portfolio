@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Hover summary polish: vertical centering + copy rewrites
+
+**Branch:** `hover-summary-polish`
+
+**Summary:** Vertically centered hover summary text in the right column by wrapping the `<p>` in a flex-centering `motion.div` container. Rewrote 7 project summaries (mochi-billing, mochi-ai-tooling, todo-priority, uw-system, sony-screenless, cip-misinfo, acorn-covid) to lead with context/tension before describing what was done. Added a summary to cip-misinfo which previously had none.
+
+**Decisions:**
+- Separated animation wrapper (`motion.div`) from semantic content (`<p>`) rather than applying flex directly to `<motion.p>` — cleaner separation of layout and semantics.
+
+---
+
 ## 2026-03-23 — Copy polish, paper link cards, coming-soon treatment
 
 **Branch:** `cip-copy-cleanup`
