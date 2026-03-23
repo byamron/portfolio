@@ -406,31 +406,43 @@ export function ContributionHeatmap() {
         >
           {focusedCell ? tooltip?.text ?? '' : ''}
         </div>
-        {tooltip && (
-          <div
-            style={{
-              position: 'absolute',
-              left: tooltip.x,
-              top: tooltip.y - 8,
-              transform: 'translate(-50%, -100%)',
-              padding: '6px 10px',
-              borderRadius: 6,
-              fontSize: 'var(--text-size-small)',
-              fontFamily: "'Onest', sans-serif",
-              fontWeight: 400,
-              lineHeight: 1.3,
-              color: 'var(--text-dark)',
-              background: 'var(--bg)',
-              border: '1px solid var(--text-light-grey)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap',
-              zIndex: 10,
-            }}
-          >
-            {tooltip.text}
-          </div>
-        )}
+        {tooltip && (() => {
+          const containerWidth = containerRef.current?.offsetWidth ?? Infinity
+          // Clamp: left-align near left edge, right-align near right edge, center otherwise
+          const nearLeft = tooltip.x < 80
+          const nearRight = tooltip.x > containerWidth - 80
+          const left = nearLeft ? 0 : nearRight ? containerWidth : tooltip.x
+          const transform = nearLeft
+            ? 'translate(0, -100%)'
+            : nearRight
+              ? 'translate(-100%, -100%)'
+              : 'translate(-50%, -100%)'
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                left,
+                top: tooltip.y - 8,
+                transform,
+                padding: '6px 10px',
+                borderRadius: 6,
+                fontSize: 'var(--text-size-small)',
+                fontFamily: "'Onest', sans-serif",
+                fontWeight: 400,
+                lineHeight: 1.3,
+                color: 'var(--text-dark)',
+                background: 'var(--bg)',
+                border: '1px solid var(--text-light-grey)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+                zIndex: 10,
+              }}
+            >
+              {tooltip.text}
+            </div>
+          )
+        })()}
         {/* Month labels below the grid */}
         <div style={{ position: 'relative', height: LABEL_HEIGHT, pointerEvents: 'none' }}>
           {monthLabels.map(({ month, col }) => (
