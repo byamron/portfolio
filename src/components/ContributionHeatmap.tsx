@@ -31,20 +31,22 @@ const ACCENT_HUES: Record<string, number> = {
   table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90,
 }
 
-const BASE_SAT = [10, 45, 48, 52, 55]
-const BASE_ALPHA = [0.06, 0.28, 0.42, 0.58, 0.75]
-
-function contribFill(level: number, hue: number, t: number, isDark: boolean): string {
-  if (isDark) {
-    // Dark mode: brighter/more saturated as intensity increases
-    const lightness = 50 + t * 10
-    const sat = (BASE_SAT[level] ?? 10) + t * 15
-    return `hsla(${hue}, ${sat}%, ${lightness}%, ${BASE_ALPHA[level] ?? 0.06})`
+function contribFill(count: number, maxCount: number, hue: number, t: number, isDark: boolean): string {
+  if (count === 0) {
+    // Empty cell — barely visible
+    if (isDark) return `hsla(${hue}, 8%, ${50 + t * 10}%, 0.05)`
+    return `hsla(${hue}, 8%, ${50 - t * 15}%, 0.05)`
   }
-  // Light mode: darker/richer as intensity increases
+  // Continuous intensity via square root for better low-end spread
+  const intensity = Math.sqrt(count / maxCount)
+  const alpha = 0.18 + intensity * 0.72 // 0.18 → 0.90
+  const sat = 30 + intensity * 40        // 30% → 70%
+  if (isDark) {
+    const lightness = 50 + t * 10
+    return `hsla(${hue}, ${sat + t * 15}%, ${lightness}%, ${alpha})`
+  }
   const lightness = 50 - t * 15
-  const sat = (BASE_SAT[level] ?? 10) + t * 10
-  return `hsla(${hue}, ${sat}%, ${lightness}%, ${BASE_ALPHA[level] ?? 0.06})`
+  return `hsla(${hue}, ${sat + t * 10}%, ${lightness}%, ${alpha})`
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -76,7 +78,7 @@ interface GridCell {
   inYear: boolean
 }
 
-function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: number } {
+function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: number, maxCount: number } {
   const lookup = new Map<string, ContributionDay>()
   for (const week of data.weeks) {
     for (const day of week.contributionDays) {
@@ -94,6 +96,7 @@ function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: 
 
   const grid: GridCell[][] = []
   let total = 0
+  let maxCount = 0
   const current = new Date(gridStart)
 
   while (current <= gridEnd) {
@@ -104,7 +107,7 @@ function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: 
       const contrib = lookup.get(dateStr)
       const count = contrib?.contributionCount ?? 0
       const level = contrib?.level ?? 0
-      if (inYear) total += count
+      if (inYear) { total += count; if (count > maxCount) maxCount = count }
       week.push({ date: dateStr, count, level, inYear })
       current.setDate(current.getDate() + 1)
     }
@@ -123,7 +126,7 @@ function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: 
   }
   const trimmed = grid.slice(0, lastFilledWeek + 1)
 
-  return { grid: trimmed, totalContributions: total }
+  return { grid: trimmed, totalContributions: total, maxCount: maxCount || 1 }
 }
 
 interface TooltipState {
@@ -133,7 +136,7 @@ interface TooltipState {
 }
 
 export function ContributionHeatmap() {
-  const { grid, totalContributions } = useMemo(() => buildYearGrid(2026), [])
+  const { grid, totalContributions, maxCount } = useMemo(() => buildYearGrid(2026), [])
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [focusedCell, setFocusedCell] = useState<{ week: number; day: number } | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
@@ -288,6 +291,7 @@ export function ContributionHeatmap() {
           fontSize: 'var(--text-size-small)',
           fontWeight: 400,
           color: 'var(--text-grey)',
+          fontVariantNumeric: 'tabular-nums',
         }}>
           {totalContributions} contributions in 2026. Most repos are private (sorry).
         </span>
@@ -350,7 +354,7 @@ export function ContributionHeatmap() {
                   width={CELL_SIZE}
                   height={CELL_SIZE}
                   rx={2}
-                  style={{ fill: contribFill(cell.level, hue, bgIntensity, isDark) }}
+                  style={{ fill: contribFill(cell.count, maxCount, hue, bgIntensity, isDark) }}
                   data-date={cell.date}
                   data-count={cell.count}
                   data-week={weekIdx}
@@ -406,31 +410,43 @@ export function ContributionHeatmap() {
         >
           {focusedCell ? tooltip?.text ?? '' : ''}
         </div>
-        {tooltip && (
-          <div
-            style={{
-              position: 'absolute',
-              left: tooltip.x,
-              top: tooltip.y - 8,
-              transform: 'translate(-50%, -100%)',
-              padding: '6px 10px',
-              borderRadius: 6,
-              fontSize: 'var(--text-size-small)',
-              fontFamily: "'Onest', sans-serif",
-              fontWeight: 400,
-              lineHeight: 1.3,
-              color: 'var(--text-dark)',
-              background: 'var(--bg)',
-              border: '1px solid var(--text-light-grey)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap',
-              zIndex: 10,
-            }}
-          >
-            {tooltip.text}
-          </div>
-        )}
+        {tooltip && (() => {
+          const containerWidth = containerRef.current?.offsetWidth ?? Infinity
+          // Clamp: left-align near left edge, right-align near right edge, center otherwise
+          const nearLeft = tooltip.x < 80
+          const nearRight = tooltip.x > containerWidth - 80
+          const left = nearLeft ? 0 : nearRight ? containerWidth : tooltip.x
+          const transform = nearLeft
+            ? 'translate(0, -100%)'
+            : nearRight
+              ? 'translate(-100%, -100%)'
+              : 'translate(-50%, -100%)'
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                left,
+                top: tooltip.y - 8,
+                transform,
+                padding: '6px 10px',
+                borderRadius: 6,
+                fontSize: 'var(--text-size-small)',
+                fontFamily: "'Onest', sans-serif",
+                fontWeight: 400,
+                lineHeight: 1.3,
+                color: 'var(--text-dark)',
+                background: 'var(--bg)',
+                border: '1px solid var(--text-light-grey)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+                zIndex: 10,
+              }}
+            >
+              {tooltip.text}
+            </div>
+          )
+        })()}
         {/* Month labels below the grid */}
         <div style={{ position: 'relative', height: LABEL_HEIGHT, pointerEvents: 'none' }}>
           {monthLabels.map(({ month, col }) => (

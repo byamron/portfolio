@@ -2,6 +2,56 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Interface polish: selection color, hover gating, tap highlights
+
+**Branch:** `interface-audit`
+
+**Summary:** Fixed text selection highlight using wrong token (`--text-light` → `--text-dark` for legibility against accent swatch). Wrapped CSS glass hover effects in `@media (hover: hover)` so touch devices don't get stuck hover states. Added `-webkit-tap-highlight-color: transparent` on interactive elements. Added `userSelect: 'none'` on sidebar controls (accent swatches, mode/cursor toggles) to prevent accidental text selection when clicking. Added `text-rendering: optimizeLegibility` and `-webkit-text-size-adjust: 100%` to html. Added `tabular-nums` to contribution count text.
+
+**Decisions:**
+- Separated `:hover` and `:focus-visible` glass styles so hover can be media-gated while focus-visible remains always available for keyboard/touch.
+
+---
+
+## 2026-03-22 — Contribution heatmap contrast improvement
+
+**Branch:** `contribution-graph-contrast`
+
+**Summary:** Replaced discrete 5-level bucket fill in the contribution heatmap with continuous intensity scaling using `Math.sqrt(count / maxCount)`. Empty cells get explicit near-invisible treatment (alpha 0.05). Active cells scale alpha 0.18–0.90 and saturation 30%–70%, producing better perceptual contrast between sparse and busy days.
+
+**Decisions:**
+- Switched from level-based to count-based fill to avoid bucketing artifacts.
+- Used square-root scaling to spread low-count days more visibly across the gradient.
+
+---
+
+## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
+
+**Branch:** `cursor-strategy-eval`
+
+**Summary:** Added a CursorCompanion component that shows contextual text cues alongside the standard browser cursor: → on project links, ← on back links (positioned left of cursor), and "coming soon" on non-link projects. Theme-aware accent coloring, respects `prefers-reduced-motion`. Reordered sidebar to put standard cursor above figpal.
+
+**Decisions:**
+- Abandoned custom cursor (cursor:none) due to Chromium macOS Tahoe bug where standard cursor stays visible. Instead, companion labels work *with* the standard cursor as add-ons.
+- Plain text (no box/pill) with horizontal inline positioning — boxes and inverse colors were tried and rejected as too heavy.
+- Figpal kept as separate mode with its own interactivity cues; companion only active in standard mode.
+
+---
+
+## 2026-03-21 — Narrative copy refresh + tooltip clamp
+
+**Branch:** `lean-into-building`
+
+**Summary:** Revised all left-column narrative text to better communicate: solid job with responsibility, prolific personal building, and range of prior experience. Also fixed contribution heatmap tooltip clipping on left/right edge cells.
+
+**Changes:**
+- Section 1: "These days" → "Lately" + concrete AI framing ("building AI into how my team designs and ships")
+- Section 2: "On the side..." → "When I'm off the clock, I spend a lot of time building things..."
+- About p1: "I like working through..." → "I do my best work shaping early stage ideas..."
+- Heatmap tooltip: left-aligns near left edge, right-aligns near right edge instead of always centering
+
+---
+
 ## 2026-03-21 — Rive signature color fix
 
 **Branch:** `rive-signature-dark-text`
