@@ -24,6 +24,18 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-23 — Condensed case studies, AI tooling narrative, typography fix
+
+**Branch:** `single-page-strategy`
+
+**Summary:** Wrote full AI tooling case study narrative (2 paragraphs: institutional knowledge gap → composable skills plugin). Rewrote Trio narrative to focus on the personal problem and product mechanics. Enabled AI tooling as a linked project. Fixed case study typography: narrative paragraphs now use Literata 300 22px (matching home page editorial voice) instead of Onest 400 18px. Title reduced from 36px to 28px for proportional fit with longer case study titles. Minor copy tweaks on Progress Tracker and UW Design System.
+
+**Decisions:**
+- Case study narrative uses same two-voice system as home page: Literata for editorial, Onest for functional. Previous mismatch (Onest on case studies) broke the design language.
+- Title at `--text-size-section-heading` (28px) instead of `--text-size-title` (36px) — long case study titles wrap to 3+ lines at 36px on a 50% column.
+
+---
+
 ## 2026-03-23 — Interface polish: selection color, hover gating, tap highlights
 
 **Branch:** `interface-audit`
@@ -49,14 +61,15 @@ Decision log and completed work, in reverse chronological order.
 
 ## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
 
-**Branch:** `cursor-strategy-eval`
+**Branch:** `mobile-cursor-theme-fix`
 
-**Summary:** Added a CursorCompanion component that shows contextual text cues alongside the standard browser cursor: → on project links, ← on back links (positioned left of cursor), and "coming soon" on non-link projects. Theme-aware accent coloring, respects `prefers-reduced-motion`. Reordered sidebar to put standard cursor above figpal.
+**Summary:** Added a CursorCompanion component that shows contextual text cues alongside the standard browser cursor: → on project links, ← on back links (positioned left of cursor), and "coming soon" on non-link projects. Theme-aware accent coloring, respects `prefers-reduced-motion`. Disabled invert cursor mode. Added mobile/touch support for sidebar (click-to-toggle, touch-outside-to-close, hidden cursor controls). Documented CursorCompanion in `design-language.md`.
 
 **Decisions:**
 - Abandoned custom cursor (cursor:none) due to Chromium macOS Tahoe bug where standard cursor stays visible. Instead, companion labels work *with* the standard cursor as add-ons.
 - Plain text (no box/pill) with horizontal inline positioning — boxes and inverse colors were tried and rejected as too heavy.
 - Figpal kept as separate mode with its own interactivity cues; companion only active in standard mode.
+- Sidebar uses click-to-toggle (not hover) on touch/narrow viewports; cursor controls hidden entirely on touch since custom cursors don't apply.
 
 ---
 
