@@ -2,6 +2,16 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-22 — Cursor companion styling: plain text, not boxes or inverse colors
+
+**What was attempted:** First implemented cursor companion labels with frosted-glass box styling (background, border, backdrop-filter). Then tried inverse/negative color styling matching the old invert cursor mode.
+
+**What went wrong:** Boxes felt too heavy and cluttered next to the standard cursor. Inverse color looked odd — too high contrast and disconnected from the theme. Both distracted from the content rather than subtly signaling interactivity.
+
+**Lesson learned:** Cursor companion cues should be minimal — plain text with theme-aware accent color, horizontally inline with the cursor (not below), no container styling. The goal is a gentle hint, not a tooltip. When adding visual elements near the cursor, less is always more.
+
+---
+
 ## 2026-03-20 — lottie-react refs aren't available in onDOMLoaded with React.lazy
 
 **What was attempted:** Used `lottieRef` + `onDOMLoaded` callback to call `goToAndStop(lastFrame)` on a lazy-loaded Lottie component, to show the final frame without replaying.
