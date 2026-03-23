@@ -639,7 +639,7 @@ export function SidebarThemeControls() {
                     onClick={() => setAccentColor(item.color)}
                     style={{
                       width: swatchSize, height: swatchSize, borderRadius: 6,
-                      background: item.swatch, border: 'none', cursor: 'pointer', padding: 0,
+                      background: item.swatch, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
                       outline: isActive ? `1.5px solid color-mix(in srgb, ${item.swatch} 50%, transparent)` : 'none',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                     }}
@@ -764,7 +764,7 @@ export function SidebarThemeControls() {
                       width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
                       opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
-                      transition: 'opacity 200ms ease-in-out',
+                      transition: 'opacity 200ms ease-in-out', userSelect: 'none' as const,
                     }}
                   >
                     <span
@@ -822,7 +822,7 @@ export function SidebarThemeControls() {
                           width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
                           border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
                           opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
-                          transition: 'opacity 200ms ease-in-out',
+                          transition: 'opacity 200ms ease-in-out', userSelect: 'none' as const,
                         }}
                       >
                         <span

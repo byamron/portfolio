@@ -2,6 +2,41 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Condensed case studies, AI tooling narrative, typography fix
+
+**Branch:** `single-page-strategy`
+
+**Summary:** Wrote full AI tooling case study narrative (2 paragraphs: institutional knowledge gap → composable skills plugin). Rewrote Trio narrative to focus on the personal problem and product mechanics. Enabled AI tooling as a linked project. Fixed case study typography: narrative paragraphs now use Literata 300 22px (matching home page editorial voice) instead of Onest 400 18px. Title reduced from 36px to 28px for proportional fit with longer case study titles. Minor copy tweaks on Progress Tracker and UW Design System.
+
+**Decisions:**
+- Case study narrative uses same two-voice system as home page: Literata for editorial, Onest for functional. Previous mismatch (Onest on case studies) broke the design language.
+- Title at `--text-size-section-heading` (28px) instead of `--text-size-title` (36px) — long case study titles wrap to 3+ lines at 36px on a 50% column.
+
+---
+
+## 2026-03-23 — Interface polish: selection color, hover gating, tap highlights
+
+**Branch:** `interface-audit`
+
+**Summary:** Fixed text selection highlight using wrong token (`--text-light` → `--text-dark` for legibility against accent swatch). Wrapped CSS glass hover effects in `@media (hover: hover)` so touch devices don't get stuck hover states. Added `-webkit-tap-highlight-color: transparent` on interactive elements. Added `userSelect: 'none'` on sidebar controls (accent swatches, mode/cursor toggles) to prevent accidental text selection when clicking. Added `text-rendering: optimizeLegibility` and `-webkit-text-size-adjust: 100%` to html. Added `tabular-nums` to contribution count text.
+
+**Decisions:**
+- Separated `:hover` and `:focus-visible` glass styles so hover can be media-gated while focus-visible remains always available for keyboard/touch.
+
+---
+
+## 2026-03-22 — Contribution heatmap contrast improvement
+
+**Branch:** `contribution-graph-contrast`
+
+**Summary:** Replaced discrete 5-level bucket fill in the contribution heatmap with continuous intensity scaling using `Math.sqrt(count / maxCount)`. Empty cells get explicit near-invisible treatment (alpha 0.05). Active cells scale alpha 0.18–0.90 and saturation 30%–70%, producing better perceptual contrast between sparse and busy days.
+
+**Decisions:**
+- Switched from level-based to count-based fill to avoid bucketing artifacts.
+- Used square-root scaling to spread low-count days more visibly across the gradient.
+
+---
+
 ## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
 
 **Branch:** `mobile-cursor-theme-fix`
