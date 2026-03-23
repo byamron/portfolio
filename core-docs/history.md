@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Interface polish: selection color, hover gating, tap highlights
+
+**Branch:** `interface-audit`
+
+**Summary:** Fixed text selection highlight using wrong token (`--text-light` → `--text-dark` for legibility against accent swatch). Wrapped CSS glass hover effects in `@media (hover: hover)` so touch devices don't get stuck hover states. Added `-webkit-tap-highlight-color: transparent` on interactive elements. Added `userSelect: 'none'` on sidebar controls (accent swatches, mode/cursor toggles) to prevent accidental text selection when clicking. Added `text-rendering: optimizeLegibility` and `-webkit-text-size-adjust: 100%` to html. Added `tabular-nums` to contribution count text.
+
+**Decisions:**
+- Separated `:hover` and `:focus-visible` glass styles so hover can be media-gated while focus-visible remains always available for keyboard/touch.
+
+---
+
 ## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
 
 **Branch:** `cursor-strategy-eval`
