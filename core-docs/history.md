@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Vitest testing infrastructure
+
+**Branch:** `testing-strategy`
+
+**Summary:** Added Vitest as the project's test runner with 3 test suites covering `contribFill` (continuous count/maxCount scaling), `computeBg` (theme background computation), `formatDate`/`getTooltipText` (heatmap helpers), and `gridToBraille`/`DIRECTIONAL_SWEEP` (braille encoding). Exported 3 functions from `ContributionHeatmap.tsx` for testability. Added `vitest.config.ts` with `@` path alias.
+
+**Decisions:**
+- Tests target the continuous `count/maxCount` version of `contribFill` (from the heatmap contrast improvement on `next-update`), not the older discrete `level`-based version still on `main`.
+- Used regex matching for floating-point assertions to handle IEEE 754 precision (e.g. `0.18 + 0.72 = 0.8999...`).
+
+---
+
 ## 2026-03-23 — Case study top spacing and sidebar alignment
 
 **Branch:** `spacing-top-elements`
