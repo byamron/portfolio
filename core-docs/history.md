@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-22 — Contribution heatmap contrast improvement
+
+**Branch:** `contribution-graph-contrast`
+
+**Summary:** Replaced discrete 5-level bucket fill in the contribution heatmap with continuous intensity scaling using `Math.sqrt(count / maxCount)`. Empty cells get explicit near-invisible treatment (alpha 0.05). Active cells scale alpha 0.18–0.90 and saturation 30%–70%, producing better perceptual contrast between sparse and busy days.
+
+**Decisions:**
+- Switched from level-based to count-based fill to avoid bucketing artifacts.
+- Used square-root scaling to spread low-count days more visibly across the gradient.
+
+---
+
 ## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
 
 **Branch:** `cursor-strategy-eval`
