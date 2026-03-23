@@ -2,6 +2,28 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Performance audit + Subframe removal
+
+**Branch:** `perf-audit`
+
+**Summary:** Broad performance pass — reduced unnecessary observers, memoized renders, code-split heavy dependencies, and removed the unused Subframe component library.
+
+**Changes:**
+- **ThemeContext**: Consolidated 3 separate `useEffect`s (data attributes, `--bg` variable, meta theme-color) into a single effect. Dispatches a `theme-changed` custom event so consumers don't need MutationObservers.
+- **MutationObserver → custom event**: Replaced `MutationObserver` on `<html>` attributes with `theme-changed` event listener in CursorCompanion, CustomCursor, SidebarThemeControls, and useGlassHighlight. Fewer DOM observers, same reactivity.
+- **useGlassHighlight**: Scroll/resize listeners are now lazy — added only when a card is hovered, removed when the highlight fades out.
+- **ContributionHeatmap**: Memoized cell fill colors with `useMemo` instead of recomputing `contribFill()` per cell on every render.
+- **SignatureAnimation**: Code-split via `React.lazy` + `Suspense` so `@rive-app/react-canvas` is not in the main bundle.
+- **SidebarThemeControls**: During intensity slider drag, bypasses React state updates and uses direct DOM writes for zero-lag feedback. Commits final value to state on pointer up.
+- **CursorCompanion positioning fix**: Moved target detection (what's under cursor) before position calculation so `leftSide` is correctly set before the label's x-coordinate is computed. Fixes a glitch where the companion would briefly appear on the wrong side.
+- **Subframe removal**: Deleted all `src/ui/` files (44 components, layouts, utils, theme), `.subframe/sync.json`, `@subframe/core` from dependencies, Subframe theme overrides from `theme.css`, and the Subframe CSS import from `globals.css`. Updated CLAUDE.md to reflect removal.
+
+**Decisions:**
+- Custom event dispatch (`theme-changed`) chosen over a pub/sub system because listeners are all vanilla DOM code (not React components), and custom events integrate naturally with `addEventListener`/`removeEventListener` cleanup.
+- Lazy scroll/resize listeners in useGlassHighlight preferred over `{ passive: true }` alone — no listener at all is cheaper than a passive one when no highlight is active.
+
+---
+
 ## 2026-03-23 — Condensed case studies, AI tooling narrative, typography fix
 
 **Branch:** `single-page-strategy`

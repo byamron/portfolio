@@ -13,7 +13,6 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.7",
     "@rive-app/react-canvas": "^4.27.2",
-    "@subframe/core": "^1.154.0",
     "framer-motion": "^11.18.0",
     "lottie-react": "^2.4.1",
     "react": "^19.0.0",

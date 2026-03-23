@@ -202,13 +202,9 @@ export function CustomCursor() {
         hand.innerHTML = makeHandSvg(tc)
       }
 
-      const observer = new MutationObserver(applyTint)
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-accent', 'data-theme'],
-      })
+      document.addEventListener('theme-changed', applyTint)
 
-      ;(container as any).__tintCleanup = () => observer.disconnect()
+      ;(container as any).__tintCleanup = () => document.removeEventListener('theme-changed', applyTint)
     } else {
       // figpal
       removeCursorNoneStyle()

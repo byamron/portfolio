@@ -61,11 +61,7 @@ export function CursorCompanion() {
 
     skinLabel()
 
-    const observer = new MutationObserver(skinLabel)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-accent', 'data-theme'],
-    })
+    document.addEventListener('theme-changed', skinLabel)
 
     function show(text: string, placeLeft = false) {
       if (leaveTimer) {
@@ -107,6 +103,38 @@ export function CursorCompanion() {
       // Only respond to mouse — no companion on touch devices
       if (e.pointerType !== 'mouse') return
 
+      // Detect what's under the cursor first so leftSide is correct before positioning
+      const target = document.elementFromPoint(e.clientX, e.clientY)
+      if (!target) { hide(); return }
+
+      // Back link → left arrow, placed to the left of cursor
+      if (target.closest('[data-back-link]')) {
+        show('\u2190', true)
+      } else {
+        // Project link card → arrow or "coming soon"
+        const linkCard = target.closest('[data-link-card]')
+        if (linkCard) {
+          const projectId = linkCard.getAttribute('data-project-id')
+          if (projectId) {
+            const project = projectsById[projectId]
+            if (project) {
+              show(project.isLink ? '\u2192' : 'coming soon')
+            } else {
+              show('\u2192')
+            }
+          } else {
+            // Link card without project data (e.g., heatmap GitHub link)
+            show('\u2192')
+          }
+        } else if (target.closest('[data-contact-card]')) {
+          // Contact card → arrow
+          show('\u2192')
+        } else {
+          hide()
+          // Still position while fading out so it doesn't freeze in place
+        }
+      }
+
       // Position the label inline with the cursor — same vertical center
       const lw = label.offsetWidth || 0
       const lh = label.offsetHeight || 0
@@ -119,40 +147,6 @@ export function CursorCompanion() {
       if (y < 4) y = 4
       if (y + lh > window.innerHeight - 4) y = window.innerHeight - lh - 4
       label.style.transform = `translate(${x}px, ${y}px)`
-
-      // Detect what's under the cursor
-      const target = document.elementFromPoint(e.clientX, e.clientY)
-      if (!target) { hide(); return }
-
-      // Back link → left arrow, placed to the left of cursor
-      if (target.closest('[data-back-link]')) {
-        show('\u2190', true)
-        return
-      }
-
-      // Project link card → arrow or "coming soon"
-      const linkCard = target.closest('[data-link-card]')
-      if (linkCard) {
-        const projectId = linkCard.getAttribute('data-project-id')
-        if (projectId) {
-          const project = projectsById[projectId]
-          if (project) {
-            show(project.isLink ? '\u2192' : 'coming soon')
-            return
-          }
-        }
-        // Link card without project data (e.g., heatmap GitHub link)
-        show('\u2192')
-        return
-      }
-
-      // Contact card → arrow
-      if (target.closest('[data-contact-card]')) {
-        show('\u2192')
-        return
-      }
-
-      hide()
     }
 
     document.addEventListener('pointermove', handlePointerMove)
@@ -160,7 +154,7 @@ export function CursorCompanion() {
     return () => {
       document.removeEventListener('pointermove', handlePointerMove)
       if (leaveTimer) clearTimeout(leaveTimer)
-      observer.disconnect()
+      document.removeEventListener('theme-changed', skinLabel)
       label.remove()
       visible = false
       currentContent = ''
