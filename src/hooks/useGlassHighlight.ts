@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type RefObject } from 'react'
 
 // ---------------------------------------------------------------------------
 // Config
@@ -43,15 +43,28 @@ export const GLASS_DEFAULTS: GlassConfig = {
 export function useGlassHighlight(
   containerRef: RefObject<HTMLElement | null>,
   config?: Partial<GlassConfig>,
-) {
+): { fadeOut: (duration?: number, delay?: number) => void } {
   const configRef = useRef<GlassConfig>({ ...GLASS_DEFAULTS, ...config })
   configRef.current = { ...GLASS_DEFAULTS, ...config }
+
+  const fadeOutRef = useRef<(duration?: number, delay?: number) => void>(() => {})
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    return setupGlassHighlight(container, configRef)
+    const { cleanup, fadeOut } = setupGlassHighlight(container, configRef)
+    fadeOutRef.current = fadeOut
+    return () => {
+      fadeOutRef.current = () => {}
+      cleanup()
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stableFadeOut = useCallback((duration?: number, delay?: number) => {
+    fadeOutRef.current(duration, delay)
+  }, [])
+
+  return { fadeOut: stableFadeOut }
 }
 
 // ---------------------------------------------------------------------------
@@ -61,14 +74,13 @@ export function useGlassHighlight(
 function setupGlassHighlight(
   container: HTMLElement,
   configRef: React.MutableRefObject<GlassConfig>,
-): () => void {
+): { cleanup: () => void; fadeOut: (duration?: number, delay?: number) => void } {
   // -- Mutable state --
   let pill: HTMLDivElement | null = null
 
   let currentCard: HTMLElement | null = null
   let isVisible = false
   let rafId: number | null = null
-  let observer: MutationObserver | null = null
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
   let clearTimer: ReturnType<typeof setTimeout> | null = null
   let currentBorderRadius = configRef.current.borderRadius
@@ -233,6 +245,22 @@ function setupGlassHighlight(
     }
   }
 
+  let scrollListenersActive = false
+
+  function addScrollListeners(): void {
+    if (scrollListenersActive) return
+    scrollListenersActive = true
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('resize', handleResize)
+  }
+
+  function removeScrollListeners(): void {
+    if (!scrollListenersActive) return
+    scrollListenersActive = false
+    window.removeEventListener('scroll', handleScroll)
+    window.removeEventListener('resize', handleResize)
+  }
+
   function loop(): void {
     rafId = null
     if (!currentCard || !pill) return
@@ -363,6 +391,7 @@ function setupGlassHighlight(
         currentCard = null
         fadeOut()
         stopLoop()
+        removeScrollListeners()
         return
       }
       // Cursor moved to a non-card area
@@ -380,6 +409,7 @@ function setupGlassHighlight(
             currentCard = null
             fadeOut()
             stopLoop()
+            removeScrollListeners()
           }, delay)
         }
       } else if (clearTimer) {
@@ -404,6 +434,11 @@ function setupGlassHighlight(
     currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
     if (pill) pill.style.borderRadius = `${currentBorderRadius}px`
 
+    // Invalidate cached container rect so the lean calculation uses a fresh
+    // position — prevents inverted pull after scrolling between hover sessions
+    // (scroll listeners are removed when no card is hovered, so scrolling
+    // between hovers leaves the cache stale).
+    cachedContainerRect = null
 
     const pos = getCardPosition(card)
 
@@ -434,6 +469,7 @@ function setupGlassHighlight(
 
     state.mouseX = e.clientX
     state.mouseY = e.clientY
+    addScrollListeners()
     startLoop()
   }
 
@@ -446,6 +482,7 @@ function setupGlassHighlight(
     currentCard = null
     fadeOut()
     stopLoop()
+    removeScrollListeners()
   }
 
   function handleMouseMove(e: MouseEvent): void {
@@ -467,6 +504,7 @@ function setupGlassHighlight(
     currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
     if (pill) pill.style.borderRadius = `${currentBorderRadius}px`
 
+    cachedContainerRect = null
 
     const pos = getCardPosition(card)
 
@@ -500,6 +538,7 @@ function setupGlassHighlight(
     currentCard = null
     fadeOut()
     stopLoop()
+    removeScrollListeners()
   }
 
   function handleScroll(): void {
@@ -523,18 +562,7 @@ function setupGlassHighlight(
   // -- Theme observer --
 
   function setupThemeObserver(): void {
-    observer = new MutationObserver(mutations => {
-      for (const m of mutations) {
-        if (m.attributeName === 'data-accent' || m.attributeName === 'data-theme') {
-          skinPill()
-          break
-        }
-      }
-    })
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-accent', 'data-theme'],
-    })
+    document.addEventListener('theme-changed', skinPill)
   }
 
   // -- Init --
@@ -550,25 +578,39 @@ function setupGlassHighlight(
   container.addEventListener('mousemove', handleMouseMove, { passive: true })
   container.addEventListener('focusin', handleFocusIn, true)
   container.addEventListener('focusout', handleFocusOut, true)
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  window.addEventListener('resize', handleResize)
   setupThemeObserver()
 
-  // -- Cleanup --
-  return () => {
+  // -- Navigation fade-out (called externally to sync with page exit) --
+
+  function navigationFadeOut(duration = configRef.current.fadeDuration, delay = 0): void {
+    if (!pill) return
+    isVisible = false
+    currentCard = null
+    if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
     stopLoop()
+    // Respect reduced motion: fall back to instant opacity change
+    const d = prefersReducedMotion.matches ? 0 : duration
+    const dl = prefersReducedMotion.matches ? 0 : delay
+    pill.style.transition = `opacity ${d}ms ease ${dl}ms`
+    pill.style.opacity = '0'
+  }
+
+  // -- Cleanup --
+  const cleanup = () => {
+    stopLoop()
+    removeScrollListeners()
     container.removeEventListener('mouseover', handleMouseOver)
     container.removeEventListener('mouseleave', handleMouseLeave)
     container.removeEventListener('mousemove', handleMouseMove)
     container.removeEventListener('focusin', handleFocusIn, true)
     container.removeEventListener('focusout', handleFocusOut, true)
-    window.removeEventListener('scroll', handleScroll)
-    window.removeEventListener('resize', handleResize)
-    observer?.disconnect()
+    document.removeEventListener('theme-changed', skinPill)
     prefersReducedMotion.removeEventListener('change', handleMotionChange)
     pill?.remove()
     container.removeAttribute('data-glass-highlight-active')
     if (resizeTimer) clearTimeout(resizeTimer)
     if (clearTimer) clearTimeout(clearTimer)
   }
+
+  return { cleanup, fadeOut: navigationFadeOut }
 }

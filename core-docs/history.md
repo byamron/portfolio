@@ -2,6 +2,173 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Vitest testing infrastructure
+
+**Branch:** `testing-strategy`
+
+**Summary:** Added Vitest as the project's test runner with 3 test suites covering `contribFill` (continuous count/maxCount scaling), `computeBg` (theme background computation), `formatDate`/`getTooltipText` (heatmap helpers), and `gridToBraille`/`DIRECTIONAL_SWEEP` (braille encoding). Exported 3 functions from `ContributionHeatmap.tsx` for testability. Added `vitest.config.ts` with `@` path alias.
+
+**Decisions:**
+- Tests target the continuous `count/maxCount` version of `contribFill` (from the heatmap contrast improvement on `next-update`), not the older discrete `level`-based version still on `main`.
+- Used regex matching for floating-point assertions to handle IEEE 754 precision (e.g. `0.18 + 0.72 = 0.8999...`).
+
+---
+
+## 2026-03-23 — Fix glass pill lean inversion after scrolling
+
+**Branch:** `fix/glass-lean-inversion`
+
+**Summary:** Fixed an intermittent bug where the glass highlight pill's directional lean/tilt responded in the opposite direction from the cursor. Caused by `cachedContainerRect` going stale between hover sessions — scroll listeners are removed when no card is hovered, so scrolling between hovers left the cache holding the container's old viewport position, inverting the lean math.
+
+**Decisions:**
+- Invalidate `cachedContainerRect` at the start of every `handleMouseOver` and `handleFocusIn`. One extra `getBoundingClientRect` per hover-start is negligible — already happens every scroll frame.
+
+---
+
+## 2026-03-23 — Case study top spacing and sidebar alignment
+
+**Branch:** `spacing-top-elements`
+
+**Summary:** On narrow viewports, the case study page's back button and title had almost no gap, and the sidebar theme swatch was misaligned with the back button. Added 32px extra top padding to the narrow case study article, aligned the swatch horizontally with the back button via a responsive CSS variable (`--sidebar-trigger-top: 36px` at <900px, falling back to 64px on wide), and excluded the sidebar from view transitions so it stays steady during page navigation.
+
+**Decisions:**
+- Used a CSS custom property with media query rather than per-page JS overrides — avoids the swatch shifting position when navigating between pages.
+- Gave the sidebar its own `view-transition-name: sidebar` with `animation: none` to keep it visually stable during route transitions.
+
+---
+
+## 2026-03-23 — Glass pill exit timing sync
+
+**Branch:** `fix-glass-exit-timing`
+
+**Summary:** Synced the glass highlight pill's fade-out with the left column content exit animation when navigating to a case study. The `useGlassHighlight` hook now returns a `fadeOut(duration, delay)` function; `LeftColumn` calls it with the same timing as the Framer Motion exit (280ms, 150ms delay). The `navigationFadeOut` also respects `prefers-reduced-motion` by zeroing duration/delay when active.
+
+**Decisions:**
+- Exposed `fadeOut` via a stable ref + `useCallback` pattern to avoid re-renders — the hook's imperative internals stay fully encapsulated.
+- Reduced-motion check lives inside `navigationFadeOut` (not the caller) so accessibility is handled centrally.
+
+---
+
+## 2026-03-23 — Signature right-side inset
+
+**Branch:** `signature-placement`
+
+**Summary:** Added 16px right padding to the signature animation container. The signature was flush against the right edge of the content area, which made it feel like it was hanging off the boundary. The small inset gives it breathing room while keeping the right-aligned placement (which mirrors how people sign letters).
+
+**Decisions:**
+- Kept right alignment after evaluating left and center — right feels most "authored" and matches the design language's embrace of intentional asymmetry.
+- 16px offset is enough to create air without pulling the signature noticeably toward center.
+
+---
+
+## 2026-03-23 — Hover summary polish: vertical centering + copy rewrites
+
+**Branch:** `hover-summary-polish`
+
+**Summary:** Vertically centered hover summary text in the right column by wrapping the `<p>` in a flex-centering `motion.div` container. Rewrote 7 project summaries (mochi-billing, mochi-ai-tooling, todo-priority, uw-system, sony-screenless, cip-misinfo, acorn-covid) to lead with context/tension before describing what was done. Added a summary to cip-misinfo which previously had none.
+
+**Decisions:**
+- Separated animation wrapper (`motion.div`) from semantic content (`<p>`) rather than applying flex directly to `<motion.p>` — cleaner separation of layout and semantics.
+
+---
+
+## 2026-03-23 — Copy polish, paper link cards, coming-soon treatment
+
+**Branch:** `cip-copy-cleanup`
+
+**Summary:** Removed "(CSCW 2025)" from CIP title; moved conference mention into body ("presented at CSCW 2025" with link). Paper links now render as Onest card-style items with arrows below the narrative, matching home page project links. Added `paperLinks` field to CaseStudy data model. Tightened section 2 intro copy ("Outside of work, I'm always building..."). Coming-soon projects no longer trigger right-column image swap; added back a minimal CursorCompanion that shows "coming soon" only on non-link cards (all cursor modes). Added 24px spacing above contribution heatmap.
+
+**Decisions:**
+- Paper links as card-style items (not inline HTML) keeps the narrative clean and gives papers the same visual weight as project links.
+- "Presented at" rather than "published at" — CSCW is a conference; publication is in ACM proceedings.
+
+---
+
+## 2026-03-23 — Performance audit + Subframe removal
+
+**Branch:** `perf-audit`
+
+**Summary:** Broad performance pass — reduced unnecessary observers, memoized renders, code-split heavy dependencies, and removed the unused Subframe component library.
+
+**Changes:**
+- **ThemeContext**: Consolidated 3 separate `useEffect`s (data attributes, `--bg` variable, meta theme-color) into a single effect. Dispatches a `theme-changed` custom event so consumers don't need MutationObservers.
+- **MutationObserver → custom event**: Replaced `MutationObserver` on `<html>` attributes with `theme-changed` event listener in CursorCompanion, CustomCursor, SidebarThemeControls, and useGlassHighlight. Fewer DOM observers, same reactivity.
+- **useGlassHighlight**: Scroll/resize listeners are now lazy — added only when a card is hovered, removed when the highlight fades out.
+- **ContributionHeatmap**: Memoized cell fill colors with `useMemo` instead of recomputing `contribFill()` per cell on every render.
+- **SignatureAnimation**: Code-split via `React.lazy` + `Suspense` so `@rive-app/react-canvas` is not in the main bundle.
+- **SidebarThemeControls**: During intensity slider drag, bypasses React state updates and uses direct DOM writes for zero-lag feedback. Commits final value to state on pointer up.
+- **CursorCompanion positioning fix**: Moved target detection (what's under cursor) before position calculation so `leftSide` is correctly set before the label's x-coordinate is computed. Fixes a glitch where the companion would briefly appear on the wrong side.
+- **Subframe removal**: Deleted all `src/ui/` files (44 components, layouts, utils, theme), `.subframe/sync.json`, `@subframe/core` from dependencies, Subframe theme overrides from `theme.css`, and the Subframe CSS import from `globals.css`. Updated CLAUDE.md to reflect removal.
+
+**Decisions:**
+- Custom event dispatch (`theme-changed`) chosen over a pub/sub system because listeners are all vanilla DOM code (not React components), and custom events integrate naturally with `addEventListener`/`removeEventListener` cleanup.
+- Lazy scroll/resize listeners in useGlassHighlight preferred over `{ passive: true }` alone — no listener at all is cheaper than a passive one when no highlight is active.
+
+---
+
+## 2026-03-23 — Condensed case studies, AI tooling narrative, typography fix
+
+**Branch:** `single-page-strategy`
+
+**Summary:** Wrote full AI tooling case study narrative (2 paragraphs: institutional knowledge gap → composable skills plugin). Rewrote Trio narrative to focus on the personal problem and product mechanics. Enabled AI tooling as a linked project. Fixed case study typography: narrative paragraphs now use Literata 300 22px (matching home page editorial voice) instead of Onest 400 18px. Title reduced from 36px to 28px for proportional fit with longer case study titles. Minor copy tweaks on Progress Tracker and UW Design System.
+
+**Decisions:**
+- Case study narrative uses same two-voice system as home page: Literata for editorial, Onest for functional. Previous mismatch (Onest on case studies) broke the design language.
+- Title at `--text-size-section-heading` (28px) instead of `--text-size-title` (36px) — long case study titles wrap to 3+ lines at 36px on a 50% column.
+
+---
+
+## 2026-03-23 — Interface polish: selection color, hover gating, tap highlights
+
+**Branch:** `interface-audit`
+
+**Summary:** Fixed text selection highlight using wrong token (`--text-light` → `--text-dark` for legibility against accent swatch). Wrapped CSS glass hover effects in `@media (hover: hover)` so touch devices don't get stuck hover states. Added `-webkit-tap-highlight-color: transparent` on interactive elements. Added `userSelect: 'none'` on sidebar controls (accent swatches, mode/cursor toggles) to prevent accidental text selection when clicking. Added `text-rendering: optimizeLegibility` and `-webkit-text-size-adjust: 100%` to html. Added `tabular-nums` to contribution count text.
+
+**Decisions:**
+- Separated `:hover` and `:focus-visible` glass styles so hover can be media-gated while focus-visible remains always available for keyboard/touch.
+
+---
+
+## 2026-03-22 — Contribution heatmap contrast improvement
+
+**Branch:** `contribution-graph-contrast`
+
+**Summary:** Replaced discrete 5-level bucket fill in the contribution heatmap with continuous intensity scaling using `Math.sqrt(count / maxCount)`. Empty cells get explicit near-invisible treatment (alpha 0.05). Active cells scale alpha 0.18–0.90 and saturation 30%–70%, producing better perceptual contrast between sparse and busy days.
+
+**Decisions:**
+- Switched from level-based to count-based fill to avoid bucketing artifacts.
+- Used square-root scaling to spread low-count days more visibly across the gradient.
+
+---
+
+## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
+
+**Branch:** `mobile-cursor-theme-fix`
+
+**Summary:** Added a CursorCompanion component that shows contextual text cues alongside the standard browser cursor: → on project links, ← on back links (positioned left of cursor), and "coming soon" on non-link projects. Theme-aware accent coloring, respects `prefers-reduced-motion`. Disabled invert cursor mode. Added mobile/touch support for sidebar (click-to-toggle, touch-outside-to-close, hidden cursor controls). Documented CursorCompanion in `design-language.md`.
+
+**Decisions:**
+- Abandoned custom cursor (cursor:none) due to Chromium macOS Tahoe bug where standard cursor stays visible. Instead, companion labels work *with* the standard cursor as add-ons.
+- Plain text (no box/pill) with horizontal inline positioning — boxes and inverse colors were tried and rejected as too heavy.
+- Figpal kept as separate mode with its own interactivity cues; companion only active in standard mode.
+- Sidebar uses click-to-toggle (not hover) on touch/narrow viewports; cursor controls hidden entirely on touch since custom cursors don't apply.
+
+---
+
+## 2026-03-21 — Narrative copy refresh + tooltip clamp
+
+**Branch:** `lean-into-building`
+
+**Summary:** Revised all left-column narrative text to better communicate: solid job with responsibility, prolific personal building, and range of prior experience. Also fixed contribution heatmap tooltip clipping on left/right edge cells.
+
+**Changes:**
+- Section 1: "These days" → "Lately" + concrete AI framing ("building AI into how my team designs and ships")
+- Section 2: "On the side..." → "When I'm off the clock, I spend a lot of time building things..."
+- About p1: "I like working through..." → "I do my best work shaping early stage ideas..."
+- Heatmap tooltip: left-aligns near left edge, right-aligns near right edge instead of always centering
+
+---
+
 ## 2026-03-21 — Rive signature color fix
 
 **Branch:** `rive-signature-dark-text`

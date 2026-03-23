@@ -120,7 +120,7 @@ transition: opacity 0.4s ease;
   8. "Connecting farmers and customers during COVID-19 →" (`projectId: acorn`)
 
 **Subsection C — Side projects:**
-- "On the side, I design and build tools that solve my own problems in life and work."
+- "I spend a lot of time outside of work building things — usually tools that solve my own problems in life and work."
 - Project links:
   9. "A todo list that keeps tasks perfectly prioritized →" (`projectId: uw`)
   10. "Detecting manipulative language on the web →" (`projectId: cip`)
@@ -384,6 +384,14 @@ src/
 - [ ] When `hoveredProjectId` is null → cross-fade back to accent default portrait
 - [ ] Both transitions simultaneous: glass highlight appears AND image swaps at the same time
 - [ ] Stack all images absolutely, toggle opacity
+
+### 3.5 — Anchor Transitions (Home ↔ Case Study) — In Progress
+
+- [ ] Smooth size/scale transition for hover preview visuals when navigating between home page and case study pages
+- The View Transition API (`viewTransitionName: 'project-hero'`) handles the shared-element morph, but the element changes size between the two contexts (e.g., `contain`-fit preview on home vs. case study hero), causing an abrupt visual jump
+- [ ] Investigate interpolation of `object-fit` / bounding box during the view transition
+- [ ] Consider matching aspect ratios or using `cover` on both ends to smooth the morph
+- [ ] Test across all preview types (video, lottie, static image)
 
 ---
 

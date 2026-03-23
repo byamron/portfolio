@@ -203,7 +203,8 @@ export function ImageDisplay() {
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: 'contain',
+                objectFit: project!.id === 'sony-screenless' ? 'cover' : 'contain',
+                aspectRatio: project!.id === 'sony-screenless' ? '4 / 3' : undefined,
                 borderRadius: 32,
                 filter: dropShadow,
                 viewTransitionName: 'project-hero',
@@ -268,7 +269,7 @@ export function ImageDisplay() {
       >
         <AnimatePresence mode="sync">
           {summary && (
-            <motion.p
+            <motion.div
               key={contentKey + '-summary'}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -278,21 +279,29 @@ export function ImageDisplay() {
                 ease: 'easeInOut',
               }}
               style={{
-                ...summaryStyle,
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
-                lineHeight: 1.5,
-                color: 'var(--text-grey)',
-                maxWidth: 540,
-                padding: '0 24px',
-                textAlign: 'left',
-                margin: '0 auto',
+                bottom: 0,
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
-              {summary}
-            </motion.p>
+              <p
+                style={{
+                  ...summaryStyle,
+                  lineHeight: 1.5,
+                  color: 'var(--text-grey)',
+                  maxWidth: 540,
+                  padding: '0 24px',
+                  textAlign: 'left',
+                  margin: '0 auto',
+                }}
+              >
+                {summary}
+              </p>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

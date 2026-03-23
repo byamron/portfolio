@@ -1,17 +1,12 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import type {
-  CaseStudy,
-  CaseStudyVisual,
-} from '@/data/case-study-content'
-
-import { CaseStudySectionText } from './CaseStudySectionText'
-import { PlaceholderVisual } from './PlaceholderVisual'
+import type { CaseStudy } from '@/data/case-study-content'
+import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 
 const Lottie = lazy(() => import('lottie-react'))
 
-// Match ImageDisplay's bottom padding for consistent hero sizing during View Transitions
-const HERO_BOTTOM_RESERVE = 144 // TEXT_ZONE_HEIGHT (120) + 24
+const DEFAULT_CONTACT_CTA =
+  'Interested in the details? <a href="mailto:ben.yamron@icloud.com" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
 
 interface CaseStudyLayoutAProps {
   data: CaseStudy
@@ -21,13 +16,18 @@ interface CaseStudyLayoutAProps {
   videoPreview?: string
 }
 
-/** Only render visuals that have real content (prototype iframes), not empty gray boxes */
-function hasRealContent(visual: CaseStudyVisual | null | undefined): visual is CaseStudyVisual {
-  return !!visual?.prototypeSrc
-}
-
 export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, videoPreview }: CaseStudyLayoutAProps) {
   const [lottieData, setLottieData] = useState<object | null>(null)
+  const narrativeRef = useRef<HTMLDivElement>(null)
+
+  // Glass highlight for paper link cards and contact CTA within the narrative
+  useGlassHighlight(narrativeRef, {
+    borderRadius: 16,
+    maxPull: 3,
+    tightBounds: true,
+    clearDelay: 300,
+    cardSelector: '[data-link-card], [data-contact-card]',
+  })
 
   useEffect(() => {
     if (!lottiePreview) {
@@ -42,137 +42,159 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
     return () => { cancelled = true }
   }, [lottiePreview])
 
-  // Read the last frame from Lottie data so we can show the final frame
-  // without replaying (it already played on the home page)
   const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
+  const hasMedia = !!(videoPreview || previewImage || (lottiePreview && lottieData))
 
-  const hasHero = !!(videoPreview || previewImage || (lottiePreview && lottieData))
-  const realGalleryItems = data.gallery.filter(item => item.prototypeSrc)
+  const narrative = data.narrative
+  const paperLinks = data.paperLinks
+  const contactCta = data.contactCta ?? DEFAULT_CONTACT_CTA
+
+  // Shared media element — video > lottie > image
+  const mediaElement = videoPreview ? (
+    <video
+      src={videoPreview}
+      autoPlay
+      muted
+      loop
+      playsInline
+      aria-label={data.title}
+      style={{
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain',
+        borderRadius: 32,
+        viewTransitionName: 'project-hero',
+      }}
+    />
+  ) : lottiePreview && lottieData ? (
+    <Suspense fallback={null}>
+      <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
+        <Lottie
+          animationData={lottieData}
+          autoplay={false}
+          loop={false}
+          initialSegment={lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
+          style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 32 }}
+        />
+      </div>
+    </Suspense>
+  ) : previewImage ? (
+    <img
+      src={previewImage}
+      alt={data.title}
+      style={{
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain',
+        borderRadius: 32,
+        viewTransitionName: 'project-hero',
+      }}
+    />
+  ) : null
+
+  // Text content — narrative paragraphs or subtitle fallback
+  const narrativeStyle = {
+    fontFamily: "'Literata', serif",
+    fontSize: 'var(--text-size-narrative)',
+    fontWeight: 300 as const,
+    lineHeight: 1.4,
+    color: 'var(--text-grey)',
+  }
+
+  const textContent = narrative ? (
+    narrative.map((html, i) => (
+      <p
+        key={i}
+        style={{
+          ...narrativeStyle,
+          marginBottom: i < narrative.length - 1 ? 16 : 0,
+        }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    ))
+  ) : (
+    <p style={narrativeStyle}>
+      {data.subtitle}
+    </p>
+  )
+
+  const paperLinksContent = paperLinks?.length ? (
+    <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {paperLinks.map((paper, i) => (
+        <a
+          key={i}
+          href={paper.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-link-card
+          style={{
+            width: 'fit-content',
+            alignSelf: 'flex-start',
+            padding: '24px 16px',
+            margin: '0 -16px',
+            borderRadius: 16,
+            fontSize: 'var(--text-size-body)',
+            fontFamily: "'Onest', sans-serif",
+            fontWeight: 400,
+            lineHeight: 1.4,
+            color: 'var(--text-dark)',
+            textDecoration: 'underline',
+            textDecorationColor: 'var(--text-underline)',
+            textUnderlineOffset: 4,
+            border: '0.1px solid transparent',
+          }}
+        >
+          {paper.title}{' '}
+          <span aria-hidden="true" style={{ display: 'inline-block', width: '1em', textAlign: 'center', verticalAlign: 'text-top' }}>{'\u2192'}</span>
+        </a>
+      ))}
+    </div>
+  ) : null
 
   if (isNarrow) {
     return (
-      <article style={{ padding: 'var(--layout-padding-top) var(--layout-margin)' }}>
-        <motion.header
+      <article style={{ padding: 'calc(var(--layout-padding-top) + 32px) var(--layout-margin) var(--layout-padding-top)' }}>
+        <motion.div
+          ref={narrativeRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35, delay: 0.15 }}
-          style={{ marginBottom: 64 }}
+          style={{ position: 'relative' }}
         >
           <h1
             style={{
-              fontSize: 'var(--text-size-title)',
+              fontSize: 'var(--text-size-section-heading)',
+              fontFamily: "'Literata', serif",
               fontWeight: 300,
               lineHeight: 1.2,
               color: 'var(--text-dark)',
-              marginBottom: 16,
+              marginBottom: 24,
             }}
           >
             {data.title}
           </h1>
-          <p
-            style={{
-              fontSize: 'var(--text-size-body)',
-              lineHeight: 1.4,
-              color: 'var(--text-medium)',
-              marginBottom: 8,
-            }}
-          >
-            {data.subtitle}
-          </p>
-          <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
-            {data.timeline}
-          </p>
-          {hasHero && (
+
+          {textContent}
+
+          {paperLinksContent}
+
+          {hasMedia && (
             <div style={{ marginTop: 32 }}>
-              {videoPreview ? (
-                <video
-                  src={videoPreview}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  aria-label={data.title}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                    borderRadius: 32,
-                    viewTransitionName: 'project-hero',
-                  }}
-                />
-              ) : lottiePreview && lottieData ? (
-                <Suspense fallback={null}>
-                  <div style={{ maxWidth: '100%', viewTransitionName: 'project-hero' }}>
-                    <Lottie
-                      animationData={lottieData}
-                      autoplay={false}
-                      loop={false}
-                      initialSegment={lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
-                      style={{ maxWidth: '100%', borderRadius: 32 }}
-                    />
-                  </div>
-                </Suspense>
-              ) : previewImage ? (
-                <img
-                  src={previewImage}
-                  alt={data.title}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                    borderRadius: 32,
-                    viewTransitionName: 'project-hero',
-                  }}
-                />
-              ) : null}
+              {mediaElement}
             </div>
           )}
-        </motion.header>
 
-        {/* Body text with inline prototype visuals */}
-        {data.sections.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 48, paddingBottom: 80 }}>
-            {data.sections.map((section) => (
-              <div key={section.id}>
-                <CaseStudySectionText
-                  heading={section.heading}
-                  paragraphs={section.paragraphs}
-                />
-                {hasRealContent(section.visual) && (
-                  <div style={{ marginTop: 32 }}>
-                    <PlaceholderVisual
-                      caption={section.visual.caption}
-                      prototypeSrc={section.visual.prototypeSrc}
-                      aspectRatio={section.visual.aspectRatio}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Gallery — only items with real content */}
-        {realGalleryItems.length > 0 && (
-          <div
+          <p
             style={{
-              marginTop: 64,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 40,
-              paddingBottom: 80,
+              fontSize: 'var(--text-size-caption)',
+              lineHeight: 1.5,
+              color: 'var(--text-grey)',
+              marginTop: 32,
+              fontFamily: "'Onest', sans-serif",
             }}
-          >
-            {realGalleryItems.map((item) => (
-              <PlaceholderVisual
-                key={item.id}
-                caption={item.caption}
-                prototypeSrc={item.prototypeSrc}
-                aspectRatio={item.aspectRatio}
-              />
-            ))}
-          </div>
-        )}
+            dangerouslySetInnerHTML={{ __html: contactCta }}
+          />
+        </motion.div>
       </article>
     )
   }
@@ -180,196 +202,71 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   return (
     <article>
       <div style={{ display: 'flex', flexDirection: 'row' }}>
-      {/* Left column — header + body text */}
-      <div
-        style={{
-          width: '50%',
-          padding: '0 var(--layout-margin)',
-        }}
-      >
-        {/* Header area — vertically centered in first viewport */}
-        <motion.header
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
+        {/* Left column — title + narrative + contact */}
+        <div
           style={{
+            width: '50%',
             minHeight: '100vh',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            textAlign: 'left',
+            padding: 'var(--layout-padding-top) var(--layout-margin)',
           }}
         >
-          <h1
-            style={{
-              fontSize: 'var(--text-size-display)',
-              fontWeight: 300,
-              lineHeight: 1.2,
-              color: 'var(--text-dark)',
-              marginBottom: 16,
-            }}
+          <motion.div
+            ref={narrativeRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35, delay: 0.15 }}
+            style={{ position: 'relative' }}
           >
-            {data.title}
-          </h1>
-          <p
-            style={{
-              fontSize: 'var(--text-size-body)',
-              lineHeight: 1.4,
-              color: 'var(--text-medium)',
-              marginBottom: 8,
-            }}
-          >
-            {data.subtitle}
-          </p>
-          <p style={{ fontSize: 'var(--text-size-caption)', color: 'var(--text-grey)' }}>
-            {data.timeline}
-          </p>
-        </motion.header>
+            <h1
+              style={{
+                fontSize: 'var(--text-size-section-heading)',
+                fontFamily: "'Literata', serif",
+                fontWeight: 300,
+                lineHeight: 1.2,
+                color: 'var(--text-dark)',
+                marginBottom: 24,
+              }}
+            >
+              {data.title}
+            </h1>
 
-        {/* Body sections */}
-        {data.sections.length > 0 && (
+            {textContent}
+
+            {paperLinksContent}
+
+            <p
+              style={{
+                fontSize: 'var(--text-size-caption)',
+                lineHeight: 1.5,
+                color: 'var(--text-grey)',
+                marginTop: 24,
+                fontFamily: "'Onest', sans-serif",
+              }}
+              dangerouslySetInnerHTML={{ __html: contactCta }}
+            />
+          </motion.div>
+        </div>
+
+        {/* Right column — sticky media */}
+        <div style={{ width: '50%' }}>
           <div
             style={{
-              paddingTop: 80,
-              paddingBottom: 80,
+              position: 'sticky',
+              top: 0,
+              height: '100vh',
               display: 'flex',
-              flexDirection: 'column',
-              gap: 48,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 'var(--layout-padding-top) var(--layout-margin)',
             }}
           >
-            {data.sections.map((section) => (
-              <div key={section.id}>
-                <CaseStudySectionText
-                  heading={section.heading}
-                  paragraphs={section.paragraphs}
-                />
-                {hasRealContent(section.visual) && (
-                  <div style={{ marginTop: 32 }}>
-                    <PlaceholderVisual
-                      caption={section.visual.caption}
-                      prototypeSrc={section.visual.prototypeSrc}
-                      aspectRatio={section.visual.aspectRatio}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+            {mediaElement}
           </div>
-        )}
-      </div>
-
-      {/* Right column — sticky hero image */}
-      <div style={{ width: '50%' }}>
-        <div
-          style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: `var(--layout-padding-top) var(--layout-margin) ${HERO_BOTTOM_RESERVE}px`,
-          }}
-        >
-          {videoPreview ? (
-            <video
-              src={videoPreview}
-              autoPlay
-              muted
-              loop
-              playsInline
-              aria-label={data.title}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 32,
-                viewTransitionName: 'project-hero',
-              }}
-            />
-          ) : lottiePreview && lottieData ? (
-            <Suspense fallback={null}>
-              <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
-                <Lottie
-                  animationData={lottieData}
-                  autoplay={false}
-                  loop={false}
-                  initialSegment={lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    borderRadius: 32,
-                  }}
-                />
-              </div>
-            </Suspense>
-          ) : previewImage ? (
-            <img
-              src={previewImage}
-              alt={data.title}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 32,
-                viewTransitionName: 'project-hero',
-              }}
-            />
-          ) : null}
         </div>
       </div>
-      </div>
-
-      {/* Gallery — only items with real content, full width below the two-column area */}
-      {realGalleryItems.length > 0 && (
-        <div
-          style={{
-            width: '100%',
-            padding: '80px var(--layout-margin) 80px',
-            display: 'grid',
-            gridTemplateColumns: realGalleryItems.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-            gap: 40,
-          }}
-        >
-          {(() => {
-            const elements: React.ReactNode[] = []
-            let i = 0
-            while (i < realGalleryItems.length) {
-              const item = realGalleryItems[i]!
-              if (item.size === 'full') {
-                elements.push(
-                  <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />,
-                )
-                i++
-              } else {
-                const next = realGalleryItems[i + 1]
-                if (next && next.size === 'half') {
-                  elements.push(
-                    <div
-                      key={item.id}
-                      style={{ display: 'flex', gap: 40 }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <PlaceholderVisual caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <PlaceholderVisual caption={next.caption} prototypeSrc={next.prototypeSrc} aspectRatio={next.aspectRatio} />
-                      </div>
-                    </div>,
-                  )
-                  i += 2
-                } else {
-                  elements.push(
-                    <PlaceholderVisual key={item.id} caption={item.caption} prototypeSrc={item.prototypeSrc} aspectRatio={item.aspectRatio} />,
-                  )
-                  i++
-                }
-              }
-            }
-            return elements
-          })()}
-        </div>
-      )}
     </article>
   )
 }
