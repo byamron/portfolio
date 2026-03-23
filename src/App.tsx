@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { CursorProvider } from '@/contexts/CursorContext'
 import { CustomCursor } from '@/components/CustomCursor'
+import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
@@ -17,6 +18,7 @@ function App() {
       <HoverProvider>
         <CursorProvider>
           <CustomCursor />
+          <CursorCompanion />
           <SidebarThemeControls />
           <Routes>
             <Route path="/" element={<Layout />} />
