@@ -39,14 +39,15 @@ Decision log and completed work, in reverse chronological order.
 
 ## 2026-03-22 — Cursor companion cues (arrows + "coming soon")
 
-**Branch:** `cursor-strategy-eval`
+**Branch:** `mobile-cursor-theme-fix`
 
-**Summary:** Added a CursorCompanion component that shows contextual text cues alongside the standard browser cursor: → on project links, ← on back links (positioned left of cursor), and "coming soon" on non-link projects. Theme-aware accent coloring, respects `prefers-reduced-motion`. Reordered sidebar to put standard cursor above figpal.
+**Summary:** Added a CursorCompanion component that shows contextual text cues alongside the standard browser cursor: → on project links, ← on back links (positioned left of cursor), and "coming soon" on non-link projects. Theme-aware accent coloring, respects `prefers-reduced-motion`. Disabled invert cursor mode. Added mobile/touch support for sidebar (click-to-toggle, touch-outside-to-close, hidden cursor controls). Documented CursorCompanion in `design-language.md`.
 
 **Decisions:**
 - Abandoned custom cursor (cursor:none) due to Chromium macOS Tahoe bug where standard cursor stays visible. Instead, companion labels work *with* the standard cursor as add-ons.
 - Plain text (no box/pill) with horizontal inline positioning — boxes and inverse colors were tried and rejected as too heavy.
 - Figpal kept as separate mode with its own interactivity cues; companion only active in standard mode.
+- Sidebar uses click-to-toggle (not hover) on touch/narrow viewports; cursor controls hidden entirely on touch since custom cursors don't apply.
 
 ---
 

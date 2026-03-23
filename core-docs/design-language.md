@@ -657,7 +657,7 @@ The site offers three cursor modes, each expressing a different interaction pers
 
 | Mode | Visual | Character |
 |------|--------|-----------|
-| Standard | Native browser cursor | Invisible, utilitarian. The site's interactions speak for themselves. |
+| Standard | Native browser cursor + companion labels | Utilitarian pointer with contextual text cues (→, ←, "coming soon") that appear alongside it on hover. |
 | Invert | 80×80px theme-tinted disc, `mix-blend-mode: difference` | Bold, graphic. The cursor becomes a lens that inverts everything beneath it, tinted toward the active accent color. |
 | Figpal | 72×72px trailing companion image | Playful, personal. A small illustrated character follows the cursor with physics-based lag. |
 
@@ -698,6 +698,48 @@ The invert cursor is the most expressive mode. It doesn't just track the mouse �
 - Safari handles `cursor: none` correctly (minor flicker during active scroll momentum only)
 
 This will likely be resolved by a future Chromium or macOS update. No code-level workaround exists. If a fix becomes available, the current implementation (class toggle + CSS rule) should work without changes.
+
+**Current status**: Invert mode is disabled in the sidebar UI (commented out of `cursorOptions`) due to this Chromium bug. Users with `'invert'` in localStorage are migrated to `'standard'` on load. The code and documentation are preserved for re-enabling when the bug is fixed.
+
+### Standard mode companion labels (CursorCompanion)
+
+In standard cursor mode, a `CursorCompanion` component renders contextual text labels alongside the native browser cursor. This compensates for the loss of invert mode's morphing cues — the standard cursor alone doesn't communicate what will happen on click.
+
+**What appears:**
+
+| Target | Label | Placement |
+|--------|-------|-----------|
+| Project link (`[data-link-card]` with `isLink: true`) | → (U+2192) | Right of cursor |
+| Non-link project (`[data-link-card]` with `isLink: false`) | coming soon | Right of cursor |
+| Back link (`[data-back-link]`) | ← (U+2190) | Left of cursor |
+| Contact card (`[data-contact-card]`) | → (U+2192) | Right of cursor |
+| Heatmap GitHub link (`[data-link-card]` without project data) | → (U+2192) | Right of cursor |
+
+**Typography:**
+- Arrows (→, ←): Onest 400 at 36px — bold, graphic, matches the invert mode's arrow typography
+- "coming soon": Literata 300 at 22px — softer, italic-adjacent, matches the narrative text style
+
+**Positioning:**
+- Horizontal offset: 18px from cursor (`OFFSET_X = 18`)
+- Vertical: centered on cursor tip (`clientY - labelHeight / 2`)
+- Viewport clamping: 4px margin from all edges; if the label would overflow the right edge, it flips to the left of the cursor
+
+**Color:**
+- Theme-aware accent tint derived from `--accent-hue`
+- Dark mode: `hsl(hue, 30%, 60%)` — muted warmth, readable on dark backgrounds
+- Light mode: `hsl(hue, 25%, 40%)` — darker tint for contrast on light backgrounds
+- Updates live via `MutationObserver` on `data-accent` and `data-theme` attributes
+
+**Behavioral rules:**
+- Mouse only — `pointerType !== 'mouse'` gates all behavior; no companion on touch devices
+- Wide viewports only — disabled below the `isWide` breakpoint (900px)
+- Standard cursor mode only — disabled in figpal mode (figpal has its own visual presence)
+- 120ms leave delay (`LEAVE_DELAY`) prevents flicker when moving between adjacent targets
+- Respects `prefers-reduced-motion: reduce` — opacity transition disabled (instant show/hide)
+
+**Implementation:** Imperative DOM (`document.createElement`) rather than React rendering, matching the `CustomCursor` pattern. The label element is `aria-hidden="true"`, `position: fixed`, `pointer-events: none`, with `will-change: transform` for GPU compositing. Cleanup removes the DOM element, disconnects the MutationObserver, and clears timers.
+
+**Data attributes for target detection:** `[data-link-card]`, `[data-contact-card]`, `[data-back-link]`, `[data-project-id]`. These are the same attributes used by the invert cursor's morphing system.
 
 ### Figpal mode
 
