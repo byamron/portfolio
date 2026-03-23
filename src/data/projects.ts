@@ -30,7 +30,7 @@ export const sections: Section[] = [
   },
   {
     context: [
-      'When I\u2019m off the clock, I spend a lot of time building things\u2009—\u2009usually tools that solve my own problems in life and work.',
+      'Outside of work, I\u2019m always building\u2009—\u2009apps, tools, experiments. I try to ship something every day.',
     ],
     projects: [
       { id: 'todo-priority', title: 'A todo list that keeps tasks perfectly prioritized', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'A native iOS/macOS app that forces one question each day: what are the three things that matter? Comparison-based ranking, five hand-tuned color themes, and AI as a design partner across five specialized agents\u2009\u2014\u2009proving personal projects can get production-grade craft.' },

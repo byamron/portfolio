@@ -64,8 +64,6 @@ export function ProjectLink({ project }: ProjectLinkProps) {
       <div
         data-link-card
         data-project-id={project.id}
-        onMouseEnter={() => setHoveredProjectId(project.id)}
-        onMouseLeave={() => setHoveredProjectId(null)}
         style={{
           width: 'fit-content',
           alignSelf: 'flex-start',

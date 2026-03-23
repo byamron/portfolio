@@ -20,13 +20,13 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   const [lottieData, setLottieData] = useState<object | null>(null)
   const narrativeRef = useRef<HTMLDivElement>(null)
 
-  // Glass highlight for paper links and contact CTA within the narrative
+  // Glass highlight for paper link cards and contact CTA within the narrative
   useGlassHighlight(narrativeRef, {
-    borderRadius: 8,
+    borderRadius: 16,
     maxPull: 3,
     tightBounds: true,
     clearDelay: 300,
-    cardSelector: '[data-paper-link], [data-contact-card]',
+    cardSelector: '[data-link-card], [data-contact-card]',
   })
 
   useEffect(() => {
@@ -46,6 +46,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   const hasMedia = !!(videoPreview || previewImage || (lottiePreview && lottieData))
 
   const narrative = data.narrative
+  const paperLinks = data.paperLinks
   const contactCta = data.contactCta ?? DEFAULT_CONTACT_CTA
 
   // Shared media element — video > lottie > image
@@ -117,6 +118,39 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
     </p>
   )
 
+  const paperLinksContent = paperLinks?.length ? (
+    <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {paperLinks.map((paper, i) => (
+        <a
+          key={i}
+          href={paper.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-link-card
+          style={{
+            width: 'fit-content',
+            alignSelf: 'flex-start',
+            padding: '24px 16px',
+            margin: '0 -16px',
+            borderRadius: 16,
+            fontSize: 'var(--text-size-body)',
+            fontFamily: "'Onest', sans-serif",
+            fontWeight: 400,
+            lineHeight: 1.4,
+            color: 'var(--text-dark)',
+            textDecoration: 'underline',
+            textDecorationColor: 'var(--text-underline)',
+            textUnderlineOffset: 4,
+            border: '0.1px solid transparent',
+          }}
+        >
+          {paper.title}{' '}
+          <span aria-hidden="true" style={{ display: 'inline-block', width: '1em', textAlign: 'center', verticalAlign: 'text-top' }}>{'\u2192'}</span>
+        </a>
+      ))}
+    </div>
+  ) : null
+
   if (isNarrow) {
     return (
       <article style={{ padding: 'var(--layout-padding-top) var(--layout-margin)' }}>
@@ -141,6 +175,8 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           </h1>
 
           {textContent}
+
+          {paperLinksContent}
 
           {hasMedia && (
             <div style={{ marginTop: 32 }}>
@@ -198,6 +234,8 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
             </h1>
 
             {textContent}
+
+            {paperLinksContent}
 
             <p
               style={{
