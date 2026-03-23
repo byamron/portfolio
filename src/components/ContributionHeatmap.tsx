@@ -291,6 +291,7 @@ export function ContributionHeatmap() {
           fontSize: 'var(--text-size-small)',
           fontWeight: 400,
           color: 'var(--text-grey)',
+          fontVariantNumeric: 'tabular-nums',
         }}>
           {totalContributions} contributions in 2026. Most repos are private (sorry).
         </span>
