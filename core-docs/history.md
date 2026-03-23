@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Signature right-side inset
+
+**Branch:** `signature-placement`
+
+**Summary:** Added 16px right padding to the signature animation container. The signature was flush against the right edge of the content area, which made it feel like it was hanging off the boundary. The small inset gives it breathing room while keeping the right-aligned placement (which mirrors how people sign letters).
+
+**Decisions:**
+- Kept right alignment after evaluating left and center — right feels most "authored" and matches the design language's embrace of intentional asymmetry.
+- 16px offset is enough to create air without pulling the signature noticeably toward center.
+
+---
+
 ## 2026-03-23 — Hover summary polish: vertical centering + copy rewrites
 
 **Branch:** `hover-summary-polish`
