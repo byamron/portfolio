@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Copy polish, paper link cards, coming-soon treatment
+
+**Branch:** `cip-copy-cleanup`
+
+**Summary:** Removed "(CSCW 2025)" from CIP title; moved conference mention into body ("presented at CSCW 2025" with link). Paper links now render as Onest card-style items with arrows below the narrative, matching home page project links. Added `paperLinks` field to CaseStudy data model. Tightened section 2 intro copy ("Outside of work, I'm always building..."). Coming-soon projects no longer trigger right-column image swap; added back a minimal CursorCompanion that shows "coming soon" only on non-link cards (all cursor modes). Added 24px spacing above contribution heatmap.
+
+**Decisions:**
+- Paper links as card-style items (not inline HTML) keeps the narrative clean and gives papers the same visual weight as project links.
+- "Presented at" rather than "published at" — CSCW is a conference; publication is in ACM proceedings.
+
+---
+
 ## 2026-03-23 — Performance audit + Subframe removal
 
 **Branch:** `perf-audit`

@@ -25,6 +25,11 @@ export interface GalleryItem {
   aspectRatio?: string
 }
 
+export interface PaperLink {
+  title: string
+  href: string
+}
+
 export interface CaseStudy {
   id: string
   title: string
@@ -35,6 +40,8 @@ export interface CaseStudy {
   gallery: GalleryItem[]
   /** Condensed flowing paragraphs (HTML strings). When present, the layout renders these instead of sections. */
   narrative?: string[]
+  /** External paper/publication links rendered as card-like items below the narrative. */
+  paperLinks?: PaperLink[]
   /** Custom contact line (HTML string). Defaults to "Interested in the details? Get in touch." */
   contactCta?: string
 }
@@ -278,12 +285,16 @@ export const sonyScreenlessTv: CaseStudy = {
 
 export const cipElectionMisinformation: CaseStudy = {
   id: 'cip-election-misinformation',
-  title: 'Framing election misinformation (CSCW 2025)',
+  title: 'Framing election misinformation',
   subtitle: 'Two papers published at CSCW 2025, co-authored with Dr. Kate Starbird\u2019s research group at the University of Washington\u2019s Center for an Informed Public.',
   timeline: '2022\u20132025',
   narrative: [
-    '<strong>Election rumors aren\u2019t about getting the facts wrong\u2009\u2014\u2009they\u2019re about framing.</strong> Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I did qualitative coding and analysis of rumoring dynamics on Twitter during the 2020 and 2022 U.S. elections. The core finding: misleading claims about election integrity take shape through interactions between often-factual evidence and distorted political frames. We built an evidence-frame framework that makes this process structurally legible.',
-    'Two papers at CSCW 2025: <a href="https://dl.acm.org/doi/10.1145/3757522" target="_blank" rel="noopener noreferrer" data-paper-link style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">What is going on? An evidence-frame framework for analyzing online rumors about election integrity</a> and <a href="https://dl.acm.org/doi/10.1145/3757576" target="_blank" rel="noopener noreferrer" data-paper-link style="color: var(--text-dark); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Deep Storytelling: Collective Sensemaking and Layers of Meaning in U.S. Elections</a>.',
+    '<strong>Election rumors aren\u2019t about getting the facts wrong\u2009\u2014\u2009they\u2019re about framing.</strong> Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I did qualitative coding and analysis of rumoring dynamics on Twitter during the 2020 and 2022 U.S. elections. Misleading claims about election integrity take shape through interactions between often-factual evidence and distorted political frames. We built an evidence-frame framework that makes this process structurally legible.',
+    '<em>What is going on?</em> introduces the framework. <em>Deep Storytelling</em> examines how these stories evolved across election cycles. Both were presented at <a href="https://cscw.acm.org/2025/" target="_blank" rel="noopener noreferrer" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">CSCW 2025</a>.',
+  ],
+  paperLinks: [
+    { title: 'What is going on? An evidence-frame framework for analyzing online rumors about election integrity', href: 'https://dl.acm.org/doi/10.1145/3757522' },
+    { title: 'Deep Storytelling: Collective Sensemaking and Layers of Meaning in U.S. Elections', href: 'https://dl.acm.org/doi/10.1145/3757576' },
   ],
   contactCta: 'Both papers are publicly available at the links above.',
   sections: [
