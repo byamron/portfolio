@@ -31,7 +31,7 @@ const ACCENT_HUES: Record<string, number> = {
   table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90,
 }
 
-function contribFill(count: number, maxCount: number, hue: number, t: number, isDark: boolean): string {
+export function contribFill(count: number, maxCount: number, hue: number, t: number, isDark: boolean): string {
   if (count === 0) {
     // Empty cell — barely visible
     if (isDark) return `hsla(${hue}, 8%, ${50 + t * 10}%, 0.05)`
@@ -51,7 +51,7 @@ function contribFill(count: number, maxCount: number, hue: number, t: number, is
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00')
   const month = date.toLocaleDateString('en-US', { month: 'long' })
   const day = date.getDate()
@@ -64,7 +64,7 @@ function formatDate(dateStr: string): string {
 
 function pad2(n: number) { return String(n).padStart(2, '0') }
 
-function getTooltipText(date: string, count: number): string {
+export function getTooltipText(date: string, count: number): string {
   const now = new Date()
   const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
   if (date >= today) return 'No contributions (yet)'
