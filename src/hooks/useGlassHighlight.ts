@@ -434,6 +434,11 @@ function setupGlassHighlight(
     currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
     if (pill) pill.style.borderRadius = `${currentBorderRadius}px`
 
+    // Invalidate cached container rect so the lean calculation uses a fresh
+    // position — prevents inverted pull after scrolling between hover sessions
+    // (scroll listeners are removed when no card is hovered, so scrolling
+    // between hovers leaves the cache stale).
+    cachedContainerRect = null
 
     const pos = getCardPosition(card)
 
@@ -499,6 +504,7 @@ function setupGlassHighlight(
     currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
     if (pill) pill.style.borderRadius = `${currentBorderRadius}px`
 
+    cachedContainerRect = null
 
     const pos = getCardPosition(card)
 

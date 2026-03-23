@@ -14,6 +14,17 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-23 — Fix glass pill lean inversion after scrolling
+
+**Branch:** `fix/glass-lean-inversion`
+
+**Summary:** Fixed an intermittent bug where the glass highlight pill's directional lean/tilt responded in the opposite direction from the cursor. Caused by `cachedContainerRect` going stale between hover sessions — scroll listeners are removed when no card is hovered, so scrolling between hovers left the cache holding the container's old viewport position, inverting the lean math.
+
+**Decisions:**
+- Invalidate `cachedContainerRect` at the start of every `handleMouseOver` and `handleFocusIn`. One extra `getBoundingClientRect` per hover-start is negligible — already happens every scroll frame.
+
+---
+
 ## 2026-03-23 — Case study top spacing and sidebar alignment
 
 **Branch:** `spacing-top-elements`
