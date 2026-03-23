@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { useHover } from '@/contexts/HoverContext'
@@ -16,8 +16,15 @@ interface LeftColumnProps {
 
 export function LeftColumn({ fullWidth }: LeftColumnProps) {
   const contentRef = useRef<HTMLDivElement>(null)
-  useGlassHighlight(contentRef)
+  const { fadeOut: fadeOutGlass } = useGlassHighlight(contentRef)
   const { navigatingProjectId } = useHover()
+
+  // Fade the glass pill in sync with the left column content exit
+  useEffect(() => {
+    if (navigatingProjectId) {
+      fadeOutGlass(280, 150)
+    }
+  }, [navigatingProjectId, fadeOutGlass])
   const previewsPreloaded = useRef(false)
   const handleMouseEnter = useCallback(() => {
     if (!previewsPreloaded.current) {

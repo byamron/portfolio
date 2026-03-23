@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type RefObject } from 'react'
 
 // ---------------------------------------------------------------------------
 // Config
@@ -43,15 +43,28 @@ export const GLASS_DEFAULTS: GlassConfig = {
 export function useGlassHighlight(
   containerRef: RefObject<HTMLElement | null>,
   config?: Partial<GlassConfig>,
-) {
+): { fadeOut: (duration?: number, delay?: number) => void } {
   const configRef = useRef<GlassConfig>({ ...GLASS_DEFAULTS, ...config })
   configRef.current = { ...GLASS_DEFAULTS, ...config }
+
+  const fadeOutRef = useRef<(duration?: number, delay?: number) => void>(() => {})
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    return setupGlassHighlight(container, configRef)
+    const { cleanup, fadeOut } = setupGlassHighlight(container, configRef)
+    fadeOutRef.current = fadeOut
+    return () => {
+      fadeOutRef.current = () => {}
+      cleanup()
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stableFadeOut = useCallback((duration?: number, delay?: number) => {
+    fadeOutRef.current(duration, delay)
+  }, [])
+
+  return { fadeOut: stableFadeOut }
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +74,7 @@ export function useGlassHighlight(
 function setupGlassHighlight(
   container: HTMLElement,
   configRef: React.MutableRefObject<GlassConfig>,
-): () => void {
+): { cleanup: () => void; fadeOut: (duration?: number, delay?: number) => void } {
   // -- Mutable state --
   let pill: HTMLDivElement | null = null
 
@@ -561,8 +574,23 @@ function setupGlassHighlight(
   container.addEventListener('focusout', handleFocusOut, true)
   setupThemeObserver()
 
+  // -- Navigation fade-out (called externally to sync with page exit) --
+
+  function navigationFadeOut(duration = configRef.current.fadeDuration, delay = 0): void {
+    if (!pill) return
+    isVisible = false
+    currentCard = null
+    if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    stopLoop()
+    // Respect reduced motion: fall back to instant opacity change
+    const d = prefersReducedMotion.matches ? 0 : duration
+    const dl = prefersReducedMotion.matches ? 0 : delay
+    pill.style.transition = `opacity ${d}ms ease ${dl}ms`
+    pill.style.opacity = '0'
+  }
+
   // -- Cleanup --
-  return () => {
+  const cleanup = () => {
     stopLoop()
     removeScrollListeners()
     container.removeEventListener('mouseover', handleMouseOver)
@@ -577,4 +605,6 @@ function setupGlassHighlight(
     if (resizeTimer) clearTimeout(resizeTimer)
     if (clearTimer) clearTimeout(clearTimer)
   }
+
+  return { cleanup, fadeOut: navigationFadeOut }
 }
