@@ -38,16 +38,13 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 This is a React migration of a Framer-based portfolio site. All original Framer component behavior has been extracted into `core-docs/design-language.md` — the reference `.tsx` files have been removed. The React rebuild replicates the visual and interactive behavior using idiomatic React patterns.
 
-### Subframe + Tailwind Integration
+### Tailwind Integration
 
-The project uses **Subframe** (component library) and **Tailwind CSS v4** for building UI pages:
+The project uses **Tailwind CSS v4** for styling:
 
-- **Subframe components** live in `src/ui/` — synced via `npx @subframe/cli sync`. These files are managed by Subframe and should not be edited directly.
 - **Tailwind v4** uses CSS-first config via `@tailwindcss/vite` plugin. No `tailwind.config.js`.
-- **Theme override strategy**: Subframe's `src/ui/theme.css` is overridden by `src/styles/theme.css` via CSS cascade (loaded after). This means `npx @subframe/cli sync` can safely overwrite `src/ui/theme.css` without losing portfolio customizations.
-- **CSS import order** in `src/styles/globals.css`: `tailwindcss` → `../ui/theme.css` (Subframe) → `./theme.css` (portfolio overrides). Order matters — the last file wins.
-- **Subframe project ID**: `b82957b2b077`. Config in `.subframe/sync.json`.
-- Subframe components use Newsreader for headings; the portfolio's own components follow the single-typeface rule (Manrope 400) per `design-language.md`.
+- **CSS import order** in `src/styles/globals.css`: `tailwindcss` → `./theme.css` (portfolio tokens).
+- Subframe was previously used as a component library but has been removed. All UI is now built with portfolio-specific components in `src/components/`.
 
 ### Key systems to replicate:
 
@@ -110,8 +107,6 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 ├── tsconfig.json
 ├── vite.config.ts
 ├── eslint.config.js
-├── .subframe/
-│   └── sync.json             # Subframe project config (do not edit manually)
 ├── core-docs/
 │   ├── guidelines.md         # Positioning, voice, philosophy, decision filters
 │   ├── plan.md               # Migration plan (living document)
@@ -139,12 +134,6 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 │   │   ├── AccentPicker.tsx
 │   │   ├── ImageDisplay.tsx   # Cross-fading images
 │   │   └── GlassButton.tsx
-│   ├── ui/                    # Subframe components (synced, do not edit)
-│   │   ├── theme.css          # Subframe theme tokens (overridden by styles/theme.css)
-│   │   ├── index.ts           # Component barrel export
-│   │   ├── utils.ts           # Subframe utilities
-│   │   ├── components/        # 44 synced components (Button, Dialog, etc.)
-│   │   └── layouts/           # Page layouts (DefaultPageLayout, etc.)
 │   ├── hooks/
 │   │   ├── useTheme.ts
 │   │   └── useHoveredProject.ts
@@ -154,7 +143,7 @@ All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish p
 │   ├── assets/
 │   │   └── images/
 │   └── styles/
-│       ├── globals.css        # CSS entry: imports Tailwind → Subframe → portfolio
-│       └── theme.css          # Portfolio tokens + Subframe variable overrides
+│       ├── globals.css        # CSS entry: imports Tailwind → portfolio tokens
+│       └── theme.css          # Portfolio design tokens
 └── public/
 ```
