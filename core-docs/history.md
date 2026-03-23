@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Case study top spacing and sidebar alignment
+
+**Branch:** `spacing-top-elements`
+
+**Summary:** On narrow viewports, the case study page's back button and title had almost no gap, and the sidebar theme swatch was misaligned with the back button. Added 32px extra top padding to the narrow case study article, aligned the swatch horizontally with the back button via a responsive CSS variable (`--sidebar-trigger-top: 36px` at <900px, falling back to 64px on wide), and excluded the sidebar from view transitions so it stays steady during page navigation.
+
+**Decisions:**
+- Used a CSS custom property with media query rather than per-page JS overrides — avoids the swatch shifting position when navigating between pages.
+- Gave the sidebar its own `view-transition-name: sidebar` with `animation: none` to keep it visually stable during route transitions.
+
+---
+
 ## 2026-03-23 — Glass pill exit timing sync
 
 **Branch:** `fix-glass-exit-timing`
@@ -131,7 +143,6 @@ Decision log and completed work, in reverse chronological order.
 - Section 2: "On the side..." → "When I'm off the clock, I spend a lot of time building things..."
 - About p1: "I like working through..." → "I do my best work shaping early stage ideas..."
 - Heatmap tooltip: left-aligns near left edge, right-aligns near right edge instead of always centering
->>>>>>> origin/next-update
 
 ---
 

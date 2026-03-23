@@ -90,6 +90,7 @@ body {
     --layout-gap: 0px;
     --layout-padding-top: 64px;
     --content-max-width: 528px;
+    --sidebar-trigger-top: 36px;
 
     /* Typography: back to full scale (single column has plenty of room) */
     --text-size-display: 48px;
@@ -231,6 +232,12 @@ p a {
 }
 @keyframes vt-fade-in {
   from { opacity: 0; }
+}
+
+/* Sidebar: stay visible during view transitions */
+::view-transition-old(sidebar),
+::view-transition-new(sidebar) {
+  animation: none;
 }
 
 /* Shared element: project image morphs between homepage and case study */
