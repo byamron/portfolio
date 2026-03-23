@@ -14,6 +14,18 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-23 — Glass pill exit timing sync
+
+**Branch:** `fix-glass-exit-timing`
+
+**Summary:** Synced the glass highlight pill's fade-out with the left column content exit animation when navigating to a case study. The `useGlassHighlight` hook now returns a `fadeOut(duration, delay)` function; `LeftColumn` calls it with the same timing as the Framer Motion exit (280ms, 150ms delay). The `navigationFadeOut` also respects `prefers-reduced-motion` by zeroing duration/delay when active.
+
+**Decisions:**
+- Exposed `fadeOut` via a stable ref + `useCallback` pattern to avoid re-renders — the hook's imperative internals stay fully encapsulated.
+- Reduced-motion check lives inside `navigationFadeOut` (not the caller) so accessibility is handled centrally.
+
+---
+
 ## 2026-03-23 — Signature right-side inset
 
 **Branch:** `signature-placement`
