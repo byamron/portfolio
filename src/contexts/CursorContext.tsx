@@ -20,7 +20,9 @@ const TINT_KEY = 'cursorTintMode'
 export function CursorProvider({ children }: { children: ReactNode }) {
   const [cursorMode, setCursorModeState] = useState<CursorMode>(() => {
     const stored = localStorage.getItem(CURSOR_KEY)
-    return VALID_CURSOR_MODES.includes(stored as CursorMode) ? (stored as CursorMode) : 'invert'
+    // Invert mode disabled (Chromium macOS Tahoe cursor:none bug) — migrate to standard
+    if (stored === 'invert') return 'standard'
+    return VALID_CURSOR_MODES.includes(stored as CursorMode) ? (stored as CursorMode) : 'standard'
   })
 
   const [cursorTintMode] = useState<CursorTintMode>(() => {

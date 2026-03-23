@@ -11,9 +11,9 @@ const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
 ]
 
 const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle' | 'figpal' }[] = [
-  { mode: 'invert', label: 'Invert circle cursor', icon: 'circle' },
-  { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
+  // { mode: 'invert', label: 'Invert circle cursor', icon: 'circle' },  // Disabled: Chromium macOS Tahoe ignores cursor:none
   { mode: 'standard', label: 'Standard cursor', icon: 'cursor' },
+  { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
 ]
 
 const ACCENT_ORDER: AccentColor[] = ['table', 'portrait', 'pizza', 'vineyard', 'sky']
@@ -317,7 +317,7 @@ function setupControlPill(container: HTMLElement): () => void {
 const THUMB_SIZE = 11
 
 // Stagger delay indices (fixed layout: swatches → intensity → modes → cursors)
-// [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes  [11] divider  [12-14] cursors
+// [0] divider  [1-5] swatches  [6] divider  [7] strip  [8] divider  [9-11] modes  [12] divider  [13-14] cursors
 const DIVIDER_1 = 0
 const SWATCH_BASE = 1
 const DIVIDER_2 = SWATCH_BASE + ACCENT_ORDER.length    // 5
