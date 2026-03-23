@@ -41,6 +41,7 @@ export function SignatureAnimation() {
         justifyContent: 'flex-end',
         paddingTop: 24,
         paddingBottom: 24,
+        paddingRight: 16,
       }}
     >
       <div
