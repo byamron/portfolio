@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — CIP case study copy cleanup
+
+**Branch:** `cip-copy-cleanup`
+
+**Summary:** Removed "(CSCW 2025)" from CIP project title on home page and case study page. Moved CSCW 2025 mention into the body text. Restructured the paper links paragraph so each paper flows into a short description — eliminates the orphaned "and" on its own line and the floating trailing period.
+
+---
+
 ## 2026-03-23 — Performance audit + Subframe removal
 
 **Branch:** `perf-audit`
