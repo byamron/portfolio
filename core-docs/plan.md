@@ -120,7 +120,7 @@ transition: opacity 0.4s ease;
   8. "Connecting farmers and customers during COVID-19 →" (`projectId: acorn`)
 
 **Subsection C — Side projects:**
-- "On the side, I design and build tools that solve my own problems in life and work."
+- "I spend a lot of time outside of work building things — usually tools that solve my own problems in life and work."
 - Project links:
   9. "A todo list that keeps tasks perfectly prioritized →" (`projectId: uw`)
   10. "Detecting manipulative language on the web →" (`projectId: cip`)

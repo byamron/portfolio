@@ -68,7 +68,6 @@ function setupGlassHighlight(
   let currentCard: HTMLElement | null = null
   let isVisible = false
   let rafId: number | null = null
-  let observer: MutationObserver | null = null
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
   let clearTimer: ReturnType<typeof setTimeout> | null = null
   let currentBorderRadius = configRef.current.borderRadius
@@ -233,6 +232,22 @@ function setupGlassHighlight(
     }
   }
 
+  let scrollListenersActive = false
+
+  function addScrollListeners(): void {
+    if (scrollListenersActive) return
+    scrollListenersActive = true
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('resize', handleResize)
+  }
+
+  function removeScrollListeners(): void {
+    if (!scrollListenersActive) return
+    scrollListenersActive = false
+    window.removeEventListener('scroll', handleScroll)
+    window.removeEventListener('resize', handleResize)
+  }
+
   function loop(): void {
     rafId = null
     if (!currentCard || !pill) return
@@ -363,6 +378,7 @@ function setupGlassHighlight(
         currentCard = null
         fadeOut()
         stopLoop()
+        removeScrollListeners()
         return
       }
       // Cursor moved to a non-card area
@@ -380,6 +396,7 @@ function setupGlassHighlight(
             currentCard = null
             fadeOut()
             stopLoop()
+            removeScrollListeners()
           }, delay)
         }
       } else if (clearTimer) {
@@ -434,6 +451,7 @@ function setupGlassHighlight(
 
     state.mouseX = e.clientX
     state.mouseY = e.clientY
+    addScrollListeners()
     startLoop()
   }
 
@@ -446,6 +464,7 @@ function setupGlassHighlight(
     currentCard = null
     fadeOut()
     stopLoop()
+    removeScrollListeners()
   }
 
   function handleMouseMove(e: MouseEvent): void {
@@ -500,6 +519,7 @@ function setupGlassHighlight(
     currentCard = null
     fadeOut()
     stopLoop()
+    removeScrollListeners()
   }
 
   function handleScroll(): void {
@@ -523,18 +543,7 @@ function setupGlassHighlight(
   // -- Theme observer --
 
   function setupThemeObserver(): void {
-    observer = new MutationObserver(mutations => {
-      for (const m of mutations) {
-        if (m.attributeName === 'data-accent' || m.attributeName === 'data-theme') {
-          skinPill()
-          break
-        }
-      }
-    })
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-accent', 'data-theme'],
-    })
+    document.addEventListener('theme-changed', skinPill)
   }
 
   // -- Init --
@@ -550,21 +559,18 @@ function setupGlassHighlight(
   container.addEventListener('mousemove', handleMouseMove, { passive: true })
   container.addEventListener('focusin', handleFocusIn, true)
   container.addEventListener('focusout', handleFocusOut, true)
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  window.addEventListener('resize', handleResize)
   setupThemeObserver()
 
   // -- Cleanup --
   return () => {
     stopLoop()
+    removeScrollListeners()
     container.removeEventListener('mouseover', handleMouseOver)
     container.removeEventListener('mouseleave', handleMouseLeave)
     container.removeEventListener('mousemove', handleMouseMove)
     container.removeEventListener('focusin', handleFocusIn, true)
     container.removeEventListener('focusout', handleFocusOut, true)
-    window.removeEventListener('scroll', handleScroll)
-    window.removeEventListener('resize', handleResize)
-    observer?.disconnect()
+    document.removeEventListener('theme-changed', skinPill)
     prefersReducedMotion.removeEventListener('change', handleMotionChange)
     pill?.remove()
     container.removeAttribute('data-glass-highlight-active')

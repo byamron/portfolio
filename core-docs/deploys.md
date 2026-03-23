@@ -15,8 +15,9 @@ Netlify auto-deploys when `main` is updated. Monthly limit: **20 deploys**. Bill
 | 7 | 2026-03-19 | PR #59 | Batch deploy: glass pill fix, double cursor fix, sidebar backdrop, glass wiggle, responsive two-column |
 | 8 | 2026-03-21 | PR #81 | Batch deploy: resume update, portrait fix, case study polish, section reorder, figpal fix, Duo preview, favicon/meta, signature, contribution grid, coming soon labels, video previews, title sync |
 | 9 | 2026-03-21 | PR #82 | Fix TypeScript build errors (hotfix) |
+| 10 | 2026-03-21 | PR #86 | UW visuals cleanup, TS fixes, deploy tracker, signature filter, hover context |
 
-**Deploys used: 9 / 20** — 11 remaining
+**Deploys used: 10 / 20** — 10 remaining
 
 ---
 

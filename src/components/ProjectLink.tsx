@@ -64,10 +64,8 @@ export function ProjectLink({ project }: ProjectLinkProps) {
       <div
         data-link-card
         data-project-id={project.id}
-        onMouseEnter={() => setHoveredProjectId(project.id)}
-        onMouseLeave={() => setHoveredProjectId(null)}
         style={{
-          width: 'max-content',
+          width: 'fit-content',
           alignSelf: 'flex-start',
           padding: '24px 16px',
           margin: '0 -16px',
@@ -138,7 +136,7 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     onBlur: () => setHoveredProjectId(null),
     onClick: handleClick,
     style: {
-      width: 'max-content' as const,
+      width: 'fit-content' as const,
       alignSelf: 'flex-start' as const,
       padding: '24px 16px',
       margin: '0 -16px',

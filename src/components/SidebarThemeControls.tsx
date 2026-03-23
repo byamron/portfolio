@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
+import { useIsWide } from '@/hooks/useMediaQuery'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -11,9 +12,9 @@ const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
 ]
 
 const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle' | 'figpal' }[] = [
-  { mode: 'invert', label: 'Invert circle cursor', icon: 'circle' },
-  { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
+  // { mode: 'invert', label: 'Invert circle cursor', icon: 'circle' },  // Disabled: Chromium macOS Tahoe ignores cursor:none
   { mode: 'standard', label: 'Standard cursor', icon: 'cursor' },
+  { mode: 'figpal', label: 'Figpal trailing cursor', icon: 'figpal' },
 ]
 
 const ACCENT_ORDER: AccentColor[] = ['table', 'portrait', 'pizza', 'vineyard', 'sky']
@@ -282,11 +283,8 @@ function setupControlPill(container: HTMLElement): () => void {
     showPillForControl(control, null)
   }
 
-  const observer = new MutationObserver(() => skinPill())
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-accent', 'data-theme'],
-  })
+  const handleThemeChange = () => skinPill()
+  document.addEventListener('theme-changed', handleThemeChange)
 
   pill = createPill()
   skinPill()
@@ -305,7 +303,7 @@ function setupControlPill(container: HTMLElement): () => void {
     container.removeEventListener('mouseover', handleMouseOver)
     container.removeEventListener('mouseleave', handleMouseLeave)
     container.removeEventListener('mousemove', trackMouse)
-    observer.disconnect()
+    document.removeEventListener('theme-changed', handleThemeChange)
     pill?.remove()
   }
 }
@@ -317,7 +315,7 @@ function setupControlPill(container: HTMLElement): () => void {
 const THUMB_SIZE = 11
 
 // Stagger delay indices (fixed layout: swatches → intensity → modes → cursors)
-// [0] divider  [1-4] swatches  [5] divider  [6] strip  [7] divider  [8-10] modes  [11] divider  [12-14] cursors
+// [0] divider  [1-5] swatches  [6] divider  [7] strip  [8] divider  [9-11] modes  [12] divider  [13-14] cursors
 const DIVIDER_1 = 0
 const SWATCH_BASE = 1
 const DIVIDER_2 = SWATCH_BASE + ACCENT_ORDER.length    // 5
@@ -351,12 +349,28 @@ export function SidebarThemeControls() {
   const cleanupModePill = useRef<(() => void) | null>(null)
   const cleanupCursorPill = useRef<(() => void) | null>(null)
   const draggingRef = useRef(false)
+  const pendingIntensity = useRef<number | null>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+  const isWide = useIsWide()
+  const [isCoarsePointer, setIsCoarsePointer] = useState(() => window.matchMedia('(pointer: coarse)').matches)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: coarse)')
+    setIsCoarsePointer(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsCoarsePointer(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  // Use click-to-toggle (not hover) on narrow viewports OR touch devices
+  const isTouch = isCoarsePointer || !isWide
 
   // ---- Viewport-responsive layout ----
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight)
-
   useEffect(() => {
-    const handler = () => setViewportHeight(window.innerHeight)
+    const handler = () => {
+      setViewportHeight(window.innerHeight)
+    }
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
   }, [])
@@ -384,6 +398,17 @@ export function SidebarThemeControls() {
   const handleLeave = () => {
     closeTimeout.current = setTimeout(() => setHovered(false), 250)
   }
+
+  // Close panel when tapping outside on touch devices
+  useEffect(() => {
+    if (!hovered) return
+    const handler = (e: TouchEvent) => {
+      if (sidebarRef.current?.contains(e.target as Node)) return
+      setHovered(false)
+    }
+    document.addEventListener('touchstart', handler)
+    return () => document.removeEventListener('touchstart', handler)
+  }, [hovered])
 
   // Each control group gets its own pill so the hover clears between sections
   const setupPills = useCallback(() => {
@@ -439,8 +464,13 @@ export function SidebarThemeControls() {
     const h = rect.height
     const y = Math.max(0, Math.min(h, e.clientY - rect.top))
     const t = y / h
-    setBgIntensity(t)
-    // Direct DOM updates for zero-lag visual feedback during drag
+    // During drag: skip React state updates, use direct DOM for zero-lag feedback.
+    // Commit final value on pointer up.
+    if (draggingRef.current) {
+      pendingIntensity.current = t
+    } else {
+      setBgIntensity(t)
+    }
     if (draggingRef.current) {
       const bg = computeBg(accentColor, resolvedAppearance, t)
       if (thumbRef.current) thumbRef.current.style.top = `${t * (h - THUMB_SIZE)}px`
@@ -475,15 +505,21 @@ export function SidebarThemeControls() {
   const handlePointerUp = useCallback(() => {
     draggingRef.current = false
     setIsDragging(false)
+    // Commit deferred intensity to React state + localStorage
+    if (pendingIntensity.current !== null) {
+      setBgIntensity(pendingIntensity.current)
+      pendingIntensity.current = null
+    }
     // Restore body bg transition
     document.body.style.transition = ''
-  }, [])
+  }, [setBgIntensity])
 
   return (
     <div
+      ref={sidebarRef}
       data-sidebar
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
+      onMouseEnter={isTouch ? undefined : handleEnter}
+      onMouseLeave={isTouch ? undefined : handleLeave}
       style={{
         position: 'fixed',
         top: 0,
@@ -491,6 +527,8 @@ export function SidebarThemeControls() {
         width: 56,
         height: '100vh',
         zIndex: 100,
+        overflow: hovered ? 'visible' : 'hidden',
+        pointerEvents: isTouch && !hovered ? 'none' : 'auto',
       }}
     >
       {/* Sidebar backdrop — mount/unmount to avoid compositing cost at rest */}
@@ -532,10 +570,11 @@ export function SidebarThemeControls() {
           filter: 'drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 90%, transparent))',
         }}
       >
-        {/* Fixed trigger — always visible, glow + opacity reflect intensity */}
+        {/* Fixed trigger — 16×16 dot with 40×40 invisible touch target overlay */}
         <div
           ref={triggerRef}
           style={{
+            position: 'relative',
             width: 16,
             height: 16,
             borderRadius: 5,
@@ -547,7 +586,22 @@ export function SidebarThemeControls() {
             transition: 'background 200ms ease-in-out, opacity 300ms ease-in-out, box-shadow 300ms ease-in-out',
             flexShrink: 0,
           }}
-        />
+        >
+          {/* Enlarged hit area for touch */}
+          <div
+            onClick={() => setHovered(h => !h)}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 40,
+              height: 40,
+              cursor: 'pointer',
+              pointerEvents: 'auto',
+            }}
+          />
+        </div>
 
         {/* Expandable toolbar — scrollable when controls exceed viewport */}
         <div
@@ -593,7 +647,7 @@ export function SidebarThemeControls() {
                     onClick={() => setAccentColor(item.color)}
                     style={{
                       width: swatchSize, height: swatchSize, borderRadius: 6,
-                      background: item.swatch, border: 'none', cursor: 'pointer', padding: 0,
+                      background: item.swatch, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
                       outline: isActive ? `1.5px solid color-mix(in srgb, ${item.swatch} 50%, transparent)` : 'none',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                     }}
@@ -718,7 +772,7 @@ export function SidebarThemeControls() {
                       width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
                       opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
-                      transition: 'opacity 200ms ease-in-out',
+                      transition: 'opacity 200ms ease-in-out', userSelect: 'none' as const,
                     }}
                   >
                     <span
@@ -737,68 +791,73 @@ export function SidebarThemeControls() {
             })}
           </div>
 
-          {/* Divider: modes ↔ cursors */}
-          <motion.div
-            animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-            transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
-            style={{
-              width: 20, height: 1, background: 'var(--text-dark)',
-              margin: `${dividerMargin}px 0`, pointerEvents: 'none',
-            }}
-          />
+          {/* Cursor style controls — hidden on touch devices (no custom cursor) */}
+          {!isTouch && (
+            <>
+              {/* Divider: modes ↔ cursors */}
+              <motion.div
+                animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
+                transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
+                style={{
+                  width: 20, height: 1, background: 'var(--text-dark)',
+                  margin: `${dividerMargin}px 0`, pointerEvents: 'none',
+                }}
+              />
 
-          {/* Cursor style icons — own pill container */}
-          <div
-            ref={cursorsRef}
-            role="radiogroup"
-            aria-label="Cursor style"
-            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: buttonGap }}
-          >
-            {cursorOptions.map(({ mode, label, icon }, i) => {
-              const isActive = cursorMode === mode
-              return (
-                <motion.div
-                  key={mode}
-                  animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                  transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * 0.04 : 0, ease: motionEase }}
-                  style={{ pointerEvents: hovered ? 'auto' : 'none' }}
-                >
-                  <button
-                    data-sidebar-control
-                    role="radio"
-                    aria-checked={isActive}
-                    aria-label={label}
-                    onClick={() => setCursorMode(mode)}
-                    style={{
-                      width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
-                      opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
-                      transition: 'opacity 200ms ease-in-out',
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 24, height: 24, borderRadius: 6,
-                        outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
-                        outlineOffset: 3, transition: 'outline 200ms ease-in-out',
-                      }}
+              {/* Cursor style icons — own pill container */}
+              <div
+                ref={cursorsRef}
+                role="radiogroup"
+                aria-label="Cursor style"
+                style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: buttonGap }}
+              >
+                {cursorOptions.map(({ mode, label, icon }, i) => {
+                  const isActive = cursorMode === mode
+                  return (
+                    <motion.div
+                      key={mode}
+                      animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
+                      transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * 0.04 : 0, ease: motionEase }}
+                      style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                     >
-                      {icon === 'cursor' && <Cursor size={18} />}
-                      {icon === 'circle' && <Circle size={18} />}
-                      {icon === 'figpal' && (
-                        <img
-                          src="/images/figpal.png"
-                          alt=""
-                          style={{ height: 22, width: 'auto' }}
-                        />
-                      )}
-                    </span>
-                  </button>
-                </motion.div>
-              )
-            })}
-          </div>
+                      <button
+                        data-sidebar-control
+                        role="radio"
+                        aria-checked={isActive}
+                        aria-label={label}
+                        onClick={() => setCursorMode(mode)}
+                        style={{
+                          width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 8,
+                          opacity: isActive ? 1 : 0.4, color: 'var(--text-dark)',
+                          transition: 'opacity 200ms ease-in-out', userSelect: 'none' as const,
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: 24, height: 24, borderRadius: 6,
+                            outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
+                            outlineOffset: 3, transition: 'outline 200ms ease-in-out',
+                          }}
+                        >
+                          {icon === 'cursor' && <Cursor size={18} />}
+                          {icon === 'circle' && <Circle size={18} />}
+                          {icon === 'figpal' && (
+                            <img
+                              src="/images/figpal.png"
+                              alt=""
+                              style={{ height: 22, width: 'auto' }}
+                            />
+                          )}
+                        </span>
+                      </button>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
