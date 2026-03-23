@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useCursor } from '@/contexts/CursorContext'
+import { useIsWide } from '@/hooks/useMediaQuery'
 import { projectsById } from '@/data/projects'
 
 const OFFSET_X = 18
@@ -12,9 +13,10 @@ const COMING_SOON_FONT_SIZE = 22
 
 export function CursorCompanion() {
   const { cursorMode } = useCursor()
+  const isWide = useIsWide()
 
   useEffect(() => {
-    if (cursorMode !== 'standard') return
+    if (cursorMode !== 'standard' || !isWide) return
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -163,7 +165,7 @@ export function CursorCompanion() {
       visible = false
       currentContent = ''
     }
-  }, [cursorMode])
+  }, [cursorMode, isWide])
 
   return null
 }

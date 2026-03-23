@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCursor } from '@/contexts/CursorContext'
 import { useHover } from '@/contexts/HoverContext'
+import { useIsWide } from '@/hooks/useMediaQuery'
 import { projectsById } from '@/data/projects'
 import { DIRECTIONAL_SWEEP } from '@/utils/braille'
 
@@ -57,6 +58,9 @@ export function CustomCursor() {
   const posRef = useRef({ x: 0, y: 0 })
   const initializedRef = useRef(false)
   const reducedMotion = useRef(false)
+  const isWide = useIsWide()
+  const [isCoarsePointer, setIsCoarsePointer] = useState(() => window.matchMedia('(pointer: coarse)').matches)
+  const isTouch = isCoarsePointer || !isWide
   const onCardRef = useRef(false)
   const cursorContentRef = useRef<'idle' | 'arrow' | 'coming-soon'>('idle')
   const onSidebarRef = useRef(false)
@@ -72,7 +76,15 @@ export function CustomCursor() {
   }, [])
 
   useEffect(() => {
-    if (cursorMode === 'standard') {
+    const mq = window.matchMedia('(pointer: coarse)')
+    setIsCoarsePointer(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsCoarsePointer(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  useEffect(() => {
+    if (cursorMode === 'standard' || isTouch) {
       removeCursorNoneStyle()
       return
     }
@@ -483,7 +495,7 @@ export function CustomCursor() {
       comingSoonRef.current = null
       figpalRef.current = null
     }
-  }, [cursorMode, cursorTintMode])
+  }, [cursorMode, cursorTintMode, isTouch])
 
   // Morph circle ↔ arrow / coming-soon based on hovered project or external link.
   useEffect(() => {

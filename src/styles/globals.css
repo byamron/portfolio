@@ -24,6 +24,10 @@ body {
   transition: background-color 500ms ease-in-out;
 }
 
+#root {
+  overflow-x: hidden;
+}
+
 /* Layout spacing tokens — responsive */
 :root {
   --layout-margin: 64px;
