@@ -203,7 +203,8 @@ export function ImageDisplay() {
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: 'contain',
+                objectFit: project!.id === 'sony-screenless' ? 'cover' : 'contain',
+                aspectRatio: project!.id === 'sony-screenless' ? '4 / 3' : undefined,
                 borderRadius: 32,
                 filter: dropShadow,
                 viewTransitionName: 'project-hero',

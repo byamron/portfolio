@@ -245,6 +245,10 @@ p a {
 ::view-transition-new(project-hero) {
   animation-duration: 300ms;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Smooth size interpolation — prevent abrupt resize during morph */
+  object-fit: cover;
+  overflow: hidden;
+  border-radius: 32px;
 }
 
 /* Sidebar trigger jiggle — draws attention after image-click accent cycle */
