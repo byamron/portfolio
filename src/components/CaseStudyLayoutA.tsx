@@ -153,7 +153,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
 
   if (isNarrow) {
     return (
-      <article style={{ padding: 'var(--layout-padding-top) var(--layout-margin)' }}>
+      <article style={{ padding: 'calc(var(--layout-padding-top) + 32px) var(--layout-margin) var(--layout-padding-top)' }}>
         <motion.div
           ref={narrativeRef}
           initial={{ opacity: 0 }}

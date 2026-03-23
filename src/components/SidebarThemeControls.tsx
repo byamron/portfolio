@@ -529,6 +529,7 @@ export function SidebarThemeControls() {
         zIndex: 100,
         overflow: hovered ? 'visible' : 'hidden',
         pointerEvents: isTouch && !hovered ? 'none' : 'auto',
+        viewTransitionName: 'sidebar',
       }}
     >
       {/* Sidebar backdrop — mount/unmount to avoid compositing cost at rest */}
@@ -565,7 +566,7 @@ export function SidebarThemeControls() {
           right: 16,
           display: 'flex',
           alignItems: 'center',
-          top: 64,
+          top: 'var(--sidebar-trigger-top, 64px)',
           flexDirection: 'column' as const,
           filter: 'drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 90%, transparent))',
         }}
