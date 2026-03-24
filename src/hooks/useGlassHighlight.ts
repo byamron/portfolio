@@ -52,6 +52,8 @@ export function useGlassHighlight(
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+    // Skip glass pill entirely on touch devices — no hover capability
+    if (window.matchMedia('(pointer: coarse)').matches) return
     const { cleanup, fadeOut } = setupGlassHighlight(container, configRef)
     fadeOutRef.current = fadeOut
     return () => {

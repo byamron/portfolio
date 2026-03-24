@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Disable glass hover on mobile/touch devices + /link command
+
+**Branch:** `fix-mobile-glass-hover`
+
+**Summary:** Fixed two mobile bugs: glass pill persisting after returning from a case study (no `mouseleave` to clear it), and back button requiring two taps (first tap triggered `focusin` glass activation). Added `/link` slash command that starts a dev server with a deterministic port derived from the workspace path, avoiding collisions across parallel worktrees.
+
+**Decisions:**
+- Gate glass pill at the hook level (`useGlassHighlight`) via `(pointer: coarse)` media query — matches existing CSS gate in `globals.css` and touch detection pattern in `CustomCursor`/`SidebarThemeControls`.
+- Suppress `onFocus`/`onBlur` in `ProjectLink` on touch to prevent `hoveredProjectId` from being set (right column is hidden on mobile anyway).
+- `/link` command verifies process ownership via `lsof -d cwd` before reusing a port, preventing cross-worktree conflicts.
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`
