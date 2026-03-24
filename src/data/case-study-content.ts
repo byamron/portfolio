@@ -245,10 +245,10 @@ export const sonyScreenlessTv: CaseStudy = {
   id: 'sony-screenless-tv',
   title: 'Screenless TV: Designing for shared reality',
   subtitle:
-    'Vision concept for Sony\u2019s TV division. My team explored how immersive technology could shape home entertainment \u2014 and found that the real design challenge wasn\u2019t personalization, it was preserving the shared experience that makes watching together meaningful.',
+    'A speculative vision project for Sony\u2019s TV division. My team explored how immersive technology could shape home entertainment \u2014 and found that the real design challenge wasn\u2019t personalization, it was preserving the shared experience that makes watching together meaningful.',
   timeline: 'Q1 \u2013 Q3 2024',
   narrative: [
-    '<strong>People don\u2019t watch together for the content\u2009\u2014\u2009they watch together for the connection.</strong> Master\u2019s capstone for Sony\u2019s TV division. We expected to hear about picture quality; instead we heard about compromise\u2009\u2014\u2009subtitles, volume, lighting\u2009\u2014\u2009and the fact that people kept watching together anyway. The value is presence, not content.',
+    '<strong>People don\u2019t watch together for the content\u2009\u2014\u2009they watch together for the connection.</strong> For my master\u2019s capstone at the University of Washington, my team took on a speculative vision project for Sony\u2019s TV division. We interviewed people about how they watch with others, expecting to hear about picture quality. Instead we heard about compromise\u2009\u2014\u2009subtitles, volume, lighting\u2009\u2014\u2009and the fact that people kept watching together anyway. The value is presence, not content.',
     '<strong>We rejected wearables\u2009\u2014\u2009a values decision, not a technical one.</strong> Apple Vision Pro had just launched, but you can\u2019t catch someone\u2019s eye during a tense scene through a headset. We designed a volumetric display with angle-specific imagery and directional audio\u2009\u2014\u2009personalization without isolation.',
   ],
   sections: [
@@ -256,7 +256,7 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-research',
       heading: 'People don\u2019t watch together for the content \u2014 they watch together for the connection',
       paragraphs: [
-        'Master\u2019s capstone, 2024. Sony\u2019s TV division asked us to explore how AR/MR might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
+        'A speculative vision project for Sony\u2019s TV division (master\u2019s capstone, 2024). Sony asked us to explore how AR/MR might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
       ],
       visual: null,
     },

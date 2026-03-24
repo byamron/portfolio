@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Sony case study updates
+
+**Branch:** `sony-case-study-updates`
+
+**Summary:** Updated Sony case study page video to use 4:3 aspect ratio with `object-fit: cover`, matching the home page preview. Added "speculative project" framing across home page summary, case study subtitle, and narrative. Rewrote narrative opening for better flow — now leads with context (capstone at UW for Sony), transitions into research (interviewed people), then findings. Changed default case study contact CTA from "Interested in the details?" to "Want the details?"
+
+**Decisions:**
+- Used `data.id` check in `CaseStudyLayoutA` for Sony-specific video styling rather than adding a generic prop, since this is the only case study needing 4:3 cover treatment.
+
+---
+
 ## 2026-03-23 — Disable glass hover on mobile/touch devices + /link command
 
 **Branch:** `fix-mobile-glass-hover`
