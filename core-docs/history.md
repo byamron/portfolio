@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-23 — Glass hover performance optimizations
+
+**Branch:** `glass-hover-perf`
+
+**Summary:** Reduced per-frame and per-mouseover DOM work in the glass highlight system. Cached `containerRect` in `getCardPosition` (was calling `getBoundingClientRect` on every position read), cached the section card list in `isCursorInCardStack` (was running `querySelectorAll` + `Array.from` + `filter` on every non-card mouseover), and removed the `backdrop-filter` CSS transition from `[data-link-card]` to avoid animating an expensive compositor property.
+
+**Decisions:**
+- `cachedSectionCards` invalidates on card change only (not scroll/resize) — the section-scoped card list is stable during a hover session; only the section context matters.
+- `cachedContainerRect` reuses the existing invalidation points (scroll, resize, hover-start) established in `fix/glass-lean-inversion`.
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`

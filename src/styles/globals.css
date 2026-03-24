@@ -146,8 +146,7 @@ p a {
   transition:
     background 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    border-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    backdrop-filter 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* CSS-only frost glass — hover gated behind pointer capability */
