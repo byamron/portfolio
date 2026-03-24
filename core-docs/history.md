@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-24 — Back button arrow slide-out animation
+
+**Branch:** `back-button-arrow-animation`
+
+**Summary:** Added a slide-out animation to the back arrow (`←`) on case study pages. On click, the arrow does a brief rightward anticipation then accelerates left and fades out before the page transition fires. Uses `clipPath: inset(0)` to mask the arrow during exit. Mirrors the existing `arrowSlideOut` pattern from `ProjectLink.tsx`.
+
+**Decisions:**
+- Reused the same CSS keyframe injection approach as `ProjectLink` for consistency.
+- Extended navigation delay from 280ms to 500ms to accommodate the animation.
+- Respects `prefers-reduced-motion` — skips animation entirely.
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`
