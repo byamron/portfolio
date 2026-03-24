@@ -15,6 +15,43 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-23 — Sony case study updates
+
+**Branch:** `sony-case-study-updates`
+
+**Summary:** Updated Sony case study page video to use 4:3 aspect ratio with `object-fit: cover`, matching the home page preview. Added "speculative project" framing across home page summary, case study subtitle, and narrative. Rewrote narrative opening for better flow — now leads with context (capstone at UW for Sony), transitions into research (interviewed people), then findings. Changed default case study contact CTA from "Interested in the details?" to "Want the details?"
+
+**Decisions:**
+- Used `data.id` check in `CaseStudyLayoutA` for Sony-specific video styling rather than adding a generic prop, since this is the only case study needing 4:3 cover treatment.
+
+---
+
+## 2026-03-23 — Disable glass hover on mobile/touch devices + /link command
+
+**Branch:** `fix-mobile-glass-hover`
+
+**Summary:** Fixed two mobile bugs: glass pill persisting after returning from a case study (no `mouseleave` to clear it), and back button requiring two taps (first tap triggered `focusin` glass activation). Added `/link` slash command that starts a dev server with a deterministic port derived from the workspace path, avoiding collisions across parallel worktrees.
+
+**Decisions:**
+- Gate glass pill at the hook level (`useGlassHighlight`) via `(pointer: coarse)` media query — matches existing CSS gate in `globals.css` and touch detection pattern in `CustomCursor`/`SidebarThemeControls`.
+- Suppress `onFocus`/`onBlur` in `ProjectLink` on touch to prevent `hoveredProjectId` from being set (right column is hidden on mobile anyway).
+- `/link` command verifies process ownership via `lsof -d cwd` before reusing a port, preventing cross-worktree conflicts.
+
+---
+
+## 2026-03-23 — Glass hover performance optimizations
+
+**Branch:** `glass-hover-perf`
+
+**Summary:** Reduced per-frame and per-mouseover DOM work in the glass highlight system. Cached `containerRect` in `getCardPosition` (was calling `getBoundingClientRect` on every position read), cached the section card list in `isCursorInCardStack` (was running `querySelectorAll` + `Array.from` + `filter` on every non-card mouseover), and removed the `backdrop-filter` CSS transition from `[data-link-card]` to avoid animating an expensive compositor property.
+
+**Decisions:**
+- `cachedSectionCards` invalidates on card change only (not scroll/resize) — the section-scoped card list is stable during a hover session; only the section context matters.
+- `cachedContainerRect` reuses the existing invalidation points (scroll, resize, hover-start) established in `fix/glass-lean-inversion`.
+>>>>>>> origin/next-update
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`
