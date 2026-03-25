@@ -14,6 +14,14 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-25 — Replace todo list hover preview video
+
+**Branch:** `update-todo-hover-video`
+
+**Summary:** Replaced the todo list project hover preview video (`preview-todo-priority.mp4`) with a new recording (`trio-better-2.mp4`, 516KB). No code changes — same file path, same project data reference.
+
+---
+
 ## 2026-03-25 — Homepage layout: flat card list with two-line cards
 
 **Branch:** `visual-ui-audit`
