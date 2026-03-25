@@ -52,7 +52,7 @@ export function ImageDisplay() {
   const summary = linkPreview?.summary ?? project?.summary ?? null
   const isPreview = !!project || !!linkPreview
 
-  const showShadow = linkPreview || (project && needsShadow.has(project.id))
+  const showShadow = (linkPreview && !linkPreview.video) || (project && needsShadow.has(project.id))
   const dropShadow = showShadow
     ? resolvedAppearance === 'dark'
       ? 'drop-shadow(0 2px 40px rgba(255, 255, 255, 0.1))'

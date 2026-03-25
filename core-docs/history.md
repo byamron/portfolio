@@ -10,6 +10,17 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-25 — Fix double shadow on link preview videos
+
+**Branch:** `fix-hover-video-shadows`
+
+**Summary:** Mochi Health and email link preview videos had a visible shadow that other previews didn't. The CSS `drop-shadow` filter was applied to all link previews, but the video files already had macOS window shadows baked into the recordings — creating a double-shadow effect.
+
+**Decisions:**
+- Changed `showShadow` condition to exclude video-based link previews (`linkPreview && !linkPreview.video`), keeping the CSS shadow only for flat image previews (resume, LinkedIn) that need it for separation.
+
+---
+
 ## 2026-03-25 — Manipulation hover preview, progress tracker video, misc polish
 
 **Branch:** `manipulation-hover-preview`
