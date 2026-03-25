@@ -68,6 +68,43 @@ export const defaultImageMap: Record<AccentColor, string> = {
   vineyard: '/images/portrait-vineyard.jpeg',
 }
 
+// Non-project link previews (resume, LinkedIn, email, Mochi Health)
+export interface LinkPreview {
+  id: string
+  image?: string
+  video?: string
+  alt: string
+  backgroundColor: string // edge color so contain-mode padding blends seamlessly
+  summary?: string
+}
+
+export const linkPreviews: Record<string, LinkPreview> = {
+  resume: {
+    id: 'resume',
+    image: '/images/preview-resume.png',
+    alt: 'Ben Yamron resume',
+    backgroundColor: '#ffffff',
+  },
+  mochi: {
+    id: 'mochi',
+    video: '/images/preview-mochi-health.mp4',
+    alt: 'Mochi Health website',
+    backgroundColor: '#2b2ba0',
+  },
+  email: {
+    id: 'email',
+    video: '/images/preview-email.mp4',
+    alt: 'Email Ben Yamron',
+    backgroundColor: '#282828',
+  },
+  linkedin: {
+    id: 'linkedin',
+    image: '/images/preview-linkedin.png',
+    alt: 'Ben Yamron LinkedIn profile',
+    backgroundColor: '#ffffff',
+  },
+}
+
 // Flat lookup for ImageDisplay: unique project id → Project
 export const projectsById: Record<string, Project> = Object.fromEntries(
   sections.flatMap(s => s.projects).map(p => [p.id, p])

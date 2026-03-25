@@ -2,9 +2,9 @@ import { useCallback } from 'react'
 import { useHover } from '@/contexts/HoverContext'
 
 export function HeroTitle() {
-  const { setHoveringLink } = useHover()
-  const onEnter = useCallback(() => setHoveringLink(true), [setHoveringLink])
-  const onLeave = useCallback(() => setHoveringLink(false), [setHoveringLink])
+  const { setHoveringLink, setHoveredLinkId } = useHover()
+  const onEnter = useCallback(() => { setHoveringLink(true); setHoveredLinkId('mochi') }, [setHoveringLink, setHoveredLinkId])
+  const onLeave = useCallback(() => { setHoveringLink(false); setHoveredLinkId(null) }, [setHoveringLink, setHoveredLinkId])
 
   return (
     <h1

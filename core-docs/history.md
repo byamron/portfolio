@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-25 — Hover previews for non-project links
+
+**Branch:** `hover-preview-links`
+
+**Summary:** Added image/video hover previews for the four non-project links (resume, email, LinkedIn, Mochi Health). Hovering these links now cross-fades the right column to show a preview, using the same AnimatePresence system as project links. Resume and LinkedIn use static images; email and Mochi Health use looping MP4 videos.
+
+**Decisions:**
+- Extended HoverContext with `hoveredLinkId` / `setHoveredLinkId`, with mutual exclusion against `hoveredProjectId` (hovering one clears the other).
+- Added `LinkPreview` type in `projects.ts` with optional `image` or `video` fields, keeping the data model parallel to project previews.
+- Link previews use `object-fit: contain` (preserving original aspect ratio) rather than `cover` (which cropped the screenshots).
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`
