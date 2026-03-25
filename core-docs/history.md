@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-25 — Remove deploy tracking (moved to GitHub Pages)
+
+**Branch:** `remove-deploy-tracking`
+
+**Summary:** Removed `core-docs/deploys.md` and all references to deploy tracking from CLAUDE.md and the `/push` command. Site moved from Netlify (20 deploy/month limit) to GitHub Pages (no limit), so tracking is no longer needed.
+
+---
+
 ## 2026-03-25 — Manipulation hover preview, progress tracker video, misc polish
 
 **Branch:** `manipulation-hover-preview`
