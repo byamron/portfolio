@@ -48,7 +48,19 @@ Decision log and completed work, in reverse chronological order.
 **Decisions:**
 - `cachedSectionCards` invalidates on card change only (not scroll/resize) — the section-scoped card list is stable during a hover session; only the section context matters.
 - `cachedContainerRect` reuses the existing invalidation points (scroll, resize, hover-start) established in `fix/glass-lean-inversion`.
->>>>>>> origin/next-update
+
+---
+
+## 2026-03-24 — External link fixes, performance, and production readiness
+
+**Branch:** `fix-external-links-perf`
+
+**Summary:** Fixed the Mochi Health link in `HeroTitle` to open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`) — previously it navigated in the same tab, unmounting the React app. Moved `preloadPreviewImages()` from a lazy `onMouseEnter` handler in `LeftColumn` to app mount in `App.tsx` so images are ready before first hover. Removed dead `sony` GIF entry from `projectImageMap` (Sony uses `videoPreview` now, leaving a 4.5 MB GIF in the preload path). Added Netlify `Cache-Control` headers for hashed assets, images, fonts, and the resume PDF. Added two test suites: `projectData.test.ts` (validates `projectImageMap` integrity, no dead entries, project data consistency) and `preloadImages.test.ts` (verifies preload skips video/lottie, enforces 1 MB size limit).
+
+**Decisions:**
+- Fixed the specific Mochi link in `HeroTitle` rather than adding generic external-link handling to `ProjectLink`, since no project data currently uses external hrefs.
+- Image preload moved to mount rather than `requestIdleCallback` for simplicity — the image set is small enough that eager loading is fine.
+- Added `immutable` cache headers for Vite hashed assets (`/assets/*`) since content-hash filenames guarantee cache safety.
 
 ---
 

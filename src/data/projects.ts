@@ -52,9 +52,8 @@ export const sections: Section[] = [
   },
 ]
 
-// projectId → preview image
+// projectId → preview image (only static-image projects; video/lottie projects are handled separately)
 export const projectImageMap: Record<string, string> = {
-  sony: '/images/preview-sony.gif',
   acorn: '/images/preview-acorn.png',
   duo: '/images/preview-duo.png',
 }

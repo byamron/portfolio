@@ -601,7 +601,7 @@ function setupGlassHighlight(
     // Respect reduced motion: fall back to instant opacity change
     const d = prefersReducedMotion.matches ? 0 : duration
     const dl = prefersReducedMotion.matches ? 0 : delay
-    pill.style.transition = `opacity ${d}ms ease ${dl}ms`
+    pill.style.transition = `opacity ${d}ms ease-out ${dl}ms`
     pill.style.opacity = '0'
   }
 
