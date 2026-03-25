@@ -25,9 +25,6 @@ Read the following files, then update them based on the work done on this branch
 - If scope changed, reflect it.
 - Only update if relevant — skip if the work doesn't affect the plan.
 
-### `core-docs/deploys.md`
-- Do NOT update this file. Deploys only happen on merge to `main`, not `next-update`.
-
 ### `core-docs/feedback.md`
 - Only update if there were mistakes or rejected approaches during this work that should be recorded for future reference.
 - Skip if everything went smoothly.
@@ -69,4 +66,3 @@ Tell the user:
 - ✅ What was committed
 - ✅ PR URL
 - ✅ Merged into `next-update`
-- Current deploy status from `core-docs/deploys.md` (as a reminder)
