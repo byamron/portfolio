@@ -6,7 +6,7 @@ export interface Project {
   projectId: string // maps to preview image: "uw" | "sony" | "cip" | "acorn"
   href: string
   isLink: boolean
-  caseStudySlug?: string // maps to markdown filename in data/case-studies/
+  caseStudySlug?: string
   lottiePreview?: string // optional Lottie JSON path (overrides projectImageMap)
   videoPreview?: string // optional video path (overrides projectImageMap)
   summary?: string // "quick version" from case study, shown below image on hover
@@ -78,15 +78,3 @@ export function getProjectForSlug(slug: string): Project | undefined {
   return sections.flatMap(s => s.projects).find(p => p.caseStudySlug === slug)
 }
 
-// Case study slug → markdown filename mapping
-export const caseStudySlugs: Record<string, string> = {
-  'mochi-ai-tooling': 'mochi-ai-tooling',
-  'mochi-progress-tracker': 'mochi-progress-tracker',
-  'mochi-subscriptions': 'mochi-subscriptions',
-  'uw-design-system': 'uw-design-system',
-  'sony-screenless-tv': 'sony-screenless-tv',
-  'cip-election-misinformation': 'cip-election-misinformation',
-  'duolingo-languages-flags': 'duolingo-languages-flags',
-  'acorn-eat-local-vt': 'acorn-eat-local-vt',
-  'trio-todo-list': 'trio-todo-list',
-}
