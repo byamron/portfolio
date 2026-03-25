@@ -2,6 +2,147 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
+
+**Branch:** `next-update`
+
+**Summary:** Reviewed next-update branch (14 commits ahead of main) for bugs, risks, and optimization opportunities. Fixed 4 TypeScript errors that broke `tsc -b`, replaced hardcoded year 2026 in ContributionHeatmap with dynamic `new Date().getFullYear()`, code-split lottie-web into its own vendor chunk (317KB removed from main bundle), compressed sony-preview.mp4 from 19MB to 3MB, and replaced "AR/MR" with "mixed reality" in Sony case study copy.
+
+**Decisions:**
+- `CURRENT_YEAR` computed once at module level (not per-render) since the heatmap year doesn't need to change mid-session.
+- `vendor-lottie` manual chunk in vite.config.ts ensures lottie-web is only loaded when a Lottie component renders (CIP preview, case study pages).
+- Video compressed with ffmpeg CRF 26 (visually near-lossless) — 84% size reduction.
+- Added `heroVisual` to `CaseStudy` interface (was used in data but missing from the type).
+- Added `.filter()` type guard to `cardOrder` in LeftColumn to handle potentially missing project IDs safely.
+
+---
+
+## 2026-03-25 — Remove deploy tracking (moved to GitHub Pages)
+
+**Branch:** `remove-deploy-tracking`
+
+**Summary:** Removed `core-docs/deploys.md` and all references to deploy tracking from CLAUDE.md and the `/push` command. Site moved from Netlify (20 deploy/month limit) to GitHub Pages (no limit), so tracking is no longer needed.
+
+---
+
+## 2026-03-25 — Fix double shadow on link preview videos
+
+**Branch:** `fix-hover-video-shadows`
+
+**Summary:** Mochi Health and email link preview videos had a visible shadow that other previews didn't. The CSS `drop-shadow` filter was applied to all link previews, but the video files already had macOS window shadows baked into the recordings — creating a double-shadow effect.
+
+**Decisions:**
+- Changed `showShadow` condition to exclude video-based link previews (`linkPreview && !linkPreview.video`), keeping the CSS shadow only for flat image previews (resume, LinkedIn) that need it for separation.
+
+---
+
+## 2026-03-25 — Manipulation hover preview, progress tracker video, misc polish
+
+**Branch:** `manipulation-hover-preview`
+
+**Summary:** Added text-only hover preview for the "Detecting manipulative language" coming-soon project — [COMING SOON] heading + description body shown centered in the image area. Added progress tracker hover video (preview-mochi-tracker.mp4). Renamed todo list project to "A todo list for focus and prioritization." Made cursor companion hide instantly on leaving coming-soon cards. Loaded Literata 400 weight for the [COMING SOON] heading.
+
+**Decisions:**
+- Text-only preview uses `previewDescription` field on Project type — heading/body split on first newline, heading centered + white, body left-aligned + grey.
+- Cursor companion hides with `transition: none` on leave to prevent lingering over adjacent active cards; fade-in transition restored on enter.
+
+---
+
+## 2026-03-25 — Replace todo list hover preview video
+
+**Branch:** `update-todo-hover-video`
+
+**Summary:** Replaced the todo list project hover preview video (`preview-todo-priority.mp4`) with a new recording (`trio-better-2.mp4`, 516KB). No code changes — same file path, same project data reference.
+
+---
+
+## 2026-03-25 — Homepage layout: flat card list with two-line cards
+
+**Branch:** `visual-ui-audit`
+
+**Summary:** Redesigned homepage project layout from sectioned narrative to a flat card list. Each card shows title + Company · Year subtitle. Updated project metadata (years, company names), reordered projects by priority, fixed case study copy for external clarity, and added arrow keyframes to CSS. Removed dev toggle, InlineProjectLink, and section grouping code.
+
+**Decisions:**
+- Flat list over sectioned (by year / by company): sections added visual noise without earning it — the subtitle already carries year and company info, and chronological order communicates recency.
+- Canonical order prioritizes current + personal work first, earlier work last.
+- Company names expanded for clarity (e.g. "Sony × University of Washington").
+---
+
+## 2026-03-25 — Hover previews for non-project links
+
+**Branch:** `hover-preview-links`
+
+**Summary:** Added image/video hover previews for the four non-project links (resume, email, LinkedIn, Mochi Health). Hovering these links now cross-fades the right column to show a preview, using the same AnimatePresence system as project links. Resume and LinkedIn use static images; email and Mochi Health use looping MP4 videos.
+
+**Decisions:**
+- Extended HoverContext with `hoveredLinkId` / `setHoveredLinkId`, with mutual exclusion against `hoveredProjectId` (hovering one clears the other).
+- Added `LinkPreview` type in `projects.ts` with optional `image` or `video` fields, keeping the data model parallel to project previews.
+- Link previews use `object-fit: contain` (preserving original aspect ratio) rather than `cover` (which cropped the screenshots).
+
+---
+
+## 2026-03-24 — Back button arrow slide-out animation
+
+**Branch:** `back-button-arrow-animation`
+
+**Summary:** Added a slide-out animation to the back arrow (`←`) on case study pages. On click, the arrow does a brief rightward anticipation then accelerates left and fades out before the page transition fires. Uses `clipPath: inset(0)` to mask the arrow during exit. Mirrors the existing `arrowSlideOut` pattern from `ProjectLink.tsx`.
+
+**Decisions:**
+- Reused the same CSS keyframe injection approach as `ProjectLink` for consistency.
+- Extended navigation delay from 280ms to 500ms to accommodate the animation.
+- Respects `prefers-reduced-motion` — skips animation entirely.
+
+---
+
+## 2026-03-23 — Sony case study updates
+
+**Branch:** `sony-case-study-updates`
+
+**Summary:** Updated Sony case study page video to use 4:3 aspect ratio with `object-fit: cover`, matching the home page preview. Added "speculative project" framing across home page summary, case study subtitle, and narrative. Rewrote narrative opening for better flow — now leads with context (capstone at UW for Sony), transitions into research (interviewed people), then findings. Changed default case study contact CTA from "Interested in the details?" to "Want the details?"
+
+**Decisions:**
+- Used `data.id` check in `CaseStudyLayoutA` for Sony-specific video styling rather than adding a generic prop, since this is the only case study needing 4:3 cover treatment.
+
+---
+
+## 2026-03-23 — Disable glass hover on mobile/touch devices + /link command
+
+**Branch:** `fix-mobile-glass-hover`
+
+**Summary:** Fixed two mobile bugs: glass pill persisting after returning from a case study (no `mouseleave` to clear it), and back button requiring two taps (first tap triggered `focusin` glass activation). Added `/link` slash command that starts a dev server with a deterministic port derived from the workspace path, avoiding collisions across parallel worktrees.
+
+**Decisions:**
+- Gate glass pill at the hook level (`useGlassHighlight`) via `(pointer: coarse)` media query — matches existing CSS gate in `globals.css` and touch detection pattern in `CustomCursor`/`SidebarThemeControls`.
+- Suppress `onFocus`/`onBlur` in `ProjectLink` on touch to prevent `hoveredProjectId` from being set (right column is hidden on mobile anyway).
+- `/link` command verifies process ownership via `lsof -d cwd` before reusing a port, preventing cross-worktree conflicts.
+
+---
+
+## 2026-03-23 — Glass hover performance optimizations
+
+**Branch:** `glass-hover-perf`
+
+**Summary:** Reduced per-frame and per-mouseover DOM work in the glass highlight system. Cached `containerRect` in `getCardPosition` (was calling `getBoundingClientRect` on every position read), cached the section card list in `isCursorInCardStack` (was running `querySelectorAll` + `Array.from` + `filter` on every non-card mouseover), and removed the `backdrop-filter` CSS transition from `[data-link-card]` to avoid animating an expensive compositor property.
+
+**Decisions:**
+- `cachedSectionCards` invalidates on card change only (not scroll/resize) — the section-scoped card list is stable during a hover session; only the section context matters.
+- `cachedContainerRect` reuses the existing invalidation points (scroll, resize, hover-start) established in `fix/glass-lean-inversion`.
+
+---
+
+## 2026-03-24 — External link fixes, performance, and production readiness
+
+**Branch:** `fix-external-links-perf`
+
+**Summary:** Fixed the Mochi Health link in `HeroTitle` to open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`) — previously it navigated in the same tab, unmounting the React app. Moved `preloadPreviewImages()` from a lazy `onMouseEnter` handler in `LeftColumn` to app mount in `App.tsx` so images are ready before first hover. Removed dead `sony` GIF entry from `projectImageMap` (Sony uses `videoPreview` now, leaving a 4.5 MB GIF in the preload path). Added Netlify `Cache-Control` headers for hashed assets, images, fonts, and the resume PDF. Added two test suites: `projectData.test.ts` (validates `projectImageMap` integrity, no dead entries, project data consistency) and `preloadImages.test.ts` (verifies preload skips video/lottie, enforces 1 MB size limit).
+
+**Decisions:**
+- Fixed the specific Mochi link in `HeroTitle` rather than adding generic external-link handling to `ProjectLink`, since no project data currently uses external hrefs.
+- Image preload moved to mount rather than `requestIdleCallback` for simplicity — the image set is small enough that eager loading is fine.
+- Added `immutable` cache headers for Vite hashed assets (`/assets/*`) since content-hash filenames guarantee cache safety.
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`

@@ -6,42 +6,16 @@ import { useCursor } from '@/contexts/CursorContext'
 import { DIRECTIONAL_SWEEP } from '@/utils/braille'
 import type { Project } from '@/data/projects'
 
+const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
 const ARROW_SLIDE_MS = 500
-
-// Windup → slide-right animation.
-// Brief pull-back (anticipation), then accelerate out to the right.
-const ARROW_SLIDE_KEYFRAMES = `
-@keyframes arrowSlideOut {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  30% {
-    transform: translateX(-20%);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(110%);
-    opacity: 0;
-  }
-}
-`
-
-// Inject keyframes once
-let keyframesInjected = false
-function ensureKeyframes() {
-  if (keyframesInjected) return
-  const style = document.createElement('style')
-  style.textContent = ARROW_SLIDE_KEYFRAMES
-  document.head.appendChild(style)
-  keyframesInjected = true
-}
 
 interface ProjectLinkProps {
   project: Project
+  twoLine?: boolean
 }
 
-export function ProjectLink({ project }: ProjectLinkProps) {
+export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
   const { setHoveredProjectId, setNavigatingProjectId } = useHover()
   const { cursorMode } = useCursor()
   const navigate = useNavigate()
@@ -59,11 +33,18 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     }
   }, [setNavigatingProjectId])
 
+  const subtitleText = `${project.company ?? ''}${project.year ? ` \u00b7 ${project.year}` : ''}`
+
   if (!project.isLink) {
     return (
       <div
         data-link-card
         data-project-id={project.id}
+        onMouseEnter={() => setHoveredProjectId(project.id)}
+        onMouseLeave={() => setHoveredProjectId(null)}
+        onFocus={IS_TOUCH ? undefined : () => setHoveredProjectId(project.id)}
+        onBlur={IS_TOUCH ? undefined : () => setHoveredProjectId(null)}
+        tabIndex={0}
         style={{
           width: 'fit-content',
           alignSelf: 'flex-start',
@@ -77,7 +58,16 @@ export function ProjectLink({ project }: ProjectLinkProps) {
           border: '0.1px solid transparent',
         }}
       >
-        {project.title}{' '}<span style={{ opacity: 0.5 }}>(coming soon)</span>
+        <span>{project.title}{' '}<span style={{ opacity: 0.5 }}>(coming soon)</span></span>
+        {twoLine && subtitleText && (
+          <div style={{
+            fontSize: 'var(--text-size-body)',
+            color: 'var(--text-grey)',
+            marginTop: 4,
+          }}>
+            {subtitleText}
+          </div>
+        )}
       </div>
     )
   }
@@ -117,7 +107,6 @@ export function ProjectLink({ project }: ProjectLinkProps) {
 
     if (cursorMode !== 'invert') {
       // Standard/figpal: slide the arrow right and out with windup
-      ensureKeyframes()
       setIsSliding(true)
       navTimerRef.current = setTimeout(doNavigate, ARROW_SLIDE_MS)
     } else {
@@ -132,8 +121,8 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     'data-project-id': project.id,
     onMouseEnter: () => setHoveredProjectId(project.id),
     onMouseLeave: () => setHoveredProjectId(null),
-    onFocus: () => setHoveredProjectId(project.id),
-    onBlur: () => setHoveredProjectId(null),
+    onFocus: IS_TOUCH ? undefined : () => setHoveredProjectId(project.id),
+    onBlur: IS_TOUCH ? undefined : () => setHoveredProjectId(null),
     onClick: handleClick,
     style: {
       width: 'fit-content' as const,
@@ -145,10 +134,11 @@ export function ProjectLink({ project }: ProjectLinkProps) {
       fontWeight: 400,
       lineHeight: 1.4,
       color: 'var(--text-dark)',
-      textDecoration: 'underline' as const,
+      textDecoration: twoLine ? 'none' as const : 'underline' as const,
       textDecorationColor: 'var(--text-underline)',
       textUnderlineOffset: 4,
       border: '0.1px solid transparent',
+      ...(twoLine ? { display: 'flex' as const, flexDirection: 'column' as const } : {}),
     },
   }
 
@@ -178,9 +168,28 @@ export function ProjectLink({ project }: ProjectLinkProps) {
     </span>
   )
 
+  const metaLine = twoLine && subtitleText ? (
+    <div style={{
+      fontSize: 'var(--text-size-body)',
+      color: 'var(--text-grey)',
+      fontWeight: 400,
+      marginTop: 4,
+      textDecoration: 'none',
+    }}>
+      {subtitleText}
+    </div>
+  ) : null
+
+  const titleSpanStyle = twoLine ? {
+    textDecoration: 'underline' as const,
+    textDecorationColor: 'var(--text-underline)',
+    textUnderlineOffset: 4,
+  } : undefined
+
   const children = (
     <>
-      {project.title}{' '}{arrowSpan}
+      <span style={titleSpanStyle}>{project.title}{' '}{arrowSpan}</span>
+      {metaLine}
     </>
   )
 

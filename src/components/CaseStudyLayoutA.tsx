@@ -6,7 +6,7 @@ import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 const Lottie = lazy(() => import('lottie-react'))
 
 const DEFAULT_CONTACT_CTA =
-  'Interested in the details? <a href="mailto:ben.yamron@icloud.com" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
+  'Want the details? <a href="mailto:ben.yamron@icloud.com" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
 
 interface CaseStudyLayoutAProps {
   data: CaseStudy
@@ -49,6 +49,8 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   const contactCta = data.contactCta ?? DEFAULT_CONTACT_CTA
 
   // Shared media element — video > lottie > image
+  const isSony = data.id === 'sony-screenless-tv'
+
   const mediaElement = videoPreview ? (
     <video
       src={videoPreview}
@@ -60,7 +62,8 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
       style={{
         maxWidth: '100%',
         maxHeight: '100%',
-        objectFit: 'contain',
+        objectFit: isSony ? 'cover' : 'contain',
+        aspectRatio: isSony ? '4 / 3' : undefined,
         borderRadius: 32,
         viewTransitionName: 'project-hero',
       }}
