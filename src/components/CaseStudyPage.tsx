@@ -9,6 +9,36 @@ import { useIsWide } from '@/hooks/useMediaQuery'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { useHover } from '@/contexts/HoverContext'
 
+const BACK_ARROW_SLIDE_MS = 500
+
+// Windup → slide-left animation (mirror of ProjectLink's arrowSlideOut).
+// Brief pull-forward (anticipation), then accelerate out to the left.
+const BACK_ARROW_KEYFRAMES = `
+@keyframes arrowSlideOutLeft {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(20%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+}
+`
+
+let backKeyframesInjected = false
+function ensureBackKeyframes() {
+  if (backKeyframesInjected) return
+  const style = document.createElement('style')
+  style.textContent = BACK_ARROW_KEYFRAMES
+  document.head.appendChild(style)
+  backKeyframesInjected = true
+}
+
 export function CaseStudyPage() {
   const { slug } = useParams<{ slug: string }>()
   const isWide = useIsWide()
@@ -18,6 +48,7 @@ export function CaseStudyPage() {
   const previewImage = projectData ? projectImageMap[projectData.projectId] : undefined
   const { setHoveredProjectId, setHoveringLink } = useHover()
   const [isExiting, setIsExiting] = useState(false)
+  const [isSliding, setIsSliding] = useState(false)
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const doBack = useCallback(() => {
@@ -39,8 +70,10 @@ export function CaseStudyPage() {
       doBack()
       return
     }
+    ensureBackKeyframes()
+    setIsSliding(true)
     setIsExiting(true)
-    exitTimer.current = setTimeout(doBack, 280)
+    exitTimer.current = setTimeout(doBack, BACK_ARROW_SLIDE_MS)
   }, [doBack])
 
   const navRef = useRef<HTMLElement>(null)
@@ -88,7 +121,29 @@ export function CaseStudyPage() {
             textUnderlineOffset: 4,
           }}
         >
-          {'\u2190'} Back
+          <span
+            aria-hidden="true"
+            style={{
+              display: 'inline-block',
+              width: '1em',
+              textAlign: 'center' as const,
+              clipPath: 'inset(0)',
+              verticalAlign: 'text-top',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                ...(isSliding
+                  ? {
+                      animation: `arrowSlideOutLeft ${BACK_ARROW_SLIDE_MS}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`,
+                    }
+                  : {}),
+              }}
+            >
+              {'\u2190'}
+            </span>
+          </span>{' '}Back
         </Link>
         <p style={{ color: 'var(--text-grey)', fontSize: 'var(--text-size-body)' }}>
           Case study not found.
@@ -168,7 +223,29 @@ export function CaseStudyPage() {
             textUnderlineOffset: 4,
           }}
         >
-          {'\u2190'} Back
+          <span
+            aria-hidden="true"
+            style={{
+              display: 'inline-block',
+              width: '1em',
+              textAlign: 'center' as const,
+              clipPath: 'inset(0)',
+              verticalAlign: 'text-top',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                ...(isSliding
+                  ? {
+                      animation: `arrowSlideOutLeft ${BACK_ARROW_SLIDE_MS}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`,
+                    }
+                  : {}),
+              }}
+            >
+              {'\u2190'}
+            </span>
+          </span>{' '}Back
         </Link>
       </nav>
 

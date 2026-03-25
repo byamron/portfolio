@@ -52,6 +52,8 @@ export function useGlassHighlight(
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+    // Skip glass pill entirely on touch devices — no hover capability
+    if (window.matchMedia('(pointer: coarse)').matches) return
     const { cleanup, fadeOut } = setupGlassHighlight(container, configRef)
     fadeOutRef.current = fadeOut
     return () => {
@@ -88,6 +90,7 @@ function setupGlassHighlight(
   let scrollDirty = false
   let lastPillW = -1
   let lastPillH = -1
+  let cachedSectionCards: HTMLElement[] | null = null
 
   // All pill geometry is driven by this state object.
   // The RAF loop lerps `current` toward `target` every frame.
@@ -180,10 +183,10 @@ function setupGlassHighlight(
 
   function getCardPosition(card: HTMLElement) {
     const cardRect = card.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
+    if (!cachedContainerRect) cachedContainerRect = container.getBoundingClientRect()
     return {
-      x: cardRect.left - containerRect.left + container.scrollLeft,
-      y: cardRect.top - containerRect.top + container.scrollTop,
+      x: cardRect.left - cachedContainerRect.left + container.scrollLeft,
+      y: cardRect.top - cachedContainerRect.top + container.scrollTop,
       w: cardRect.width,
       h: cardRect.height,
     }
@@ -357,16 +360,21 @@ function setupGlassHighlight(
 
   function isCursorInCardStack(clientX: number, clientY: number): boolean {
     if (!currentCard) return false
-    const sel = configRef.current.cardSelector
-    // Scope to the same <section> as the current card so narrative text
-    // between sections properly clears the glass pill.
-    const section = currentCard.closest('section')
-    const scope = section && container.contains(section) ? section : container
-    const allCards = scope.querySelectorAll<HTMLElement>(sel)
-    // Exclude tight-bounds cards (e.g. inline links like "Mochi Health") from the
-    // stack span — they aren't adjacent to project cards and would extend the
-    // stack bounds across unrelated content, keeping the pill alive in gaps.
-    const cards = Array.from(allCards).filter(c => !c.hasAttribute('data-tight-bounds'))
+    // Use cached card list — rebuilt when currentCard changes, avoids
+    // querySelectorAll + Array.from + filter on every non-card mouseover
+    if (!cachedSectionCards) {
+      const sel = configRef.current.cardSelector
+      // Scope to the same <section> as the current card so narrative text
+      // between sections properly clears the glass pill.
+      const section = currentCard.closest('section')
+      const scope = section && container.contains(section) ? section : container
+      // Exclude tight-bounds cards (e.g. inline links like "Mochi Health") from the
+      // stack span — they aren't adjacent to project cards and would extend the
+      // stack bounds across unrelated content, keeping the pill alive in gaps.
+      cachedSectionCards = Array.from(scope.querySelectorAll<HTMLElement>(sel))
+        .filter(c => !c.hasAttribute('data-tight-bounds'))
+    }
+    const cards = cachedSectionCards
     if (cards.length === 0) return false
     const firstRect = cards[0]!.getBoundingClientRect()
     const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
@@ -428,6 +436,7 @@ function setupGlassHighlight(
 
     const prevCard = currentCard
     currentCard = card
+    cachedSectionCards = null // Rebuild card list for new section context
 
     // Per-card border radius override
     const cardRadius = card.getAttribute('data-border-radius')
@@ -499,6 +508,7 @@ function setupGlassHighlight(
 
     const prevCard = currentCard
     currentCard = card
+    cachedSectionCards = null
 
     const cardRadius = card.getAttribute('data-border-radius')
     currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
