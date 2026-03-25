@@ -35,7 +35,7 @@ export function AboutSection() {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <p style={textStyle}>
-        I do my best work shaping early stage ideas — setting direction in ambiguity, getting technical with engineers, and building ideas in code.
+        I do my best work shaping early-stage ideas — setting direction in ambiguity, getting technical with engineers, and building ideas in code.
       </p>
 
       <p style={textStyle}>

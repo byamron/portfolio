@@ -34,6 +34,9 @@
   /* Accent hue for derived calculations (glass fill, etc.) */
   --accent-hue: 34;
 
+  /* Accent-derived label color — darker in light, lighter in dark */
+  --swatch-label: hsl(var(--accent-hue), 40%, 35%);
+
   /* Contribution heatmap levels (derived from accent hue) */
   --contrib-0: hsla(var(--accent-hue), 10%, 50%, 0.07);
   --contrib-1: hsla(var(--accent-hue), 40%, 50%, 0.15);
@@ -55,6 +58,7 @@
   --text-light: hsl(0, 0%, 7%);
   --text-link: hsl(220, 54%, 81%);
   --text-underline: hsla(0, 0%, 93%, 0.2);
+  --swatch-label: hsl(var(--accent-hue), 45%, 75%);
 }
 
 /* ============================================================================

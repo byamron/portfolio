@@ -2,6 +2,26 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-25 — Check Google Fonts URL before using a font weight
+
+**What was attempted:** Set inline project links to `fontWeight: 500` for contrast against surrounding 300-weight text.
+
+**What went wrong:** Literata weight 500 wasn't loaded in the Google Fonts URL — only 300 was. The browser faked bold, producing no visible difference. Had to add weight 400 to the URL and use that instead.
+
+**Lesson learned:** Before using a new font weight, verify it's included in the Google Fonts `<link>` in `index.html`. If the weight isn't loaded, the browser synthesizes it and it looks identical to the nearest loaded weight.
+
+---
+
+## 2026-03-25 — --text-light-grey has poor contrast in both modes
+
+**What was attempted:** Used `--text-light-grey` for section labels and card subtitles.
+
+**What went wrong:** Unreadable in both dark mode (40% lightness) and light mode (70% lightness). The token is designed for decorative/non-essential elements, not readable text.
+
+**Lesson learned:** For any text that needs to be read, use `--text-grey` (75% dark / 45% light) as the minimum. Reserve `--text-light-grey` for purely decorative elements like borders or disabled states.
+
+---
+
 ## 2026-03-24 — Never sacrifice visual synchronization for performance
 
 **What was attempted:** Removed `backdrop-filter` from the `[data-link-card]` CSS transition list as a "performance optimization," reasoning that 1px blur is binary (on/off) and doesn't need to be animated.
