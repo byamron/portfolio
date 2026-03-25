@@ -22,6 +22,8 @@ export interface CaseStudy {
   contactCta?: string
   /** Structured content sections (alternative to narrative paragraphs). */
   sections?: CaseStudySection[]
+  /** Hero visual for the case study page. */
+  heroVisual?: { id: string; caption: string }
   /** Gallery items for the case study. */
   gallery?: unknown[]
 }
@@ -234,7 +236,7 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-research',
       heading: 'People don\u2019t watch together for the content \u2014 they watch together for the connection',
       paragraphs: [
-        'A speculative vision project for Sony\u2019s TV division (master\u2019s capstone, 2024). Sony asked us to explore how AR/MR might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
+        'A speculative vision project for Sony\u2019s TV division (master\u2019s capstone, 2024). Sony asked us to explore how mixed reality might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
       ],
       visual: null,
     },

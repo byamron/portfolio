@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
+
+**Branch:** `next-update`
+
+**Summary:** Reviewed next-update branch (14 commits ahead of main) for bugs, risks, and optimization opportunities. Fixed 4 TypeScript errors that broke `tsc -b`, replaced hardcoded year 2026 in ContributionHeatmap with dynamic `new Date().getFullYear()`, code-split lottie-web into its own vendor chunk (317KB removed from main bundle), compressed sony-preview.mp4 from 19MB to 3MB, and replaced "AR/MR" with "mixed reality" in Sony case study copy.
+
+**Decisions:**
+- `CURRENT_YEAR` computed once at module level (not per-render) since the heatmap year doesn't need to change mid-session.
+- `vendor-lottie` manual chunk in vite.config.ts ensures lottie-web is only loaded when a Lottie component renders (CIP preview, case study pages).
+- Video compressed with ffmpeg CRF 26 (visually near-lossless) — 84% size reduction.
+- Added `heroVisual` to `CaseStudy` interface (was used in data but missing from the type).
+- Added `.filter()` type guard to `cardOrder` in LeftColumn to handle potentially missing project IDs safely.
+
+---
+
 ## 2026-03-25 — Remove deploy tracking (moved to GitHub Pages)
 
 **Branch:** `remove-deploy-tracking`

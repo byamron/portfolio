@@ -7,8 +7,7 @@ import { ProjectLink } from '@/components/ProjectLink'
 import { AboutSection } from '@/components/AboutSection'
 import { SignatureAnimation } from '@/components/SignatureAnimation'
 import { ContributionHeatmap } from '@/components/ContributionHeatmap'
-import { projectsById } from '@/data/projects'
-import { preloadPreviewImages } from '@/utils/preloadImages'
+import { projectsById, type Project } from '@/data/projects'
 
 const narrativeStyle: React.CSSProperties = {
   fontFamily: "'Literata', serif",
@@ -24,7 +23,7 @@ const cardOrder = [
   'mochi-tracker', 'mochi-billing',
   'sony-screenless', 'uw-system', 'cip-misinfo',
   'duo-flags', 'acorn-covid',
-].map(id => projectsById[id])
+].map(id => projectsById[id]).filter((p): p is Project => !!p)
 
 interface LeftColumnProps {
   fullWidth?: boolean

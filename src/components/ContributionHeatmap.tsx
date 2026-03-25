@@ -135,8 +135,10 @@ interface TooltipState {
   y: number
 }
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 export function ContributionHeatmap() {
-  const { grid, totalContributions, maxCount } = useMemo(() => buildYearGrid(2026), [])
+  const { grid, totalContributions, maxCount } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [focusedCell, setFocusedCell] = useState<{ week: number; day: number } | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
@@ -157,13 +159,13 @@ export function ContributionHeatmap() {
   }, [grid, maxCount, hue, bgIntensity, isDark])
 
   const monthLabels = useMemo(() => {
-    const jan1 = new Date(2026, 0, 1)
-    const gridStartDay = new Date(2026, 0, 1 - jan1.getDay())
+    const jan1 = new Date(CURRENT_YEAR, 0, 1)
+    const gridStartDay = new Date(CURRENT_YEAR, 0, 1 - jan1.getDay())
     const labels: { month: string; col: number }[] = []
     const maxCol = grid.length - 1
 
     for (let m = 0; m < 12; m++) {
-      const firstOfMonth = new Date(2026, m, 1)
+      const firstOfMonth = new Date(CURRENT_YEAR, m, 1)
       const daysDiff = Math.floor((firstOfMonth.getTime() - gridStartDay.getTime()) / (86400000))
       const col = Math.floor(daysDiff / 7)
       if (col > maxCol) break
@@ -299,7 +301,7 @@ export function ContributionHeatmap() {
           color: 'var(--text-grey)',
           fontVariantNumeric: 'tabular-nums',
         }}>
-          {totalContributions} contributions in 2026. Most repos are private (sorry).
+          {totalContributions} contributions in {CURRENT_YEAR}. Most repos are private (sorry).
         </span>
         <a
           href="https://github.com/byamron"
@@ -343,7 +345,7 @@ export function ContributionHeatmap() {
           width="100%"
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           role="img"
-          aria-label={`GitHub contribution graph: ${totalContributions} contributions in 2026`}
+          aria-label={`GitHub contribution graph: ${totalContributions} contributions in ${CURRENT_YEAR}`}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           style={{ display: 'block' }}
