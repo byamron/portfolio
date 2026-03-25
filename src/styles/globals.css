@@ -251,6 +251,13 @@ p a {
   border-radius: 32px;
 }
 
+/* Arrow slide-out on project link click — windup pull-back then accelerate right */
+@keyframes arrowSlideOut {
+  0% { transform: translateX(0); opacity: 1; }
+  30% { transform: translateX(-20%); opacity: 1; }
+  100% { transform: translateX(110%); opacity: 0; }
+}
+
 /* Sidebar trigger jiggle — draws attention after image-click accent cycle */
 @keyframes sidebar-jiggle {
   0%, 100% { transform: translateX(0); }
