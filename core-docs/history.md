@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-25 — Homepage layout: flat card list with two-line cards
+
+**Branch:** `visual-ui-audit`
+
+**Summary:** Redesigned homepage project layout from sectioned narrative to a flat card list. Each card shows title + Company · Year subtitle. Updated project metadata (years, company names), reordered projects by priority, fixed case study copy for external clarity, and added arrow keyframes to CSS. Removed dev toggle, InlineProjectLink, and section grouping code.
+
+**Decisions:**
+- Flat list over sectioned (by year / by company): sections added visual noise without earning it — the subtitle already carries year and company info, and chronological order communicates recency.
+- Canonical order prioritizes current + personal work first, earlier work last.
+- Company names expanded for clarity (e.g. "Sony × University of Washington").
+
+---
+
 ## 2026-03-23 — Vitest testing infrastructure
 
 **Branch:** `testing-strategy`
