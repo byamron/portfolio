@@ -8,10 +8,10 @@ import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
-import { preloadPortraitImages } from '@/utils/preloadImages'
+import { preloadPortraitImages, preloadPreviewImages } from '@/utils/preloadImages'
 
 function App() {
-  useEffect(() => { preloadPortraitImages() }, [])
+  useEffect(() => { preloadPortraitImages(); preloadPreviewImages() }, [])
 
   return (
     <ThemeProvider>

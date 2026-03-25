@@ -44,7 +44,7 @@ export const sections: Section[] = [
     ],
     projects: [
       { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, caseStudySlug: 'uw-design-system', videoPreview: '/prototypes/uw-preview.mp4', summary: 'UW-IT wanted a design system but progress had stalled at foundations. I kicked off component design, created role-aware documentation templates, and defined the process for building\u2009\u2014\u2009and actually following\u2009\u2014\u2009the system.' },
-      { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv', videoPreview: '/prototypes/sony-preview.mp4', summary: 'Master\u2019s capstone for Sony\u2019s TV division. We researched how AR/MR could shape home entertainment\u2009\u2014\u2009and learned that the thing people value most about watching together isn\u2019t the content, it\u2019s the connection.' },
+      { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, caseStudySlug: 'sony-screenless-tv', videoPreview: '/prototypes/sony-preview.mp4', summary: 'A speculative vision project for Sony\u2019s TV division (master\u2019s capstone). We researched how AR/MR could shape home entertainment\u2009\u2014\u2009and learned that the thing people value most about watching together isn\u2019t the content, it\u2019s the connection.' },
       { id: 'cip-misinfo', title: 'Framing election misinformation', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json', summary: 'Qualitative research with Dr. Kate Starbird\u2019s group at UW\u2019s Center for an Informed Public. Contributed to two papers presented at CSCW 2025 on how misleading claims about elections take shape through interactions between factual evidence and distorted political frames.' },
       { id: 'duo-flags', title: 'Making Duolingo\u2019s use of flags more inclusive', projectId: 'duo', href: '/project/duolingo-languages-flags', isLink: true, caseStudySlug: 'duolingo-languages-flags', summary: 'A small subset of flags are often used to represent languages, but their relationship is messy. In this personal project, I redesigned Duolingo\u2019s course selection UI to fix a system that excludes, confuses, and often doesn\u2019t follow its own logic. I also mapped out a scalable path to use even more flags to represent more people.' },
       { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/acorn-eat-local-vt', isLink: true, caseStudySlug: 'acorn-eat-local-vt', summary: 'COVID-19 shut down farmers markets across Vermont. I gathered eight engineers, taught myself product design, and shipped a cross-platform app that connected 1,100+ customers to 300+ local farms.' },
@@ -52,9 +52,8 @@ export const sections: Section[] = [
   },
 ]
 
-// projectId → preview image
+// projectId → preview image (only static-image projects; video/lottie projects are handled separately)
 export const projectImageMap: Record<string, string> = {
-  sony: '/images/preview-sony.gif',
   acorn: '/images/preview-acorn.png',
   duo: '/images/preview-duo.png',
 }
