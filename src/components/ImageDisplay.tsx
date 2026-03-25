@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
@@ -76,6 +76,30 @@ export function ImageDisplay() {
       document.dispatchEvent(new CustomEvent('accent-cycled'))
     }
   }, [cycleAccent, triggerSpringPress])
+
+  // Track whether the current image has loaded to prevent animating to a blank frame
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const loadedSrcs = useRef(new Set<string>())
+
+  // Reset load state when src changes, unless already cached
+  useEffect(() => {
+    if (loadedSrcs.current.has(imageSrc)) {
+      setImageLoaded(true)
+    } else {
+      setImageLoaded(false)
+    }
+  }, [imageSrc])
+
+  const handleImageLoad = useCallback(() => {
+    loadedSrcs.current.add(imageSrc)
+    setImageLoaded(true)
+  }, [imageSrc])
+
+  // For default portraits, consider them loaded (preloaded on mount)
+  const effectiveOpacity = useMemo(() => {
+    if (!isPreview) return 1 // portraits are preloaded
+    return imageLoaded ? 1 : 0
+  }, [isPreview, imageLoaded])
 
   const [lottieData, setLottieData] = useState<object | null>(null)
 
@@ -250,7 +274,8 @@ export function ImageDisplay() {
             <img
               src={imageSrc}
               alt={project ? project.title : 'Ben Yamron portrait'}
-              style={imgStyle}
+              onLoad={handleImageLoad}
+              style={{ ...imgStyle, opacity: effectiveOpacity, transition: 'opacity 200ms ease-in' }}
             />
           </motion.div>
         )}
