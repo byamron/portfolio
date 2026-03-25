@@ -4,7 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { projectsById, projectImageMap, defaultImageMap } from '@/data/projects'
+import { projectsById, projectImageMap, defaultImageMap, linkPreviews } from '@/data/projects'
 
 // Projects whose previews need a subtle shadow to separate from the background
 const needsShadow = new Set(['cip-misinfo', 'acorn-covid', 'duo-flags'])
@@ -23,27 +23,32 @@ const reducedMotion =
 const TEXT_ZONE_HEIGHT = 120
 
 export function ImageDisplay() {
-  const { hoveredProjectId } = useHover()
+  const { hoveredProjectId, hoveredLinkId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
 
   const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
+  const linkPreview = hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null
   const lottieUrl = project?.lottiePreview ?? null
-  const videoUrl = project?.videoPreview ?? null
-  const imageSrc = project
-    ? (projectImageMap[project.projectId] ?? defaultImageMap[accentColor])
-    : defaultImageMap[accentColor]
-  const contentKey = videoUrl
-    ? `video-${project!.id}`
-    : lottieUrl
-      ? `lottie-${project!.id}`
-      : project
-        ? project.projectId
-        : `default-${accentColor}`
+  const videoUrl = linkPreview?.video ?? project?.videoPreview ?? null
+  const imageSrc = linkPreview
+    ? linkPreview.image ?? null
+    : project
+      ? (projectImageMap[project.projectId] ?? defaultImageMap[accentColor])
+      : defaultImageMap[accentColor]
+  const contentKey = linkPreview
+    ? `link-${linkPreview.id}`
+    : videoUrl
+      ? `video-${project!.id}`
+      : lottieUrl
+        ? `lottie-${project!.id}`
+        : project
+          ? project.projectId
+          : `default-${accentColor}`
 
-  const summary = project?.summary ?? null
-  const isPreview = !!project
+  const summary = linkPreview?.summary ?? project?.summary ?? null
+  const isPreview = !!project || !!linkPreview
 
-  const showShadow = project && needsShadow.has(project.id)
+  const showShadow = linkPreview || (project && needsShadow.has(project.id))
   const dropShadow = showShadow
     ? resolvedAppearance === 'dark'
       ? 'drop-shadow(0 2px 40px rgba(255, 255, 255, 0.1))'
@@ -83,7 +88,7 @@ export function ImageDisplay() {
 
   // Reset load state when src changes, unless already cached
   useEffect(() => {
-    if (loadedSrcs.current.has(imageSrc)) {
+    if (imageSrc && loadedSrcs.current.has(imageSrc)) {
       setImageLoaded(true)
     } else {
       setImageLoaded(false)
@@ -91,7 +96,7 @@ export function ImageDisplay() {
   }, [imageSrc])
 
   const handleImageLoad = useCallback(() => {
-    loadedSrcs.current.add(imageSrc)
+    if (imageSrc) loadedSrcs.current.add(imageSrc)
     setImageLoaded(true)
   }, [imageSrc])
 
@@ -120,10 +125,10 @@ export function ImageDisplay() {
     return () => { cancelled = true }
   }, [lottieUrl])
 
-  // Portrait fills with cover, previews use contain (no cropping)
-  const usePortraitCover = !isPreview
+  // Portraits fill with cover; link previews and project previews use contain
+  const isPortrait = !project && !linkPreview
 
-  const imgStyle: React.CSSProperties = usePortraitCover
+  const imgStyle: React.CSSProperties = isPortrait
     ? {
         height: '100%',
         maxWidth: '100%',
@@ -131,7 +136,6 @@ export function ImageDisplay() {
         objectFit: 'cover',
         borderRadius: 32,
         filter: dropShadow,
-        viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
       }
     : {
         maxWidth: '100%',
@@ -142,7 +146,7 @@ export function ImageDisplay() {
         viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
       }
 
-  const imageWrapperStyle: React.CSSProperties = usePortraitCover
+  const imageWrapperStyle: React.CSSProperties = isPortrait
     ? {
         position: 'absolute',
         inset: 0,
@@ -196,7 +200,7 @@ export function ImageDisplay() {
           border: 0,
         }}
       >
-        {project ? project.title : `Portrait, ${accentColor} theme`}
+        {linkPreview ? linkPreview.alt : project ? project.title : `Portrait, ${accentColor} theme`}
       </div>
 
       {/* Image */}
@@ -223,15 +227,15 @@ export function ImageDisplay() {
               muted
               loop
               playsInline
-              aria-label={project!.title}
+              aria-label={linkPreview?.alt ?? project!.title}
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: project!.id === 'sony-screenless' ? 'cover' : 'contain',
-                aspectRatio: project!.id === 'sony-screenless' ? '4 / 3' : undefined,
+                objectFit: project?.id === 'sony-screenless' ? 'cover' : 'contain',
+                aspectRatio: project?.id === 'sony-screenless' ? '4 / 3' : undefined,
                 borderRadius: 32,
                 filter: dropShadow,
-                viewTransitionName: 'project-hero',
+                viewTransitionName: project ? 'project-hero' : undefined,
               }}
             />
           </motion.div>
@@ -272,8 +276,8 @@ export function ImageDisplay() {
             style={imageWrapperStyle}
           >
             <img
-              src={imageSrc}
-              alt={project ? project.title : 'Ben Yamron portrait'}
+              src={imageSrc!}
+              alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
               onLoad={handleImageLoad}
               style={{ ...imgStyle, opacity: effectiveOpacity, transition: 'opacity 200ms ease-in' }}
             />
