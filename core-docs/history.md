@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-25 — Manipulation hover preview, progress tracker video, misc polish
+
+**Branch:** `manipulation-hover-preview`
+
+**Summary:** Added text-only hover preview for the "Detecting manipulative language" coming-soon project — [COMING SOON] heading + description body shown centered in the image area. Added progress tracker hover video (preview-mochi-tracker.mp4). Renamed todo list project to "A todo list for focus and prioritization." Made cursor companion hide instantly on leaving coming-soon cards. Loaded Literata 400 weight for the [COMING SOON] heading.
+
+**Decisions:**
+- Text-only preview uses `previewDescription` field on Project type — heading/body split on first newline, heading centered + white, body left-aligned + grey.
+- Cursor companion hides with `transition: none` on leave to prevent lingering over adjacent active cards; fade-in transition restored on enter.
+
+---
+
 ## 2026-03-25 — Replace todo list hover preview video
 
 **Branch:** `update-todo-hover-video`

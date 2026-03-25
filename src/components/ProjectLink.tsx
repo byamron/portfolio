@@ -40,6 +40,11 @@ export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
       <div
         data-link-card
         data-project-id={project.id}
+        onMouseEnter={() => setHoveredProjectId(project.id)}
+        onMouseLeave={() => setHoveredProjectId(null)}
+        onFocus={IS_TOUCH ? undefined : () => setHoveredProjectId(project.id)}
+        onBlur={IS_TOUCH ? undefined : () => setHoveredProjectId(null)}
+        tabIndex={0}
         style={{
           width: 'fit-content',
           alignSelf: 'flex-start',
