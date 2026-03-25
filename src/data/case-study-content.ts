@@ -331,7 +331,7 @@ export const acornEatLocalVt: CaseStudy = {
 
 export const trioTodoList: CaseStudy = {
   id: 'trio-todo-list',
-  title: 'A todo list that keeps tasks perfectly prioritized',
+  title: 'A todo list for focus and prioritization',
   subtitle:
     'I designed and built a native iOS/macOS app to solve my own priority problem\u2009\u2014\u2009using AI tools as a design partner, going deep on craft that personal projects rarely get.',
   timeline: 'Jan \u2013 Mar 2026',

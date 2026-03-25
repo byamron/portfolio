@@ -30,20 +30,24 @@ export function ImageDisplay() {
   const linkPreview = hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null
   const lottieUrl = project?.lottiePreview ?? null
   const videoUrl = linkPreview?.video ?? project?.videoPreview ?? null
+  const previewDescription = project?.previewDescription ?? null
+  const hasMedia = !!videoUrl || !!lottieUrl || !!linkPreview || (project && projectImageMap[project.projectId])
   const imageSrc = linkPreview
     ? linkPreview.image ?? null
     : project
-      ? (projectImageMap[project.projectId] ?? defaultImageMap[accentColor])
+      ? (hasMedia ? (projectImageMap[project.projectId] ?? defaultImageMap[accentColor]) : (previewDescription ? null : defaultImageMap[accentColor]))
       : defaultImageMap[accentColor]
-  const contentKey = linkPreview
-    ? `link-${linkPreview.id}`
-    : videoUrl
-      ? `video-${project!.id}`
-      : lottieUrl
-        ? `lottie-${project!.id}`
-        : project
-          ? project.projectId
-          : `default-${accentColor}`
+  const contentKey = previewDescription && !hasMedia
+    ? `desc-${project!.id}`
+    : linkPreview
+      ? `link-${linkPreview.id}`
+      : videoUrl
+        ? `video-${project!.id}`
+        : lottieUrl
+          ? `lottie-${project!.id}`
+          : project
+            ? project.projectId
+            : `default-${accentColor}`
 
   const summary = linkPreview?.summary ?? project?.summary ?? null
   const isPreview = !!project || !!linkPreview
@@ -205,7 +209,60 @@ export function ImageDisplay() {
 
       {/* Image */}
       <AnimatePresence mode="sync">
-        {videoUrl ? (
+        {previewDescription && !hasMedia ? (
+          <motion.div
+            key={contentKey}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 32px',
+            }}
+          >
+            {(() => {
+              const nlIdx = previewDescription.indexOf('\n')
+              const heading = nlIdx >= 0 ? previewDescription.slice(0, nlIdx) : previewDescription
+              const body = nlIdx >= 0 ? previewDescription.slice(nlIdx + 1) : null
+              return (
+                <div style={{ maxWidth: 480, margin: 0 }}>
+                  <p
+                    style={{
+                      ...summaryStyle,
+                      fontSize: 'var(--text-size-summary)',
+                      fontWeight: 400,
+                      lineHeight: 1.6,
+                      color: 'var(--text-primary)',
+                      textAlign: 'center',
+                      margin: 0,
+                    }}
+                  >
+                    {heading}
+                  </p>
+                  {body && (
+                    <p
+                      style={{
+                        ...summaryStyle,
+                        fontSize: 'var(--text-size-summary)',
+                        lineHeight: 1.6,
+                        color: 'var(--text-grey)',
+                        textAlign: 'left',
+                        marginTop: 24,
+                      }}
+                    >
+                      {body}
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
+          </motion.div>
+        ) : videoUrl ? (
           <motion.div
             key={contentKey}
             initial={{ opacity: 0 }}

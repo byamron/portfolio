@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { projectsById } from '@/data/projects'
 
 const OFFSET_X = 18
-const LEAVE_DELAY = 120
 const FONT_SIZE = 22
 
 /**
@@ -56,18 +55,18 @@ export function CursorCompanion() {
       if (!visible) {
         label.textContent = 'coming soon'
         visible = true
+        label.style.transition = reducedMotion ? 'none' : 'opacity 180ms ease-in-out'
         label.style.opacity = '1'
       }
     }
 
     function hide() {
+      if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
       if (!visible) return
-      if (leaveTimer) return
-      leaveTimer = setTimeout(() => {
-        leaveTimer = null
-        visible = false
-        label.style.opacity = '0'
-      }, LEAVE_DELAY)
+      visible = false
+      // Instant hide — no transition so the label doesn't linger over active project cards
+      label.style.transition = 'none'
+      label.style.opacity = '0'
     }
 
     function handlePointerMove(e: PointerEvent) {
