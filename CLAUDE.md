@@ -62,6 +62,10 @@ The project uses **Tailwind CSS v4** for styling:
 - **Responsive**: Sizes scale down proportionally in narrower two-column tiers (1024–1199px, 900–1023px), reset to full at <900px single column
 - See `core-docs/design-language.md` § Typography for full token table and responsive scaling values
 
+### Dev server after implementation:
+
+After completing any feature implementation, bug fix, or code change, **always run `/link`** to start (or reconnect to) a dev server and send the user a test link. Do not wait to be asked. The `/link` command handles port assignment automatically to avoid conflicts across parallel worktrees.
+
 ### Dev panels policy:
 
 Dev control panels (e.g. font comparison panels, glass mode switchers, layout tuners) must **never** be merged into `main`. They are useful on feature branches for experimentation, but must be removed before merging. When preparing a branch for merge, Claude should check for and flag any dev panels that need to be stripped out — including their component files, imports, renders, and any hook/CSS plumbing that exists solely to support them.

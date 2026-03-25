@@ -6,6 +6,8 @@ import { useCursor } from '@/contexts/CursorContext'
 import { DIRECTIONAL_SWEEP } from '@/utils/braille'
 import type { Project } from '@/data/projects'
 
+const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
 const ARROW_SLIDE_MS = 500
 
 interface ProjectLinkProps {
@@ -114,8 +116,8 @@ export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
     'data-project-id': project.id,
     onMouseEnter: () => setHoveredProjectId(project.id),
     onMouseLeave: () => setHoveredProjectId(null),
-    onFocus: () => setHoveredProjectId(project.id),
-    onBlur: () => setHoveredProjectId(null),
+    onFocus: IS_TOUCH ? undefined : () => setHoveredProjectId(project.id),
+    onBlur: IS_TOUCH ? undefined : () => setHoveredProjectId(null),
     onClick: handleClick,
     style: {
       width: 'fit-content' as const,

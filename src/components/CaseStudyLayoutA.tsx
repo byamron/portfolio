@@ -6,7 +6,7 @@ import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 const Lottie = lazy(() => import('lottie-react'))
 
 const DEFAULT_CONTACT_CTA =
-  'Interested in the details? <a href="mailto:ben.yamron@icloud.com" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
+  'Want the details? <a href="mailto:ben.yamron@icloud.com" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
 
 interface CaseStudyLayoutAProps {
   data: CaseStudy
@@ -45,11 +45,12 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
   const hasMedia = !!(videoPreview || previewImage || (lottiePreview && lottieData))
 
-  const narrative = data.narrative
-  const paperLinks = data.paperLinks
+  const { narrative, paperLinks } = data
   const contactCta = data.contactCta ?? DEFAULT_CONTACT_CTA
 
   // Shared media element — video > lottie > image
+  const isSony = data.id === 'sony-screenless-tv'
+
   const mediaElement = videoPreview ? (
     <video
       src={videoPreview}
@@ -61,7 +62,8 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
       style={{
         maxWidth: '100%',
         maxHeight: '100%',
-        objectFit: 'contain',
+        objectFit: isSony ? 'cover' : 'contain',
+        aspectRatio: isSony ? '4 / 3' : undefined,
         borderRadius: 32,
         viewTransitionName: 'project-hero',
       }}
@@ -101,22 +103,16 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
     color: 'var(--text-grey)',
   }
 
-  const textContent = narrative ? (
-    narrative.map((html, i) => (
-      <p
-        key={i}
-        style={{
-          ...narrativeStyle,
-          marginBottom: i < narrative.length - 1 ? 16 : 0,
-        }}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    ))
-  ) : (
-    <p style={narrativeStyle}>
-      {data.subtitle}
-    </p>
-  )
+  const textContent = narrative.map((html, i) => (
+    <p
+      key={i}
+      style={{
+        ...narrativeStyle,
+        marginBottom: i < narrative.length - 1 ? 16 : 0,
+      }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  ))
 
   const paperLinksContent = paperLinks?.length ? (
     <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 0 }}>

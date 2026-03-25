@@ -54,6 +54,14 @@ After implementation, self-review:
 - Does it meet accessibility standards?
 - Is the implementation complete, not partial?
 
+**Performance & production readiness checklist** (run before considering work complete):
+- **Asset preload paths:** If any asset's delivery method changed (e.g., static image → video, GIF → MP4), verify old references are removed from `projectImageMap` and any other preload maps. Run `projectData.test.ts` to catch dead entries.
+- **Preload timing:** New images/assets should preload at mount, not on interaction. Verify `preloadPreviewImages` covers all static assets that need to be ready on hover.
+- **External links:** Every link to an external URL or downloadable file must have `target="_blank"` and `rel="noopener noreferrer"`. Grep for `href="http` and `href="/.*\.pdf"` to verify.
+- **File sizes:** No static image in the preload pipeline should exceed 1MB. If it does, convert to video/WebP or lazy-load it. The `preloadImages.test.ts` suite enforces this.
+- **Cache headers:** If new asset types are added to `public/`, verify `netlify.toml` has appropriate `Cache-Control` headers for them.
+- **CSS transitions:** Avoid transitioning GPU-heavy properties (`backdrop-filter`, `filter`, `clip-path`) unless the animation is visually necessary. Prefer instant application for binary on/off effects.
+
 ### 7. Solicit Feedback
 
 Present the work for feedback. Show what was built, why, and how.

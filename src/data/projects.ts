@@ -54,9 +54,8 @@ export const sections: Section[] = [
   },
 ]
 
-// projectId → preview image
+// projectId → preview image (only static-image projects; video/lottie projects are handled separately)
 export const projectImageMap: Record<string, string> = {
-  sony: '/images/preview-sony.gif',
   acorn: '/images/preview-acorn.png',
   duo: '/images/preview-duo.png',
 }
@@ -70,6 +69,43 @@ export const defaultImageMap: Record<AccentColor, string> = {
   vineyard: '/images/portrait-vineyard.jpeg',
 }
 
+// Non-project link previews (resume, LinkedIn, email, Mochi Health)
+export interface LinkPreview {
+  id: string
+  image?: string
+  video?: string
+  alt: string
+  backgroundColor: string // edge color so contain-mode padding blends seamlessly
+  summary?: string
+}
+
+export const linkPreviews: Record<string, LinkPreview> = {
+  resume: {
+    id: 'resume',
+    image: '/images/preview-resume.png',
+    alt: 'Ben Yamron resume',
+    backgroundColor: '#ffffff',
+  },
+  mochi: {
+    id: 'mochi',
+    video: '/images/preview-mochi-health.mp4',
+    alt: 'Mochi Health website',
+    backgroundColor: '#2b2ba0',
+  },
+  email: {
+    id: 'email',
+    video: '/images/preview-email.mp4',
+    alt: 'Email Ben Yamron',
+    backgroundColor: '#282828',
+  },
+  linkedin: {
+    id: 'linkedin',
+    image: '/images/preview-linkedin.png',
+    alt: 'Ben Yamron LinkedIn profile',
+    backgroundColor: '#ffffff',
+  },
+}
+
 // Flat lookup for ImageDisplay: unique project id → Project
 export const projectsById: Record<string, Project> = Object.fromEntries(
   sections.flatMap(s => s.projects).map(p => [p.id, p])
@@ -80,15 +116,3 @@ export function getProjectForSlug(slug: string): Project | undefined {
   return sections.flatMap(s => s.projects).find(p => p.caseStudySlug === slug)
 }
 
-// Case study slug → markdown filename mapping
-export const caseStudySlugs: Record<string, string> = {
-  'mochi-ai-tooling': 'mochi-ai-tooling',
-  'mochi-progress-tracker': 'mochi-progress-tracker',
-  'mochi-subscriptions': 'mochi-subscriptions',
-  'uw-design-system': 'uw-design-system',
-  'sony-screenless-tv': 'sony-screenless-tv',
-  'cip-election-misinformation': 'cip-election-misinformation',
-  'duolingo-languages-flags': 'duolingo-languages-flags',
-  'acorn-eat-local-vt': 'acorn-eat-local-vt',
-  'trio-todo-list': 'trio-todo-list',
-}

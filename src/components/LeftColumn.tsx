@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { useHover } from '@/contexts/HoverContext'
@@ -40,19 +40,10 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
       fadeOutGlass(280, 150)
     }
   }, [navigatingProjectId, fadeOutGlass])
-  const previewsPreloaded = useRef(false)
-  const handleMouseEnter = useCallback(() => {
-    if (!previewsPreloaded.current) {
-      previewsPreloaded.current = true
-      preloadPreviewImages()
-    }
-  }, [])
-
   return (
     <main
       ref={contentRef}
       className="left-column"
-      onMouseEnter={handleMouseEnter}
       style={{
         width: fullWidth ? '100%' : '50%',
         padding:

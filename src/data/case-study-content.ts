@@ -1,33 +1,13 @@
-export interface CaseStudyVisual {
-  id: string
-  caption: string
-  /** Optional iframe src for live prototype embeds */
-  prototypeSrc?: string
-  /** Aspect ratio override for prototypes (default: '16 / 10') */
-  aspectRatio?: string
+export interface PaperLink {
+  title: string
+  href: string
 }
 
 export interface CaseStudySection {
   id: string
   heading: string
   paragraphs: string[]
-  visual: CaseStudyVisual | null
-}
-
-export interface GalleryItem {
-  id: string
-  caption?: string
-  /** 'full' spans the page width; 'half' sits in a 2-up grid */
-  size: 'full' | 'half'
-  /** Optional iframe src for live prototype embeds */
-  prototypeSrc?: string
-  /** Aspect ratio override for prototypes (default: '16 / 10') */
-  aspectRatio?: string
-}
-
-export interface PaperLink {
-  title: string
-  href: string
+  visual: { id: string; caption: string } | null
 }
 
 export interface CaseStudy {
@@ -35,15 +15,15 @@ export interface CaseStudy {
   title: string
   subtitle: string
   timeline: string
-  heroVisual?: CaseStudyVisual
-  sections: CaseStudySection[]
-  gallery: GalleryItem[]
-  /** Condensed flowing paragraphs (HTML strings). When present, the layout renders these instead of sections. */
-  narrative?: string[]
+  narrative: string[]
   /** External paper/publication links rendered as card-like items below the narrative. */
   paperLinks?: PaperLink[]
   /** Custom contact line (HTML string). Defaults to "Interested in the details? Get in touch." */
   contactCta?: string
+  /** Structured content sections (alternative to narrative paragraphs). */
+  sections?: CaseStudySection[]
+  /** Gallery items for the case study. */
+  gallery?: unknown[]
 }
 
 export const mochiAiTooling: CaseStudy = {
@@ -55,8 +35,6 @@ export const mochiAiTooling: CaseStudy = {
     '<strong>Mochi had no single source of truth for how the product works.</strong> Institutional knowledge\u2009\u2014\u2009how the code is structured, how database tables map to features, when changes went in and why\u2009\u2014\u2009lived in individuals\u2019 heads. When people started using AI tools, they hit the same wall: without that context, AI could only offer generic help. I built a documentation layer and a Claude Code plugin on top of it\u2009\u2014\u2009one system that knows everything, available to anyone at the company.',
     '<strong>The plugin has specialized modes for different workflows</strong>\u2009\u2014\u2009writing product specs, tracing bugs to the code changes that caused them, querying the database, managing project tickets with full product context. The modes work together: a bug report can pull from version history, the database, and project management to surface the full picture. Anyone at the company\u2009\u2014\u2009designers, engineers, PMs\u2009\u2014\u2009can install it and use it immediately.',
   ],
-  sections: [],
-  gallery: [],
 }
 
 export const mochiProgressTracker: CaseStudy = {
@@ -245,10 +223,10 @@ export const sonyScreenlessTv: CaseStudy = {
   id: 'sony-screenless-tv',
   title: 'Screenless TV: Designing for shared reality',
   subtitle:
-    'Vision concept for Sony\u2019s TV division. My team explored how immersive technology could shape home entertainment \u2014 and found that the real design challenge wasn\u2019t personalization, it was preserving the shared experience that makes watching together meaningful.',
+    'A speculative vision project for Sony\u2019s TV division. My team explored how immersive technology could shape home entertainment \u2014 and found that the real design challenge wasn\u2019t personalization, it was preserving the shared experience that makes watching together meaningful.',
   timeline: 'Q1 \u2013 Q3 2024',
   narrative: [
-    '<strong>People don\u2019t watch together for the content\u2009\u2014\u2009they watch together for the connection.</strong> Master\u2019s capstone for Sony\u2019s TV division. We expected to hear about picture quality; instead we heard about compromise\u2009\u2014\u2009subtitles, volume, lighting\u2009\u2014\u2009and the fact that people kept watching together anyway. The value is presence, not content.',
+    '<strong>People don\u2019t watch together for the content\u2009\u2014\u2009they watch together for the connection.</strong> For my master\u2019s capstone at the University of Washington, my team took on a speculative vision project for Sony\u2019s TV division. We interviewed people about how they watch with others, expecting to hear about picture quality. Instead we heard about compromise\u2009\u2014\u2009subtitles, volume, lighting\u2009\u2014\u2009and the fact that people kept watching together anyway. The value is presence, not content.',
     '<strong>We rejected wearables\u2009\u2014\u2009a values decision, not a technical one.</strong> Apple Vision Pro had just launched, but you can\u2019t catch someone\u2019s eye during a tense scene through a headset. We designed a volumetric display with angle-specific imagery and directional audio\u2009\u2014\u2009personalization without isolation.',
   ],
   sections: [
@@ -256,7 +234,7 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-research',
       heading: 'People don\u2019t watch together for the content \u2014 they watch together for the connection',
       paragraphs: [
-        'Master\u2019s capstone, 2024. Sony\u2019s TV division asked us to explore how AR/MR might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
+        'A speculative vision project for Sony\u2019s TV division (master\u2019s capstone, 2024). Sony asked us to explore how AR/MR might shape home entertainment. We expected to hear about picture quality. Instead we heard about compromise \u2014 subtitles, volume, lighting \u2014 and the fact that people kept watching together anyway. The value is presence, not content.',
       ],
       visual: null,
     },
@@ -337,61 +315,6 @@ export const duolingoLanguagesFlags: CaseStudy = {
     '<strong>Duolingo represents every language with a flag, but which flag represents Spanish\u2009\u2014\u2009Spain? Mexico?</strong> The mapping can\u2019t follow logic because no logic exists. When it breaks down completely\u2009\u2014\u2009the Arab League for Arabic, Hawaii\u2019s state flag for Hawaiian\u2009\u2014\u2009the fallback is flags most users couldn\u2019t identify anyway. Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against it.',
     '<strong>Remove flags from course selection; add them everywhere else.</strong> Replace with ISO-639 language codes\u2009\u2014\u2009standardized, uniform, immediately implementable. Then repurpose flags in stories, roleplay scenarios, and loading screens to highlight the cultural diversity the current system erases. One change removes the problem; the other turns flags into an asset.',
   ],
-  sections: [
-    {
-      id: 'duo-problem',
-      heading: 'The problem',
-      paragraphs: [
-        'Duolingo represents every language course with a flag. But which flag represents Spanish \u2014 Spain? Mexico? The 19 other countries? The mapping can\u2019t follow logic because no logic exists. And when it breaks down completely \u2014 the Arab League for Arabic, the state flag of Hawaii for Hawaiian \u2014 Duolingo reaches for flags most users couldn\u2019t identify anyway.',
-      ],
-      visual: {
-        id: 'duo-flag-grid',
-        caption: 'Grid of Duolingo\u2019s actual flag-language pairings, arranged to make the inconsistency undeniable at a glance.',
-      },
-    },
-    {
-      id: 'duo-known-problem',
-      heading: 'A known problem, an unknown priority',
-      paragraphs: [
-        'Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against it. It persists because it doesn\u2019t cause measurable pain and it\u2019s an industry convention. Neither is a good reason at this scale.',
-      ],
-      visual: {
-        id: 'duo-evidence',
-        caption: 'Compact composite of Reddit screenshots, CEO acknowledgment, and Vikram redesign callout.',
-      },
-    },
-    {
-      id: 'duo-remove-flags',
-      heading: 'Remove flags from course selection',
-      paragraphs: [
-        'Replace them with ISO-639 language codes \u2014 standardized, uniform length, immediately implementable. They drop into existing UI without changing anything else.',
-      ],
-      visual: {
-        id: 'duo-before-after',
-        caption: 'Before/after of the course selection screen \u2014 flags vs. ISO codes styled in Duolingo\u2019s typeface and colors.',
-      },
-    },
-    {
-      id: 'duo-add-flags',
-      heading: 'Add flags everywhere else',
-      paragraphs: [
-        'Don\u2019t remove flags from the platform \u2014 increase their use. Repurpose them in stories, roleplay scenarios, and loading screens to highlight the cultural diversity that the current system erases. Flags are great at representing countries. They\u2019re just bad at representing languages.',
-      ],
-      visual: {
-        id: 'duo-flags-in-content',
-        caption: 'Mockups showing flags used well inside course content \u2014 stories, loading screens, roleplay scenarios.',
-      },
-    },
-    {
-      id: 'duo-result',
-      heading: 'One change removes the problem. The other turns flags into an asset.',
-      paragraphs: [
-        'Low-cost, immediately implementable, and makes the platform better.',
-      ],
-      visual: null,
-    },
-  ],
-  gallery: [],
 }
 
 export const acornEatLocalVt: CaseStudy = {
@@ -404,44 +327,6 @@ export const acornEatLocalVt: CaseStudy = {
     '<strong>COVID-19 shut down farmers markets across Vermont.</strong> As a college student with no design experience, I gathered eight engineers and taught myself product design to ship a cross-platform app connecting customers to local farms. 300+ farms onboarded, 1,100+ downloads, local news coverage.',
     '<strong>None of us had built an app before.</strong> I sat in engineering meetings not because I understood everything, but because I wanted to be a real partner\u2009\u2014\u2009not someone who hands off specs and disappears. That instinct stuck. Today I treat engineering collaboration as the starting point, not the handoff.',
   ],
-  sections: [
-    {
-      id: 'acorn-context',
-      heading: 'COVID-19 shut down farmers markets across Vermont',
-      paragraphs: [
-        'As a college student with no design experience, I gathered eight engineers and taught myself product design to solve a problem I could see.',
-      ],
-      visual: null,
-    },
-    {
-      id: 'acorn-ship',
-      heading: 'We shipped a cross-platform app connecting customers to local farms',
-      paragraphs: [
-        '300+ farms onboarded. 1,100+ downloads. Local news coverage. Real impact during a hard time.',
-      ],
-      visual: {
-        id: 'acorn-app',
-        caption: 'Eat Local VT \u2014 cross-platform app connecting customers to local farms.',
-      },
-    },
-    {
-      id: 'acorn-team',
-      heading: 'None of us had built an app before',
-      paragraphs: [
-        'We learned together \u2014 healthy disagreements, testing assumptions, using data to settle debates. I advocated for the user; they taught me what was possible. I sat in on technical conversations not because I understood everything, but because I wanted to be a real partner, not someone who hands off specs and disappears.',
-      ],
-      visual: null,
-    },
-    {
-      id: 'acorn-instinct',
-      heading: 'That instinct stuck',
-      paragraphs: [
-        'Today I sit in engineering meetings, think through technical constraints early, and treat collaboration as the starting point. It traces back to this project.',
-      ],
-      visual: null,
-    },
-  ],
-  gallery: [],
 }
 
 export const trioTodoList: CaseStudy = {

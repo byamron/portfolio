@@ -22,6 +22,43 @@ Record negative feedback and lessons learned here. Review this file before start
 
 ---
 
+## 2026-03-24 — Never sacrifice visual synchronization for performance
+
+**What was attempted:** Removed `backdrop-filter` from the `[data-link-card]` CSS transition list as a "performance optimization," reasoning that 1px blur is binary (on/off) and doesn't need to be animated.
+
+**What went wrong:** This desynchronized the glass hover effect — blur would snap on instantly while `background`, `box-shadow`, and `border-color` still faded over 200ms. The result is a visible window where content distorts without the tinted fill. This is the same class of bug as a previous incident where backdrop-filter was missing during transitions and then popped on after — that was also called "imperceptible" but was clearly noticeable.
+
+**Lesson learned:** All properties that compose a single visual effect must transition together. Never remove one property from a synchronized transition group for performance reasons — if they animate together, they must stay together. The glass hover is a coordinated effect: blur + tint + shadow + border are perceived as one thing. Desynchronizing any one of them breaks the illusion.
+
+**Broader principle:** Don't dismiss visual changes as "imperceptible" or "nearly imperceptible" to justify a shortcut. If a change alters timing, synchronization, or the order in which visual properties appear, assume it's noticeable until proven otherwise by actually seeing it. Performance optimizations that touch visual properties need the same scrutiny as design changes — they ARE design changes.
+
+**How to apply:** Before removing or altering any CSS transition/animation property, ask: "Is this property part of a coordinated visual effect?" If yes, don't touch it independently. Optimize the entire effect together or not at all.
+
+---
+
+## 2026-03-24 — Dead assets, late preloading, missing link attributes, and no cache headers shipped to prod
+
+**What was attempted:** Multiple features shipped over time without a performance review step.
+
+**What went wrong (4 separate issues, same root cause):**
+
+1. **Dead 4.5MB Sony GIF in preload path.** When `sony-screenless` switched from GIF to `videoPreview`, the old GIF entry stayed in `projectImageMap`. The preload function downloaded it on every page load — 4.5MB of wasted bandwidth competing with the duo (230KB) and acorn (748KB) images that actually needed to load.
+
+2. **Preview images preloaded too late.** `preloadPreviewImages()` was triggered by `onMouseEnter` on the left column instead of on mount. Fast users could hover a project before downloads had even started, causing blank image frames during the 300ms fade animation.
+
+3. **Mochi link missing `target="_blank"` and `rel="noopener noreferrer"`.** Opened in the same tab, causing the React app to unmount (perceived slowness). LinkedIn and resume had the attributes; Mochi didn't. No consistency check existed.
+
+4. **No cache headers on Netlify.** Static images, fonts, and hashed Vite output were served without explicit `Cache-Control` headers. Repeat visitors re-downloaded everything.
+
+**Lesson learned:** Performance issues accumulate silently because no step in the workflow audits for them. Asset preloading, link hygiene, and caching are not covered by visual review. The fix:
+
+- **Tests now exist** (`projectData.test.ts`, `preloadImages.test.ts`) that verify data integrity: no dead assets in preload paths, no oversized files in the preload pipeline, correct link/project data consistency.
+- **Workflow updated** with a "Performance & production readiness" review step that checks preload paths, link attributes, and hosting config before merge.
+
+**Scope:** Any time an asset's delivery method changes (e.g., GIF → video), the old reference must be removed from all maps. Any time an external link is added, verify `target="_blank"` and `rel="noopener noreferrer"`.
+
+---
+
 ## 2026-03-22 — Cursor companion styling: plain text, not boxes or inverse colors
 
 **What was attempted:** First implemented cursor companion labels with frosted-glass box styling (background, border, backdrop-filter). Then tried inverse/negative color styling matching the old invert cursor mode.
