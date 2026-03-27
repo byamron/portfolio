@@ -39,7 +39,7 @@ export function AboutSection() {
       </p>
 
       <p style={textStyle}>
-        I feel fulfilled working on experiences related to health, community, and other human stuff.
+        I feel fulfilled working on experiences related to productivity, community, health, and other human stuff.
       </p>
       <div ref={contactRef} data-contact-links style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 32 }}>
         <p style={textStyle}>
