@@ -1,14 +1,7 @@
 import { useRef, useCallback } from 'react'
 import { useHover } from '@/contexts/HoverContext'
 import { useGlassHighlight } from '../hooks/useGlassHighlight'
-
-const textStyle = {
-  fontFamily: "'Literata', serif",
-  fontSize: 'var(--text-size-narrative)',
-  fontWeight: 300,
-  lineHeight: 1.4,
-  color: 'var(--text-grey)',
-} as const
+import { narrativeStyle } from '@/styles/shared'
 
 const linkCardStyle = {
   color: 'inherit',
@@ -34,21 +27,21 @@ export function AboutSection() {
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <p style={textStyle}>
+      <p style={narrativeStyle}>
         I do my best work shaping early-stage ideas — setting direction in ambiguity, getting technical with engineers, and building ideas in code.
       </p>
 
-      <p style={textStyle}>
+      <p style={narrativeStyle}>
         I feel fulfilled working on experiences related to health, community, and other human stuff.
       </p>
       <div ref={contactRef} data-contact-links style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 32 }}>
-        <p style={textStyle}>
+        <p style={narrativeStyle}>
           You can say hi if you see me running around SF, or you can contact me via{' '}
           <a href="mailto:ben.yamron@icloud.com" data-contact-card style={linkCardStyle} onMouseEnter={() => onLinkEnter('email')} onMouseLeave={onLinkLeave} onFocus={() => onLinkEnter('email')} onBlur={onLinkLeave}>email</a>
           {' '}or on{' '}
           <a href="https://www.linkedin.com/in/benyamron" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle} onMouseEnter={() => onLinkEnter('linkedin')} onMouseLeave={onLinkLeave} onFocus={() => onLinkEnter('linkedin')} onBlur={onLinkLeave}>LinkedIn</a>.
         </p>
-        <p style={textStyle}>
+        <p style={narrativeStyle}>
           Just lurking? Take a look at my{' '}
           <a href="/ben-yamron-resume.pdf" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle} onMouseEnter={() => onLinkEnter('resume')} onMouseLeave={onLinkLeave} onFocus={() => onLinkEnter('resume')} onBlur={onLinkLeave}>resume</a>.
         </p>

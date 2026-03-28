@@ -7,23 +7,8 @@ import { ProjectLink } from '@/components/ProjectLink'
 import { AboutSection } from '@/components/AboutSection'
 import { SignatureAnimation } from '@/components/SignatureAnimation'
 import { ContributionHeatmap } from '@/components/ContributionHeatmap'
-import { projectsById, type Project } from '@/data/projects'
-
-const narrativeStyle: React.CSSProperties = {
-  fontFamily: "'Literata', serif",
-  fontSize: 'var(--text-size-narrative)',
-  fontWeight: 300,
-  lineHeight: 1.4,
-  color: 'var(--text-grey)',
-}
-
-// Canonical display order
-const cardOrder = [
-  'mochi-ai-tooling', 'todo-priority', 'detect-manip',
-  'mochi-tracker', 'mochi-billing',
-  'sony-screenless', 'uw-system', 'cip-misinfo',
-  'duo-flags', 'acorn-covid',
-].map(id => projectsById[id]).filter((p): p is Project => !!p)
+import { sections } from '@/data/projects'
+import { narrativeStyle } from '@/styles/shared'
 
 interface LeftColumnProps {
   fullWidth?: boolean
@@ -62,25 +47,24 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
 
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <p style={narrativeStyle}>
-              I own product problems{'\u2009'}&mdash;{'\u2009'}from setting direction with leadership to shipping the details. Lately, that means building AI into how my team designs and ships.
-            </p>
-            <p style={narrativeStyle}>
-              Outside of work, I'm always building{'\u2009'}&mdash;{'\u2009'}apps, tools, experiments. I try to ship something every day.
-            </p>
-          </section>
-
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {cardOrder.map(proj => (
-              <ProjectLink key={proj.id} project={proj} twoLine />
-            ))}
-          </section>
-
-          <ContributionHeatmap />
+          {sections.map((section, i) => (
+            <section key={i} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {section.context.map((text, j) => (
+                <p key={j} style={narrativeStyle}>{text}</p>
+              ))}
+              {/* Heatmap between narrative and project cards for personal projects (index 1) */}
+              {i === 1 && <ContributionHeatmap displayMode="collapsed" vizGap={16} sparkPos="right" collapseTransition="drawer" />}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {section.projects.map(proj => (
+                  <ProjectLink key={proj.id} project={proj} twoLine statusGap={8} subtitleSize="var(--text-size-summary)" nonLinkUnderline="dotted" titleSubGap={6} />
+                ))}
+              </div>
+            </section>
+          ))}
 
           <AboutSection />
           <SignatureAnimation />
+
         </div>
       </motion.div>
     </main>

@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Add personal projects section
+
+**Branch:** `add-personal-projects-section`
+
+**Summary:** Added personal projects section with "In progress" status indicators, refactored LeftColumn to render sections data-driven from `projects.ts`, extracted shared `narrativeStyle` to `src/styles/shared.ts`, extended ContributionHeatmap with collapsible/animated display modes (collapsed, sparkline, mono, glass, etc.), and added `--status-green` token. Review fixes: documented IBM Plex Mono as an allowed exception for `<code>` data values, added `useReducedMotion` to ContributionHeatmap for Framer Motion animations, added `role="group"` + `aria-label` to non-link project cards, updated `tokens.md` with `--status-green`.
+
+**Decisions:**
+- IBM Plex Mono is a documented exception to the two-typeface rule — functional requirement for `<code>` elements displaying numeric data.
+- Non-link project cards keep `tabIndex={0}` for keyboard discovery but use `role="group"` to avoid being announced as links.
+- Framer Motion `useReducedMotion` zeroes all animation durations when user prefers reduced motion (CSS rules only cover CSS animations).
+
+---
+
 ## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
 
 **Branch:** `next-update`
