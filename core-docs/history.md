@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Fix glass pill persisting when cursor leaves card
+
+**Branch:** `fix-hover-persist-bug`
+
+**Summary:** Fixed a bug where the glass highlight pill would stay visible indefinitely when the cursor left a card but remained within the vertical bounds of the card stack. The old logic cancelled the clear timer in that case, keeping the pill alive. Simplified to always start the clear timer on leaving a card — entering a new card naturally cancels it.
+
+**Decisions:**
+- Removed the `shouldClear` / `isCursorInCardStack` gating that prevented the clear timer from starting. Retained `isCursorInCardStack` only for computing a longer delay (400ms) when leaving tight-bounds cards, giving the cursor time to reach the next card.
+
+---
+
 ## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
 
 **Branch:** `next-update`
