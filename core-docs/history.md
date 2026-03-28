@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Add Havana privacy policy page
+
+**Branch:** `havana-privacy-policy`
+
+**Summary:** Added a standalone privacy policy page for the Havana language practice app at `/havana/privacy`. The page is not linked from anywhere on the site — only accessible via direct URL (for App Store compliance). Uses a neutral white/dark background (no accent tinting), includes an inline light/dark/system mode toggle, and hides the sidebar/custom cursor on `/havana/*` routes without refactoring the sidebar system.
+
+**Decisions:**
+- Route lives under `/havana/privacy` — no parent `/havana` route needed, React Router handles it independently.
+- Sidebar, custom cursor, and cursor companion conditionally hidden via `pathname.startsWith('/havana/')` check in a new `AppContent` wrapper component in App.tsx.
+- Page uses hardcoded neutral colors rather than theme CSS variables to stay visually independent from the portfolio's accent color system.
+
+---
+
 ## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
 
 **Branch:** `next-update`
