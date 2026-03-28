@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { CaseStudy } from '@/data/case-study-content'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
+import { narrativeStyle } from '@/styles/shared'
 
 const Lottie = lazy(() => import('lottie-react'))
 
@@ -95,14 +96,6 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   ) : null
 
   // Text content — narrative paragraphs or subtitle fallback
-  const narrativeStyle = {
-    fontFamily: "'Literata', serif",
-    fontSize: 'var(--text-size-narrative)',
-    fontWeight: 300 as const,
-    lineHeight: 1.4,
-    color: 'var(--text-grey)',
-  }
-
   const textContent = narrative.map((html, i) => (
     <p
       key={i}

@@ -6,7 +6,7 @@ import { projectsById } from '@/data/projects'
 import { DIRECTIONAL_SWEEP } from '@/utils/braille'
 
 const INVERT_SIZE = 64
-const ARROW_FONT_SIZE = 36
+const ARROW_FONT_SIZE = 36 // matches --text-size-title
 const FIGPAL_SIZE = 72
 const FIGPAL_OFFSET_X = 24
 const FIGPAL_OFFSET_Y = 24

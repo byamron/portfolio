@@ -52,7 +52,7 @@ export function ImageDisplay() {
   const summary = linkPreview?.summary ?? project?.summary ?? null
   const isPreview = !!project || !!linkPreview
 
-  const showShadow = (linkPreview && !linkPreview.video) || (project && needsShadow.has(project.id))
+  const showShadow = (project && needsShadow.has(project.id))
   const dropShadow = showShadow
     ? resolvedAppearance === 'dark'
       ? 'drop-shadow(0 2px 40px rgba(255, 255, 255, 0.1))'
@@ -129,8 +129,10 @@ export function ImageDisplay() {
     return () => { cancelled = true }
   }, [lottieUrl])
 
-  // Portraits fill with cover; link previews and project previews use contain
+  // Portraits fill with cover; static link previews (resume, LinkedIn) fill like
+  // portraits but use contain + background color; project previews use contain with padding.
   const isPortrait = !project && !linkPreview
+  const isStaticLinkPreview = !!linkPreview && !linkPreview.video
 
   const imgStyle: React.CSSProperties = isPortrait
     ? {
@@ -141,16 +143,23 @@ export function ImageDisplay() {
         borderRadius: 32,
         filter: dropShadow,
       }
-    : {
-        maxWidth: '100%',
-        maxHeight: '100%',
-        objectFit: 'contain',
-        borderRadius: 32,
-        filter: dropShadow,
-        viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
-      }
+    : isStaticLinkPreview
+      ? {
+          height: '100%',
+          objectFit: 'contain',
+          borderRadius: 32,
+          filter: dropShadow,
+        }
+      : {
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: 'contain',
+          borderRadius: 32,
+          filter: dropShadow,
+          viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
+        }
 
-  const imageWrapperStyle: React.CSSProperties = isPortrait
+  const imageWrapperStyle: React.CSSProperties = isPortrait || isStaticLinkPreview
     ? {
         position: 'absolute',
         inset: 0,
@@ -158,7 +167,7 @@ export function ImageDisplay() {
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        borderRadius: 32,
+        borderRadius: isPortrait ? 32 : undefined,
       }
     : {
         position: 'absolute',
@@ -237,7 +246,7 @@ export function ImageDisplay() {
                       fontSize: 'var(--text-size-summary)',
                       fontWeight: 400,
                       lineHeight: 1.6,
-                      color: 'var(--text-primary)',
+                      color: 'var(--text-dark)',
                       textAlign: 'center',
                       margin: 0,
                     }}

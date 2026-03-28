@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { useHover } from '@/contexts/HoverContext'
@@ -13,9 +13,17 @@ const ARROW_SLIDE_MS = 500
 interface ProjectLinkProps {
   project: Project
   twoLine?: boolean
+  separator?: string
+  statusGap?: number
+  titleWeight?: number
+  subtitleWeight?: number
+  statusWeight?: number
+  subtitleSize?: string
+  titleSubGap?: number
+  nonLinkUnderline?: 'none' | 'solid' | 'dotted'
 }
 
-export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
+export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10, titleWeight = 400, subtitleWeight = 400, statusWeight = 400, subtitleSize, titleSubGap = 4, nonLinkUnderline = 'none' }: ProjectLinkProps) {
   const { setHoveredProjectId, setNavigatingProjectId } = useHover()
   const { cursorMode } = useCursor()
   const navigate = useNavigate()
@@ -33,13 +41,60 @@ export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
     }
   }, [setNavigatingProjectId])
 
-  const subtitleText = `${project.company ?? ''}${project.year ? ` \u00b7 ${project.year}` : ''}`
+  const subtitleParts = [
+    project.company ?? '',
+    project.year ? project.year : '',
+  ].filter(Boolean).join(separator)
+
+  // Derive a stable delay from project id so dots pulse out of sync
+  const pulseDelay = useMemo(() => {
+    let hash = 0
+    for (let i = 0; i < project.id.length; i++) {
+      hash = ((hash << 5) - hash + project.id.charCodeAt(i)) | 0
+    }
+    return (Math.abs(hash) % 2500) / 1000 // 0–2.5s, matching animation duration
+  }, [project.id])
+
+  const statusIndicator = project.status ? (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--status-green)' }}>
+      <span
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          backgroundColor: 'var(--status-green)',
+          display: 'inline-block',
+          flexShrink: 0,
+          animation: 'status-pulse 2.5s ease-in-out infinite',
+          animationDelay: `${pulseDelay}s`,
+        }}
+      />
+      <span style={{ fontWeight: statusWeight }}>{project.status}</span>
+    </span>
+  ) : null
+
+  const subtitleContent = (
+    <div style={{
+      fontSize: subtitleSize || 'var(--text-size-body)',
+      color: 'var(--text-grey)',
+      fontWeight: subtitleWeight,
+      marginTop: titleSubGap,
+      display: 'flex',
+      alignItems: 'center',
+      gap: statusGap,
+    }}>
+      {subtitleParts && <span>{subtitleParts}</span>}
+      {statusIndicator}
+    </div>
+  )
 
   if (!project.isLink) {
     return (
       <div
         data-link-card
         data-project-id={project.id}
+        role="group"
+        aria-label={`${project.title}${project.status ? ` — ${project.status}` : ''}`}
         onMouseEnter={() => setHoveredProjectId(project.id)}
         onMouseLeave={() => setHoveredProjectId(null)}
         onFocus={IS_TOUCH ? undefined : () => setHoveredProjectId(project.id)}
@@ -52,22 +107,19 @@ export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
           margin: '0 -16px',
           borderRadius: 16,
           fontSize: 'var(--text-size-body)',
-          fontWeight: 400,
+          fontWeight: titleWeight,
           lineHeight: 1.4,
           color: 'var(--text-medium)',
           border: '0.1px solid transparent',
         }}
       >
-        <span>{project.title}{' '}<span style={{ opacity: 0.5 }}>(coming soon)</span></span>
-        {twoLine && subtitleText && (
-          <div style={{
-            fontSize: 'var(--text-size-body)',
-            color: 'var(--text-grey)',
-            marginTop: 4,
-          }}>
-            {subtitleText}
-          </div>
-        )}
+        <span style={nonLinkUnderline !== 'none' ? {
+          textDecoration: 'underline',
+          textDecorationStyle: nonLinkUnderline as React.CSSProperties['textDecorationStyle'],
+          textDecorationColor: 'var(--text-underline)',
+          textUnderlineOffset: 4,
+        } : undefined}>{project.title}</span>
+        {twoLine && subtitleContent}
       </div>
     )
   }
@@ -131,7 +183,7 @@ export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
       margin: '0 -16px',
       borderRadius: 16,
       fontSize: 'var(--text-size-body)',
-      fontWeight: 400,
+      fontWeight: titleWeight,
       lineHeight: 1.4,
       color: 'var(--text-dark)',
       textDecoration: twoLine ? 'none' as const : 'underline' as const,
@@ -168,15 +220,19 @@ export function ProjectLink({ project, twoLine }: ProjectLinkProps) {
     </span>
   )
 
-  const metaLine = twoLine && subtitleText ? (
+  const metaLine = twoLine ? (
     <div style={{
-      fontSize: 'var(--text-size-body)',
+      fontSize: subtitleSize || 'var(--text-size-body)',
       color: 'var(--text-grey)',
-      fontWeight: 400,
-      marginTop: 4,
+      fontWeight: subtitleWeight,
+      marginTop: titleSubGap,
       textDecoration: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      gap: statusGap,
     }}>
-      {subtitleText}
+      {subtitleParts && <span>{subtitleParts}</span>}
+      {statusIndicator}
     </div>
   ) : null
 

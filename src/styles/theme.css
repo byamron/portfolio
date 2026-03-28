@@ -24,6 +24,9 @@
   /* Active swatch (default: table) */
   --swatch: hsl(34, 50%, 60%);
 
+  /* Status indicator */
+  --status-green: hsl(142, 40%, 38%);
+
   /* All swatches (constant across modes) */
   --swatch-sky: hsl(204, 50%, 70%);
   --swatch-table: hsl(34, 50%, 60%);
@@ -59,6 +62,7 @@
   --text-link: hsl(220, 54%, 81%);
   --text-underline: hsla(0, 0%, 93%, 0.2);
   --swatch-label: hsl(var(--accent-hue), 45%, 75%);
+  --status-green: hsl(142, 40%, 52%);
 }
 
 /* ============================================================================
