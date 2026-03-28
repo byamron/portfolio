@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Update resume PDF and hover preview
+
+**Branch:** `update-resume`
+
+**Summary:** Replaced resume PDF and regenerated the hover preview image at 2x resolution (1224×1584px) from the PDF using macOS Quick Look. The previous preview was 612×792px (72 DPI) and appeared blurry on Retina displays.
+
+**Decisions:**
+- Rendered preview at 2x (144 DPI) for Retina sharpness. File size increase (141KB → 336KB) is acceptable for a one-time-load hover image.
+- Used `qlmanage` to render from the PDF directly, avoiding manual export quality issues.
+
+---
+
 ## 2026-03-27 — Update About section subtitle copy
 
 **Branch:** `update-hero-subtitle`
