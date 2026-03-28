@@ -14,6 +14,14 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-27 — Update About section subtitle copy
+
+**Branch:** `update-hero-subtitle`
+
+**Summary:** Changed the About section subtitle from "health, community, and other human stuff" to "productivity, community, health, and other human stuff" — adding "productivity" to better reflect the range of work.
+
+---
+
 ## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
 
 **Branch:** `next-update`
