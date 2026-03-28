@@ -15,6 +15,53 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-28 — Add Havana privacy policy page
+
+**Branch:** `havana-privacy-policy`
+
+**Summary:** Added a standalone privacy policy page for the Havana language practice app at `/havana/privacy`. The page is not linked from anywhere on the site — only accessible via direct URL (for App Store compliance). Uses a neutral white/dark background (no accent tinting), includes an inline light/dark/system mode toggle, and hides the sidebar/custom cursor on `/havana/*` routes without refactoring the sidebar system.
+
+**Decisions:**
+- Route lives under `/havana/privacy` — no parent `/havana` route needed, React Router handles it independently.
+- Sidebar, custom cursor, and cursor companion conditionally hidden via `pathname.startsWith('/havana/')` check in a new `AppContent` wrapper component in App.tsx.
+- Page uses hardcoded neutral colors rather than theme CSS variables to stay visually independent from the portfolio's accent color system.
+
+---
+
+## 2026-03-28 — Fill link preview images like portraits
+
+**Branch:** `fill-link-preview-images`
+
+**Summary:** Made resume and LinkedIn hover previews fill the right column like portrait images do — height fills the container, aspect ratio preserved (slightly narrower than portraits). Removed the drop-shadow from static link previews since they now fill the frame and the shadow created hard-cornered artifacts from the rectangular PNG.
+
+**Decisions:**
+- Static link previews (resume, LinkedIn) get portrait-like wrapper treatment: `height: 100%`, `object-fit: contain`, no background color, no text zone padding.
+- Drop-shadow removed for static link previews — it traced the rectangular PNG edge rather than the CSS border-radius, creating a sloppy outline.
+- Wrapper `borderRadius` only applied to portraits (link preview images have their own `borderRadius: 32`).
+
+---
+
+## 2026-03-28 — Update resume PDF and hover preview
+
+**Branch:** `update-resume`
+
+**Summary:** Replaced resume PDF and regenerated the hover preview image at 2x resolution (1224×1584px) from the PDF using macOS Quick Look. The previous preview was 612×792px (72 DPI) and appeared blurry on Retina displays.
+
+**Decisions:**
+- Rendered preview at 2x (144 DPI) for Retina sharpness. File size increase (141KB → 336KB) is acceptable for a one-time-load hover image.
+- Used `qlmanage` to render from the PDF directly, avoiding manual export quality issues.
+
+---
+
+## 2026-03-27 — Update About section subtitle copy
+
+**Branch:** `update-hero-subtitle`
+
+**Summary:** Changed the About section subtitle from "health, community, and other human stuff" to "productivity, community, health, and other human stuff" — adding "productivity" to better reflect the range of work.
+>>>>>>> origin/next-update
+
+---
+
 ## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
 
 **Branch:** `next-update`
