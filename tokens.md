@@ -16,10 +16,17 @@ All values extracted from Framer color panel. HSL format: `hsl(H, S%, L%)`.
 | `--text-link` | `hsl(219, 49%, 53%)` | `hsl(220, 54%, 81%)` | Link text |
 | `--text-underline` | `hsla(0, 0%, 7%, 0.2)` | `hsla(0, 0%, 93%, 0.2)` | Link underline decoration |
 
+## Status Colors
+
+| Token | Light Mode | Dark Mode | Usage |
+|-------|-----------|-----------|-------|
+| `--status-green` | `hsl(142, 40%, 38%)` | `hsl(142, 40%, 52%)` | "In progress" status indicator dot and label |
+
 **Notes:**
 - Text colors are **not theme-dependent** — they stay the same across table/portrait/sky/pizza/vineyard.
 - They only change between light and dark appearance mode.
 - `--text-grey` has a very slight blue tint (240deg hue, 2% saturation).
+- Status colors follow the same pattern — appearance-dependent, not theme-dependent.
 
 ---
 

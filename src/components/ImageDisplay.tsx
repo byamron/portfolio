@@ -246,7 +246,7 @@ export function ImageDisplay() {
                       fontSize: 'var(--text-size-summary)',
                       fontWeight: 400,
                       lineHeight: 1.6,
-                      color: 'var(--text-primary)',
+                      color: 'var(--text-dark)',
                       textAlign: 'center',
                       margin: 0,
                     }}

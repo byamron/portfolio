@@ -13,6 +13,7 @@ export interface Project {
   videoPreview?: string // optional video path (overrides projectImageMap)
   summary?: string // "quick version" from case study, shown below image on hover
   previewDescription?: string // text-only preview shown centered in the image area on hover (no media)
+  status?: string // e.g. 'In progress', 'In TestFlight' — shown as dot + label on the card
 }
 
 export interface Section {
@@ -33,12 +34,13 @@ export const sections: Section[] = [
   },
   {
     context: [
-      'Outside of work, I\u2019m always building\u2009—\u2009apps, tools, experiments. I try to ship something every day.',
+      'Outside of work, I\u2019m always building\u2009—\u2009apps, tools, experiments. Here\u2019s what I\u2019m working on right now.',
     ],
     projects: [
-      { id: 'todo-priority', title: 'A todo list for focus and prioritization', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'I\u2019ve never had a todo list I actually liked. I designed and built a native iOS/macOS app around one constraint: your active list can only hold three tasks. Add as many as you want to the backlog\u2009\u2014\u2009comparison-based ranking keeps everything prioritized so you never have to decide what\u2019s next.' },
-      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'detect', href: '', isLink: false, company: 'Personal project', year: '2026', previewDescription: '[COMING SOON]\nMisinformation isn\u2019t always spread by lies. More often, perpetrators use subtle manipulation tactics that can be hard to recognize: fear-mongering, false dichotomies, ad hominem attacks. Inspired by my research on misinformation at the UW, I built a Chrome extension that uses LLMs to identify and explain manipulative language on the web.' },
-      // { id: 'ai-search', title: 'New patterns for AI search with personal context', projectId: 'ai-search', href: '', isLink: false },
+      { id: 'todo-priority', title: 'A todo list for focus and prioritization', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'I\u2019ve never had a todo list I actually liked. I designed and built a native iOS/macOS app around one constraint: your active list can only hold three tasks. Add as many as you want to the backlog\u2009\u2014\u2009comparison-based ranking keeps everything prioritized so you never have to decide what\u2019s next. Currently in TestFlight.', status: 'In progress' },
+      { id: 'language-app', title: 'Voice-first language practice with personalized feedback', projectId: 'language-app', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nMost language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: real-time voice conversations with AI, and a feed of corrections and feedback generated from things you actually said. Practice speaking when you can, consume personalized feedback when you can\u2019t.' },
+      { id: 'forge', title: 'Optimizing your AI development workflow', projectId: 'forge', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nClaude Code has a deep configuration surface\u2009\u2014\u2009skills, rules, hooks, agents, memory\u2009\u2014\u2009but managing it well requires expertise most people don\u2019t have. I\u2019m building a Claude Code plugin that analyzes how you work and automatically optimizes your context and setup, so you get the most out of your AI workflow without needing to manage all the infrastructure yourself.' },
+      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'detect', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nMisinformation isn\u2019t always spread by lies. More often, perpetrators use subtle manipulation tactics that can be hard to recognize: fear-mongering, false dichotomies, ad hominem attacks. Inspired by my research on misinformation at the UW, I\u2019m building a Chrome extension that uses LLMs to identify and explain manipulative language on the web.' },
     ],
   },
   {

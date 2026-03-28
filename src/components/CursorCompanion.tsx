@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { projectsById } from '@/data/projects'
 
 const OFFSET_X = 18
-const FONT_SIZE = 22
+const FONT_SIZE = 22 // matches --text-size-narrative
 
 /**
  * Minimal cursor companion — only shows "coming soon" on non-link project cards.

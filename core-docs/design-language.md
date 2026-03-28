@@ -197,7 +197,7 @@ Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238
 - No text-transform (no uppercase labels or small caps)
 - No decorative letter-spacing on content text
 - Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.
-- No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence
+- No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence. **Exception:** a monospace face (IBM Plex Mono) is permitted for `<code>` elements displaying data values (e.g. contribution counts), where monospace is a functional requirement rather than a design choice.
 - No weight variation within a role — all headings share one weight, all body text shares one weight
 
 ---
@@ -973,7 +973,7 @@ Things this site deliberately avoids. If you find yourself reaching for any of t
 
 | Don't | Why |
 |-------|-----|
-| Add a third typeface | The serif/sans pairing is the system. A third font breaks coherence and signals indecision. |
+| Add a third typeface | The serif/sans pairing is the system. A third font breaks coherence and signals indecision. **Exception:** a monospace face (IBM Plex Mono) is allowed for `<code>` elements displaying data values, where monospace is functionally required. |
 | Vary weight within a role | All headings share one weight, all body shares one weight. Weight contrast is between roles, not within them. |
 | Use weight for emphasis within text | Bold words or phrases within body text fight the clean, even texture. Structure and color create emphasis. |
 | Add drop shadows to cards or containers | The only shadow is the inner glow on the glass effect and the panel shadow. Shadows imply elevation, and this site is flat. |
