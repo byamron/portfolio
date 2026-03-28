@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Fill link preview images like portraits
+
+**Branch:** `fill-link-preview-images`
+
+**Summary:** Made resume and LinkedIn hover previews fill the right column like portrait images do — height fills the container, aspect ratio preserved (slightly narrower than portraits). Removed the drop-shadow from static link previews since they now fill the frame and the shadow created hard-cornered artifacts from the rectangular PNG.
+
+**Decisions:**
+- Static link previews (resume, LinkedIn) get portrait-like wrapper treatment: `height: 100%`, `object-fit: contain`, no background color, no text zone padding.
+- Drop-shadow removed for static link previews — it traced the rectangular PNG edge rather than the CSS border-radius, creating a sloppy outline.
+- Wrapper `borderRadius` only applied to portraits (link preview images have their own `borderRadius: 32`).
+
+---
+
 ## 2026-03-28 — Update resume PDF and hover preview
 
 **Branch:** `update-resume`
