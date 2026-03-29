@@ -574,6 +574,16 @@ export function SidebarThemeControls() {
         {/* Fixed trigger — 16×16 dot with 40×40 invisible touch target overlay */}
         <div
           ref={triggerRef}
+          role="button"
+          tabIndex={0}
+          aria-label={hovered ? 'Close theme controls' : 'Open theme controls'}
+          aria-expanded={hovered}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setHovered(h => !h)
+            }
+          }}
           style={{
             position: 'relative',
             width: 16,
@@ -645,6 +655,7 @@ export function SidebarThemeControls() {
                     role="radio"
                     aria-checked={isActive}
                     aria-label={`${item.color} theme`}
+                    tabIndex={hovered ? 0 : -1}
                     onClick={() => setAccentColor(item.color)}
                     style={{
                       width: swatchSize, height: swatchSize, borderRadius: 6,
@@ -681,7 +692,7 @@ export function SidebarThemeControls() {
                   aria-valuemax={100}
                   aria-valuenow={Math.round(bgIntensity * 100)}
                   aria-valuetext={`${Math.round(bgIntensity * 100)}%`}
-                  tabIndex={0}
+                  tabIndex={hovered ? 0 : -1}
                   onKeyDown={(e) => {
                     if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
                       e.preventDefault()
@@ -768,6 +779,7 @@ export function SidebarThemeControls() {
                     role="radio"
                     aria-checked={isActive}
                     aria-label={label}
+                    tabIndex={hovered ? 0 : -1}
                     onClick={() => setAppearanceMode(mode)}
                     style={{
                       width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -826,6 +838,7 @@ export function SidebarThemeControls() {
                         role="radio"
                         aria-checked={isActive}
                         aria-label={label}
+                        tabIndex={hovered ? 0 : -1}
                         onClick={() => setCursorMode(mode)}
                         style={{
                           width: buttonSize, height: buttonSize, display: 'flex', alignItems: 'center', justifyContent: 'center',

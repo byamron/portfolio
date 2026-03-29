@@ -389,6 +389,8 @@ export function ImageDisplay() {
                   lineHeight: 1.5,
                   color: 'var(--text-grey)',
                   maxWidth: 540,
+                  maxHeight: TEXT_ZONE_HEIGHT,
+                  overflow: 'hidden',
                   padding: '0 24px',
                   textAlign: 'left',
                   margin: '0 auto',

@@ -24,7 +24,7 @@ export function CursorCompanion() {
       top: '0',
       left: '0',
       opacity: '0',
-      willChange: 'transform',
+      willChange: 'translate',
       whiteSpace: 'nowrap',
       fontSize: `${FONT_SIZE}px`,
       fontFamily: "'Literata', serif",
@@ -101,13 +101,24 @@ export function CursorCompanion() {
       if (x < 4) x = 4
       if (y < 4) y = 4
       if (y + lh > window.innerHeight - 4) y = window.innerHeight - lh - 4
-      label.style.transform = `translate(${x}px, ${y}px)`
+      label.style.translate = `${x}px ${y}px`
     }
 
     document.addEventListener('pointermove', handlePointerMove)
 
+    function handleComingSoonClick() {
+      if (!visible) return
+      label.classList.remove('coming-soon-nudge')
+      void label.offsetHeight
+      label.classList.add('coming-soon-nudge')
+      label.addEventListener('animationend', () => label.classList.remove('coming-soon-nudge'), { once: true })
+    }
+
+    document.addEventListener('coming-soon-clicked', handleComingSoonClick)
+
     return () => {
       document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('coming-soon-clicked', handleComingSoonClick)
       if (leaveTimer) clearTimeout(leaveTimer)
       document.removeEventListener('theme-changed', skinLabel)
       label.remove()
