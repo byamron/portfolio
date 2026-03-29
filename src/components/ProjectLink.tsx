@@ -97,6 +97,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
         aria-label={`${project.title}${project.status ? ` — ${project.status}` : ''}`}
         onMouseEnter={() => setHoveredProjectId(project.id)}
         onMouseLeave={() => setHoveredProjectId(null)}
+        onClick={() => document.dispatchEvent(new CustomEvent('coming-soon-clicked'))}
         onFocus={IS_TOUCH ? undefined : () => setHoveredProjectId(project.id)}
         onBlur={IS_TOUCH ? undefined : () => setHoveredProjectId(null)}
         tabIndex={0}

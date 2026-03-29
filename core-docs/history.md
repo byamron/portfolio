@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Shake + pulse nudge on coming-soon card click
+
+**Branch:** `shake-coming-soon`
+
+**Summary:** Added a shake-and-pulse animation ("nudge") to the "coming soon" cursor label when users click a non-link project card. Repurposed the sidebar jiggle concept with improved motion design — asymmetric dampening shake with a lagging scale swell. Works in both standard cursor (CursorCompanion) and invert cursor (CustomCursor) modes.
+
+**Decisions:**
+- Used CSS `translate` property (not `transform`) for CursorCompanion positioning so the nudge keyframe's `transform` doesn't conflict. For invert mode, wrapped text in an inner `<span>` so the parent keeps its `scale(0/1)` show/hide transform.
+- Combined shake + pulse into a single `coming-soon-nudge` keyframe rather than layering two animations — scale peaks at 30% (lagging behind first shake hit at 12%) for a more physical feel.
+- Used `cubic-bezier(0.2, 0, 0, 1)` for sharp attack / soft tail, matching click-response expectations.
+
+---
+
 ## 2026-03-28 — Add today indicator to contribution heatmap
 
 **Branch:** `fix-github-viz-timing`
