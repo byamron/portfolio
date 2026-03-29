@@ -10,6 +10,7 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+
 ## 2026-03-28 — Add today indicator to contribution heatmap
 
 **Branch:** `fix-github-viz-timing`
