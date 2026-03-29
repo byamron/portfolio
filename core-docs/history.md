@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Fix tooltip overflow in contribution heatmap
+
+**Branch:** `tooltip-overflow-fix`
+
+**Summary:** Fixed two tooltip clipping issues in the contribution heatmap: (1) tooltips on top-row cells were cut off by the container edge — now dynamically flip below the cell when there isn't enough space above; (2) tooltips were clipped by `overflow: hidden` on the expand animation wrapper — now toggle to `overflow: visible` after the animation completes.
+
+**Decisions:**
+- Used an estimated tooltip height (35px) to decide flip direction rather than measuring the DOM, keeping it simple and avoiding layout thrashing.
+- Added `expandAnimDone` state driven by Framer Motion's `onAnimationComplete`/`onAnimationStart` callbacks to safely toggle overflow only after the expand animation finishes.
+
+---
+
 ## 2026-03-29 — Shake + pulse nudge on coming-soon card click
 
 **Branch:** `shake-coming-soon`
