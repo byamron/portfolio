@@ -77,7 +77,8 @@ function pad2(n: number) { return String(n).padStart(2, '0') }
 export function getTooltipText(date: string, count: number): string {
   const now = new Date()
   const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
-  if (date >= today) return 'No contributions (yet)'
+  if (date === today) return `Today, ${formatDate(date)} — contributions in progress`
+  if (date > today) return 'No contributions (yet)'
   return `${count} contribution${count !== 1 ? 's' : ''} on ${formatDate(date)}`
 }
 
@@ -88,7 +89,7 @@ interface GridCell {
   inYear: boolean
 }
 
-function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: number, maxCount: number } {
+function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: number, maxCount: number, todayCoord: { week: number; day: number } | null, todayStr: string } {
   const lookup = new Map<string, ContributionDay>()
   for (const week of data.weeks) {
     for (const day of week.contributionDays) {
@@ -135,7 +136,18 @@ function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: 
   }
   const trimmed = grid.slice(0, lastFilledWeek + 1)
 
-  return { grid: trimmed, totalContributions: total, maxCount: maxCount || 1 }
+  let todayCoord: { week: number; day: number } | null = null
+  for (let w = 0; w < trimmed.length; w++) {
+    const week = trimmed[w]
+    if (!week) continue
+    for (let d = 0; d < week.length; d++) {
+      if (week[d]?.date === todayStr && week[d]?.inYear) {
+        todayCoord = { week: w, day: d }
+      }
+    }
+  }
+
+  return { grid: trimmed, totalContributions: total, maxCount: maxCount || 1, todayCoord, todayStr }
 }
 
 interface TooltipState {
@@ -150,7 +162,7 @@ export type SparkPos = 'left' | 'right'
 export type CollapseTransition = 'none' | 'drawer' | 'crossfade' | 'scatter' | 'height'
 
 export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, sparkPos = 'left', collapseTransition = 'none' }: { displayMode?: HeatmapMode; vizGap?: number; sparkPos?: SparkPos; collapseTransition?: CollapseTransition }) {
-  const { grid, totalContributions, maxCount } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
+  const { grid, totalContributions, maxCount, todayCoord, todayStr } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [focusedCell, setFocusedCell] = useState<{ week: number; day: number } | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
@@ -497,6 +509,21 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
               />
             )
           })
+        )}
+
+        {/* Today indicator — inset border so it's visible even at 0 contributions */}
+        {todayCoord && (
+          <rect
+            x={todayCoord.week * CELL_STEP + 1}
+            y={todayCoord.day * CELL_STEP + 1}
+            width={CELL_SIZE - 2}
+            height={CELL_SIZE - 2}
+            rx={1.5}
+            fill="none"
+            stroke={isDark ? `hsla(${hue}, 50%, 65%, 0.6)` : `hsla(${hue}, 55%, 40%, 0.5)`}
+            strokeWidth={1.5}
+            style={{ pointerEvents: 'none' }}
+          />
         )}
 
         {/* Mouse hover highlight (standard/figpal cursor modes only) */}
