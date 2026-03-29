@@ -2,6 +2,18 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-28 — Hot-reloaded files cause blank pages; always verify with a hard reload
+
+**What was attempted:** Edited component files (CaseStudyTypographyPanel, CaseStudyLayoutA) while the Vite dev server was running. The page went blank.
+
+**What went wrong:** Vite's HMR (hot module replacement) can fail silently when edits change a component's exports, add new imports, or restructure JSX in ways the HMR boundary can't reconcile. The page goes blank with no visible error — it looks like a code bug but the production build (`vite build`, `tsc --noEmit`) passes clean. The blank page persists until the browser cache is cleared or a hard reload is performed.
+
+**Lesson learned:** After any file edit that changes component structure (new imports, restructured JSX, new exports), **always hard-reload the browser** (Cmd+Shift+R) before investigating code. If the page is blank but build/typecheck passes, it's almost certainly a stale HMR state — not a code error. Don't waste time debugging phantom issues.
+
+**How to apply:** When the user reports a blank page after edits: (1) ask them to hard-reload first, (2) only investigate code if the blank persists after hard reload, (3) mention this explicitly when delivering changes that touch component structure.
+
+---
+
 ## 2026-03-25 — Check Google Fonts URL before using a font weight
 
 **What was attempted:** Set inline project links to `fontWeight: 500` for contrast against surrounding 300-weight text.

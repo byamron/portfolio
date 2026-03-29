@@ -53,7 +53,7 @@ export function HavanaPrivacyPolicy() {
               Havana — Voice Language Practice
             </p>
             <p style={{ fontSize: 14, color: textMuted }}>
-              Last updated: March 23, 2026
+              Last updated: March 28, 2026
             </p>
           </div>
 
@@ -93,103 +93,71 @@ export function HavanaPrivacyPolicy() {
           </div>
         </div>
 
-        <Section title="Overview" textSecondary={textSecondary} linkColor={linkColor}>
-          <p>
-            Havana is a voice-based language practice app. It is designed to
-            collect as little data as possible. This policy explains what data the
-            app handles, how it is stored, and what leaves your device.
-          </p>
-        </Section>
-
-        <Section title="Data that stays on your device" textSecondary={textSecondary} linkColor={linkColor}>
-          <ul>
-            <li>
-              <strong>Gemini API key</strong> — Stored in the iOS Keychain. Never
-              sent to any server other than Google's Gemini API.
-            </li>
-            <li>
-              <strong>Feed cards and spaced repetition state</strong> — Stored
-              locally using SwiftData. Synced across your devices via iCloud if you
-              have it enabled — Apple manages this data under their own{' '}
-              <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener noreferrer">
-                privacy policy
-              </a>
-              .
-            </li>
-            <li>
-              <strong>App preferences</strong> — Language selection, goals, and
-              settings stored locally via UserDefaults.
-            </li>
-          </ul>
-        </Section>
-
-        <Section title="Data processed in memory only" textSecondary={textSecondary} linkColor={linkColor}>
-          <ul>
-            <li>
-              <strong>Voice audio</strong> — Captured by your device's microphone
-              during a conversation session. Streamed directly to the Gemini API in
-              real time. Never saved to disk.
-            </li>
-            <li>
-              <strong>Conversation transcripts</strong> — Accumulated in memory
-              during a session to generate feedback cards, then discarded. Never
-              written to disk or sent to any server other than Google's Gemini API.
-            </li>
-          </ul>
-        </Section>
-
-        <Section title="Data sent to third parties" textSecondary={textSecondary} linkColor={linkColor}>
-          <p>The app communicates with one external service:</p>
-          <ul>
-            <li>
-              <strong>Google Gemini API</strong> — Audio and text are sent to
-              Google's Gemini API using your personal API key. Google's data
-              handling is governed by the{' '}
-              <a href="https://developers.google.com/terms" target="_blank" rel="noopener noreferrer">
-                Google API Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
-                Google Privacy Policy
-              </a>
-              . Havana has no control over how Google processes this data.
-            </li>
-          </ul>
-        </Section>
-
-        <Section title="Data we do not collect" textSecondary={textSecondary} linkColor={linkColor}>
-          <ul>
-            <li>No analytics or usage tracking</li>
-            <li>No advertising identifiers</li>
-            <li>No crash reporting to third-party services</li>
-            <li>No email addresses, names, or account information</li>
-            <li>No server-side storage of conversations, audio, or personal data</li>
-          </ul>
-        </Section>
-
         <Section title="Authentication" textSecondary={textSecondary} linkColor={linkColor}>
           <p>
-            The app uses Sign in with Apple for authentication. Apple provides an
-            anonymous, app-scoped user identifier — no email address or personal
-            information is requested or stored.
+            The app does not require account creation or sign-in. There is no
+            authentication system — no user accounts, no passwords, and no user
+            identifiers are generated or stored. Each installation is anonymous
+            and self-contained.
           </p>
         </Section>
 
-        <Section title="Children" textSecondary={textSecondary} linkColor={linkColor}>
-          <p>Havana is not intended for users under 17.</p>
+        <Section title="Data Stored on Your Device" textSecondary={textSecondary} linkColor={linkColor}>
+          <p>The app stores the following data locally on your device:</p>
+          <ul>
+            <li>
+              <strong>Gemini API key</strong> — stored in the iOS Keychain,
+              encrypted and accessible only when your device is unlocked. This
+              key is provided by you and is never sent to our servers.
+            </li>
+            <li>
+              <strong>Session summaries</strong> — topic, themes, duration, and
+              vocabulary notes from your conversations. These contain no
+              personally identifiable information or verbatim quotes.
+            </li>
+            <li>
+              <strong>Feed cards</strong> — language corrections derived from
+              your conversations (what you said, a better alternative, and why).
+              No personal information is included.
+            </li>
+            <li>
+              <strong>Preferences</strong> — your selected language, learning
+              goals, and app settings.
+            </li>
+          </ul>
+          <p>No email address, name, or personal information is requested or stored.</p>
         </Section>
 
-        <Section title="Changes" textSecondary={textSecondary} linkColor={linkColor}>
+        <Section title="Data Sent to Third Parties" textSecondary={textSecondary} linkColor={linkColor}>
           <p>
-            If this policy changes, the updated version will be posted here with a
-            new "last updated" date.
+            During a conversation, your voice audio is streamed directly to
+            Google's Gemini API for real-time processing. After the conversation,
+            your transcript is sent to Google's Gemini API once for analysis. In
+            both cases:
           </p>
+          <ul>
+            <li>
+              Audio and transcript data are processed in real time and are{' '}
+              <strong>not stored on your device</strong>.
+            </li>
+            <li>
+              Google's Gemini API (paid tier) does not use your data to train or
+              improve Google products. Logs are retained briefly for abuse
+              monitoring only.
+            </li>
+            <li>
+              No data is sent to any server operated by us. All communication is
+              directly between your device and Google's Gemini API.
+            </li>
+          </ul>
         </Section>
 
-        <Section title="Contact" textSecondary={textSecondary} linkColor={linkColor}>
+        <Section title="No Backend" textSecondary={textSecondary} linkColor={linkColor}>
           <p>
-            Questions about this policy can be sent to{' '}
-            <a href="mailto:ben.yamron@gmail.com">ben.yamron@gmail.com</a>.
+            The app has no backend server. There is no server-side storage of
+            your data, no analytics collection, and no telemetry. Your data lives
+            on your device and nowhere else (aside from the transient processing
+            by Google's Gemini API described above).
           </p>
         </Section>
       </main>

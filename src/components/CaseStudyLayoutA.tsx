@@ -7,7 +7,7 @@ import { narrativeStyle } from '@/styles/shared'
 const Lottie = lazy(() => import('lottie-react'))
 
 const DEFAULT_CONTACT_CTA =
-  'Want the details? <a href="mailto:ben.yamron@icloud.com" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
+  'Want more details? <a href="mailto:ben.yamron@icloud.com" data-contact-card data-border-radius="8" style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
 
 interface CaseStudyLayoutAProps {
   data: CaseStudy
@@ -96,16 +96,30 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   ) : null
 
   // Text content — narrative paragraphs or subtitle fallback
-  const textContent = narrative.map((html, i) => (
-    <p
-      key={i}
-      style={{
-        ...narrativeStyle,
-        marginBottom: i < narrative.length - 1 ? 16 : 0,
-      }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  ))
+  const textContent = (
+    <>
+      <style>{`
+        .cs-narrative strong {
+          color: var(--cs-strong-color, var(--text-dark));
+          font-weight: var(--cs-strong-weight, 300);
+        }
+      `}</style>
+      {narrative.map((html, i) => (
+        <p
+          key={i}
+          className="cs-narrative"
+          style={{
+            ...narrativeStyle,
+            fontFamily: 'var(--cs-body-font, ' + narrativeStyle.fontFamily + ')',
+            fontSize: 'var(--cs-body-size, ' + narrativeStyle.fontSize + ')',
+            color: 'var(--cs-body-color, ' + narrativeStyle.color + ')',
+            marginBottom: i < narrative.length - 1 ? 16 : 0,
+          }}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ))}
+    </>
+  )
 
   const paperLinksContent = paperLinks?.length ? (
     <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -142,7 +156,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
 
   if (isNarrow) {
     return (
-      <article style={{ padding: 'calc(var(--layout-padding-top) + 32px) var(--layout-margin) var(--layout-padding-top)' }}>
+      <article style={{ padding: 'calc(var(--cs-top-padding, var(--layout-padding-top)) + 32px) var(--layout-margin) var(--layout-padding-top)' }}>
         <motion.div
           ref={narrativeRef}
           initial={{ opacity: 0 }}
@@ -152,12 +166,12 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
         >
           <h1
             style={{
-              fontSize: 'var(--text-size-section-heading)',
+              fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
               fontFamily: "'Literata', serif",
               fontWeight: 300,
               lineHeight: 1.2,
               color: 'var(--text-dark)',
-              marginBottom: 24,
+              marginBottom: 'var(--cs-heading-spacing, 24px)',
             }}
           >
             {data.title}
@@ -190,18 +204,17 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
 
   return (
     <article>
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
-        {/* Left column — title + narrative + contact */}
-        <div
-          style={{
-            width: '50%',
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            padding: 'var(--layout-padding-top) var(--layout-margin)',
-          }}
-        >
+      {/* Left column — scrollable text */}
+      <div
+        style={{
+          width: '50%',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: 'var(--cs-top-padding, var(--layout-padding-top)) var(--layout-margin)',
+        }}
+      >
           <motion.div
             ref={narrativeRef}
             initial={{ opacity: 0 }}
@@ -211,12 +224,12 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           >
             <h1
               style={{
-                fontSize: 'var(--text-size-section-heading)',
+                fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
                 fontFamily: "'Literata', serif",
                 fontWeight: 300,
                 lineHeight: 1.2,
                 color: 'var(--text-dark)',
-                marginBottom: 24,
+                marginBottom: 'var(--cs-heading-spacing, 24px)',
               }}
             >
               {data.title}
@@ -239,23 +252,22 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           </motion.div>
         </div>
 
-        {/* Right column — sticky media */}
-        <div style={{ width: '50%' }}>
-          <div
-            style={{
-              position: 'sticky',
-              top: 0,
-              height: '100vh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 'var(--layout-padding-top) var(--layout-margin)',
-            }}
-          >
-            {mediaElement}
-          </div>
+        {/* Right column — fixed media (mirrors home page RightColumn) */}
+        <div
+          style={{
+            width: '50%',
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'var(--layout-padding-top) var(--layout-margin)',
+          }}
+        >
+          {mediaElement}
         </div>
-      </div>
     </article>
   )
 }
