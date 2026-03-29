@@ -2,39 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
-## 2026-03-29 — Fix tooltip overflow in contribution heatmap
+## 2026-03-29 — Fix UI bugs: selection contrast, summary overflow, sidebar keyboard accessibility
 
-**Branch:** `tooltip-overflow-fix`
+**Branch:** `investigate-ui-bugs`
 
-**Summary:** Fixed two tooltip clipping issues in the contribution heatmap: (1) tooltips on top-row cells were cut off by the container edge — now dynamically flip below the cell when there isn't enough space above; (2) tooltips were clipped by `overflow: hidden` on the expand animation wrapper — now toggle to `overflow: visible` after the animation completes.
-
-**Decisions:**
-- Used an estimated tooltip height (35px) to decide flip direction rather than measuring the DOM, keeping it simple and avoiding layout thrashing.
-- Added `expandAnimDone` state driven by Framer Motion's `onAnimationComplete`/`onAnimationStart` callbacks to safely toggle overflow only after the expand animation finishes.
-
----
-
-## 2026-03-29 — Shake + pulse nudge on coming-soon card click
-
-**Branch:** `shake-coming-soon`
-
-**Summary:** Added a shake-and-pulse animation ("nudge") to the "coming soon" cursor label when users click a non-link project card. Repurposed the sidebar jiggle concept with improved motion design — asymmetric dampening shake with a lagging scale swell. Works in both standard cursor (CursorCompanion) and invert cursor (CustomCursor) modes.
+**Summary:** Three surgical fixes for visual/interaction bugs: (1) dark-mode text selection now uses light text on accent background instead of white-on-accent which was unreadable, (2) long project summaries (e.g. Priority) no longer overflow below the image container — clamped to `TEXT_ZONE_HEIGHT` with `overflow: hidden`, (3) sidebar keyboard navigation fixed — trigger focus ring no longer clipped by `overflow: hidden`, swatch/mode/cursor buttons now show focus rings via CSS override of inline `outline: none`, and all controls use `tabIndex={hovered ? 0 : -1}` so collapsed sidebar controls are removed from tab order.
 
 **Decisions:**
-- Used CSS `translate` property (not `transform`) for CursorCompanion positioning so the nudge keyframe's `transform` doesn't conflict. For invert mode, wrapped text in an inner `<span>` so the parent keeps its `scale(0/1)` show/hide transform.
-- Combined shake + pulse into a single `coming-soon-nudge` keyframe rather than layering two animations — scale peaks at 30% (lagging behind first shake hit at 12%) for a more physical feel.
-- Used `cubic-bezier(0.2, 0, 0, 1)` for sharp attack / soft tail, matching click-response expectations.
+- Moved keyboard props (`role`, `tabIndex`, ARIA, `onKeyDown`) from the 40×40 hit area to the 16×16 parent dot so the focus ring fits within the sidebar container bounds. Touch click stays on the inner div.
+- Used `[data-sidebar-control]:focus-visible` with `!important` in CSS to override inline `outline: 'none'` — pragmatic fix since inline styles were the root cause.
+- Selection color fix scoped to `[data-theme="dark"]` only — light mode selection was already correct.
 
 ---
-
-## 2026-03-29 — Update Havana privacy policy
-
-**Branch:** `update-havana-privacy-policy`
-
-**Summary:** Updated the Havana privacy policy page with two new sections (iCloud Sync, No App Backend replacing the old No Backend), updated the "last updated" date to March 29, 2026, and refined the No Backend copy to clarify "operated by us" and reference iCloud storage.
-
----
-
 
 ## 2026-03-28 — Add today indicator to contribution heatmap
 
