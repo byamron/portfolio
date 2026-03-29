@@ -154,7 +154,6 @@ interface TooltipState {
   text: string
   x: number
   y: number
-  cellHeight: number
 }
 
 const CURRENT_YEAR = new Date().getFullYear()
@@ -169,7 +168,6 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
   const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
   const [isHoveringGrid, setIsHoveringGrid] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [expandAnimDone, setExpandAnimDone] = useState(false)
   const hasExpandedOnce = useRef(false)
   const [scrollOpacity, setScrollOpacity] = useState(0.3)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -274,7 +272,6 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
       text: getTooltipText(cell.date, cell.count),
       x: cellRect.left + cellRect.width / 2 - containerRect.left,
       y: cellRect.top - containerRect.top,
-      cellHeight: cellRect.height,
     })
   }, [grid])
 
@@ -580,20 +577,18 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
         const nearLeft = tooltip.x < 80
         const nearRight = tooltip.x > containerWidth - 80
         const left = nearLeft ? 0 : nearRight ? containerWidth : tooltip.x
-        const horizontalTranslate = nearLeft ? '0' : nearRight ? '-100%' : '-50%'
-        // Dynamically check if tooltip fits above the cell; estimated tooltip height ~35px
-        const tooltipEstHeight = 35
-        const gap = 8
-        const showBelow = tooltip.y - gap - tooltipEstHeight < 0
-        const top = showBelow ? tooltip.y + tooltip.cellHeight + gap : tooltip.y - gap
-        const verticalTranslate = showBelow ? '0' : '-100%'
+        const transform = nearLeft
+          ? 'translate(0, -100%)'
+          : nearRight
+            ? 'translate(-100%, -100%)'
+            : 'translate(-50%, -100%)'
         return (
           <div
             style={{
               position: 'absolute',
               left,
-              top,
-              transform: `translate(${horizontalTranslate}, ${verticalTranslate})`,
+              top: tooltip.y - 8,
+              transform,
               padding: '6px 10px',
               borderRadius: 6,
               fontSize: 'var(--text-size-small)',
@@ -820,7 +815,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
         >
           {/* Header row — click to toggle collapsed/expanded */}
           <button
-            onClick={() => { if (!isExpanded) hasExpandedOnce.current = true; setExpandAnimDone(false); setIsExpanded(v => !v) }}
+            onClick={() => { if (!isExpanded) hasExpandedOnce.current = true; setIsExpanded(v => !v) }}
             onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.025)' } }}
             onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = 'transparent' } }}
             style={{ display: 'flex', alignItems: 'baseline', gap: 12, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
@@ -910,9 +905,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
                   initial={anim.initial}
                   animate={anim.animate}
                   exit={anim.exit}
-                  onAnimationComplete={() => setExpandAnimDone(true)}
-                  onAnimationStart={() => setExpandAnimDone(false)}
-                  style={{ overflow: expandAnimDone ? 'visible' : 'hidden', transformOrigin: 'top center' }}
+                  style={{ overflow: 'hidden', transformOrigin: 'top center' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
                     {svgContent}
