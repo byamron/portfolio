@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "script": "config",
+  "fingerprint": "309df80a3b70cd36468b8e3e6ad7b1aecf6a800bc6b215d66c7bb58f5955922c",
+  "result": {
+    "timestamp": "2026-03-29T21:23:55.205365Z",
+    "project_root": "/Users/benyamron/conductor/workspaces/portfolio-site/santa-fe",
+    "context_budget": {
+      "claude_md_lines": 151,
+      "claude_local_md_lines": 0,
+      "rules_count": 0,
+      "rules_total_lines": 0,
+      "skills_count": 2,
+      "agents_count": 0,
+      "hooks_count": 0,
+      "estimated_tier1_lines": 151
+    },
+    "existing_skills": [
+      {
+        "name": "link",
+        "description": "Start a dev server for testing. Use this PROACTIVELY after completing any feature implementation, bug fix, or code change \u2014 do not wait for the user to ask. Also use when the user explicitly requests a dev server or test link.",
+        "content": "# /link \u2014 Start dev server and send test link\n\nYou are starting (or reconnecting to) a dev server for this workspace. Follow these steps:\n\n## Step 1: Derive a deterministic port and check for conflicts\n\nTo avoid port collisions across parallel worktrees, compute a stable port from the current working directory, then verify no other worktree is using it.\n\nRun this as a single bash command:\n\n```bash\n# Hash the workspace path to a port in range 3100\u20133999\nPORT=$((3100 + $(echo -n \"$PWD\" | shasum | cut -c1-4 | xargs -I{} printf '%d' 0x{}) % 900))\n\n# Check if something is already running on this port\nPID=$(lsof -i :$PORT -t 2>/dev/null | head -1)\n\nif [ -n \"$PID\" ]; then\n  # Verify the process belongs to THIS workspace (not another worktree)\n  PROC_CWD=$(lsof -a -p \"$PID\" -d cwd -Fn 2>/dev/null | grep '^n' | sed 's/^n//')\n  if [ \"$PROC_CWD\" = \"$PWD\" ]; then\n    echo \"REUSE=$PORT\"\n  else\n    # Port taken by a different workspace \u2014 find the next free port\n    while lsof -i :$PORT -t >/dev/null 2>&1; do\n      PORT=$((PORT + 1))\n    done\n    echo \"START=$PORT\"\n  fi\nelse\n  echo \"START=$PORT\"\nfi\n```\n\n- If output is `REUSE=<port>`: a dev server for this workspace is already running. Skip to Step 3.\n- If output is `START=<port>`: no server running. Proceed to Step 2.\n\n## Step 2: Start the dev server\n\nRun in the background using the port from Step 1:\n\n```bash\nnpm run dev -- --port $PORT\n```\n\nWait briefly, then confirm it started by checking the output for \"ready\" or \"Local:\".\n\n## Step 3: Send the test link\n\nEnd your message with the test link, formatted clearly:\n\n```\nDev server: http://localhost:$PORT/\n```\n\nReplace `$PORT` with the actual port number. If you navigated to a specific route during implementation (e.g., a case study page), include that deep link too.",
+        "path": "/Users/benyamron/conductor/workspaces/portfolio-site/santa-fe/.claude/commands/link.md",
+        "format": "legacy_command"
+      },
+      {
+        "name": "push",
+        "description": "",
+        "content": "# /push \u2014 Update docs, commit, PR, and merge to next-update\n\nYou are running the `/push` workflow for the portfolio site. Follow every step in order. Do not skip steps.\n\n## Step 1: Pre-flight checks\n\n- Run `git status` to see what's changed.\n- Run `git branch --show-current` to confirm you're on a feature branch (not `main` or `next-update`). If you're on `main` or `next-update`, **stop and tell the user** they need to be on a feature branch.\n- Run `git log next-update..HEAD --oneline` to see what commits are being contributed.\n\n## Step 2: Update core docs\n\nRead the following files, then update them based on the work done on this branch:\n\n### `core-docs/history.md`\n- Add a new entry at the top (reverse chronological order) with:\n  - **Date**: today's date\n  - **Summary**: what was built or changed\n  - **Decisions**: key decisions and reasoning\n  - **Branch**: current branch name\n- Keep the entry concise \u2014 3-6 lines max.\n\n### `core-docs/plan.md`\n- If any planned phases or tasks were completed by this work, mark them done.\n- If scope changed, reflect it.\n- Only update if relevant \u2014 skip if the work doesn't affect the plan.\n\n### `core-docs/feedback.md`\n- Only update if there were mistakes or rejected approaches during this work that should be recorded for future reference.\n- Skip if everything went smoothly.\n\n## Step 3: Commit\n\n- Stage all changes (updated docs + any uncommitted work): `git add -A`\n- Review what's staged with `git diff --cached --stat` to confirm nothing unexpected is included.\n- Write a clear commit message summarizing the work. End with the co-author line.\n- Commit.\n\n## Step 4: Push and open PR\n\n- Push the branch to origin: `git push -u origin HEAD`\n- Create a PR targeting `next-update` using `gh pr create`:\n  - Title: concise summary of the work (under 70 chars)\n  - Body format:\n    ```\n    ## Summary\n    - <bullet points of what changed>\n\n    ## Core docs updated\n    - history.md: \u2705\n    - plan.md: \u2705 or \u23ed\ufe0f (skipped \u2014 not relevant)\n    - feedback.md: \u2705 or \u23ed\ufe0f (skipped \u2014 no issues)\n\n    \ud83e\udd16 Generated with [Claude Code](https://claude.com/claude-code)\n    ```\n  - Base branch: `next-update`\n\n## Step 5: Merge the PR\n\n- Merge the PR into `next-update`: `gh pr merge --squash --delete-branch`\n- Confirm the merge succeeded.\n\n## Step 6: Report\n\nTell the user:\n- \u2705 What was committed\n- \u2705 PR URL\n- \u2705 Merged into `next-update`",
+        "path": "/Users/benyamron/conductor/workspaces/portfolio-site/santa-fe/.claude/commands/push.md",
+        "format": "legacy_command"
+      }
+    ],
+    "existing_agents": [],
+    "existing_hooks": [],
+    "tech_stack": {
+      "detected": [
+        "node",
+        "react",
+        "typescript"
+      ],
+      "package_manager": "npm",
+      "formatter": null,
+      "linter": "eslint",
+      "test_framework": "vitest"
+    },
+    "gaps": [
+      {
+        "type": "missing_hook",
+        "severity": "high",
+        "description": "eslint detected but no PostToolUse auto-lint hook configured for Write/Edit operations.",
+        "suggested_artifact": "hook",
+        "detail": {
+          "hook_event": "PostToolUse",
+          "matcher": "Write|Edit",
+          "linter": "eslint"
+        }
+      },
+      {
+        "type": "missing_hook",
+        "severity": "low",
+        "description": "Test framework 'vitest' detected but no hook runs tests automatically.",
+        "suggested_artifact": "hook",
+        "detail": {
+          "test_framework": "vitest"
+        }
+      }
+    ],
+    "placement_issues": [
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 19,
+        "content": "| `core-docs/initial-implementation.md` | React component architecture: Framer\u2192React mapping, contexts, decisions | When architectural approach changes |",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions a framework name)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 37,
+        "content": "This is a React migration of a Framer-based portfolio site. All original Framer component behavior has been extracted into `core-docs/design-language.md` \u2014 the reference `.tsx` files have been removed. The React rebuild replicates the visual and interactive behavior using idiomatic React patterns.",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions specific file extensions, mentions a framework name)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 43,
+        "content": "- **Tailwind v4** uses CSS-first config via `@tailwindcss/vite` plugin. No `tailwind.config.js`.",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions specific file extensions)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 44,
+        "content": "- **CSS import order** in `src/styles/globals.css`: `tailwindcss` \u2192 `./theme.css` (portfolio tokens).",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions a specific directory)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 45,
+        "content": "- Subframe was previously used as a component library but has been removed. All UI is now built with portfolio-specific components in `src/components/`.",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions a specific directory)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 49,
+        "content": "- **Theme system**: 4 accent colors (table, portrait, sky, pizza) \u00d7 3 appearance modes (system/light/dark). CSS custom properties drive all color changes. Dark mode default. React Context + CSS variables replace Framer's `window.__themeState`. All token values (text, background, swatch) are documented in `tokens.md`.",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions a framework name)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 58,
+        "content": "- **Tokenized**: All sizes use CSS custom properties (`--text-size-*`) defined in `src/styles/theme.css`",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions a specific directory)."
+      },
+      {
+        "type": "domain_specific_in_claude_md",
+        "severity": "medium",
+        "line_number": 73,
+        "content": "- Replace all `window.__*` global state with React Context providers",
+        "suggestion": "Consider moving to a scoped rule in .claude/rules/ with path frontmatter (mentions a framework name)."
+      }
+    ]
+  }
+}
