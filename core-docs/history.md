@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Update Havana privacy policy
+
+**Branch:** `update-havana-privacy-policy`
+
+**Summary:** Updated the Havana privacy policy page with two new sections (iCloud Sync, No App Backend replacing the old No Backend), updated the "last updated" date to March 29, 2026, and refined the No Backend copy to clarify "operated by us" and reference iCloud storage.
+
+---
+
 ## 2026-03-28 — Add today indicator to contribution heatmap
 
 **Branch:** `fix-github-viz-timing`

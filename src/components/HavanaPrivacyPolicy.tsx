@@ -53,7 +53,7 @@ export function HavanaPrivacyPolicy() {
               Havana — Voice Language Practice
             </p>
             <p style={{ fontSize: 14, color: textMuted }}>
-              Last updated: March 28, 2026
+              Last updated: March 29, 2026
             </p>
           </div>
 
@@ -152,12 +152,23 @@ export function HavanaPrivacyPolicy() {
           </ul>
         </Section>
 
-        <Section title="No Backend" textSecondary={textSecondary} linkColor={linkColor}>
+        <Section title="iCloud Sync" textSecondary={textSecondary} linkColor={linkColor}>
           <p>
-            The app has no backend server. There is no server-side storage of
-            your data, no analytics collection, and no telemetry. Your data lives
-            on your device and nowhere else (aside from the transient processing
-            by Google's Gemini API described above).
+            When iCloud Sync is enabled (the default), your feed cards, session
+            summaries, and spaced repetition state sync to your private iCloud
+            database via Apple's CloudKit. This data is stored in your personal
+            iCloud account and is not accessible to us. You can disable iCloud
+            Sync at any time in Settings — the app falls back to local-only
+            storage with no data loss.
+          </p>
+        </Section>
+
+        <Section title="No App Backend" textSecondary={textSecondary} linkColor={linkColor}>
+          <p>
+            The app has no backend server operated by us. There is no server-side
+            storage of your data on our infrastructure, no analytics collection,
+            and no telemetry. Your data lives on your device and, if iCloud Sync
+            is enabled, in your private iCloud account.
           </p>
         </Section>
       </main>
