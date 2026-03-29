@@ -124,6 +124,15 @@ describe('formatDate', () => {
 })
 
 describe('getTooltipText', () => {
+  it('returns "in progress" message for today', () => {
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    const result = getTooltipText(todayStr, 5)
+    expect(result).toMatch(/^Today,/)
+    expect(result).toContain('contributions in progress')
+  })
+
   it('returns "yet" message for future dates', () => {
     expect(getTooltipText('2099-12-31', 0)).toBe('No contributions (yet)')
   })

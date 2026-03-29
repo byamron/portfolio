@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Add today indicator to contribution heatmap
+
+**Branch:** `fix-github-viz-timing`
+
+**Summary:** Added a visual "today" indicator to the contribution heatmap so the grid no longer looks a couple days behind (the 0-count cell for today was nearly invisible). Today's cell now has an inset accent-colored border, and hovering it shows a witty tooltip: "Today, March 28th — contributions in progress."
+
+**Decisions:**
+- Used an inset stroke (not outer border or fill) for the today indicator — outer border clipped against the container, fill was invisible against cell backgrounds. Inset stroke with accent hue at 50-55% saturation renders clearly in both modes.
+- Tooltip distinguishes today (`=== today`) from future dates (`> today`) — today gets the "contributions in progress" message, future dates keep "No contributions (yet)."
+
+---
+
 ## 2026-03-28 — Fix glass pill persisting when cursor leaves card
 
 **Branch:** `fix-hover-persist-bug`
