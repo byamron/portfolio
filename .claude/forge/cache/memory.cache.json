@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "script": "memory",
+  "fingerprint": "c22cbefce4a233cd092ca4dd08072332867b160fdd0b563a04a5571cb731d165",
+  "result": {
+    "timestamp": "2026-03-29T21:23:56.392794Z",
+    "auto_memory": {
+      "exists": false,
+      "memory_md_lines": 0,
+      "topic_files": [],
+      "promotable_notes": []
+    },
+    "claude_local_md": {
+      "exists": false,
+      "lines": 0,
+      "domain_specific_entries": [],
+      "redundant_entries": []
+    }
+  }
+}

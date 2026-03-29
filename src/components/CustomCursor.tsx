@@ -52,6 +52,7 @@ export function CustomCursor() {
   const arrowRef = useRef<HTMLDivElement | null>(null)
   const handRef = useRef<HTMLDivElement | null>(null)
   const comingSoonRef = useRef<HTMLDivElement | null>(null)
+  const comingSoonTextRef = useRef<HTMLSpanElement | null>(null)
   const figpalRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
@@ -171,9 +172,12 @@ export function CustomCursor() {
         transform: 'scale(0)',
         transition: reducedMotion.current ? 'none' : `transform 300ms ${CIRCLE_EASING}`,
       })
-      comingSoon.textContent = 'coming soon'
+      const comingSoonText = document.createElement('span')
+      comingSoonText.textContent = 'coming soon'
+      comingSoon.appendChild(comingSoonText)
       container.appendChild(comingSoon)
       comingSoonRef.current = comingSoon
+      comingSoonTextRef.current = comingSoonText
 
       // Circle — disc that scales down to reveal arrow/hand/coming-soon
       const circle = document.createElement('div')
@@ -489,6 +493,7 @@ export function CustomCursor() {
       arrowRef.current = null
       handRef.current = null
       comingSoonRef.current = null
+      comingSoonTextRef.current = null
       figpalRef.current = null
     }
   }, [cursorMode, cursorTintMode, isTouch])
@@ -574,6 +579,21 @@ export function CustomCursor() {
       }
     }
   }, [hoveredProjectId, hoveringLink, cursorMode])
+
+  // Jiggle "coming soon" label when a non-link card is clicked (invert mode)
+  useEffect(() => {
+    if (cursorMode !== 'invert') return
+    const handler = () => {
+      const el = comingSoonTextRef.current
+      if (!el || cursorContentRef.current !== 'coming-soon') return
+      el.classList.remove('coming-soon-nudge')
+      void el.offsetHeight
+      el.classList.add('coming-soon-nudge')
+      el.addEventListener('animationend', () => el.classList.remove('coming-soon-nudge'), { once: true })
+    }
+    document.addEventListener('coming-soon-clicked', handler)
+    return () => document.removeEventListener('coming-soon-clicked', handler)
+  }, [cursorMode])
 
   // Braille animation on cursor arrow when a project link is clicked
   useEffect(() => {
