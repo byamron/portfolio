@@ -2,6 +2,88 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-28 — Add today indicator to contribution heatmap
+
+**Branch:** `fix-github-viz-timing`
+
+**Summary:** Added a visual "today" indicator to the contribution heatmap so the grid no longer looks a couple days behind (the 0-count cell for today was nearly invisible). Today's cell now has an inset accent-colored border, and hovering it shows a witty tooltip: "Today, March 28th — contributions in progress."
+
+**Decisions:**
+- Used an inset stroke (not outer border or fill) for the today indicator — outer border clipped against the container, fill was invisible against cell backgrounds. Inset stroke with accent hue at 50-55% saturation renders clearly in both modes.
+- Tooltip distinguishes today (`=== today`) from future dates (`> today`) — today gets the "contributions in progress" message, future dates keep "No contributions (yet)."
+
+---
+
+## 2026-03-28 — Fix glass pill persisting when cursor leaves card
+
+**Branch:** `fix-hover-persist-bug`
+
+**Summary:** Fixed a bug where the glass highlight pill would stay visible indefinitely when the cursor left a card but remained within the vertical bounds of the card stack. The old logic cancelled the clear timer in that case, keeping the pill alive. Simplified to always start the clear timer on leaving a card — entering a new card naturally cancels it.
+
+**Decisions:**
+- Removed the `shouldClear` / `isCursorInCardStack` gating that prevented the clear timer from starting. Retained `isCursorInCardStack` only for computing a longer delay (400ms) when leaving tight-bounds cards, giving the cursor time to reach the next card.
+
+---
+
+## 2026-03-28 — Add personal projects section
+
+**Branch:** `add-personal-projects-section`
+
+**Summary:** Added personal projects section with "In progress" status indicators, refactored LeftColumn to render sections data-driven from `projects.ts`, extracted shared `narrativeStyle` to `src/styles/shared.ts`, extended ContributionHeatmap with collapsible/animated display modes (collapsed, sparkline, mono, glass, etc.), and added `--status-green` token. Review fixes: documented IBM Plex Mono as an allowed exception for `<code>` data values, added `useReducedMotion` to ContributionHeatmap for Framer Motion animations, added `role="group"` + `aria-label` to non-link project cards, updated `tokens.md` with `--status-green`.
+
+**Decisions:**
+- IBM Plex Mono is a documented exception to the two-typeface rule — functional requirement for `<code>` elements displaying numeric data.
+- Non-link project cards keep `tabIndex={0}` for keyboard discovery but use `role="group"` to avoid being announced as links.
+- Framer Motion `useReducedMotion` zeroes all animation durations when user prefers reduced motion (CSS rules only cover CSS animations).
+
+---
+
+## 2026-03-28 — Add Havana privacy policy page
+
+**Branch:** `havana-privacy-policy`
+
+**Summary:** Added a standalone privacy policy page for the Havana language practice app at `/havana/privacy`. The page is not linked from anywhere on the site — only accessible via direct URL (for App Store compliance). Uses a neutral white/dark background (no accent tinting), includes an inline light/dark/system mode toggle, and hides the sidebar/custom cursor on `/havana/*` routes without refactoring the sidebar system.
+
+**Decisions:**
+- Route lives under `/havana/privacy` — no parent `/havana` route needed, React Router handles it independently.
+- Sidebar, custom cursor, and cursor companion conditionally hidden via `pathname.startsWith('/havana/')` check in a new `AppContent` wrapper component in App.tsx.
+- Page uses hardcoded neutral colors rather than theme CSS variables to stay visually independent from the portfolio's accent color system.
+
+---
+
+## 2026-03-28 — Fill link preview images like portraits
+
+**Branch:** `fill-link-preview-images`
+
+**Summary:** Made resume and LinkedIn hover previews fill the right column like portrait images do — height fills the container, aspect ratio preserved (slightly narrower than portraits). Removed the drop-shadow from static link previews since they now fill the frame and the shadow created hard-cornered artifacts from the rectangular PNG.
+
+**Decisions:**
+- Static link previews (resume, LinkedIn) get portrait-like wrapper treatment: `height: 100%`, `object-fit: contain`, no background color, no text zone padding.
+- Drop-shadow removed for static link previews — it traced the rectangular PNG edge rather than the CSS border-radius, creating a sloppy outline.
+- Wrapper `borderRadius` only applied to portraits (link preview images have their own `borderRadius: 32`).
+
+---
+
+## 2026-03-28 — Update resume PDF and hover preview
+
+**Branch:** `update-resume`
+
+**Summary:** Replaced resume PDF and regenerated the hover preview image at 2x resolution (1224×1584px) from the PDF using macOS Quick Look. The previous preview was 612×792px (72 DPI) and appeared blurry on Retina displays.
+
+**Decisions:**
+- Rendered preview at 2x (144 DPI) for Retina sharpness. File size increase (141KB → 336KB) is acceptable for a one-time-load hover image.
+- Used `qlmanage` to render from the PDF directly, avoiding manual export quality issues.
+
+---
+
+## 2026-03-27 — Update About section subtitle copy
+
+**Branch:** `update-hero-subtitle`
+
+**Summary:** Changed the About section subtitle from "health, community, and other human stuff" to "productivity, community, health, and other human stuff" — adding "productivity" to better reflect the range of work.
+
+---
+
 ## 2026-03-25 — Build review: fix TS errors, optimize bundle, compress Sony video
 
 **Branch:** `next-update`

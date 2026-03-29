@@ -402,28 +402,23 @@ function setupGlassHighlight(
         removeScrollListeners()
         return
       }
-      // Cursor moved to a non-card area
-      const cardTight = currentCard?.hasAttribute('data-tight-bounds')
-      const inStack = isCursorInCardStack(e.clientX, e.clientY)
-      const shouldClear = configRef.current.tightBounds || cardTight || !inStack
-      if (currentCard && shouldClear) {
-        if (!clearTimer) {
-          // Longer delay when leaving a tight-bounds card toward other cards,
-          // so the cursor has time to reach the next card and cancel the timer
-          const base = configRef.current.clearDelay
-          const delay = (cardTight && inStack) ? Math.max(base, 400) : base
-          clearTimer = setTimeout(() => {
-            clearTimer = null
-            currentCard = null
-            fadeOut()
-            stopLoop()
-            removeScrollListeners()
-          }, delay)
-        }
-      } else if (clearTimer) {
-        // Cursor moved back into card stack bounds — cancel pending clear
-        clearTimeout(clearTimer)
-        clearTimer = null
+      // Cursor moved to a non-card area — always start clear timer.
+      // If the cursor reaches another card before it fires, handleMouseOver
+      // cancels the timer and the pill slides seamlessly to the new card.
+      if (currentCard && !clearTimer) {
+        const cardTight = currentCard.hasAttribute('data-tight-bounds')
+        const base = configRef.current.clearDelay
+        // Longer delay when leaving a tight-bounds card toward other cards,
+        // so the cursor has time to reach the next card and cancel the timer
+        const inStack = isCursorInCardStack(e.clientX, e.clientY)
+        const delay = (cardTight && inStack) ? Math.max(base, 400) : base
+        clearTimer = setTimeout(() => {
+          clearTimer = null
+          currentCard = null
+          fadeOut()
+          stopLoop()
+          removeScrollListeners()
+        }, delay)
       }
       return
     }
