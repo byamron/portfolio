@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Fix UI bugs: selection contrast, summary overflow, sidebar keyboard accessibility
+
+**Branch:** `investigate-ui-bugs`
+
+**Summary:** Three surgical fixes for visual/interaction bugs: (1) dark-mode text selection now uses light text on accent background instead of white-on-accent which was unreadable, (2) long project summaries (e.g. Priority) no longer overflow below the image container — clamped to `TEXT_ZONE_HEIGHT` with `overflow: hidden`, (3) sidebar keyboard navigation fixed — trigger focus ring no longer clipped by `overflow: hidden`, swatch/mode/cursor buttons now show focus rings via CSS override of inline `outline: none`, and all controls use `tabIndex={hovered ? 0 : -1}` so collapsed sidebar controls are removed from tab order.
+
+**Decisions:**
+- Moved keyboard props (`role`, `tabIndex`, ARIA, `onKeyDown`) from the 40×40 hit area to the 16×16 parent dot so the focus ring fits within the sidebar container bounds. Touch click stays on the inner div.
+- Used `[data-sidebar-control]:focus-visible` with `!important` in CSS to override inline `outline: 'none'` — pragmatic fix since inline styles were the root cause.
+- Selection color fix scoped to `[data-theme="dark"]` only — light mode selection was already correct.
+
+---
+
 ## 2026-03-28 — Add today indicator to contribution heatmap
 
 **Branch:** `fix-github-viz-timing`
