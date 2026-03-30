@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const Lottie = lazy(() => import('lottie-react'))
@@ -16,16 +16,13 @@ const summaryStyle: React.CSSProperties = {
   fontSize: 'var(--text-size-summary)',
 }
 
-const reducedMotion =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 // Fixed height for text zone — always allocated so the image area never resizes
 const TEXT_ZONE_HEIGHT = 120
 
 export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
+  const reducedMotion = useReducedMotion()
   const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
   const linkPreview = hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null
   const lottieUrl = project?.lottiePreview ?? null
