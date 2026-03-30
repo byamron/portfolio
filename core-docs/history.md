@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-30 — Tune glass lean/tilt: configurable, subtler, reduced-motion safe
+
+**Branch:** `reduce-card-text-wobble`
+
+**Summary:** Extracted hardcoded pill lean (2.5px), pill tilt (0.75deg), and card text lean (1.8px) values into the `GlassConfig` interface so they can be tuned per-instance. Reduced defaults to pill lean 1.5px, tilt 0.5deg, dead zone 0.5, card lean 1.2px — still perceptible as a subtle refraction effect but no longer distracting wobble. Explicitly zeroes all lean/tilt properties under `prefers-reduced-motion`.
+
+**Decisions:**
+- Added `pillMaxLean`, `pillMaxTilt`, `pillDeadZone`, `cardMaxLean`, `cardLeanRamp` to `GlassConfig` — previously these were magic numbers inside the RAF loop.
+- Lowered dead zone from 0.78 → 0.5 so lean activates across more of the card area at lower intensity, rather than spiking only at the edges.
+- Used a temporary `GlassDevPanel` with sliders to tune values live, then stripped it before merge per dev-panels policy.
+
+---
+
 ## 2026-03-29 — Reorder homepage projects and update Forge description
 
 **Branch:** `reorder-homepage-projects`
