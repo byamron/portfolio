@@ -6,14 +6,17 @@ import { CursorProvider } from '@/contexts/CursorContext'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
+import { RightColumn } from '@/components/RightColumn'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
 import { preloadPortraitImages, preloadPreviewImages } from '@/utils/preloadImages'
+import { useIsWide } from '@/hooks/useMediaQuery'
 
 function AppContent() {
   const { pathname } = useLocation()
   const isStandalone = pathname.startsWith('/havana/')
+  const isWide = useIsWide()
 
   useEffect(() => { preloadPortraitImages(); preloadPreviewImages() }, [])
 
@@ -31,6 +34,8 @@ function AppContent() {
         <Route path="/project/:slug" element={<CaseStudyPage />} />
         <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
       </Routes>
+      {/* Persistent right column — never unmounts during route transitions */}
+      {isWide && !isStandalone && <RightColumn />}
     </>
   )
 }

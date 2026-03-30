@@ -19,6 +19,7 @@ export function RightColumn() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: isCompact ? 'flex-start' : 'center',
+        viewTransitionName: 'right-column',
       }}
     >
       <ImageDisplay />

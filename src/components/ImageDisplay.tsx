@@ -1,10 +1,13 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMatch } from 'react-router-dom'
 
 const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { projectsById, projectImageMap, defaultImageMap, linkPreviews } from '@/data/projects'
+import { transitionSettings as ts } from '@/contexts/TransitionContext'
+import { projectsById, projectImageMap, defaultImageMap, linkPreviews, getProjectForSlug } from '@/data/projects'
+import { caseStudiesBySlug } from '@/data/case-study-content'
 
 // Projects whose previews need a subtle shadow to separate from the background
 const needsShadow = new Set(['cip-misinfo', 'acorn-covid', 'duo-flags'])
@@ -15,22 +18,33 @@ const summaryStyle: React.CSSProperties = {
   fontSize: 'var(--text-size-summary)',
 }
 
-const reducedMotion =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 // Fixed height for text zone — always allocated so the image area never resizes
 const TEXT_ZONE_HEIGHT = 120
 
 export function ImageDisplay() {
-  const { hoveredProjectId, hoveredLinkId } = useHover()
+  const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
+  const reducedMotion = useReducedMotion()
+  const csDisplayMode = 'metadata' as const
 
-  const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
-  const linkPreview = hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null
+  // Detect case study route
+  const caseStudyMatch = useMatch('/project/:slug')
+  const caseStudySlug = caseStudyMatch?.params.slug ?? null
+  const isCaseStudy = !!caseStudySlug
+  const csProject = caseStudySlug ? getProjectForSlug(caseStudySlug) ?? null : null
+  const caseStudy = caseStudySlug ? caseStudiesBySlug[caseStudySlug] ?? null : null
+
+  // In case study mode: always show that project, ignore hover
+  // On home page: use hover state as before
+  const project = isCaseStudy
+    ? csProject
+    : (hoveredProjectId ? projectsById[hoveredProjectId] : null)
+  const linkPreview = isCaseStudy
+    ? null
+    : (hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null)
   const lottieUrl = project?.lottiePreview ?? null
   const videoUrl = linkPreview?.video ?? project?.videoPreview ?? null
-  const previewDescription = project?.previewDescription ?? null
+  const previewDescription = isCaseStudy ? null : (project?.previewDescription ?? null)
   const hasMedia = !!videoUrl || !!lottieUrl || !!linkPreview || (project && projectImageMap[project.projectId])
   const imageSrc = linkPreview
     ? linkPreview.image ?? null
@@ -49,8 +63,14 @@ export function ImageDisplay() {
             ? project.projectId
             : `default-${accentColor}`
 
-  const summary = linkPreview?.summary ?? project?.summary ?? null
+  // Text zone: on home show summary, on case study show nothing (handled by metadata zone)
+  const summary = isCaseStudy
+    ? null
+    : (linkPreview?.summary ?? project?.summary ?? null)
   const isPreview = !!project || !!linkPreview
+
+  // Whether to allocate bottom padding for the text zone
+  const showTextZone = !isCaseStudy || csDisplayMode === 'metadata'
 
   const showShadow = (project && needsShadow.has(project.id))
   const dropShadow = showShadow
@@ -72,19 +92,21 @@ export function ImageDisplay() {
   }, [])
 
   const handleClick = useCallback(() => {
+    if (isCaseStudy) return // don't cycle accent on case study pages
     cycleAccent()
     triggerSpringPress()
     document.dispatchEvent(new CustomEvent('accent-cycled'))
-  }, [cycleAccent, triggerSpringPress])
+  }, [isCaseStudy, cycleAccent, triggerSpringPress])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isCaseStudy) return
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       cycleAccent()
       triggerSpringPress()
       document.dispatchEvent(new CustomEvent('accent-cycled'))
     }
-  }, [cycleAccent, triggerSpringPress])
+  }, [isCaseStudy, cycleAccent, triggerSpringPress])
 
   // Track whether the current image has loaded to prevent animating to a blank frame
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -129,10 +151,15 @@ export function ImageDisplay() {
     return () => { cancelled = true }
   }, [lottieUrl])
 
+  const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
+
   // Portraits fill with cover; static link previews (resume, LinkedIn) fill like
   // portraits but use contain + background color; project previews use contain with padding.
   const isPortrait = !project && !linkPreview
   const isStaticLinkPreview = !!linkPreview && !linkPreview.video
+
+  // Bottom padding for media area: allocate space for text zone, or none for true-center
+  const mediaBottomPad = showTextZone ? `${TEXT_ZONE_HEIGHT + 24}px` : '0'
 
   const imgStyle: React.CSSProperties = isPortrait
     ? {
@@ -156,7 +183,6 @@ export function ImageDisplay() {
           objectFit: 'contain',
           borderRadius: 32,
           filter: dropShadow,
-          viewTransitionName: project && !lottieUrl ? 'project-hero' : undefined,
         }
 
   const imageWrapperStyle: React.CSSProperties = isPortrait || isStaticLinkPreview
@@ -175,8 +201,17 @@ export function ImageDisplay() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: `0 5% ${TEXT_ZONE_HEIGHT + 24}px`,
+        padding: `0 5% ${mediaBottomPad}`,
       }
+
+  // Metadata for case study text zone
+  const metadataItems = useMemo(() => {
+    if (!isCaseStudy || !csProject || !caseStudy) return null
+    const items: { label: string; value: string }[] = []
+    if (csProject.company) items.push({ label: 'Team', value: csProject.company })
+    if (caseStudy.timeline) items.push({ label: 'Timeline', value: caseStudy.timeline })
+    return items.length > 0 ? items : null
+  }, [isCaseStudy, csProject, caseStudy])
 
   return (
     <div
@@ -184,9 +219,9 @@ export function ImageDisplay() {
       data-theme-image
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-label="Cycle accent color"
+      tabIndex={isCaseStudy ? -1 : 0}
+      role={isCaseStudy ? undefined : 'button'}
+      aria-label={isCaseStudy ? undefined : 'Cycle accent color'}
       style={{
         position: 'relative',
         width: '100%',
@@ -194,7 +229,7 @@ export function ImageDisplay() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: 'pointer',
+        cursor: isCaseStudy ? 'default' : 'pointer',
       }}
     >
       {/* Live region for screen reader announcements */}
@@ -221,10 +256,10 @@ export function ImageDisplay() {
         {previewDescription && !hasMedia ? (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -274,17 +309,17 @@ export function ImageDisplay() {
         ) : videoUrl ? (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
               inset: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: `0 5% ${TEXT_ZONE_HEIGHT + 24}px`,
+              padding: `0 5% ${mediaBottomPad}`,
             }}
           >
             <video
@@ -301,17 +336,16 @@ export function ImageDisplay() {
                 aspectRatio: project?.id === 'sony-screenless' ? '4 / 3' : undefined,
                 borderRadius: 32,
                 filter: dropShadow,
-                viewTransitionName: project ? 'project-hero' : undefined,
               }}
             />
           </motion.div>
         ) : lottieUrl && lottieData ? (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -319,14 +353,16 @@ export function ImageDisplay() {
               alignItems: 'center',
               justifyContent: 'center',
               filter: dropShadow,
-              padding: `0 5% ${TEXT_ZONE_HEIGHT + 24}px`,
+              padding: `0 5% ${mediaBottomPad}`,
             }}
           >
             <Suspense fallback={null}>
-              <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
+              <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
                 <Lottie
                   animationData={lottieData}
                   loop={false}
+                  autoplay={!isCaseStudy}
+                  initialSegment={isCaseStudy && lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
                   style={{ maxWidth: '100%', maxHeight: '100%' }}
                 />
               </div>
@@ -335,44 +371,99 @@ export function ImageDisplay() {
         ) : (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{
+              opacity: 0,
+              scale: isPortrait ? ts.portraitEnterScale : ts.previewEnterScale,
+              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitEnterBlur : ts.previewEnterBlur}px)`,
+            }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{
+              opacity: 0,
+              scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale,
+              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)`,
+            }}
+            transition={{
+              duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
+              ease: ts.easing,
+            }}
             style={imageWrapperStyle}
           >
             <img
               src={imageSrc!}
               alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
               onLoad={handleImageLoad}
-              style={{ ...imgStyle, opacity: effectiveOpacity, transition: 'opacity 200ms ease-in' }}
+              style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Summary text — absolutely positioned at bottom, no layout impact */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: TEXT_ZONE_HEIGHT,
-          pointerEvents: 'none',
-        }}
-      >
-        <AnimatePresence mode="sync">
-          {summary && (
+      {/* Text zone — summary on home, metadata on case study (metadata variant only) */}
+      {showTextZone && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: TEXT_ZONE_HEIGHT,
+            pointerEvents: 'none',
+          }}
+        >
+          {/* Home page: project summary — fades out with left column on navigation */}
+          <AnimatePresence mode="sync">
+            {summary && (
+              <motion.div
+                key={contentKey + '-summary'}
+                initial={{ opacity: 0, filter: reducedMotion ? 'none' : `blur(${ts.summaryEnterBlur}px)` }}
+                animate={{
+                  opacity: navigatingProjectId ? 0 : 1,
+                  filter: reducedMotion ? 'none' : 'blur(0px)',
+                }}
+                exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                transition={navigatingProjectId
+                  ? { duration: 0.28, delay: 0.15 }
+                  : { duration: reducedMotion ? 0 : ts.summaryDuration, ease: ts.easing }
+                }
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <p
+                  style={{
+                    ...summaryStyle,
+                    lineHeight: 1.5,
+                    color: 'var(--text-grey)',
+                    maxWidth: 540,
+                    maxHeight: TEXT_ZONE_HEIGHT,
+                    overflow: 'hidden',
+                    padding: '0 24px',
+                    textAlign: 'left',
+                    margin: '0 auto',
+                  }}
+                >
+                  {summary}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Case study: metadata — fades in with body text, fades out with left column on back */}
+          {isCaseStudy && csDisplayMode === 'metadata' && metadataItems && (
             <motion.div
-              key={contentKey + '-summary'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.3,
-                ease: 'easeInOut',
-              }}
+              key="cs-metadata"
+              initial={{ opacity: 0, filter: reducedMotion ? 'none' : `blur(${ts.summaryEnterBlur}px)` }}
+              animate={{ opacity: navigatingProjectId ? 0 : 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+              transition={navigatingProjectId
+                ? { duration: 0.28 }
+                : { duration: reducedMotion ? 0 : ts.summaryDuration, ease: ts.easing, delay: 0.15 }
+              }
               style={{
                 position: 'absolute',
                 top: 0,
@@ -381,27 +472,53 @@ export function ImageDisplay() {
                 bottom: 0,
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 5%',
               }}
             >
-              <p
+              {/* 50/50 grid centered under the preview image */}
+              <div
                 style={{
-                  ...summaryStyle,
-                  lineHeight: 1.5,
-                  color: 'var(--text-grey)',
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${metadataItems.length}, 1fr)`,
+                  width: '100%',
                   maxWidth: 540,
-                  maxHeight: TEXT_ZONE_HEIGHT,
-                  overflow: 'hidden',
-                  padding: '0 24px',
-                  textAlign: 'left',
-                  margin: '0 auto',
                 }}
               >
-                {summary}
-              </p>
+                {metadataItems.map(item => (
+                  <div key={item.label} style={{ textAlign: 'center' }}>
+                    <div
+                      style={{
+                        fontFamily: "'Onest', sans-serif",
+                        fontSize: 'var(--text-size-small)',
+                        fontWeight: 400,
+                        color: 'var(--text-light-grey)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        marginBottom: 4,
+                      }}
+                    >
+                      {item.label}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'Onest', sans-serif",
+                        fontSize: 'var(--text-size-caption)',
+                        fontWeight: 400,
+                        color: 'var(--text-grey)',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
+        </div>
+      )}
+
     </div>
   )
 }
