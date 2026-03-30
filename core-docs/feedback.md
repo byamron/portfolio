@@ -2,6 +2,26 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-29 — Merge conflict resolutions can silently revert changes; always verify after merge
+
+**What happened:** The tooltip overflow fix (PR #127) was silently reverted during merge conflict resolution in commit `9612351` ("Merge main into next-update to resolve conflicts"). The conflict in `ContributionHeatmap.tsx` was resolved by picking the `main` side, discarding every change from #127. This wasn't caught until the user noticed the bug persisting in production.
+
+**What went wrong:** Merge conflict resolution can drop changes without any warning when the "wrong side" is picked. The merge appeared clean, the PR merged, and the deploy went out — but the fix wasn't actually there.
+
+**Lesson learned:** After any merge conflict resolution, **run `git diff` against the pre-merge branch** to verify no intended changes were dropped. Specifically: `git diff <merge-commit>..<pre-merge-branch> -- <conflicted-files>` should show no unexpected reversals.
+
+**How to apply:** Before marking any merge conflict resolution as complete: (1) list all files that had conflicts, (2) diff each file's merge result against the branch that contained the intended changes, (3) flag any lines that reverted back to the base branch version.
+
+---
+
+## 2026-03-29 — Don't merge stale feature branches wholesale; cherry-pick specific changes
+
+**What happened:** Three branches (`polish-case-studies`, `lean-into-building`, `fix-case-study-heroes`) all contained the desired case study heading/spacing changes, but also contained unintended regressions — removed video preview support, changed homepage copy, removed project data fields, restructured components. The user did not want any of those changes.
+
+**Lesson learned:** When a feature branch has diverged significantly from main, **don't merge it wholesale**. Instead, identify the specific desired changes and apply them surgically to the current codebase. Stale branches accumulate unintended changes that are easy to miss.
+
+---
+
 ## 2026-03-28 — Hot-reloaded files cause blank pages; always verify with a hard reload
 
 **What was attempted:** Edited component files (CaseStudyTypographyPanel, CaseStudyLayoutA) while the Vite dev server was running. The page went blank.
