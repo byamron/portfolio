@@ -2,6 +2,33 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-30 — SEO cleanup: remove stale Google listings, add redirects and sitemap
+
+**Branch:** `remove-old-google-pages`
+
+**Summary:** Old portfolio pages (`/about`, `/eat-local-vt`, `/rivet`) were still indexed by Google and showing "connection not private" errors. Added redirects for all three to working pages, a friendly 404 page for unmatched routes, a `robots.txt`, and an auto-generated `sitemap.xml` that stays in sync with project data. Renamed the Acorn case study slug from `acorn-eat-local-vt` to `eat-local-vt` to reclaim the old URL.
+
+**Decisions:**
+- Redirects via React Router `<Navigate replace />` for `/about` → `/`, `/eat-local-vt` → `/project/eat-local-vt`, `/rivet` → `/`. Combined with Google Search Console removal requests for faster cleanup.
+- Sitemap is auto-generated from `src/data/projects.ts` at build time (`scripts/generate-sitemap.ts`), so new case studies are included automatically.
+- 404 page is standalone HTML (not React) since unmatched routes won't load the SPA. Tone is casual and transparent: "This page is gone — it was probably part of an older version."
+
+---
+
+## 2026-03-30 — Tune glass lean/tilt: configurable, subtler, reduced-motion safe
+
+**Branch:** `reduce-card-text-wobble`
+
+**Summary:** Extracted hardcoded pill lean (2.5px), pill tilt (0.75deg), and card text lean (1.8px) values into the `GlassConfig` interface so they can be tuned per-instance. Reduced defaults to pill lean 1.5px, tilt 0.5deg, dead zone 0.5, card lean 1.2px — still perceptible as a subtle refraction effect but no longer distracting wobble. Explicitly zeroes all lean/tilt properties under `prefers-reduced-motion`.
+
+**Decisions:**
+- Added `pillMaxLean`, `pillMaxTilt`, `pillDeadZone`, `cardMaxLean`, `cardLeanRamp` to `GlassConfig` — previously these were magic numbers inside the RAF loop.
+- Lowered dead zone from 0.78 → 0.5 so lean activates across more of the card area at lower intensity, rather than spiking only at the edges.
+- Used a temporary `GlassDevPanel` with sliders to tune values live, then stripped it before merge per dev-panels policy.
+
+---
+
+
 ## 2026-03-29 — Reorder homepage projects and update Forge description
 
 **Branch:** `reorder-homepage-projects`

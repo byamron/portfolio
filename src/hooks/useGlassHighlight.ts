@@ -18,6 +18,12 @@ export interface GlassConfig {
   tightBounds: boolean
   clearDelay: number
   cardSelector: string
+  // Lean + tilt tuning
+  pillMaxLean: number
+  pillMaxTilt: number
+  pillDeadZone: number
+  cardMaxLean: number
+  cardLeanRamp: number
 }
 
 export const GLASS_DEFAULTS: GlassConfig = {
@@ -34,6 +40,12 @@ export const GLASS_DEFAULTS: GlassConfig = {
   tightBounds: false,
   clearDelay: 150,
   cardSelector: '[data-link-card]',
+  // Lean + tilt tuning
+  pillMaxLean: 1.5,
+  pillMaxTilt: 0.5,
+  pillDeadZone: 0.5,
+  cardMaxLean: 1.2,
+  cardLeanRamp: 0.10,
 }
 
 // ---------------------------------------------------------------------------
@@ -130,6 +142,9 @@ function setupGlassHighlight(
         fadeDuration: 0,
         maxPull: 0,
         lerpSpeed: 1, // instant — snap to target
+        pillMaxLean: 0,
+        pillMaxTilt: 0,
+        cardMaxLean: 0,
       }
     } else {
       configRef.current = { ...GLASS_DEFAULTS, ...configRef.current }
@@ -346,12 +361,12 @@ function setupGlassHighlight(
       ny = state.currentH > 0 ? relY / (state.currentH / 2) : 0
       const d = Math.sqrt(nx * nx + ny * ny)
 
-      const deadZone = 0.78
+      const deadZone = cfg.pillDeadZone
       const rawD = Math.max(0, d - deadZone) / (1 - deadZone)
       const t = 1 - Math.exp(-rawD * 2.0)
 
       // Lean: offset toward cursor
-      const maxLean = 2.5
+      const maxLean = cfg.pillMaxLean
       const dirX = d > 0.001 ? nx / d : 0
       const dirY = d > 0.001 ? ny / d : 0
       leanX = dirX * t * maxLean
@@ -360,7 +375,7 @@ function setupGlassHighlight(
       // Tilt: cross-axis positional hint via rotation
       // Uses dirY * |dirY| (not just |dirY|) so the rotation sign flips correctly
       // when pulling from opposite sides. Symmetric in all quadrants.
-      const maxTilt = 0.75 // degrees
+      const maxTilt = cfg.pillMaxTilt
       const cnx = Math.max(-1, Math.min(1, nx))
       const cny = Math.max(-1, Math.min(1, ny))
       rotateDeg = (cnx * dirY * Math.abs(dirY) + cny * dirX * Math.abs(dirX)) * maxTilt * t
@@ -370,7 +385,7 @@ function setupGlassHighlight(
     // Responds across the full card area so the shift feels intentional,
     // then edge-fades to zero near boundaries for silent departures.
     if (leanedCard && mouseActive) {
-      leanIntensity += (1 - leanIntensity) * 0.14
+      leanIntensity += (1 - leanIntensity) * cfg.cardLeanRamp
       if (leanIntensity > 0.99) leanIntensity = 1
       const cardDist = Math.sqrt(nx * nx + ny * ny)
       const cardT = Math.min(cardDist, 1)
@@ -378,7 +393,7 @@ function setupGlassHighlight(
       const cdy = cardDist > 0.001 ? ny / cardDist : 0
       const edgeProximity = Math.max(Math.abs(nx), Math.abs(ny))
       const edgeFade = edgeProximity < 0.75 ? 1 : Math.max(0, 1 - (edgeProximity - 0.75) / 0.25)
-      const maxCardLean = 1.8
+      const maxCardLean = cfg.cardMaxLean
       const clx = cdx * cardT * maxCardLean * leanIntensity * edgeFade
       const cly = cdy * cardT * maxCardLean * leanIntensity * edgeFade
       leanedCard.style.transform = `translate(${clx.toFixed(2)}px, ${cly.toFixed(2)}px)`
