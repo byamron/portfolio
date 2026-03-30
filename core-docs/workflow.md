@@ -54,6 +54,11 @@ After implementation, self-review:
 - Does it meet accessibility standards?
 - Is the implementation complete, not partial?
 
+**Refactoring safety checklist** (run when your changes restructure or rewrite any component):
+- **Recent fixes preserved:** Run `git log --oneline -10 -- <file>` for every file you substantially changed. If any recent commit was a fix, diff your version against it to confirm the fix survived your refactor.
+- **No duplicated style values:** If your refactor created multiple rendering paths (e.g., narrow/wide layout), verify that shared values (font sizes, spacing, colors) are extracted into constants — not copy-pasted with potentially stale values.
+- **Both branches updated:** If you're hotfixing `main` directly, the same fix must also land on `next-update` (or vice versa), or the next merge will revert it.
+
 **Performance & production readiness checklist** (run before considering work complete):
 - **Asset preload paths:** If any asset's delivery method changed (e.g., static image → video, GIF → MP4), verify old references are removed from `projectImageMap` and any other preload maps. Run `projectData.test.ts` to catch dead entries.
 - **Preload timing:** New images/assets should preload at mount, not on interaction. Verify `preloadPreviewImages` covers all static assets that need to be ready on hover.
