@@ -1,9 +1,8 @@
 import { LeftColumn } from '@/components/LeftColumn'
-import { RightColumn } from '@/components/RightColumn'
 import { useIsWide } from '@/hooks/useMediaQuery'
 
 export function Layout() {
-  const showRightColumn = useIsWide()
+  const isWide = useIsWide()
 
   return (
     <div
@@ -16,8 +15,7 @@ export function Layout() {
       }}
       role="presentation"
     >
-      <LeftColumn fullWidth={!showRightColumn} />
-      {showRightColumn && <RightColumn />}
+      <LeftColumn fullWidth={!isWide} />
     </div>
   )
 }

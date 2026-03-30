@@ -54,7 +54,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
               ))}
               {/* Heatmap between narrative and project cards for personal projects (index 1) */}
               {i === 1 && <ContributionHeatmap displayMode="collapsed" vizGap={16} sparkPos="right" collapseTransition="drawer" />}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {section.projects.map(proj => (
                   <ProjectLink key={proj.id} project={proj} twoLine statusGap={8} subtitleSize="var(--text-size-summary)" nonLinkUnderline="dotted" titleSubGap={6} />
                 ))}
