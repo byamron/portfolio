@@ -6,6 +6,13 @@ import { narrativeStyle } from '@/styles/shared'
 
 const Lottie = lazy(() => import('lottie-react'))
 
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Match ImageDisplay's bottom padding for consistent hero sizing during View Transitions
+const HERO_BOTTOM_RESERVE = 144 // TEXT_ZONE_HEIGHT (120) + 24
+
 const DEFAULT_CONTACT_CTA =
   'Want more details? <a href="mailto:ben.yamron@icloud.com" data-contact-card data-border-radius="8" style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
 
@@ -156,22 +163,22 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
 
   if (isNarrow) {
     return (
-      <article style={{ padding: 'calc(var(--cs-top-padding, var(--layout-padding-top)) + 32px) var(--layout-margin) var(--layout-padding-top)' }}>
+      <article style={{ padding: 'calc(var(--layout-padding-top) + 48px) var(--layout-margin) var(--layout-padding-top)' }}>
         <motion.div
           ref={narrativeRef}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: reducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
+          transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.15 }}
           style={{ position: 'relative' }}
         >
           <h1
             style={{
-              fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
+              fontSize: 'var(--text-size-title)',
               fontFamily: "'Literata', serif",
               fontWeight: 300,
               lineHeight: 1.2,
               color: 'var(--text-dark)',
-              marginBottom: 'var(--cs-heading-spacing, 24px)',
+              marginBottom: 32,
             }}
           >
             {data.title}
@@ -212,24 +219,24 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          padding: 'var(--cs-top-padding, var(--layout-padding-top)) var(--layout-margin)',
+          padding: 'calc(var(--layout-padding-top) + 48px) var(--layout-margin)',
         }}
       >
           <motion.div
             ref={narrativeRef}
-            initial={{ opacity: 0 }}
+            initial={{ opacity: reducedMotion ? 1 : 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
+            transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.15 }}
             style={{ position: 'relative' }}
           >
             <h1
               style={{
-                fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
+                fontSize: 'var(--text-size-title)',
                 fontFamily: "'Literata', serif",
                 fontWeight: 300,
                 lineHeight: 1.2,
                 color: 'var(--text-dark)',
-                marginBottom: 'var(--cs-heading-spacing, 24px)',
+                marginBottom: 32,
               }}
             >
               {data.title}
@@ -263,7 +270,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 'var(--layout-padding-top) var(--layout-margin)',
+            padding: `var(--layout-padding-top) var(--layout-margin) ${HERO_BOTTOM_RESERVE}px`,
           }}
         >
           {mediaElement}
