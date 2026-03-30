@@ -78,6 +78,18 @@ Dev control panels (e.g. font comparison panels, glass mode switchers, layout tu
 - Mobile-first responsive design
 - Accessible by default — see **Accessibility Standards** below
 
+### Refactoring safety (CRITICAL — read before modifying any component):
+
+When refactoring a component — especially splitting it into multiple rendering paths (e.g., narrow/wide, mobile/desktop) — **recent fixes get silently lost**. This has caused the same bug to ship to production three times.
+
+**Why it happens:** When you rewrite sections of a file, you may write new code with old/default values instead of carrying forward the values currently in the file. Git merges this cleanly because the refactor replaces the relevant lines entirely — there's no conflict to flag the regression. Parallel worktrees make this worse because agents don't see each other's recent changes.
+
+**Rules:**
+1. **Before refactoring any file**, check `git log --oneline -10 -- <file>` for recent fixes. Understand what those fixes changed and verify your refactored code preserves them.
+2. **Never duplicate style values across rendering paths.** Extract shared styles into constants at the top of the file (see `CaseStudyLayoutA.tsx` for the pattern). If two code paths need the same font size, spacing, or color, they must reference the same constant — not have the value typed twice.
+3. **After refactoring**, diff your changes against the pre-refactor file and specifically check that no recently-fixed values reverted to old defaults.
+4. **After any direct-to-main hotfix**, immediately propagate the fix to `next-update`. If only one branch has the fix, the next merge will revert it.
+
 ### Accessibility Standards
 
 All development must adhere to WCAG 2.1 AA as a baseline. This is not a polish phase concern — it is a default requirement from the first line of code.
