@@ -90,8 +90,6 @@ function setupGlassHighlight(
   let scrollDirty = false
   let lastPillW = -1
   let lastPillH = -1
-  let cachedSectionCards: HTMLElement[] | null = null
-
   // All pill geometry is driven by this state object.
   // The RAF loop lerps `current` toward `target` every frame.
   const state = {
@@ -99,6 +97,27 @@ function setupGlassHighlight(
     targetX: 0, targetY: 0, targetW: 0, targetH: 0,
     baseX: 0, baseY: 0, baseW: 0, baseH: 0,
     mouseX: 0, mouseY: 0,
+  }
+
+  // -- Card lean: subtle text shift toward cursor (à la nelson.co) --
+  let mouseActive = false
+  let leanedCard: HTMLElement | null = null
+  let leanIntensity = 0
+
+  function engageCardLean(card: HTMLElement): void {
+    // Text lean only on project cards — inline/contact links are too small
+    // for the effect to read as intentional
+    if (!card.hasAttribute('data-project-id')) return
+    leanIntensity = 0
+    card.style.transition = 'none'
+    leanedCard = card
+  }
+
+  function releaseCardLean(): void {
+    if (!leanedCard) return
+    leanedCard.style.transition = 'transform 300ms cubic-bezier(0.5, 0, 0.15, 1)'
+    leanedCard.style.transform = ''
+    leanedCard = null
   }
 
   // -- Reduced motion --
@@ -302,6 +321,9 @@ function setupGlassHighlight(
       Math.abs(state.currentW - state.targetW) < threshold &&
       Math.abs(state.currentH - state.targetH) < threshold
 
+    // Card lean intensity still ramping — keep loop alive even if pill has settled
+    const leanRamping = leanedCard && mouseActive && leanIntensity < 1
+
     if (settled) {
       state.currentX = state.targetX
       state.currentY = state.targetY
@@ -312,6 +334,7 @@ function setupGlassHighlight(
     // Compute lean + tilt from cursor position
     let leanX = 0, leanY = 0
     let rotateDeg = 0
+    let nx = 0, ny = 0
 
     if (cfg.maxPull > 0) {
       if (!cachedContainerRect) cachedContainerRect = container.getBoundingClientRect()
@@ -319,8 +342,8 @@ function setupGlassHighlight(
       const pillVpY = cachedContainerRect.top + state.currentY - container.scrollTop
       const relX = state.mouseX - pillVpX - state.currentW / 2
       const relY = state.mouseY - pillVpY - state.currentH / 2
-      const nx = state.currentW > 0 ? relX / (state.currentW / 2) : 0
-      const ny = state.currentH > 0 ? relY / (state.currentH / 2) : 0
+      nx = state.currentW > 0 ? relX / (state.currentW / 2) : 0
+      ny = state.currentH > 0 ? relY / (state.currentH / 2) : 0
       const d = Math.sqrt(nx * nx + ny * ny)
 
       const deadZone = 0.78
@@ -343,47 +366,38 @@ function setupGlassHighlight(
       rotateDeg = (cnx * dirY * Math.abs(dirY) + cny * dirX * Math.abs(dirX)) * maxTilt * t
     }
 
+    // Card text lean — computed separately from pill lean (no deadZone).
+    // Responds across the full card area so the shift feels intentional,
+    // then edge-fades to zero near boundaries for silent departures.
+    if (leanedCard && mouseActive) {
+      leanIntensity += (1 - leanIntensity) * 0.14
+      if (leanIntensity > 0.99) leanIntensity = 1
+      const cardDist = Math.sqrt(nx * nx + ny * ny)
+      const cardT = Math.min(cardDist, 1)
+      const cdx = cardDist > 0.001 ? nx / cardDist : 0
+      const cdy = cardDist > 0.001 ? ny / cardDist : 0
+      const edgeProximity = Math.max(Math.abs(nx), Math.abs(ny))
+      const edgeFade = edgeProximity < 0.75 ? 1 : Math.max(0, 1 - (edgeProximity - 0.75) / 0.25)
+      const maxCardLean = 1.8
+      const clx = cdx * cardT * maxCardLean * leanIntensity * edgeFade
+      const cly = cdy * cardT * maxCardLean * leanIntensity * edgeFade
+      leanedCard.style.transform = `translate(${clx.toFixed(2)}px, ${cly.toFixed(2)}px)`
+    }
+
     // Apply position + lean + tilt to DOM
     applyPillPosition(
       state.currentX, state.currentY, state.currentW, state.currentH,
       leanX, leanY, 1, 1, rotateDeg,
     )
 
-    // Keep running if not settled
-    if (!settled) {
+    // Keep running if pill is sliding or lean is still ramping
+    if (!settled || leanRamping) {
       rafId = requestAnimationFrame(loop)
     }
-    // When settled, loop stops. mousemove restarts it.
+    // When settled and lean full, loop stops. mousemove restarts it.
   }
 
   // -- Event handlers --
-
-  function isCursorInCardStack(clientX: number, clientY: number): boolean {
-    if (!currentCard) return false
-    // Use cached card list — rebuilt when currentCard changes, avoids
-    // querySelectorAll + Array.from + filter on every non-card mouseover
-    if (!cachedSectionCards) {
-      const sel = configRef.current.cardSelector
-      // Scope to the same <section> as the current card so narrative text
-      // between sections properly clears the glass pill.
-      const section = currentCard.closest('section')
-      const scope = section && container.contains(section) ? section : container
-      // Exclude tight-bounds cards (e.g. inline links like "Mochi Health") from the
-      // stack span — they aren't adjacent to project cards and would extend the
-      // stack bounds across unrelated content, keeping the pill alive in gaps.
-      cachedSectionCards = Array.from(scope.querySelectorAll<HTMLElement>(sel))
-        .filter(c => !c.hasAttribute('data-tight-bounds'))
-    }
-    const cards = cachedSectionCards
-    if (cards.length === 0) return false
-    const firstRect = cards[0]!.getBoundingClientRect()
-    const lastRect = cards[cards.length - 1]!.getBoundingClientRect()
-    // Vertical bounds: span only the section's card stack
-    if (clientY < firstRect.top || clientY > lastRect.bottom) return false
-    // Horizontal bounds: use the current card's width, not the union of all cards.
-    const rect = currentCard.getBoundingClientRect()
-    return clientX >= rect.left && clientX <= rect.right
-  }
 
   function handleMouseOver(e: MouseEvent): void {
     const card = (e.target as HTMLElement).closest<HTMLElement>(configRef.current.cardSelector)
@@ -396,29 +410,24 @@ function setupGlassHighlight(
       const breakEl = (e.target as HTMLElement).closest('[data-glass-break]')
       if (breakEl && container.contains(breakEl)) {
         if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+        releaseCardLean()
         currentCard = null
         fadeOut()
         stopLoop()
         removeScrollListeners()
         return
       }
-      // Cursor moved to a non-card area — always start clear timer.
-      // If the cursor reaches another card before it fires, handleMouseOver
-      // cancels the timer and the pill slides seamlessly to the new card.
+      // Cursor moved to a non-card area — start clear timer.
+      // With zero-gap card stacks this only fires when leaving the stack entirely.
       if (currentCard && !clearTimer) {
-        const cardTight = currentCard.hasAttribute('data-tight-bounds')
-        const base = configRef.current.clearDelay
-        // Longer delay when leaving a tight-bounds card toward other cards,
-        // so the cursor has time to reach the next card and cancel the timer
-        const inStack = isCursorInCardStack(e.clientX, e.clientY)
-        const delay = (cardTight && inStack) ? Math.max(base, 400) : base
         clearTimer = setTimeout(() => {
           clearTimer = null
+          releaseCardLean()
           currentCard = null
           fadeOut()
           stopLoop()
           removeScrollListeners()
-        }, delay)
+        }, configRef.current.clearDelay)
       }
       return
     }
@@ -431,7 +440,9 @@ function setupGlassHighlight(
 
     const prevCard = currentCard
     currentCard = card
-    cachedSectionCards = null // Rebuild card list for new section context
+    mouseActive = true
+    releaseCardLean()
+    engageCardLean(card)
 
     // Per-card border radius override
     const cardRadius = card.getAttribute('data-border-radius')
@@ -483,6 +494,7 @@ function setupGlassHighlight(
       clearTimeout(clearTimer)
       clearTimer = null
     }
+    releaseCardLean()
     currentCard = null
     fadeOut()
     stopLoop()
@@ -492,6 +504,10 @@ function setupGlassHighlight(
   function handleMouseMove(e: MouseEvent): void {
     state.mouseX = e.clientX
     state.mouseY = e.clientY
+    if (!mouseActive) {
+      mouseActive = true
+      if (currentCard && !leanedCard) engageCardLean(currentCard)
+    }
     if (currentCard && rafId === null) {
       startLoop()
     }
@@ -503,7 +519,8 @@ function setupGlassHighlight(
 
     const prevCard = currentCard
     currentCard = card
-    cachedSectionCards = null
+    mouseActive = false
+    releaseCardLean()
 
     const cardRadius = card.getAttribute('data-border-radius')
     currentBorderRadius = cardRadius ? parseFloat(cardRadius) : configRef.current.borderRadius
@@ -540,6 +557,7 @@ function setupGlassHighlight(
   function handleFocusOut(e: FocusEvent): void {
     const related = e.relatedTarget as HTMLElement | null
     if (related?.closest?.(configRef.current.cardSelector)) return
+    releaseCardLean()
     currentCard = null
     fadeOut()
     stopLoop()
@@ -590,6 +608,7 @@ function setupGlassHighlight(
   function navigationFadeOut(duration = configRef.current.fadeDuration, delay = 0): void {
     if (!pill) return
     isVisible = false
+    releaseCardLean()
     currentCard = null
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
     stopLoop()
@@ -602,6 +621,7 @@ function setupGlassHighlight(
 
   // -- Cleanup --
   const cleanup = () => {
+    releaseCardLean()
     stopLoop()
     removeScrollListeners()
     container.removeEventListener('mouseover', handleMouseOver)

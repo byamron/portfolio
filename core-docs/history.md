@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Smoother hover interaction: card lean + zero-gap pill sliding
+
+**Branch:** `smoother-hover-interaction`
+
+**Summary:** Added a subtle card-text-lean effect (à la nelson.co) where project card text shifts up to 1.8px toward the cursor on hover, with edge-fade near boundaries and a lerp-based intensity ramp-in. Changed project link gap from 16px to 0px to enable seamless zero-gap pill sliding, which allowed removing the complex `isCursorInCardStack` section-scoped hit-testing logic in favor of a simpler fixed clear-delay approach.
+
+**Decisions:**
+- Zero-gap layout eliminates the need for bounding-box hit-testing between cards — `mouseover` on adjacent cards cancels the clear timer naturally. Removed `cachedSectionCards`, `isCursorInCardStack`, and the variable 400ms tight-bounds delay.
+- Card lean is gated on `data-project-id` so it only applies to project cards (inline/contact links are too small for the effect to read as intentional). Lean is effectively disabled under reduced motion because `maxPull: 0` zeroes out `nx`/`ny`.
+
+---
+
 ## 2026-03-29 — Case study heading size and spacing adjustments
 
 **Branch:** `case-study-heading-spacing`
