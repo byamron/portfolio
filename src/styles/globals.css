@@ -243,15 +243,10 @@ p a {
   animation: none;
 }
 
-/* Shared element: project image morphs between homepage and case study */
-::view-transition-old(project-hero),
-::view-transition-new(project-hero) {
-  animation-duration: 300ms;
-  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  /* Smooth size interpolation — prevent abrupt resize during morph */
-  object-fit: cover;
-  overflow: hidden;
-  border-radius: 32px;
+/* Right column: persistent across route transitions — no animation */
+::view-transition-old(right-column),
+::view-transition-new(right-column) {
+  animation: none;
 }
 
 /* Arrow slide-out on project link click — windup pull-back then accelerate right */
@@ -323,9 +318,7 @@ html.cursor-none *::after {
     transition-duration: 0.01ms !important;
   }
   ::view-transition-old(root),
-  ::view-transition-new(root),
-  ::view-transition-old(project-hero),
-  ::view-transition-new(project-hero) {
+  ::view-transition-new(root) {
     animation-duration: 0ms !important;
     animation-delay: 0ms !important;
   }
