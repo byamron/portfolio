@@ -22,12 +22,13 @@ Decision log and completed work, in reverse chronological order.
 
 **Branch:** `image-transition-polish`
 
-**Summary:** Upgraded image transitions in `ImageDisplay` from plain opacity fades to blur+scale+opacity animations. Previews, portraits, and summary text each have independently tuned blur, scale, duration, and easing values. All animations respect `prefers-reduced-motion` (duration: 0, filter: none).
+**Summary:** Upgraded image transitions in `ImageDisplay` from plain opacity fades to blur+scale+opacity animations. Previews, portraits, and summary text each have independently tuned blur, scale, duration, and easing values. All animations respect `prefers-reduced-motion` reactively via Framer Motion's `useReducedMotion()` hook. Also fixed tooltip overflow in `ContributionHeatmap` (dynamic above/below positioning, visible overflow after expand animation).
 
 **Decisions:**
 - Extracted transition constants into `src/contexts/TransitionContext.tsx` rather than hardcoding in ImageDisplay — keeps the tuned values documented and easy to adjust.
 - Used a dev panel on the feature branch for tuning, then stripped it before merge per dev panels policy.
 - Portraits get slightly softer/longer transitions than project previews to match their visual weight.
+- Switched from static module-level `reducedMotion` snapshot to reactive `useReducedMotion()` hook (matching `ContributionHeatmap` pattern) after code review flagged the non-reactive approach.
 
 ---
 

@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMatch } from 'react-router-dom'
 
@@ -18,16 +18,13 @@ const summaryStyle: React.CSSProperties = {
   fontSize: 'var(--text-size-summary)',
 }
 
-const reducedMotion =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 // Fixed height for text zone — always allocated so the image area never resizes
 const TEXT_ZONE_HEIGHT = 120
 
 export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
+  const reducedMotion = useReducedMotion()
   const csDisplayMode = 'metadata' as const
 
   // Detect case study route
@@ -461,11 +458,11 @@ export function ImageDisplay() {
           {isCaseStudy && csDisplayMode === 'metadata' && metadataItems && (
             <motion.div
               key="cs-metadata"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: navigatingProjectId ? 0 : 1 }}
+              initial={{ opacity: 0, filter: reducedMotion ? 'none' : `blur(${ts.summaryEnterBlur}px)` }}
+              animate={{ opacity: navigatingProjectId ? 0 : 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
               transition={navigatingProjectId
                 ? { duration: 0.28 }
-                : { duration: 0.35, delay: 0.15 }
+                : { duration: reducedMotion ? 0 : ts.summaryDuration, ease: ts.easing, delay: 0.15 }
               }
               style={{
                 position: 'absolute',
