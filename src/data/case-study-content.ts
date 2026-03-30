@@ -320,7 +320,7 @@ export const duolingoLanguagesFlags: CaseStudy = {
 }
 
 export const acornEatLocalVt: CaseStudy = {
-  id: 'acorn-eat-local-vt',
+  id: 'eat-local-vt',
   title: 'Connecting farmers and customers during COVID-19',
   subtitle:
     'COVID-19 shut down farmers markets across Vermont. As a college student with no design experience, I gathered eight engineers and taught myself product design to solve a problem I could see.',
@@ -395,6 +395,6 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'sony-screenless-tv': sonyScreenlessTv,
   'cip-election-misinformation': cipElectionMisinformation,
   'duolingo-languages-flags': duolingoLanguagesFlags,
-  'acorn-eat-local-vt': acornEatLocalVt,
+  'eat-local-vt': acornEatLocalVt,
   'trio-todo-list': trioTodoList,
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { CursorProvider } from '@/contexts/CursorContext'
@@ -33,6 +33,10 @@ function AppContent() {
         <Route path="/" element={<Layout />} />
         <Route path="/project/:slug" element={<CaseStudyPage />} />
         <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
+        {/* Redirect old portfolio URLs to current routes */}
+        <Route path="/eat-local-vt" element={<Navigate to="/project/eat-local-vt" replace />} />
+        <Route path="/about" element={<Navigate to="/" replace />} />
+        <Route path="/rivet" element={<Navigate to="/" replace />} />
       </Routes>
       {/* Persistent right column — never unmounts during route transitions */}
       {isWide && !isStandalone && <RightColumn />}

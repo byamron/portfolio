@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-30 — SEO cleanup: remove stale Google listings, add redirects and sitemap
+
+**Branch:** `remove-old-google-pages`
+
+**Summary:** Old portfolio pages (`/about`, `/eat-local-vt`, `/rivet`) were still indexed by Google and showing "connection not private" errors. Added redirects for all three to working pages, a friendly 404 page for unmatched routes, a `robots.txt`, and an auto-generated `sitemap.xml` that stays in sync with project data. Renamed the Acorn case study slug from `acorn-eat-local-vt` to `eat-local-vt` to reclaim the old URL.
+
+**Decisions:**
+- Redirects via React Router `<Navigate replace />` for `/about` → `/`, `/eat-local-vt` → `/project/eat-local-vt`, `/rivet` → `/`. Combined with Google Search Console removal requests for faster cleanup.
+- Sitemap is auto-generated from `src/data/projects.ts` at build time (`scripts/generate-sitemap.ts`), so new case studies are included automatically.
+- 404 page is standalone HTML (not React) since unmatched routes won't load the SPA. Tone is casual and transparent: "This page is gone — it was probably part of an older version."
+
+---
+
 ## 2026-03-30 — Tune glass lean/tilt: configurable, subtler, reduced-motion safe
 
 **Branch:** `reduce-card-text-wobble`
