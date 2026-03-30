@@ -2,6 +2,18 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-03-29 — Component refactors silently revert prior fixes when both branches aren't updated
+
+**What happened:** The case study heading fix (PR #131 — `--text-size-title` at 36px, `marginBottom: 32`) was deployed to main, then reverted twice. The first revert was caught and re-fixed. The second revert happened because PR #135 (persistent right column) refactored `CaseStudyLayoutA.tsx` into separate narrow/wide rendering paths. The narrow path inherited the correct heading values, but the wide path was written with the old pre-fix values (`--text-size-section-heading`, `24px`). Additionally, `next-update` still had the old values, so every subsequent merge from `next-update → main` would re-introduce the regression.
+
+**What went wrong:** Two compounding issues: (1) When splitting a component into multiple rendering paths, style values were manually re-typed instead of referenced from a shared constant — the wide path got stale values. (2) The fix existed only on `main` via a cherry-pick/direct PR, but `next-update` was never updated, creating a persistent source of regression on every merge.
+
+**Lesson learned:** When refactoring components that have duplicated style blocks (e.g., narrow vs wide layout), **extract shared styles into constants** at the top of the file so both paths reference the same values. Never copy-paste style objects across rendering paths. Also: when hotfixing main directly, **always propagate the fix to next-update** in the same PR or immediately after, or the next deploy cycle will revert it.
+
+**How to apply:** (1) Before merging any refactor that touches a file with a recent fix, diff the refactored file against main to verify the fix is preserved. (2) After any direct-to-main hotfix, immediately apply the same change to next-update. (3) For style values used in multiple rendering paths, use shared constants.
+
+---
+
 ## 2026-03-29 — Merge conflict resolutions can silently revert changes; always verify after merge
 
 **What happened:** The tooltip overflow fix (PR #127) was silently reverted during merge conflict resolution in commit `9612351` ("Merge main into next-update to resolve conflicts"). The conflict in `ContributionHeatmap.tsx` was resolved by picking the `main` side, discarding every change from #127. This wasn't caught until the user noticed the bug persisting in production.

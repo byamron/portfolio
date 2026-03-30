@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Fix case study text hierarchy (third time) and prevent future drift
+
+**Branch:** `fix-case-study-text-hierarchy`
+
+**Summary:** The wide-layout case study heading was reverted to `--text-size-section-heading` (28px) with 24px bottom margin when PR #135 refactored the component into narrow/wide rendering paths. Fixed by extracting `headingStyle` and `contactCtaStyle` as shared constants referenced by both paths — eliminates the possibility of values drifting between paths. Also restored `reducedMotion` checks (via reactive `useReducedMotion()` hook) that were dropped in the refactor, and removed leftover `--cs-heading-size`/`--cs-heading-spacing` CSS variable indirection from the removed dev panel.
+
+**Root cause:** PR #135 split the component but re-typed style values manually in the wide path instead of carrying forward the fix. `next-update` also never received the heading fix, so every merge reintroduced the regression.
+
+**Decisions:**
+- Extracted shared style constants to make narrow/wide value drift structurally impossible.
+- Used `useReducedMotion()` (reactive hook) instead of the previous module-level `window.matchMedia` snapshot.
+- PR targets main directly as a prod hotfix. Must also be propagated to next-update.
+
+---
+
 ## 2026-03-29 — Smoother hover interaction: card lean + zero-gap pill sliding
 
 **Branch:** `smoother-hover-interaction`
@@ -41,7 +56,6 @@ Decision log and completed work, in reverse chronological order.
 - Used a dev panel on the feature branch for tuning, then stripped it before merge per dev panels policy.
 - Portraits get slightly softer/longer transitions than project previews to match their visual weight.
 - Switched from static module-level `reducedMotion` snapshot to reactive `useReducedMotion()` hook (matching `ContributionHeatmap` pattern) after code review flagged the non-reactive approach.
->>>>>>> origin/next-update
 
 ---
 

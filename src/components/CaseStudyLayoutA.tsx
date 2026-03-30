@@ -1,8 +1,26 @@
 import { useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { CaseStudy } from '@/data/case-study-content'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { narrativeStyle } from '@/styles/shared'
+
+// Shared heading style — single source of truth for both narrow and wide layouts
+const headingStyle = {
+  fontSize: 'var(--text-size-title)',
+  fontFamily: "'Literata', serif",
+  fontWeight: 300,
+  lineHeight: 1.2,
+  color: 'var(--text-dark)',
+  marginBottom: 32,
+} as const
+
+const contactCtaStyle = {
+  fontSize: 'var(--text-size-caption)',
+  lineHeight: 1.5,
+  color: 'var(--text-grey)',
+  marginTop: 32,
+  fontFamily: "'Onest', sans-serif",
+} as const
 
 const DEFAULT_CONTACT_CTA =
   'Want more details? <a href="mailto:ben.yamron@icloud.com" data-contact-card data-border-radius="8" style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
@@ -16,6 +34,7 @@ interface CaseStudyLayoutAProps {
 }
 
 export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, videoPreview }: CaseStudyLayoutAProps) {
+  const reducedMotion = useReducedMotion()
   const narrativeRef = useRef<HTMLDivElement>(null)
 
   // Glass highlight for paper link cards and contact CTA within the narrative
@@ -133,16 +152,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.15 }}
           style={{ position: 'relative' }}
         >
-          <h1
-            style={{
-              fontSize: 'var(--text-size-title)',
-              fontFamily: "'Literata', serif",
-              fontWeight: 300,
-              lineHeight: 1.2,
-              color: 'var(--text-dark)',
-              marginBottom: 32,
-            }}
-          >
+          <h1 style={headingStyle}>
             {data.title}
           </h1>
 
@@ -157,13 +167,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           )}
 
           <p
-            style={{
-              fontSize: 'var(--text-size-caption)',
-              lineHeight: 1.5,
-              color: 'var(--text-grey)',
-              marginTop: 32,
-              fontFamily: "'Onest', sans-serif",
-            }}
+            style={contactCtaStyle}
             dangerouslySetInnerHTML={{ __html: contactCta }}
           />
         </motion.div>
@@ -186,21 +190,12 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
       >
         <motion.div
           ref={narrativeRef}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: reducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
+          transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.15 }}
           style={{ position: 'relative' }}
         >
-          <h1
-            style={{
-              fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
-              fontFamily: "'Literata', serif",
-              fontWeight: 300,
-              lineHeight: 1.2,
-              color: 'var(--text-dark)',
-              marginBottom: 'var(--cs-heading-spacing, 24px)',
-            }}
-          >
+          <h1 style={headingStyle}>
             {data.title}
           </h1>
 
@@ -209,13 +204,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           {paperLinksContent}
 
           <p
-            style={{
-              fontSize: 'var(--text-size-caption)',
-              lineHeight: 1.5,
-              color: 'var(--text-grey)',
-              marginTop: 24,
-              fontFamily: "'Onest', sans-serif",
-            }}
+            style={contactCtaStyle}
             dangerouslySetInnerHTML={{ __html: contactCta }}
           />
         </motion.div>
