@@ -46,12 +46,13 @@ export function CaseStudyPage() {
   const caseStudy = slug ? caseStudiesBySlug[slug] : undefined
   const projectData = slug ? getProjectForSlug(slug) : undefined
   const previewImage = projectData ? projectImageMap[projectData.projectId] : undefined
-  const { setHoveredProjectId, setHoveringLink } = useHover()
+  const { setHoveredProjectId, setHoveringLink, setNavigatingProjectId } = useHover()
   const [isExiting, setIsExiting] = useState(false)
   const [isSliding, setIsSliding] = useState(false)
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const doBack = useCallback(() => {
+    setNavigatingProjectId(null)
     if (document.startViewTransition) {
       document.startViewTransition(() => {
         flushSync(() => navigate('/'))
@@ -60,7 +61,7 @@ export function CaseStudyPage() {
     } else {
       navigate('/')
     }
-  }, [navigate])
+  }, [navigate, setNavigatingProjectId])
 
   const handleBack = useCallback((e: React.MouseEvent) => {
     // Cmd/Ctrl+click: let browser handle natively
@@ -73,8 +74,9 @@ export function CaseStudyPage() {
     ensureBackKeyframes()
     setIsSliding(true)
     setIsExiting(true)
+    setNavigatingProjectId(projectData?.id ?? 'back')
     exitTimer.current = setTimeout(doBack, BACK_ARROW_SLIDE_MS)
-  }, [doBack])
+  }, [doBack, setNavigatingProjectId, projectData])
 
   const navRef = useRef<HTMLElement>(null)
   useGlassHighlight(navRef, {

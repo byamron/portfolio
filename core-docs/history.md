@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Persistent right column: zero-flash preview transitions between home and case study
+
+**Branch:** `preview-transition-anchor`
+
+**Summary:** Made the right-column preview image a true anchor across page transitions. The `RightColumn` + `ImageDisplay` now lives in `AppContent` outside the router, so the image element never unmounts during navigation — no screenshot capture, no crossfade, no flash. `ImageDisplay` detects the current route via `useMatch` to switch between hover-driven home mode and static case study mode. On case study pages, metadata (team + timeline) appears below the preview, fading in/out synchronized with the left column body text.
+
+**Decisions:**
+- Moved `RightColumn` to `AppContent` (persistent) instead of morphing between two separate image elements via View Transition API. Eliminates the size/position mismatch entirely.
+- Added `viewTransitionName: 'right-column'` with `animation: none` so the right column stays perfectly still during page transitions.
+- Removed `viewTransitionName: 'project-hero'` — no longer needed since the element persists.
+- Summary text exits with left column timing (`0.28s, 0.15s delay`) when navigating forward; metadata enters matching case study body text (`0.35s, 0.15s delay`). Back navigation also fades metadata out via `navigatingProjectId`.
+- Chose "metadata" variant (team + timeline below preview) over "true-center" (no text zone). Metadata fills the space naturally and provides useful context.
+- Brought in `TransitionContext` with tuned blur/scale settings from `next-update` for preview crossfades.
+
+---
+
 ## 2026-03-29 — Fix UI bugs: selection contrast, summary overflow, sidebar keyboard accessibility
 
 **Branch:** `investigate-ui-bugs`

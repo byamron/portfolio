@@ -1,10 +1,8 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { CaseStudy } from '@/data/case-study-content'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { narrativeStyle } from '@/styles/shared'
-
-const Lottie = lazy(() => import('lottie-react'))
 
 const DEFAULT_CONTACT_CTA =
   'Want more details? <a href="mailto:ben.yamron@icloud.com" data-contact-card data-border-radius="8" style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Get in touch</a>.'
@@ -18,7 +16,6 @@ interface CaseStudyLayoutAProps {
 }
 
 export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, videoPreview }: CaseStudyLayoutAProps) {
-  const [lottieData, setLottieData] = useState<object | null>(null)
   const narrativeRef = useRef<HTMLDivElement>(null)
 
   // Glass highlight for paper link cards and contact CTA within the narrative
@@ -30,69 +27,41 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
     cardSelector: '[data-link-card], [data-contact-card]',
   })
 
-  useEffect(() => {
-    if (!lottiePreview) {
-      setLottieData(null)
-      return
-    }
-    let cancelled = false
-    fetch(lottiePreview)
-      .then(r => r.json())
-      .then(d => { if (!cancelled) setLottieData(d) })
-      .catch(() => { if (!cancelled) setLottieData(null) })
-    return () => { cancelled = true }
-  }, [lottiePreview])
-
-  const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
-  const hasMedia = !!(videoPreview || previewImage || (lottiePreview && lottieData))
+  const hasMedia = !!(videoPreview || previewImage || lottiePreview)
 
   const { narrative, paperLinks } = data
   const contactCta = data.contactCta ?? DEFAULT_CONTACT_CTA
 
-  // Shared media element — video > lottie > image
-  const isSony = data.id === 'sony-screenless-tv'
-
-  const mediaElement = videoPreview ? (
-    <video
-      src={videoPreview}
-      autoPlay
-      muted
-      loop
-      playsInline
-      aria-label={data.title}
-      style={{
-        maxWidth: '100%',
-        maxHeight: '100%',
-        objectFit: isSony ? 'cover' : 'contain',
-        aspectRatio: isSony ? '4 / 3' : undefined,
-        borderRadius: 32,
-        viewTransitionName: 'project-hero',
-      }}
-    />
-  ) : lottiePreview && lottieData ? (
-    <Suspense fallback={null}>
-      <div style={{ maxWidth: '100%', maxHeight: '100%', viewTransitionName: 'project-hero' }}>
-        <Lottie
-          animationData={lottieData}
-          autoplay={false}
-          loop={false}
-          initialSegment={lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
-          style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 32 }}
-        />
-      </div>
-    </Suspense>
-  ) : previewImage ? (
-    <img
-      src={previewImage}
-      alt={data.title}
-      style={{
-        maxWidth: '100%',
-        maxHeight: '100%',
-        objectFit: 'contain',
-        borderRadius: 32,
-        viewTransitionName: 'project-hero',
-      }}
-    />
+  // Narrow-only media element (wide layout uses the persistent RightColumn)
+  const narrowMediaElement = isNarrow && hasMedia ? (
+    videoPreview ? (
+      <video
+        src={videoPreview}
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-label={data.title}
+        style={{
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: data.id === 'sony-screenless-tv' ? 'cover' : 'contain',
+          aspectRatio: data.id === 'sony-screenless-tv' ? '4 / 3' : undefined,
+          borderRadius: 32,
+        }}
+      />
+    ) : previewImage ? (
+      <img
+        src={previewImage}
+        alt={data.title}
+        style={{
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: 'contain',
+          borderRadius: 32,
+        }}
+      />
+    ) : null
   ) : null
 
   // Text content — narrative paragraphs or subtitle fallback
@@ -181,9 +150,9 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
 
           {paperLinksContent}
 
-          {hasMedia && (
+          {narrowMediaElement && (
             <div style={{ marginTop: 32 }}>
-              {mediaElement}
+              {narrowMediaElement}
             </div>
           )}
 
@@ -202,9 +171,9 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
     )
   }
 
+  // Wide layout: left column only — right column is the persistent RightColumn from App
   return (
     <article>
-      {/* Left column — scrollable text */}
       <div
         style={{
           width: '50%',
@@ -215,59 +184,42 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           padding: 'var(--cs-top-padding, var(--layout-padding-top)) var(--layout-margin)',
         }}
       >
-          <motion.div
-            ref={narrativeRef}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
-            style={{ position: 'relative' }}
-          >
-            <h1
-              style={{
-                fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
-                fontFamily: "'Literata', serif",
-                fontWeight: 300,
-                lineHeight: 1.2,
-                color: 'var(--text-dark)',
-                marginBottom: 'var(--cs-heading-spacing, 24px)',
-              }}
-            >
-              {data.title}
-            </h1>
-
-            {textContent}
-
-            {paperLinksContent}
-
-            <p
-              style={{
-                fontSize: 'var(--text-size-caption)',
-                lineHeight: 1.5,
-                color: 'var(--text-grey)',
-                marginTop: 24,
-                fontFamily: "'Onest', sans-serif",
-              }}
-              dangerouslySetInnerHTML={{ __html: contactCta }}
-            />
-          </motion.div>
-        </div>
-
-        {/* Right column — fixed media (mirrors home page RightColumn) */}
-        <div
-          style={{
-            width: '50%',
-            position: 'fixed',
-            top: 0,
-            right: 0,
-            height: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'var(--layout-padding-top) var(--layout-margin)',
-          }}
+        <motion.div
+          ref={narrativeRef}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
+          style={{ position: 'relative' }}
         >
-          {mediaElement}
-        </div>
+          <h1
+            style={{
+              fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
+              fontFamily: "'Literata', serif",
+              fontWeight: 300,
+              lineHeight: 1.2,
+              color: 'var(--text-dark)',
+              marginBottom: 'var(--cs-heading-spacing, 24px)',
+            }}
+          >
+            {data.title}
+          </h1>
+
+          {textContent}
+
+          {paperLinksContent}
+
+          <p
+            style={{
+              fontSize: 'var(--text-size-caption)',
+              lineHeight: 1.5,
+              color: 'var(--text-grey)',
+              marginTop: 24,
+              fontFamily: "'Onest', sans-serif",
+            }}
+            dangerouslySetInnerHTML={{ __html: contactCta }}
+          />
+        </motion.div>
+      </div>
     </article>
   )
 }
