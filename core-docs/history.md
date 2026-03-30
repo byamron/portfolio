@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Reorder homepage projects and update Forge description
+
+**Branch:** `reorder-homepage-projects`
+
+**Summary:** Reordered projects across all three homepage sections to match Ben's preferred priority order. Updated the Forge project's preview description to clarify that it analyzes your codebase and suggests optimizations in real time, and reframed the barrier from "expertise" to "investment/time."
+
+**Decisions:**
+- Order changes only — no data or structural modifications to projects themselves.
+
+---
+
 ## 2026-03-29 — Fix case study text hierarchy (third time) and prevent future drift
 
 **Branch:** `fix-case-study-text-hierarchy`
