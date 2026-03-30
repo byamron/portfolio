@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-29 — Polish image cross-fade transitions with blur + scale
+
+**Branch:** `image-transition-polish`
+
+**Summary:** Upgraded image transitions in `ImageDisplay` from plain opacity fades to blur+scale+opacity animations. Previews, portraits, and summary text each have independently tuned blur, scale, duration, and easing values. All animations respect `prefers-reduced-motion` (duration: 0, filter: none).
+
+**Decisions:**
+- Extracted transition constants into `src/contexts/TransitionContext.tsx` rather than hardcoding in ImageDisplay — keeps the tuned values documented and easy to adjust.
+- Used a dev panel on the feature branch for tuning, then stripped it before merge per dev panels policy.
+- Portraits get slightly softer/longer transitions than project previews to match their visual weight.
+
+---
+
 ## 2026-03-29 — Fix UI bugs: selection contrast, summary overflow, sidebar keyboard accessibility
 
 **Branch:** `investigate-ui-bugs`
