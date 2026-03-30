@@ -15,6 +15,18 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-03-29 — Case study heading size and spacing adjustments
+
+**Branch:** `case-study-heading-spacing`
+
+**Summary:** Increased case study heading from `--text-size-section-heading` (28px) to `--text-size-title` (36px), increased heading→body margin from 24px to 32px, added 48px extra top padding for more breathing room below the fixed back button, added `HERO_BOTTOM_RESERVE` (144px) to the wide-layout hero for smooth View Transitions, and added `reducedMotion` checks on fade-in animations.
+
+**Decisions:**
+- Applied changes surgically to the existing component rather than merging any of the three stale branches (`polish-case-studies`, `lean-into-building`, `fix-case-study-heroes`) which contained unintended regressions (removed video support, homepage copy changes, removed project data fields).
+- Kept Lottie last-frame logic, video preview support, glass highlights, and all existing structure intact.
+
+---
+
 ## 2026-03-29 — Fix UI bugs: selection contrast, summary overflow, sidebar keyboard accessibility
 
 **Branch:** `investigate-ui-bugs`
