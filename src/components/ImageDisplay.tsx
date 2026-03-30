@@ -4,6 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
 import { useTheme } from '@/contexts/ThemeContext'
+import { transitionSettings as ts } from '@/contexts/TransitionContext'
 import { projectsById, projectImageMap, defaultImageMap, linkPreviews } from '@/data/projects'
 
 // Projects whose previews need a subtle shadow to separate from the background
@@ -25,7 +26,6 @@ const TEXT_ZONE_HEIGHT = 120
 export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
-
   const project = hoveredProjectId ? projectsById[hoveredProjectId] : null
   const linkPreview = hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null
   const lottieUrl = project?.lottiePreview ?? null
@@ -221,10 +221,10 @@ export function ImageDisplay() {
         {previewDescription && !hasMedia ? (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -274,10 +274,10 @@ export function ImageDisplay() {
         ) : videoUrl ? (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -308,10 +308,10 @@ export function ImageDisplay() {
         ) : lottieUrl && lottieData ? (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -335,17 +335,28 @@ export function ImageDisplay() {
         ) : (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{
+              opacity: 0,
+              scale: isPortrait ? ts.portraitEnterScale : ts.previewEnterScale,
+              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitEnterBlur : ts.previewEnterBlur}px)`,
+            }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{
+              opacity: 0,
+              scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale,
+              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)`,
+            }}
+            transition={{
+              duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
+              ease: ts.easing,
+            }}
             style={imageWrapperStyle}
           >
             <img
               src={imageSrc!}
               alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
               onLoad={handleImageLoad}
-              style={{ ...imgStyle, opacity: effectiveOpacity, transition: 'opacity 200ms ease-in' }}
+              style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
             />
           </motion.div>
         )}
@@ -366,12 +377,12 @@ export function ImageDisplay() {
           {summary && (
             <motion.div
               key={contentKey + '-summary'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, filter: reducedMotion ? 'none' : `blur(${ts.summaryEnterBlur}px)` }}
+              animate={{ opacity: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+              exit={{ opacity: 0, filter: reducedMotion ? 'none' : `blur(${ts.summaryExitBlur}px)` }}
               transition={{
-                duration: reducedMotion ? 0 : 0.3,
-                ease: 'easeInOut',
+                duration: reducedMotion ? 0 : ts.summaryDuration,
+                ease: ts.easing,
               }}
               style={{
                 position: 'absolute',
