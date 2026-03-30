@@ -125,22 +125,22 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
 
   if (isNarrow) {
     return (
-      <article style={{ padding: 'calc(var(--cs-top-padding, var(--layout-padding-top)) + 32px) var(--layout-margin) var(--layout-padding-top)' }}>
+      <article style={{ padding: 'calc(var(--layout-padding-top) + 48px) var(--layout-margin) var(--layout-padding-top)' }}>
         <motion.div
           ref={narrativeRef}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: reducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
+          transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.15 }}
           style={{ position: 'relative' }}
         >
           <h1
             style={{
-              fontSize: 'var(--cs-heading-size, var(--text-size-section-heading))',
+              fontSize: 'var(--text-size-title)',
               fontFamily: "'Literata', serif",
               fontWeight: 300,
               lineHeight: 1.2,
               color: 'var(--text-dark)',
-              marginBottom: 'var(--cs-heading-spacing, 24px)',
+              marginBottom: 32,
             }}
           >
             {data.title}
@@ -181,7 +181,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          padding: 'var(--cs-top-padding, var(--layout-padding-top)) var(--layout-margin)',
+          padding: 'calc(var(--layout-padding-top) + 48px) var(--layout-margin)',
         }}
       >
         <motion.div

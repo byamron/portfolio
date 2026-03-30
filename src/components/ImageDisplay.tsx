@@ -25,7 +25,6 @@ const reducedMotion =
 // Fixed height for text zone — always allocated so the image area never resizes
 const TEXT_ZONE_HEIGHT = 120
 
-
 export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
@@ -46,7 +45,6 @@ export function ImageDisplay() {
   const linkPreview = isCaseStudy
     ? null
     : (hoveredLinkId ? linkPreviews[hoveredLinkId] ?? null : null)
-
   const lottieUrl = project?.lottiePreview ?? null
   const videoUrl = linkPreview?.video ?? project?.videoPreview ?? null
   const previewDescription = isCaseStudy ? null : (project?.previewDescription ?? null)
@@ -376,17 +374,28 @@ export function ImageDisplay() {
         ) : (
           <motion.div
             key={contentKey}
-            initial={{ opacity: 0, scale: isPortrait ? ts.portraitEnterScale : ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitEnterBlur : ts.previewEnterBlur}px)` }}
+            initial={{
+              opacity: 0,
+              scale: isPortrait ? ts.portraitEnterScale : ts.previewEnterScale,
+              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitEnterBlur : ts.previewEnterBlur}px)`,
+            }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)` }}
-            transition={{ duration: reducedMotion ? 0 : (isPortrait ? ts.portraitDuration : ts.previewDuration), ease: ts.easing }}
+            exit={{
+              opacity: 0,
+              scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale,
+              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)`,
+            }}
+            transition={{
+              duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
+              ease: ts.easing,
+            }}
             style={imageWrapperStyle}
           >
             <img
               src={imageSrc!}
               alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
               onLoad={handleImageLoad}
-              style={{ ...imgStyle, opacity: effectiveOpacity, transition: 'opacity 200ms ease-in' }}
+              style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
             />
           </motion.div>
         )}
