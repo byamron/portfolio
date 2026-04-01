@@ -387,6 +387,18 @@ export const trioTodoList: CaseStudy = {
   gallery: [],
 }
 
+export const forge: CaseStudy = {
+  id: 'forge',
+  title: 'Optimizing your AI development workflow',
+  subtitle:
+    'I built a Claude Code plugin that watches how you use Claude, detects patterns (repeated corrections, repeated workflows, missing hooks), and proposes infrastructure improvements\u2009\u2014\u2009rules, skills, hooks, agents, reference docs. It manages your Claude Code configuration as a living system rather than something you set up once and forget.',
+  timeline: '2026',
+  narrative: [
+    '<strong>Forge is a Claude Code plugin that analyzes your sessions, project configuration, and memory\u2009\u2014\u2009all locally, zero token cost\u2009\u2014\u2009and surfaces patterns you\u2019d never catch yourself.</strong> Keep correcting Claude about the same thing? It proposes a rule so the mistake stops. Always running pytest after an edit? It proposes a hook to automate it. Starting every third session with the same prompt? It drafts a skill you can invoke in two keystrokes.',
+    '<strong>It manages the other direction too.</strong> A 300-line CLAUDE.md full of React guidance gets broken into scoped rules that only load when relevant. Stale artifacts that haven\u2019t come up in months get flagged. Recurring workflows get drafted into agents. The configuration doesn\u2019t just grow\u2009\u2014\u2009it stays lean. Everything is a proposal you review. Nothing auto-applies.',
+  ],
+}
+
 export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'mochi-ai-tooling': mochiAiTooling,
   'mochi-progress-tracker': mochiProgressTracker,
@@ -397,4 +409,5 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'duolingo-languages-flags': duolingoLanguagesFlags,
   'eat-local-vt': acornEatLocalVt,
   'trio-todo-list': trioTodoList,
+  'forge': forge,
 }
