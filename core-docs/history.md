@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-01 — Fix case study timelines: UW and Duo
+
+**Branch:** `timeline-fixes`
+
+**Summary:** Added `'2024'` timeline to UW Design System case study (was empty). Removed "Personal project" from Duolingo case study timeline and subtitle (redundant with `company` field in projects.ts).
+
+---
+
 ## 2026-03-31 — Open Forge case study: homepage link + case study page + video preview
 
 **Branch:** `forge-case-study`
