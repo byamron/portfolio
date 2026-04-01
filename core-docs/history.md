@@ -33,7 +33,6 @@ Decision log and completed work, in reverse chronological order.
 **Files changed:** `public/ben-yamron-resume.pdf`, `public/images/preview-resume.png`
 
 ---
-
 ## 2026-03-31 — Open Forge case study: homepage link + case study page + video preview
 
 **Branch:** `forge-case-study`
@@ -45,7 +44,7 @@ Decision log and completed work, in reverse chronological order.
 - Case study uses `narrative` only (no `sections` or `gallery`) — content is concise enough to not need structured sections.
 
 ---
->>>>>>> origin/next-update
+
 ## 2026-03-30 — SEO cleanup: remove stale Google listings, add redirects and sitemap
 
 **Branch:** `remove-old-google-pages`
@@ -71,7 +70,6 @@ Decision log and completed work, in reverse chronological order.
 - Used a temporary `GlassDevPanel` with sliders to tune values live, then stripped it before merge per dev-panels policy.
 
 ---
-
 
 ## 2026-03-29 — Reorder homepage projects and update Forge description
 
