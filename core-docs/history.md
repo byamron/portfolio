@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-03-31 — Open Forge case study: homepage link + case study page + video preview
+
+**Branch:** `forge-case-study`
+
+**Summary:** Converted the Forge project from a non-link "in progress" card to a fully linked project with a case study page. Added video preview (`forge-trio.mp4`), updated homepage summary text, and created the case study content with two narrative paragraphs. Kept "In progress" status badge.
+
+**Decisions:**
+- Replaced `previewDescription` (text-only preview) with `videoPreview` + `summary`, matching the pattern of other shipped projects.
+- Case study uses `narrative` only (no `sections` or `gallery`) — content is concise enough to not need structured sections.
+
+---
+
 ## 2026-03-30 — SEO cleanup: remove stale Google listings, add redirects and sitemap
 
 **Branch:** `remove-old-google-pages`
