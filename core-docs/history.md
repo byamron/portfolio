@@ -13,7 +13,6 @@ Decision log and completed work, in reverse chronological order.
 - Case study uses `narrative` only (no `sections` or `gallery`) — content is concise enough to not need structured sections.
 
 ---
-
 ## 2026-03-30 — SEO cleanup: remove stale Google listings, add redirects and sitemap
 
 **Branch:** `remove-old-google-pages`
@@ -40,7 +39,10 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/next-update
 ## 2026-03-29 — Reorder homepage projects and update Forge description
 
 **Branch:** `reorder-homepage-projects`
