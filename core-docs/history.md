@@ -2,6 +2,20 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-01 — Fix hover preview overflow and text zone responsiveness
+
+**Branch:** `fix-hover-preview-overflow`
+
+**Summary:** Replaced the fixed-height text zone (120px with line clamp) with a dynamic auto-growing text zone measured by ResizeObserver. Portraits fill the full container again (no space stolen by text zone). Static link previews (resume) now scale properly at small viewports. Team/timeline metadata columns forced to true 50/50 width.
+
+**Decisions:**
+- Used ResizeObserver → CSS variable (`--text-zone-h`) for dynamic `padding-bottom` on non-portrait media, preserving the original overlay layout where portraits fill everything.
+- Removed `isStaticLinkPreview` special branch — link previews now use same `maxWidth/maxHeight: 100%` pattern as project previews.
+- Changed metadata grid from `1fr` to `minmax(0, 1fr)` to prevent long company names from skewing column widths.
+- Lottie wrapper simplified: removed inner div, SVG viewBox handles scaling within padded parent.
+
+---
+
 ## 2026-04-01 — Fix case study timelines: UW and Duo
 
 **Branch:** `timeline-fixes`
@@ -31,6 +45,7 @@ Decision log and completed work, in reverse chronological order.
 - Case study uses `narrative` only (no `sections` or `gallery`) — content is concise enough to not need structured sections.
 
 ---
+>>>>>>> origin/next-update
 ## 2026-03-30 — SEO cleanup: remove stale Google listings, add redirects and sitemap
 
 **Branch:** `remove-old-google-pages`

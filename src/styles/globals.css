@@ -243,8 +243,14 @@ p a {
   animation: none;
 }
 
-/* Right column: persistent across route transitions — no animation */
-::view-transition-old(right-column),
+/* Right column: persistent across route transitions — hide old snapshot
+   immediately, show new with no animation.  Using animation:none on BOTH
+   old+new keeps both at opacity 1 simultaneously, which stacks drop shadows
+   on phone-device previews (duo, acorn) and creates a visible flash. */
+::view-transition-old(right-column) {
+  animation: none;
+  opacity: 0;
+}
 ::view-transition-new(right-column) {
   animation: none;
 }

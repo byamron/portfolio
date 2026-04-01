@@ -18,8 +18,9 @@ const summaryStyle: React.CSSProperties = {
   fontSize: 'var(--text-size-summary)',
 }
 
-// Fixed height for text zone — always allocated so the image area never resizes
-const TEXT_ZONE_HEIGHT = 120
+// Minimum text zone height: reserves space for summaries. The text zone grows
+// beyond this if the summary is long enough (no line clamp), preventing cutoff.
+const TEXT_ZONE_MIN_HEIGHT = 'clamp(100px, 16vh, 180px)'
 
 export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
@@ -69,7 +70,7 @@ export function ImageDisplay() {
     : (linkPreview?.summary ?? project?.summary ?? null)
   const isPreview = !!project || !!linkPreview
 
-  // Whether to allocate bottom padding for the text zone
+  // Whether to render the text zone below the media area
   const showTextZone = !isCaseStudy || csDisplayMode === 'metadata'
 
   const showShadow = (project && needsShadow.has(project.id))
@@ -80,6 +81,7 @@ export function ImageDisplay() {
     : undefined
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const textZoneRef = useRef<HTMLDivElement>(null)
 
   const triggerSpringPress = useCallback(() => {
     if (reducedMotion || !containerRef.current) return
@@ -153,13 +155,34 @@ export function ImageDisplay() {
 
   const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
 
+  // Measure text zone height → CSS variable for dynamic media bottom padding.
+  // Non-portrait media uses padding-bottom: var(--text-zone-h) to stay above the text zone,
+  // while portraits fill the full container (no padding). This replaces the old fixed
+  // mediaBottomPad so summaries can grow without clipping.
+  useEffect(() => {
+    const el = textZoneRef.current
+    const container = containerRef.current
+    if (!el || !container) {
+      containerRef.current?.style.removeProperty('--text-zone-h')
+      return
+    }
+    const observer = new ResizeObserver(entries => {
+      const height = entries[0].borderBoxSize[0].blockSize
+      container.style.setProperty('--text-zone-h', `${height}px`)
+    })
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      container.style.removeProperty('--text-zone-h')
+    }
+  }, [showTextZone])
+
   // Portraits fill with cover; static link previews (resume, LinkedIn) fill like
   // portraits but use contain + background color; project previews use contain with padding.
   const isPortrait = !project && !linkPreview
-  const isStaticLinkPreview = !!linkPreview && !linkPreview.video
-
-  // Bottom padding for media area: allocate space for text zone, or none for true-center
-  const mediaBottomPad = showTextZone ? `${TEXT_ZONE_HEIGHT + 24}px` : '0'
+  // Dynamic bottom padding: non-portrait media avoids the text zone via a CSS variable
+  // set by the ResizeObserver. Portrait/link-preview wrappers don't use this (they fill everything).
+  const mediaBottomPad = showTextZone ? 'calc(var(--text-zone-h, 0px) + 24px)' : '0'
 
   const imgStyle: React.CSSProperties = isPortrait
     ? {
@@ -170,14 +193,7 @@ export function ImageDisplay() {
         borderRadius: 32,
         filter: dropShadow,
       }
-    : isStaticLinkPreview
-      ? {
-          height: '100%',
-          objectFit: 'contain',
-          borderRadius: 32,
-          filter: dropShadow,
-        }
-      : {
+    : {
           maxWidth: '100%',
           maxHeight: '100%',
           objectFit: 'contain',
@@ -185,7 +201,7 @@ export function ImageDisplay() {
           filter: dropShadow,
         }
 
-  const imageWrapperStyle: React.CSSProperties = isPortrait || isStaticLinkPreview
+  const imageWrapperStyle: React.CSSProperties = isPortrait
     ? {
         position: 'absolute',
         inset: 0,
@@ -193,7 +209,7 @@ export function ImageDisplay() {
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        borderRadius: isPortrait ? 32 : undefined,
+        borderRadius: 32,
       }
     : {
         position: 'absolute',
@@ -251,7 +267,7 @@ export function ImageDisplay() {
         {linkPreview ? linkPreview.alt : project ? project.title : `Portrait, ${accentColor} theme`}
       </div>
 
-      {/* Image */}
+      {/* Media — absolutely positioned, with bottom padding to avoid text zone */}
       <AnimatePresence mode="sync">
         {previewDescription && !hasMedia ? (
           <motion.div
@@ -357,15 +373,13 @@ export function ImageDisplay() {
             }}
           >
             <Suspense fallback={null}>
-              <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                <Lottie
-                  animationData={lottieData}
-                  loop={false}
-                  autoplay={!isCaseStudy}
-                  initialSegment={isCaseStudy && lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
-                  style={{ maxWidth: '100%', maxHeight: '100%' }}
-                />
-              </div>
+              <Lottie
+                animationData={lottieData}
+                loop={false}
+                autoplay={!isCaseStudy}
+                initialSegment={isCaseStudy && lottieLastFrame > 1 ? [lottieLastFrame - 1, lottieLastFrame] : undefined}
+                style={{ width: '100%', height: '100%' }}
+              />
             </Suspense>
           </motion.div>
         ) : (
@@ -401,12 +415,14 @@ export function ImageDisplay() {
       {/* Text zone — summary on home, metadata on case study (metadata variant only) */}
       {showTextZone && (
         <div
+          ref={textZoneRef}
           style={{
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
-            height: TEXT_ZONE_HEIGHT,
+            minHeight: (summary || (isCaseStudy && metadataItems)) ? TEXT_ZONE_MIN_HEIGHT : 0,
+            display: 'grid',
             pointerEvents: 'none',
           }}
         >
@@ -426,11 +442,8 @@ export function ImageDisplay() {
                   : { duration: reducedMotion ? 0 : ts.summaryDuration, ease: ts.easing }
                 }
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                  gridRow: 1,
+                  gridColumn: 1,
                   display: 'flex',
                   alignItems: 'center',
                 }}
@@ -441,8 +454,6 @@ export function ImageDisplay() {
                     lineHeight: 1.5,
                     color: 'var(--text-grey)',
                     maxWidth: 540,
-                    maxHeight: TEXT_ZONE_HEIGHT,
-                    overflow: 'hidden',
                     padding: '0 24px',
                     textAlign: 'left',
                     margin: '0 auto',
@@ -465,11 +476,8 @@ export function ImageDisplay() {
                 : { duration: reducedMotion ? 0 : ts.summaryDuration, ease: ts.easing, delay: 0.15 }
               }
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                gridRow: 1,
+                gridColumn: 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -480,7 +488,7 @@ export function ImageDisplay() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: `repeat(${metadataItems.length}, 1fr)`,
+                  gridTemplateColumns: `repeat(${metadataItems.length}, minmax(0, 1fr))`,
                   width: '100%',
                   maxWidth: 540,
                 }}
