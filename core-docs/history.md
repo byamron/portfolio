@@ -2,6 +2,16 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-01 — Update resume PDF and hover preview
+
+**Branch:** `update-resume`
+
+**Summary:** Replaced resume PDF and hover preview image with the April 2026 version. Preview image at 2x resolution (1224×1584px). Straightforward file swap — no code changes.
+
+**Files changed:** `public/ben-yamron-resume.pdf`, `public/images/preview-resume.png`
+
+---
+
 ## 2026-03-31 — Open Forge case study: homepage link + case study page + video preview
 
 **Branch:** `forge-case-study`
