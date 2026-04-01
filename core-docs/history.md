@@ -40,9 +40,13 @@ Decision log and completed work, in reverse chronological order.
 ---
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> origin/next-update
+=======
+
+>>>>>>> origin/main
 ## 2026-03-29 — Reorder homepage projects and update Forge description
 
 **Branch:** `reorder-homepage-projects`
