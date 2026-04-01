@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-01 — Fix case study timelines: UW and Duo
+
+**Branch:** `timeline-fixes`
+
+**Summary:** Added `'2024'` timeline to UW Design System case study (was empty). Removed "Personal project" from Duolingo case study timeline and subtitle (redundant with `company` field in projects.ts).
+
+---
+
 ## 2026-04-01 — Update resume PDF and hover preview
 
 **Branch:** `update-resume`
@@ -49,14 +57,7 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/next-update
-=======
-
->>>>>>> origin/main
 ## 2026-03-29 — Reorder homepage projects and update Forge description
 
 **Branch:** `reorder-homepage-projects`
