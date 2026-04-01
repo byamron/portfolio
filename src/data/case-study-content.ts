@@ -187,7 +187,7 @@ export const uwDesignSystem: CaseStudy = {
   title: 'Building the system that builds the system',
   subtitle:
     'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.',
-  timeline: '',
+  timeline: '2024',
   narrative: [
     '<strong>UW-IT manages digital services for 90,000+ students, faculty, and staff.</strong> Their design system existed only as colors and principles\u2009\u2014\u2009no components, no documentation, no process for building either. I designed the first three components. The real deliverable was everything around them: a documentation template for engineers and non-technical designers, a process for turning existing UI patterns into opinionated, reusable components, and clear guidance on what the system shouldn\u2019t do.',
     '<strong>Design systems get adopted when they accommodate existing workflows instead of demanding new ones.</strong> Code snippets toggled on or off depending on your role. A framework dropdown let teams grab code in their stack. A system needs opinions\u2009\u2014\u2009infinite customization isn\u2019t flexibility, it\u2019s abdication.',
@@ -311,8 +311,8 @@ export const cipElectionMisinformation: CaseStudy = {
 export const duolingoLanguagesFlags: CaseStudy = {
   id: 'duolingo-languages-flags',
   title: 'Making Duolingo\u2019s use of flags more inclusive',
-  subtitle: 'Duolingo redesign \u00b7 Personal project, 2020',
-  timeline: 'Personal project, 2020',
+  subtitle: 'Duolingo redesign \u00b7 2020',
+  timeline: '2020',
   narrative: [
     '<strong>Duolingo represents every language with a flag, but which flag represents Spanish\u2009\u2014\u2009Spain? Mexico?</strong> The mapping can\u2019t follow logic because no logic exists. When it breaks down completely\u2009\u2014\u2009the Arab League for Arabic, Hawaii\u2019s state flag for Hawaiian\u2009\u2014\u2009the fallback is flags most users couldn\u2019t identify anyway. Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against it.',
     '<strong>Remove flags from course selection; add them everywhere else.</strong> Replace with ISO-639 language codes\u2009\u2014\u2009standardized, uniform, immediately implementable. Then repurpose flags in stories, roleplay scenarios, and loading screens to highlight the cultural diversity the current system erases. One change removes the problem; the other turns flags into an asset.',
@@ -387,6 +387,18 @@ export const trioTodoList: CaseStudy = {
   gallery: [],
 }
 
+export const forge: CaseStudy = {
+  id: 'forge',
+  title: 'Optimizing your AI development workflow',
+  subtitle:
+    'I built a Claude Code plugin that watches how you use Claude, detects patterns (repeated corrections, repeated workflows, missing hooks), and proposes infrastructure improvements\u2009\u2014\u2009rules, skills, hooks, agents, reference docs. It manages your Claude Code configuration as a living system rather than something you set up once and forget.',
+  timeline: '2026',
+  narrative: [
+    '<strong>Forge is a Claude Code plugin that analyzes your sessions, project configuration, and memory\u2009\u2014\u2009all locally, zero token cost\u2009\u2014\u2009and surfaces patterns you\u2019d never catch yourself.</strong> Keep correcting Claude about the same thing? It proposes a rule so the mistake stops. Always running pytest after an edit? It proposes a hook to automate it. Starting every third session with the same prompt? It drafts a skill you can invoke in two keystrokes.',
+    '<strong>It manages the other direction too.</strong> A 300-line CLAUDE.md full of React guidance gets broken into scoped rules that only load when relevant. Stale artifacts that haven\u2019t come up in months get flagged. Recurring workflows get drafted into agents. The configuration doesn\u2019t just grow\u2009\u2014\u2009it stays lean. Everything is a proposal you review. Nothing auto-applies.',
+  ],
+}
+
 export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'mochi-ai-tooling': mochiAiTooling,
   'mochi-progress-tracker': mochiProgressTracker,
@@ -397,4 +409,5 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'duolingo-languages-flags': duolingoLanguagesFlags,
   'eat-local-vt': acornEatLocalVt,
   'trio-todo-list': trioTodoList,
+  'forge': forge,
 }
