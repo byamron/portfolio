@@ -10,12 +10,15 @@ import { RightColumn } from '@/components/RightColumn'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
+import { PlaygroundRoutes } from '@/components/PlaygroundRoutes'
+import { PlaygroundDemo } from '@/components/PlaygroundDemo'
 import { preloadPortraitImages, preloadPreviewImages } from '@/utils/preloadImages'
 import { useIsWide } from '@/hooks/useMediaQuery'
 
 function AppContent() {
   const { pathname } = useLocation()
-  const isStandalone = pathname.startsWith('/havana/')
+  const demoRoutes = ['/slide-to-unlock', '/dvd', '/high-five']
+  const isStandalone = pathname.startsWith('/havana/') || pathname.startsWith('/playground') || demoRoutes.includes(pathname)
   const isWide = useIsWide()
 
   useEffect(() => { preloadPortraitImages(); preloadPreviewImages() }, [])
@@ -33,6 +36,10 @@ function AppContent() {
         <Route path="/" element={<Layout />} />
         <Route path="/project/:slug" element={<CaseStudyPage />} />
         <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
+        <Route path="/playground/*" element={<PlaygroundRoutes />} />
+        <Route path="/slide-to-unlock" element={<PlaygroundDemo slug="slide-unlock" />} />
+        <Route path="/dvd" element={<PlaygroundDemo slug="dvd-bounce" />} />
+        <Route path="/high-five" element={<PlaygroundDemo slug="figma-highfive" />} />
         {/* Redirect old portfolio URLs to current routes */}
         <Route path="/eat-local-vt" element={<Navigate to="/project/eat-local-vt" replace />} />
         <Route path="/about" element={<Navigate to="/" replace />} />
