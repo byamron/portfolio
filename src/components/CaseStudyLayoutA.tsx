@@ -87,16 +87,9 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   // Text content — narrative paragraphs or subtitle fallback
   const textContent = (
     <>
-      <style>{`
-        .cs-narrative strong {
-          color: var(--cs-strong-color, var(--text-medium));
-          font-weight: var(--cs-strong-weight, 400);
-        }
-      `}</style>
-      {narrative.map((html, i) => (
+{narrative.map((html, i) => (
         <p
           key={i}
-          className="cs-narrative"
           style={{
             ...narrativeStyle,
             fontFamily: 'var(--cs-body-font, ' + narrativeStyle.fontFamily + ')',
