@@ -42,29 +42,22 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
         position: 'relative',
       }}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: navigatingProjectId ? 0 : 1 }}
-        transition={navigatingProjectId
-          ? { duration: 0.28, delay: 0.15 }
-          : { duration: 0.35, delay: 0.12 }
-        }
-        style={{ display: 'flex', flexDirection: 'column', gap: 64, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}>
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
 
           {sections.map((section, i) => (
             <section key={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {sectionHeadingMode === 'label' && section.label && (
-                <span style={{
-                  fontSize: 'var(--text-size-small)',
-                  fontWeight: 500,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--text-grey)',
+                <h2 style={{
+                  fontFamily: "'Literata', serif",
+                  fontSize: 'var(--text-size-section-heading)',
+                  fontWeight: 300,
+                  lineHeight: 1.3,
+                  color: 'var(--text-medium)',
+                  margin: 0,
                   marginBottom: 4,
-                }}>{section.label}</span>
+                }}>{section.label}</h2>
               )}
               {section.context.map((text, j) => (
                 <p key={j} style={narrativeStyle}>{text}</p>
@@ -83,7 +76,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
           <SignatureAnimation />
 
         </div>
-      </motion.div>
+      </div>
     </motion.main>
   )
 }

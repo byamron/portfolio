@@ -4,7 +4,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { CursorProvider } from '@/contexts/CursorContext'
 import { TypographyProvider } from '@/contexts/TypographyContext'
-import { TypographyDevPanel } from '@/components/TypographyDevPanel'
+
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
@@ -60,7 +60,6 @@ function App() {
         <CursorProvider>
           <TypographyProvider>
             <AppContent />
-            <TypographyDevPanel />
           </TypographyProvider>
         </CursorProvider>
       </HoverProvider>

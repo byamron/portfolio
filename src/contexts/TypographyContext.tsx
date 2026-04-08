@@ -37,7 +37,7 @@ const TypographyContext = createContext<TypographyContextValue>({
 
 export function TypographyProvider({ children }: { children: ReactNode }) {
   const [variant, setVariant] = useState<TypographyVariant>('unified')
-  const [sectionHeadingMode, setSectionHeadingMode] = useState<SectionHeadingMode>('control')
+  const [sectionHeadingMode, setSectionHeadingMode] = useState<SectionHeadingMode>('label')
 
   const base = variant === 'unified' ? unifiedNarrative : currentNarrative
   const narrativeStyle = sectionHeadingMode === 'dark-narrative'

@@ -24,7 +24,7 @@ export interface Section {
 
 export const sections: Section[] = [
   {
-    label: 'Work',
+    label: '',
     context: [
       'I own product problems\u2009—\u2009from setting direction to shipping the details. Right now I\u2019m deep in AI tooling\u2009—\u2009designing it for my team and using it to ship my own apps.',
     ],
@@ -35,10 +35,8 @@ export const sections: Section[] = [
     ],
   },
   {
-    label: 'Building',
-    context: [
-      'I build tools on my own time too.',
-    ],
+    label: 'Building tools on the side',
+    context: [],
     projects: [
       { id: 'forge', title: 'Optimizing your AI development workflow', projectId: 'forge', href: '/project/forge', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'forge', videoPreview: '/images/preview-forge.mp4', status: 'In progress', summary: 'Claude Code\u2019s configuration infrastructure is powerful, but keeping it optimized is real work. Forge watches your sessions, detects patterns, and proposes improvements\u2009\u2014\u2009rules, hooks, skills, scoped artifacts. Everything is a proposal you review. Nothing auto-applies.' },
       { id: 'language-app', title: 'Voice-first language practice with personalized feedback', projectId: 'language-app', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nMost language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: real-time voice conversations powered by native audio models, and an async feed of corrections generated from things you actually said. Practice speaking when you can, consume personalized feedback when you can\u2019t.' },
@@ -47,10 +45,8 @@ export const sections: Section[] = [
     ],
   },
   {
-    label: 'Earlier',
-    context: [
-      'Earlier work.',
-    ],
+    label: 'Earlier work',
+    context: [],
     projects: [
       { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, company: 'Sony \u00d7 University of Washington', year: '2024', caseStudySlug: 'sony-screenless-tv', videoPreview: '/prototypes/sony-preview.mp4', summary: 'People watch TV together for connection, not just content. For my master\u2019s capstone at UW, I led design on a speculative project for Sony\u2019s TV division\u2009\u2014\u2009a volumetric display with angle-specific imagery and directional audio. Personalization without isolation.' },
       { id: 'cip-misinfo', title: 'Framing election misinformation', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, company: 'UW Center for an Informed Public', year: '2024', caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json', summary: 'Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I analyzed how election misinformation spreads through framing, not fabrication. I helped build a framework mapping how identical evidence gets assembled into opposing claims. Two papers presented at CSCW 2025.' },
@@ -110,6 +106,18 @@ export const linkPreviews: Record<string, LinkPreview> = {
     image: '/images/preview-linkedin.png',
     alt: 'Ben Yamron LinkedIn profile',
     backgroundColor: '#ffffff',
+  },
+  x: {
+    id: 'x',
+    image: '/images/preview-x.png',
+    alt: 'Ben Yamron on X',
+    backgroundColor: '#000000',
+  },
+  github: {
+    id: 'github',
+    image: '/images/preview-github.png',
+    alt: 'Ben Yamron on GitHub',
+    backgroundColor: '#0d1117',
   },
 }
 

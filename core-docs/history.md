@@ -2,6 +2,40 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-07 — Merge typography unification + copy rewrite, redesign section hierarchy
+
+**Branch:** `merge-both-prs-preview` (supersedes `text-size-unify` PR #155 and `update-case-study-copy` PR #156)
+
+**Summary:** Merged both open PRs and redesigned the section hierarchy that emerged from combining shorter copy with the unified sans typography. The shorter narrative text from the copy PR lost its visual weight in the flattened type system, so section headings were introduced as structural anchors.
+
+**Section hierarchy redesign:**
+- Added Literata serif section headings at 28px (`--text-size-section-heading`) for "Building tools on the side", "Earlier work", and "How I work"
+- Removed "Current work" heading — Mochi projects flow naturally from the hero statement + narrative paragraph
+- Dropped redundant short narrative intros ("I build tools on my own time too.", "Earlier work.") — the headings say the same thing
+- Four-tier type hierarchy: hero 36px → section heading 28px → project title 18px → project meta 14px uppercase
+
+**Spacing refinement:**
+- Hero → first section narrative: 40px (tighter than 64px section gap — reads as one unit with the hero)
+- Between sections: 64px (structural break)
+- Within sections: 12px (proximity)
+
+**About section:**
+- Added "How I work" serif heading (consistent with other section headings)
+- Added X and GitHub links with glass hover treatment
+- Added hover preview images for X and GitHub profiles
+- Rewrote contact copy: "email, LinkedIn, or X" + "resume and GitHub"
+
+**Cleanup:**
+- Removed TypographyDevPanel (dev panels policy)
+- Fixed duplicated opacity animation on LeftColumn (both motion.main and motion.div had identical fade — simplified to motion.main only)
+
+**Decisions:**
+- Section headings use serif (Literata) to create a distinct tier between hero and body content. The old small uppercase labels collided visually with project card subtitles (same size, weight, case, color).
+- "Current work" omitted because the hero already establishes "product designer at Mochi Health" — labeling the Mochi projects beneath it is redundant.
+- 40px hero→content gap chosen as distinct from both 12px (within-section) and 64px (between-section) — three clear spacing tiers.
+
+---
+
 ## 2026-04-07 — Unify typography: collapse narrative to sans, tighten spacing
 
 **Branch:** `text-size-unify`
