@@ -29,11 +29,11 @@ export function AboutSection() {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <p style={narrativeStyle}>
-        I do my best work shaping early-stage ideas — setting direction in ambiguity, getting technical with engineers, and building ideas in code.
+        I do my best work shaping early-stage ideas — setting direction in ambiguity, getting technical with engineers, building in code.
       </p>
 
       <p style={narrativeStyle}>
-        I feel fulfilled working on experiences related to health, community, and other human stuff.
+        I feel fulfilled working on experiences related to productivity, health, and other human stuff.
       </p>
       <div ref={contactRef} data-contact-links style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <p style={narrativeStyle}>

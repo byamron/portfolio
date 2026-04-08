@@ -31,11 +31,12 @@ export interface CaseStudy {
 export const mochiAiTooling: CaseStudy = {
   id: 'mochi-ai-tooling',
   title: 'AI tooling to automate internal workflows',
-  subtitle: 'Mochi had no central repository of institutional knowledge. I built a shared context layer and a Claude Code plugin on top of it\u2009\u2014\u2009making previously inaccessible information available to anyone at the company.',
+  subtitle: 'AI tools are only as good as the context they have. I built a documentation layer and a Claude Code plugin that gives anyone at the company an AI assistant that actually knows the product.',
   timeline: '2025\u20132026',
   narrative: [
-    '<strong>Mochi had no single source of truth for how the product works.</strong> Institutional knowledge\u2009\u2014\u2009how the code is structured, how database tables map to features, when changes went in and why\u2009\u2014\u2009lived in individuals\u2019 heads. When people started using AI tools, they hit the same wall: without that context, AI could only offer generic help. I built a documentation layer and a Claude Code plugin on top of it\u2009\u2014\u2009one system that knows everything, available to anyone at the company.',
-    '<strong>The plugin has specialized modes for different workflows</strong>\u2009\u2014\u2009writing product specs, tracing bugs to the code changes that caused them, querying the database, managing project tickets with full product context. The modes work together: a bug report can pull from version history, the database, and project management to surface the full picture. Anyone at the company\u2009\u2014\u2009designers, engineers, PMs\u2009\u2014\u2009can install it and use it immediately.',
+    '<strong>AI tools are only as good as the context they have.</strong> At Mochi, that context\u2009\u2014\u2009how the code maps to features, when things changed and why, how database tables connect\u2009\u2014\u2009lived in people\u2019s heads. I built a documentation layer and a Claude Code plugin on top of it that gives anyone at the company an AI assistant that actually knows the product.',
+    '<strong>The plugin uses Claude Code skills for different workflows:</strong> writing product specs, tracing bugs to the code changes that caused them, querying the database, managing project tickets. The skills compose\u2009\u2014\u2009a single bug report can pull from version history, the database, and project management to surface the full picture without switching tools. Anyone\u2009\u2014\u2009designers, engineers, PMs\u2009\u2014\u2009can install it and use it immediately.',
+    '<strong>Now I\u2019m turning the knowledge layer into a reusable context repository</strong>\u2009\u2014\u2009a foundation other people can build specialized tools on top of without starting from scratch. Lower the barrier, and useful internal tools get built fast.',
   ],
 }
 
@@ -43,11 +44,11 @@ export const mochiProgressTracker: CaseStudy = {
   id: 'mochi-progress-tracker',
   title: 'Empowering weight loss through progress tracking',
   subtitle:
-    'Mochi\u2019s progress tracker existed but nobody used it. I drove a 53% increase in weekly active users, then identified its real value \u2014 a single source of truth for patient weight data \u2014 and built the integration that made it critical to the clinical workflow.',
+    'Mochi tracked weight in two places that didn\u2019t talk to each other. I unified them so provider-recorded weights appear automatically in the patient\u2019s tracker. Separately, I redesigned the tracker with mobile support: 53% increase in weekly active users within two weeks.',
   timeline: 'Q3 2025 \u2013 Q1 2026',
   narrative: [
-    '<strong>Only 30% of patients had ever used our progress tracker.</strong> I redesigned it with mobile support and cleaner data visualization\u2009\u2014\u200953% increase in weekly active users within two weeks. But adoption wasn\u2019t the real problem.',
-    '<strong>Mochi had two separate systems tracking patient weight that didn\u2019t talk to each other.</strong> Patients logged weight in the app; providers recorded it separately during check-ins. I unified them so provider-recorded weights automatically appear in the patient\u2019s tracker. Patients get a filled-out history without extra effort; providers get the timestamped data they need to approve refills. What started as a low-priority feature is now infrastructure the clinical team can\u2019t operate without.',
+    '<strong>Patients reported their weight to their provider every month, yet most still saw nothing in their own progress tracker.</strong> Mochi tracked weight in two places that didn\u2019t talk to each other\u2009\u2014\u2009one for patients, one for providers. I killed the split. Provider-recorded weights now appear automatically in the patient\u2019s tracker. Patients get a filled-out history without logging anything; providers get the data they need to approve refills. What started as a low-priority feature is now infrastructure the clinical team can\u2019t operate without.',
+    '<strong>The surface layer mattered too.</strong> The progress tracker had 30% lifetime usage\u2009\u2014\u2009mostly because it didn\u2019t work on mobile. I redesigned it with mobile support and cleaner data visualization. 53% increase in weekly active users within two weeks.',
   ],
   sections: [
     {
@@ -88,11 +89,12 @@ export const mochiSubscriptions: CaseStudy = {
   id: 'mochi-subscriptions',
   title: 'Improving billing UX for our core subscriptions model',
   subtitle:
-    'Mochi billed its patients for monthly medication whether it shipped or not. I rebuilt subscriptions so billing triggers when an order is processed, gave patients control over their schedule, and eliminated $200\u2013300k/month in infrastructure costs. 90%+ of patients have been successfully migrated.',
+    'Billing and fulfillment were two independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I worked with two engineers to rebuild billing so charges only trigger on shipment, gave patients control over their schedule, and eliminated $200\u2013300k/month in infrastructure costs. 90%+ of users migrated.',
   timeline: 'Q3 2025 \u2013 Q1 2026',
   narrative: [
-    '<strong>Billing and fulfillment were two independent systems\u2009\u2014\u2009patients paid the price.</strong> Mochi charged monthly on a fixed schedule while medication delivery depended on a multi-step refill process. When they diverged, charges continued without medication. I redesigned billing so patients only pay when medication ships. Eliminated $200\u2013300k/month in payment processing overhead; 90%+ of users migrated.',
-    '<strong>Refill denial rates spiked 3\u00d7 after removing required check-ins</strong>\u2009\u2014\u2009a timing problem, not a data problem. Providers reviewed refills before patients had a chance to submit updated health information. I moved data collection 14 days earlier in the refill cycle so the information is already there when providers review. <strong>20% of subscription churn was preventable</strong>\u2009\u2014\u2009patients just wanted a break. I designed a delay feature: push your next order out up to 3 months, subscription stays active.',
+    '<strong>Mochi is a telehealth subscription\u2009\u2014\u2009patients pay monthly for weight loss medication and ongoing care.</strong> But billing and fulfillment were two independent systems. Patients got charged on a fixed monthly schedule regardless of whether their medication had shipped. When the two diverged, people paid for medication they hadn\u2019t received. I worked with two engineers to rebuild our billing scheduling logic from scratch, replacing a third-party service\u2009\u2014\u2009defining every status, error state, and edge case from the ground up. Charges now only trigger on shipment. Eliminated $200\u2013300k/month in payment processing overhead; 90%+ of users migrated.',
+    '<strong>With the foundation fixed, I tackled the problems around it.</strong> Refill denial rates had spiked 3\u00d7\u2009\u2014\u2009providers were reviewing refills before patients had a chance to submit updated health information. I moved data collection 14 days earlier in the cycle so the information is already there when the provider looks. Separately, 20% of subscription churn was patients who just wanted a break. I designed a delay feature that lets users push their next order out up to three months, and a restart flow so that if they do cancel, they can pick up where they left off instead of being treated like a new patient.',
+    '<strong>Now we\u2019re building the subscription entity to handle any medication type</strong>\u2009\u2014\u2009not just GLP-1s. The same system, flexible enough to scale as Mochi\u2019s offering grows.',
   ],
   heroVisual: {
     id: 'hero-mochi',
@@ -186,11 +188,11 @@ export const uwDesignSystem: CaseStudy = {
   id: 'uw-design-system',
   title: 'Building the system that builds the system',
   subtitle:
-    'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.',
+    'UW-IT\u2019s design system existed only as colors and principles. I designed the first three components and\u2009\u2014\u2009more importantly\u2009\u2014\u2009the process and documentation structure for everything that would follow.',
   timeline: '2024',
   narrative: [
-    '<strong>UW-IT manages digital services for 90,000+ students, faculty, and staff.</strong> Their design system existed only as colors and principles\u2009\u2014\u2009no components, no documentation, no process for building either. I designed the first three components. The real deliverable was everything around them: a documentation template for engineers and non-technical designers, a process for turning existing UI patterns into opinionated, reusable components, and clear guidance on what the system shouldn\u2019t do.',
-    '<strong>Design systems get adopted when they accommodate existing workflows instead of demanding new ones.</strong> Code snippets toggled on or off depending on your role. A framework dropdown let teams grab code in their stack. A system needs opinions\u2009\u2014\u2009infinite customization isn\u2019t flexibility, it\u2019s abdication.',
+    '<strong>UW-IT manages digital services for 90,000+ students, faculty, and staff.</strong> Their design system existed only as colors and principles\u2009\u2014\u2009no components, no documentation, no process for building either. I designed the first three components and\u2009\u2014\u2009more importantly\u2009\u2014\u2009the process and documentation structure for everything that would follow. Documentation toggled code snippets by role. A framework dropdown let teams grab code in their stack. Engineers could adopt without changing how they already worked.',
+    '<strong>The hard part was deciding what the system shouldn\u2019t do.</strong> Infinite customization isn\u2019t flexibility\u2009\u2014\u2009it\u2019s abdication. I scoped components with strong defaults and limited overrides, and wrote explicit guidance on when to break from the system rather than pretending it covers everything.',
   ],
   sections: [
     {
@@ -225,11 +227,11 @@ export const sonyScreenlessTv: CaseStudy = {
   id: 'sony-screenless-tv',
   title: 'Screenless TV: Designing for shared reality',
   subtitle:
-    'A speculative vision project for Sony\u2019s TV division. My team explored how immersive technology could shape home entertainment \u2014 and found that the real design challenge wasn\u2019t personalization, it was preserving the shared experience that makes watching together meaningful.',
+    'People watch TV together for connection, not just content. For my master\u2019s capstone at UW, I led design on a speculative project for Sony\u2019s TV division\u2009\u2014\u2009a volumetric display with personalization without isolation.',
   timeline: 'Q1 \u2013 Q3 2024',
   narrative: [
-    '<strong>People don\u2019t watch together for the content\u2009\u2014\u2009they watch together for the connection.</strong> For my master\u2019s capstone at the University of Washington, my team took on a speculative vision project for Sony\u2019s TV division. We interviewed people about how they watch with others, expecting to hear about picture quality. Instead we heard about compromise\u2009\u2014\u2009subtitles, volume, lighting\u2009\u2014\u2009and the fact that people kept watching together anyway. The value is presence, not content.',
-    '<strong>We rejected wearables\u2009\u2014\u2009a values decision, not a technical one.</strong> Apple Vision Pro had just launched, but you can\u2019t catch someone\u2019s eye during a tense scene through a headset. We designed a volumetric display with angle-specific imagery and directional audio\u2009\u2014\u2009personalization without isolation.',
+    '<strong>People watch TV together for connection, not just content.</strong> They compromise constantly\u2009\u2014\u2009subtitles, volume, lighting\u2009\u2014\u2009and keep watching together anyway. Every attempt at personalization has meant isolation: headphones, second screens, headsets. We wanted personalization without isolation.',
+    '<strong>For my master\u2019s capstone at UW, I led design on a speculative project for Sony\u2019s TV division exploring the future of television.</strong> We designed around a volumetric display\u2009\u2014\u2009technology that exists today\u2009\u2014\u2009that projects into physical space without a physical footprint. The screen can be moved, resized, and disappears completely when you turn it off. Angle-specific imagery and directional audio let everyone in the room have personalized subtitles, volume, and lighting without wearing anything. I kept interaction patterns deliberately familiar\u2009\u2014\u2009a remote control with Wiimote-style gestures for new functions. The product had to feel like a TV, not a tech demo. We prototyped in Figma, Adobe Aero (AR spatial), and After Effects (video walkthrough), and presented to Sony\u2019s directors and product planners.',
   ],
   sections: [
     {
@@ -266,10 +268,10 @@ export const sonyScreenlessTv: CaseStudy = {
 export const cipElectionMisinformation: CaseStudy = {
   id: 'cip-election-misinformation',
   title: 'Framing election misinformation',
-  subtitle: 'Two papers published at CSCW 2025, co-authored with Dr. Kate Starbird\u2019s research group at the University of Washington\u2019s Center for an Informed Public.',
+  subtitle: 'Election misinformation spreads through framing, not fabrication. Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I helped build a framework mapping how identical evidence gets assembled into opposing claims. Two papers presented at CSCW 2025.',
   timeline: '2022\u20132025',
   narrative: [
-    '<strong>Election rumors aren\u2019t about getting the facts wrong\u2009\u2014\u2009they\u2019re about framing.</strong> Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I analyzed how misleading claims spread on Twitter during the 2020 and 2022 U.S. elections. The core finding: these claims often start with real evidence\u2009\u2014\u2009a photo, a statistic, a policy change\u2009\u2014\u2009and become misleading through the political frame applied to them. We built a framework that maps how the same evidence gets assembled into fundamentally different narratives depending on who\u2019s telling the story.',
+    '<strong>Election rumors aren\u2019t about getting the facts wrong\u2009\u2014\u2009they\u2019re about framing.</strong> Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I analyzed how election misinformation spreads on Twitter\u2009\u2014\u2009not through fabrication, but through framing. A photo, a statistic, a real policy change becomes misleading depending on the narrative wrapped around it. I helped build a framework mapping how identical evidence gets assembled into opposing claims. Two papers presented at CSCW 2025.',
     '<em>What is going on?</em> introduces the framework. <em>Deep Storytelling</em> examines how these stories evolved across election cycles. Both were presented at <a href="https://cscw.acm.org/2025/" target="_blank" rel="noopener noreferrer" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">CSCW 2025</a>.',
   ],
   paperLinks: [
@@ -311,11 +313,11 @@ export const cipElectionMisinformation: CaseStudy = {
 export const duolingoLanguagesFlags: CaseStudy = {
   id: 'duolingo-languages-flags',
   title: 'Making Duolingo\u2019s use of flags more inclusive',
-  subtitle: 'Duolingo redesign \u00b7 2020',
+  subtitle: 'Duolingo represents every language with a flag, but the mapping can\u2019t follow logic because no logic exists. One change removes the problem; another turns flags into an asset.',
   timeline: '2020',
   narrative: [
     '<strong>Duolingo represents every language with a flag, but which flag represents Spanish\u2009\u2014\u2009Spain? Mexico?</strong> The mapping can\u2019t follow logic because no logic exists. When it breaks down completely\u2009\u2014\u2009the Arab League for Arabic, Hawaii\u2019s state flag for Hawaiian\u2009\u2014\u2009the fallback is flags most users couldn\u2019t identify anyway. Users call this out regularly. Duolingo\u2019s CEO has acknowledged it\u2019s flawed. The W3C recommends against it.',
-    '<strong>Remove flags from course selection; add them everywhere else.</strong> Replace with ISO-639 language codes\u2009\u2014\u2009standardized, uniform, immediately implementable. Then repurpose flags in stories, roleplay scenarios, and loading screens to highlight the cultural diversity the current system erases. One change removes the problem; the other turns flags into an asset.',
+    '<strong>The fix is one change:</strong> replace flags with ISO-639 language codes in course selection\u2009\u2014\u2009\u201cES\u201d for Spanish, \u201cAR\u201d for Arabic, \u201cHAW\u201d for Hawaiian. Standardized, uniform, and easily stylized to match Duolingo\u2019s visual language. Ships tomorrow. Then repurpose flags everywhere else\u2009\u2014\u2009in stories, roleplay scenarios, and loading screens\u2009\u2014\u2009to highlight the cultural diversity the current system erases. One change removes the problem; the other turns flags into an asset.',
   ],
 }
 
@@ -323,11 +325,11 @@ export const acornEatLocalVt: CaseStudy = {
   id: 'eat-local-vt',
   title: 'Connecting farmers and customers during COVID-19',
   subtitle:
-    'COVID-19 shut down farmers markets across Vermont. As a college student with no design experience, I gathered eight engineers and taught myself product design to solve a problem I could see.',
+    'First app I ever shipped. Taught myself product design as a college student, gathered a team of eight, and built a cross-platform app connecting Vermont customers to local farms after COVID shut down farmers markets.',
   timeline: '2020\u20132021',
   narrative: [
-    '<strong>COVID-19 shut down farmers markets across Vermont.</strong> As a college student with no design experience, I gathered eight engineers and taught myself product design to ship a cross-platform app connecting customers to local farms. 300+ farms onboarded, 1,100+ downloads, local news coverage.',
-    '<strong>None of us had built an app before.</strong> I sat in engineering meetings not because I understood everything, but because I wanted to be a real partner\u2009\u2014\u2009not someone who hands off specs and disappears. That instinct stuck. Today I treat engineering collaboration as the starting point, not the handoff.',
+    '<strong>First app I ever shipped.</strong> Taught myself product design as a college student, gathered a team of eight, and built a cross-platform app connecting Vermont customers to local farms after COVID shut down farmers markets. 300+ farms, 1,100+ downloads. None of us had built anything before.',
+    '<strong>I sat in every engineering meeting</strong>\u2009\u2014\u2009not because I understood everything, but because I wanted to be a real partner. That instinct stuck. I still treat engineering collaboration as the starting point, not the handoff.',
   ],
 }
 
@@ -335,12 +337,11 @@ export const trioTodoList: CaseStudy = {
   id: 'trio-todo-list',
   title: 'A todo list for focus and prioritization',
   subtitle:
-    'I designed and built a native iOS/macOS app to solve my own priority problem\u2009\u2014\u2009using AI tools as a design partner, going deep on craft that personal projects rarely get.',
+    'Most todo apps give you a list and leave the rest to you. I built one that maintains itself\u2009\u2014\u2009pairwise comparisons keep everything ranked, and your active list can only hold three at a time.',
   timeline: 'Jan \u2013 Mar 2026',
   narrative: [
-    '<strong>I\u2019ve never had a todo list I actually liked.</strong> They\u2019d pile up and I\u2019d stall\u2009\u2014\u2009not because I didn\u2019t know what to do, but because I couldn\u2019t decide what to do <em>next</em>. I wanted to take the decision-making out of prioritization. Inspired by apps like Beli, where simple comparisons produce a ranked order, I applied the same idea to tasks: instead of setting your priorities, you just compare two tasks at a time, and the system keeps everything in order for you.',
-    '<strong>Your backlog can be as long as you want, but your day stays focused.</strong> Every task you add gets ranked through pairwise comparisons, so the list is always prioritized. When you\u2019re ready to work, you pull tasks into today\u2009\u2014\u2009but you can only hold three at a time. Finish one, add the next. The constraint keeps you moving instead of staring at a wall of tasks.',
-    '<strong>This was the first app I built with Claude Code.</strong> Since I designed it for myself and use it every day, I can iterate quickly\u2009\u2014\u2009testing ideas against my own workflow and shipping improvements the same day.',
+    '<strong>You have a finite day and too many things to do.</strong> Most todo apps give you a list and leave the rest to you\u2009\u2014\u2009ordering, prioritizing, deciding what actually matters today. It gets out of hand fast, and once it does, the list works against you instead of for you.',
+    '<strong>I built a todo app that maintains itself through light infrastructure on input.</strong> Every task you add gets ranked through pairwise comparisons\u2009\u2014\u2009you just pick between two tasks at a time, and the system keeps a running priority order. No dragging, no labels, no maintenance. When you\u2019re ready to work, you pull tasks into today\u2009\u2014\u2009but you can only hold three at a time. Finish one, pull the next. The constraint keeps you moving instead of staring.',
   ],
   sections: [
     {
@@ -391,11 +392,12 @@ export const forge: CaseStudy = {
   id: 'forge',
   title: 'Optimizing your AI development workflow',
   subtitle:
-    'I built a Claude Code plugin that watches how you use Claude, detects patterns (repeated corrections, repeated workflows, missing hooks), and proposes infrastructure improvements\u2009\u2014\u2009rules, skills, hooks, agents, reference docs. It manages your Claude Code configuration as a living system rather than something you set up once and forget.',
+    'Claude Code\u2019s configuration infrastructure is powerful, but keeping it optimized is real work. Forge watches your sessions, detects patterns, and proposes improvements\u2009\u2014\u2009rules, hooks, skills, scoped artifacts. Everything is a proposal you review. Nothing auto-applies.',
   timeline: '2026',
   narrative: [
-    '<strong>Forge is a Claude Code plugin that analyzes your sessions, project configuration, and memory\u2009\u2014\u2009all locally, zero token cost\u2009\u2014\u2009and surfaces patterns you\u2019d never catch yourself.</strong> Keep correcting Claude about the same thing? It proposes a rule so the mistake stops. Always running pytest after an edit? It proposes a hook to automate it. Starting every third session with the same prompt? It drafts a skill you can invoke in two keystrokes.',
-    '<strong>It manages the other direction too.</strong> A 300-line CLAUDE.md full of React guidance gets broken into scoped rules that only load when relevant. Stale artifacts that haven\u2019t come up in months get flagged. Recurring workflows get drafted into agents. The configuration doesn\u2019t just grow\u2009\u2014\u2009it stays lean. Everything is a proposal you review. Nothing auto-applies.',
+    '<strong>Claude Code\u2019s configuration infrastructure is powerful\u2009\u2014\u2009rules, hooks, skills, agents, references, all scoped and layered.</strong> Keeping it optimized as your project evolves is real work. Forge does it for you. It\u2019s a Claude Code plugin that treats your configuration as a living body of work\u2009\u2014\u2009watching your sessions, detecting patterns in your workflow, and continuously proposing improvements that keep your setup sharp.',
+    '<strong>Keep correcting Claude about the same thing? Forge drafts a rule.</strong> Always running pytest after an edit? Forge drafts a hook. A bloated CLAUDE.md? Forge breaks it into scoped artifacts that only load when relevant. Stale rules get flagged for removal. Proposals go through a two-stage pipeline\u2009\u2014\u2009Python preprocessing to detect candidates, then an LLM quality gate to filter noise. Forge also learns from your feedback: dismiss a proposal for low impact and it deflates similar scores next time; approve one and it monitors whether the pattern actually stops. Everything is a proposal you review. Nothing auto-applies.',
+    '<strong>I got a working version in two days</strong> and run it actively across my other projects, iterating on the results.',
   ],
 }
 
