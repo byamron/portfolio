@@ -188,7 +188,7 @@ export const uwDesignSystem: CaseStudy = {
   id: 'uw-design-system',
   title: 'Building the system that builds the system',
   subtitle:
-    'UW-IT\u2019s design system existed only as colors and principles. I designed the first three components and\u2009\u2014\u2009more importantly\u2009\u2014\u2009the process and documentation structure for everything that would follow.',
+    'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.',
   timeline: '2024',
   narrative: [
     '<strong>UW-IT manages digital services for 90,000+ students, faculty, and staff.</strong> Their design system existed only as colors and principles\u2009\u2014\u2009no components, no documentation, no process for building either. I designed the first three components and\u2009\u2014\u2009more importantly\u2009\u2014\u2009the process and documentation structure for everything that would follow. Documentation toggled code snippets by role. A framework dropdown let teams grab code in their stack. Engineers could adopt without changing how they already worked.',
