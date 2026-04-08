@@ -1,4 +1,5 @@
 import { ProjectLink } from '@/components/ProjectLink'
+import { useTypography } from '@/contexts/TypographyContext'
 import type { Section as SectionType } from '@/data/projects'
 
 interface SectionProps {
@@ -7,19 +8,14 @@ interface SectionProps {
 }
 
 export function Section({ section, afterContext }: SectionProps) {
+  const { narrativeStyle } = useTypography()
   return (
     <section style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {section.context.map((text, i) => (
           <p
             key={i}
-            style={{
-              fontFamily: "'Literata', serif",
-              fontSize: 'var(--text-size-narrative)',
-              fontWeight: 300,
-              lineHeight: 1.4,
-              color: 'var(--text-grey)',
-            }}
+            style={narrativeStyle}
             dangerouslySetInnerHTML={{ __html: text }}
           />
         ))}

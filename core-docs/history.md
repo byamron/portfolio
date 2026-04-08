@@ -2,6 +2,78 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-07 — Merge typography unification + copy rewrite, redesign section hierarchy
+
+**Branch:** `merge-both-prs-preview` (supersedes `text-size-unify` PR #155 and `update-case-study-copy` PR #156)
+
+**Summary:** Merged both open PRs and redesigned the section hierarchy that emerged from combining shorter copy with the unified sans typography. The shorter narrative text from the copy PR lost its visual weight in the flattened type system, so section headings were introduced as structural anchors.
+
+**Section hierarchy redesign:**
+- Added Literata serif section headings at 28px (`--text-size-section-heading`) for "Building tools on the side", "Earlier work", and "How I work"
+- Removed "Current work" heading — Mochi projects flow naturally from the hero statement + narrative paragraph
+- Dropped redundant short narrative intros ("I build tools on my own time too.", "Earlier work.") — the headings say the same thing
+- Four-tier type hierarchy: hero 36px → section heading 28px → project title 18px → project meta 14px uppercase
+
+**Spacing refinement:**
+- Hero → first section narrative: 40px (tighter than 64px section gap — reads as one unit with the hero)
+- Between sections: 64px (structural break)
+- Within sections: 12px (proximity)
+
+**About section:**
+- Added "How I work" serif heading (consistent with other section headings)
+- Added X and GitHub links with glass hover treatment
+- Added hover preview images for X and GitHub profiles
+- Rewrote contact copy: "email, LinkedIn, or X" + "resume and GitHub"
+
+**Cleanup:**
+- Removed TypographyDevPanel (dev panels policy)
+- Fixed duplicated opacity animation on LeftColumn (both motion.main and motion.div had identical fade — simplified to motion.main only)
+
+**Decisions:**
+- Section headings use serif (Literata) to create a distinct tier between hero and body content. The old small uppercase labels collided visually with project card subtitles (same size, weight, case, color).
+- "Current work" omitted because the hero already establishes "product designer at Mochi Health" — labeling the Mochi projects beneath it is redundant.
+- 40px hero→content gap chosen as distinct from both 12px (within-section) and 64px (between-section) — three clear spacing tiers.
+
+---
+
+## 2026-04-07 — Unify typography: collapse narrative to sans, tighten spacing
+
+**Branch:** `text-size-unify`
+
+**Summary:** Simplified the homepage and case study typography from a serif/sans two-voice system to a single sans voice for all body content. Narrative text (section intros, about, case study body) switched from Literata 300 at 22px to Onest 400 at 18px, matching project link titles. Headings remain Literata 300 at 36px. Tightened spacing across the page for better scannability.
+
+**Typography changes:**
+- Narrative text: Literata 300 / 22px → Onest 400 / 18px (`--text-size-body`)
+- Project card subtitles: uppercase, `--text-size-caption` (14px), 0.02em letter-spacing
+- Case study body: now uses same Onest 400 / 18px as homepage
+- Case study `<strong>`: changed from `--text-dark` weight 300 to `--text-medium` weight 400 (gentler emphasis)
+- Light mode `--text-grey` darkened from 45% → 40% lightness to meet WCAG AA 4.5:1 contrast
+
+**Spacing changes:**
+- Hero → sections: 40px → 64px
+- Between sections: 56px → 64px (consistent major-break rhythm)
+- Narrative → cards (inner section gap): 24px → 12px (proximity principle)
+- Card vertical padding: 24px → 18px (tighter scan rhythm)
+- About section paragraph gap: 32px → 24px (consistent with sections)
+- Case study paper link padding: 24px → 18px
+
+**Dev panel (feature branch only):**
+- Before/After toggle to compare Literata vs Onest narrative
+- Section heading mode toggle (Control / Dark narrative / Labels) for evaluating section anchoring — decided to keep Control (no headings), spacing alone handles grouping
+
+**Other:**
+- Deleted unused `src/styles/shared.ts` (narrativeStyle moved to TypographyContext)
+- Lazy-loaded PlaygroundRoutes and PlaygroundDemo in App.tsx to avoid build errors when ui-playground source is absent
+- Added `label` field to Section type in projects.ts for optional section labels
+
+**Decisions:**
+- Collapsed to one body font (Onest) because narrative at Literata 22px created an ambiguous middle tier — not heading, not body. The heading alone carries enough editorial weight.
+- Kept `--text-grey` for narrative to differentiate from `--text-dark` link titles — color hierarchy, not size, separates "context" from "action."
+- Rejected section headings (labels or dark narrative) — the 12px proximity gap + 64px section gap provides sufficient grouping without added visual noise.
+- Subtitle color matching narrative (`--text-grey`) is intentional — both are metadata that recedes. Differentiated by size (14px vs 18px), case (uppercase vs sentence), and position.
+
+---
+
 ## 2026-04-01 — Fix hover preview overflow and text zone responsiveness
 
 **Branch:** `fix-hover-preview-overflow`
