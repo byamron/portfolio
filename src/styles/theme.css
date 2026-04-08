@@ -12,7 +12,7 @@
   /* Text colors (light mode defaults) */
   --text-dark: hsl(0, 0%, 7%);
   --text-medium: hsl(0, 0%, 20%);
-  --text-grey: hsl(240, 2%, 45%);
+  --text-grey: hsl(240, 2%, 40%);
   --text-light-grey: hsl(0, 0%, 70%);
   --text-light: hsl(0, 0%, 100%);
   --text-link: hsl(219, 49%, 53%);

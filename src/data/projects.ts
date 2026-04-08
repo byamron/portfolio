@@ -17,12 +17,14 @@ export interface Project {
 }
 
 export interface Section {
+  label?: string // short uppercase label (e.g. "Work", "Building", "Earlier")
   context: string[] // paragraph(s) before links — supports inline HTML for links
   projects: Project[]
 }
 
 export const sections: Section[] = [
   {
+    label: 'Work',
     context: [
       'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. Lately, that means building AI into how my team designs and ships.',
     ],
@@ -33,6 +35,7 @@ export const sections: Section[] = [
     ],
   },
   {
+    label: 'Building',
     context: [
       'Outside of work, I\u2019m always building\u2009—\u2009apps, tools, experiments. Here\u2019s what I\u2019m working on right now.',
     ],
@@ -44,8 +47,9 @@ export const sections: Section[] = [
     ],
   },
   {
+    label: 'Earlier',
     context: [
-      'Since I started designing in 2020, I’ve explored challenges across different domains.',
+      'Since I started designing in 2020, I\u2019ve explored challenges across different domains.',
     ],
     projects: [
       { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, company: 'Sony \u00d7 University of Washington', year: '2024', caseStudySlug: 'sony-screenless-tv', videoPreview: '/prototypes/sony-preview.mp4', summary: 'Master\u2019s capstone for Sony\u2019s TV division. We researched how mixed reality could shape home entertainment\u2009\u2014\u2009and learned that the thing people value most about watching together isn\u2019t the content, it\u2019s the connection.' },
