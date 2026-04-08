@@ -17,14 +17,12 @@ export interface Project {
 }
 
 export interface Section {
-  label?: string // short uppercase label (e.g. "Work", "Building", "Earlier")
   context: string[] // paragraph(s) before links — supports inline HTML for links
   projects: Project[]
 }
 
 export const sections: Section[] = [
   {
-    label: 'Work',
     context: [
       'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. Lately, that means building AI into how my team designs and ships.',
     ],
@@ -35,7 +33,6 @@ export const sections: Section[] = [
     ],
   },
   {
-    label: 'Building',
     context: [
       'Outside of work, I\u2019m always building\u2009—\u2009apps, tools, experiments. Here\u2019s what I\u2019m working on right now.',
     ],
@@ -47,7 +44,6 @@ export const sections: Section[] = [
     ],
   },
   {
-    label: 'Earlier',
     context: [
       'Since I started designing in 2020, I\u2019ve explored challenges across different domains.',
     ],

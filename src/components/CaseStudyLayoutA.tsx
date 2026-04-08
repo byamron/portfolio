@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { CaseStudy } from '@/data/case-study-content'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
-import { useTypography } from '@/contexts/TypographyContext'
+import { narrativeStyle } from '@/styles/shared'
 
 // Shared heading style — single source of truth for both narrow and wide layouts
 const headingStyle = {
@@ -35,7 +35,6 @@ interface CaseStudyLayoutAProps {
 
 export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, videoPreview }: CaseStudyLayoutAProps) {
   const reducedMotion = useReducedMotion()
-  const { narrativeStyle } = useTypography()
   const narrativeRef = useRef<HTMLDivElement>(null)
 
   // Glass highlight for paper link cards and contact CTA within the narrative

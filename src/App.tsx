@@ -3,8 +3,6 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { CursorProvider } from '@/contexts/CursorContext'
-import { TypographyProvider } from '@/contexts/TypographyContext'
-import { TypographyDevPanel } from '@/components/TypographyDevPanel'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
@@ -58,10 +56,7 @@ function App() {
     <ThemeProvider>
       <HoverProvider>
         <CursorProvider>
-          <TypographyProvider>
-            <AppContent />
-            <TypographyDevPanel />
-          </TypographyProvider>
+          <AppContent />
         </CursorProvider>
       </HoverProvider>
     </ThemeProvider>

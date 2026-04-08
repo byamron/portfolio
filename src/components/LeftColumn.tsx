@@ -8,7 +8,7 @@ import { AboutSection } from '@/components/AboutSection'
 import { SignatureAnimation } from '@/components/SignatureAnimation'
 import { ContributionHeatmap } from '@/components/ContributionHeatmap'
 import { sections } from '@/data/projects'
-import { useTypography } from '@/contexts/TypographyContext'
+import { narrativeStyle } from '@/styles/shared'
 
 interface LeftColumnProps {
   fullWidth?: boolean
@@ -18,7 +18,6 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const { fadeOut: fadeOutGlass } = useGlassHighlight(contentRef)
   const { navigatingProjectId } = useHover()
-  const { narrativeStyle, sectionHeadingMode } = useTypography()
 
   useEffect(() => {
     if (navigatingProjectId) {
@@ -50,16 +49,6 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
 
           {sections.map((section, i) => (
             <section key={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {sectionHeadingMode === 'label' && section.label && (
-                <span style={{
-                  fontSize: 'var(--text-size-small)',
-                  fontWeight: 500,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--text-grey)',
-                  marginBottom: 4,
-                }}>{section.label}</span>
-              )}
               {section.context.map((text, j) => (
                 <p key={j} style={narrativeStyle}>{text}</p>
               ))}

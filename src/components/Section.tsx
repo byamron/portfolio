@@ -1,5 +1,5 @@
 import { ProjectLink } from '@/components/ProjectLink'
-import { useTypography } from '@/contexts/TypographyContext'
+import { narrativeStyle } from '@/styles/shared'
 import type { Section as SectionType } from '@/data/projects'
 
 interface SectionProps {
@@ -8,7 +8,6 @@ interface SectionProps {
 }
 
 export function Section({ section, afterContext }: SectionProps) {
-  const { narrativeStyle } = useTypography()
   return (
     <section style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

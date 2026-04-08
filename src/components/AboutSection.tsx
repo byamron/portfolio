@@ -1,7 +1,7 @@
 import { useRef, useCallback } from 'react'
 import { useHover } from '@/contexts/HoverContext'
 import { useGlassHighlight } from '../hooks/useGlassHighlight'
-import { useTypography } from '@/contexts/TypographyContext'
+import { narrativeStyle } from '@/styles/shared'
 
 const linkCardStyle = {
   color: 'inherit',
@@ -13,7 +13,6 @@ const linkCardStyle = {
 } as const
 
 export function AboutSection() {
-  const { narrativeStyle } = useTypography()
   const { setHoveringLink, setHoveredLinkId } = useHover()
   const onLinkEnter = useCallback((id: string) => { setHoveringLink(true); setHoveredLinkId(id) }, [setHoveringLink, setHoveredLinkId])
   const onLinkLeave = useCallback(() => { setHoveringLink(false); setHoveredLinkId(null) }, [setHoveringLink, setHoveredLinkId])
