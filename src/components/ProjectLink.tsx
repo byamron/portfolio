@@ -82,8 +82,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
       display: 'flex',
       alignItems: 'center',
       gap: statusGap,
-      textTransform: 'uppercase',
-      letterSpacing: '0.02em',
+      letterSpacing: '0.01em',
     }}>
       {subtitleParts && <span>{subtitleParts}</span>}
       {statusIndicator}
@@ -233,8 +232,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
       display: 'flex',
       alignItems: 'center',
       gap: statusGap,
-      textTransform: 'uppercase',
-      letterSpacing: '0.02em',
+      letterSpacing: '0.01em',
     }}>
       {subtitleParts && <span>{subtitleParts}</span>}
       {statusIndicator}

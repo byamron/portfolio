@@ -89,10 +89,10 @@ export const mochiSubscriptions: CaseStudy = {
   id: 'mochi-subscriptions',
   title: 'Improving billing UX for our core subscriptions model',
   subtitle:
-    'Billing and fulfillment were two independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I worked with two engineers to rebuild billing so charges only trigger on shipment, gave patients control over their schedule, and eliminated $200\u2013300k/month in infrastructure costs. 90%+ of users migrated.',
+    'Billing and fulfillment were two independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I worked with two engineers to rebuild billing so charges only trigger on shipment, gave patients control over their schedule, and eliminated >$200k/month in infrastructure costs. 90%+ of users migrated.',
   timeline: 'Q3 2025 \u2013 Q1 2026',
   narrative: [
-    '<strong>Mochi is a telehealth subscription\u2009\u2014\u2009patients pay monthly for weight loss medication and ongoing care.</strong> But billing and fulfillment were two independent systems. Patients got charged on a fixed monthly schedule regardless of whether their medication had shipped. When the two diverged, people paid for medication they hadn\u2019t received. I worked with two engineers to rebuild our billing scheduling logic from scratch, replacing a third-party service\u2009\u2014\u2009defining every status, error state, and edge case from the ground up. Charges now only trigger on shipment. Eliminated $200\u2013300k/month in payment processing overhead; 90%+ of users migrated.',
+    '<strong>Mochi is a telehealth subscription\u2009\u2014\u2009patients pay monthly for weight loss medication and ongoing care.</strong> But billing and fulfillment were two independent systems. Patients got charged on a fixed monthly schedule regardless of whether their medication had shipped. When the two diverged, people paid for medication they hadn\u2019t received. I worked with two engineers to rebuild our billing scheduling logic from scratch, replacing a third-party service\u2009\u2014\u2009defining every status, error state, and edge case from the ground up. Charges now only trigger on shipment. Eliminated >$200k/month in payment processing overhead; 90%+ of users migrated.',
     '<strong>With the foundation fixed, I tackled the problems around it.</strong> Refill denial rates had spiked 3\u00d7\u2009\u2014\u2009providers were reviewing refills before patients had a chance to submit updated health information. I moved data collection 14 days earlier in the cycle so the information is already there when the provider looks. Separately, 20% of subscription churn was patients who just wanted a break. I designed a delay feature that lets users push their next order out up to three months, and a restart flow so that if they do cancel, they can pick up where they left off instead of being treated like a new patient.',
     '<strong>Now we\u2019re building the subscription entity to handle any medication type</strong>\u2009\u2014\u2009not just GLP-1s. The same system, flexible enough to scale as Mochi\u2019s offering grows.',
   ],
@@ -119,7 +119,7 @@ export const mochiSubscriptions: CaseStudy = {
       heading:
         'I redesigned billing so patients only pay when medication ships',
       paragraphs: [
-        'I defined the timing rules, states, edge cases, and billing triggers that engineering built to spec. This also eliminated $200\u2013300k/month in payment processing overhead. Over 90% of users have migrated.',
+        'I defined the timing rules, states, edge cases, and billing triggers that engineering built to spec. This also eliminated >$200k/month in payment processing overhead. Over 90% of users have migrated.',
       ],
       visual: null,
     },
