@@ -2,6 +2,44 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-07 — Unify typography: collapse narrative to sans, tighten spacing
+
+**Branch:** `text-size-unify`
+
+**Summary:** Simplified the homepage and case study typography from a serif/sans two-voice system to a single sans voice for all body content. Narrative text (section intros, about, case study body) switched from Literata 300 at 22px to Onest 400 at 18px, matching project link titles. Headings remain Literata 300 at 36px. Tightened spacing across the page for better scannability.
+
+**Typography changes:**
+- Narrative text: Literata 300 / 22px → Onest 400 / 18px (`--text-size-body`)
+- Project card subtitles: uppercase, `--text-size-caption` (14px), 0.02em letter-spacing
+- Case study body: now uses same Onest 400 / 18px as homepage
+- Case study `<strong>`: changed from `--text-dark` weight 300 to `--text-medium` weight 400 (gentler emphasis)
+- Light mode `--text-grey` darkened from 45% → 40% lightness to meet WCAG AA 4.5:1 contrast
+
+**Spacing changes:**
+- Hero → sections: 40px → 64px
+- Between sections: 56px → 64px (consistent major-break rhythm)
+- Narrative → cards (inner section gap): 24px → 12px (proximity principle)
+- Card vertical padding: 24px → 18px (tighter scan rhythm)
+- About section paragraph gap: 32px → 24px (consistent with sections)
+- Case study paper link padding: 24px → 18px
+
+**Dev panel (feature branch only):**
+- Before/After toggle to compare Literata vs Onest narrative
+- Section heading mode toggle (Control / Dark narrative / Labels) for evaluating section anchoring — decided to keep Control (no headings), spacing alone handles grouping
+
+**Other:**
+- Deleted unused `src/styles/shared.ts` (narrativeStyle moved to TypographyContext)
+- Lazy-loaded PlaygroundRoutes and PlaygroundDemo in App.tsx to avoid build errors when ui-playground source is absent
+- Added `label` field to Section type in projects.ts for optional section labels
+
+**Decisions:**
+- Collapsed to one body font (Onest) because narrative at Literata 22px created an ambiguous middle tier — not heading, not body. The heading alone carries enough editorial weight.
+- Kept `--text-grey` for narrative to differentiate from `--text-dark` link titles — color hierarchy, not size, separates "context" from "action."
+- Rejected section headings (labels or dark narrative) — the 12px proximity gap + 64px section gap provides sufficient grouping without added visual noise.
+- Subtitle color matching narrative (`--text-grey`) is intentional — both are metadata that recedes. Differentiated by size (14px vs 18px), case (uppercase vs sentence), and position.
+
+---
+
 ## 2026-04-01 — Fix hover preview overflow and text zone responsiveness
 
 **Branch:** `fix-hover-preview-overflow`

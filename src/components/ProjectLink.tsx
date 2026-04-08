@@ -82,6 +82,8 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
       display: 'flex',
       alignItems: 'center',
       gap: statusGap,
+      textTransform: 'uppercase',
+      letterSpacing: '0.02em',
     }}>
       {subtitleParts && <span>{subtitleParts}</span>}
       {statusIndicator}
@@ -104,7 +106,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
         style={{
           width: 'fit-content',
           alignSelf: 'flex-start',
-          padding: '24px 16px',
+          padding: '18px 16px',
           margin: '0 -16px',
           borderRadius: 16,
           fontSize: 'var(--text-size-body)',
@@ -180,7 +182,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
     style: {
       width: 'fit-content' as const,
       alignSelf: 'flex-start' as const,
-      padding: '24px 16px',
+      padding: '18px 16px',
       margin: '0 -16px',
       borderRadius: 16,
       fontSize: 'var(--text-size-body)',
@@ -231,6 +233,8 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
       display: 'flex',
       alignItems: 'center',
       gap: statusGap,
+      textTransform: 'uppercase',
+      letterSpacing: '0.02em',
     }}>
       {subtitleParts && <span>{subtitleParts}</span>}
       {statusIndicator}

@@ -8,7 +8,7 @@ import { AboutSection } from '@/components/AboutSection'
 import { SignatureAnimation } from '@/components/SignatureAnimation'
 import { ContributionHeatmap } from '@/components/ContributionHeatmap'
 import { sections } from '@/data/projects'
-import { narrativeStyle } from '@/styles/shared'
+import { useTypography } from '@/contexts/TypographyContext'
 
 interface LeftColumnProps {
   fullWidth?: boolean
@@ -18,6 +18,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const { fadeOut: fadeOutGlass } = useGlassHighlight(contentRef)
   const { navigatingProjectId } = useHover()
+  const { narrativeStyle, sectionHeadingMode } = useTypography()
 
   useEffect(() => {
     if (navigatingProjectId) {
@@ -42,13 +43,23 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
           ? { duration: 0.28, delay: 0.15 }
           : { duration: 0.35, delay: 0.12 }
         }
-        style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 64, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}
       >
         <HeroTitle />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
 
           {sections.map((section, i) => (
-            <section key={i} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <section key={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {sectionHeadingMode === 'label' && section.label && (
+                <span style={{
+                  fontSize: 'var(--text-size-small)',
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: 'var(--text-grey)',
+                  marginBottom: 4,
+                }}>{section.label}</span>
+              )}
               {section.context.map((text, j) => (
                 <p key={j} style={narrativeStyle}>{text}</p>
               ))}
@@ -56,7 +67,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
               {i === 1 && <ContributionHeatmap displayMode="collapsed" vizGap={16} sparkPos="right" collapseTransition="drawer" />}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {section.projects.map(proj => (
-                  <ProjectLink key={proj.id} project={proj} twoLine statusGap={8} subtitleSize="var(--text-size-summary)" nonLinkUnderline="dotted" titleSubGap={6} />
+                  <ProjectLink key={proj.id} project={proj} twoLine statusGap={8} subtitleSize="var(--text-size-caption)" nonLinkUnderline="dotted" titleSubGap={6} />
                 ))}
               </div>
             </section>
