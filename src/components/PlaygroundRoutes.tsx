@@ -3,21 +3,36 @@ import { Routes, Route } from 'react-router-dom'
 import { PlaygroundWrapper } from './PlaygroundWrapper'
 import { PlaygroundGallery } from './PlaygroundGallery'
 
-// Lazy-load each demo to keep the main bundle small
-const WaterRipple = lazy(() => import('@playground/demos/water-ripple/WaterRipple').then(m => ({ default: m.WaterRipple })))
-const GlassPull = lazy(() => import('@playground/demos/glass-pull/GlassPull').then(m => ({ default: m.GlassPull })))
-const MagneticButton = lazy(() => import('@playground/demos/magnetic-button/MagneticButton').then(m => ({ default: m.MagneticButton })))
-const TextScramble = lazy(() => import('@playground/demos/text-scramble/TextScramble').then(m => ({ default: m.TextScramble })))
-const ElasticToggle = lazy(() => import('@playground/demos/elastic-toggle/ElasticToggle').then(m => ({ default: m.ElasticToggle })))
-const FisheyeText = lazy(() => import('@playground/demos/fisheye-text/FisheyeText').then(m => ({ default: m.FisheyeText })))
-const FigpalCursor = lazy(() => import('@playground/demos/figpal-cursor/FigpalCursor').then(m => ({ default: m.FigpalCursor })))
-const CursorMorph = lazy(() => import('@playground/demos/cursor-morph/CursorMorph').then(m => ({ default: m.CursorMorph })))
-const ThemeSidebar = lazy(() => import('@playground/demos/theme-sidebar/ThemeSidebar').then(m => ({ default: m.ThemeSidebar })))
-const TaskRanking = lazy(() => import('@playground/demos/task-ranking/TaskRanking').then(m => ({ default: m.TaskRanking })))
-const DvdBounce = lazy(() => import('@playground/demos/dvd-bounce/DvdBounce').then(m => ({ default: m.DvdBounce })))
-const SlideUnlock = lazy(() => import('@playground/demos/slide-unlock/SlideUnlock').then(m => ({ default: m.SlideUnlock })))
-const FigmaHighfive = lazy(() => import('@playground/demos/figma-highfive/FigmaHighfive').then(m => ({ default: m.FigmaHighfive })))
-const FrameGuide = lazy(() => import('@playground/demos/frame-guide/FrameGuide').then(m => ({ default: m.FrameGuide })))
+// Lazy-load each demo — only include demos whose source files exist.
+// Demos in @playground/demos/* are excluded when ui-playground/src is empty.
+const demoModules = import.meta.glob('@playground/demos/*/index.{ts,tsx}')
+
+// Only register routes for demos that actually exist on disk
+const hasDemo = (name: string) =>
+  Object.keys(demoModules).some(k => k.includes(`/${name}/`))
+
+// Safe lazy loader: returns null component if the demo doesn't exist
+function safeLazy(path: string, name: string, exportName: string) {
+  if (!hasDemo(name)) return null
+  return lazy(() =>
+    import(/* @vite-ignore */ path).then(m => ({ default: (m as Record<string, React.ComponentType>)[exportName] }))
+  )
+}
+
+const WaterRipple = safeLazy('@playground/demos/water-ripple/WaterRipple', 'water-ripple', 'WaterRipple')
+const GlassPull = safeLazy('@playground/demos/glass-pull/GlassPull', 'glass-pull', 'GlassPull')
+const MagneticButton = safeLazy('@playground/demos/magnetic-button/MagneticButton', 'magnetic-button', 'MagneticButton')
+const TextScramble = safeLazy('@playground/demos/text-scramble/TextScramble', 'text-scramble', 'TextScramble')
+const ElasticToggle = safeLazy('@playground/demos/elastic-toggle/ElasticToggle', 'elastic-toggle', 'ElasticToggle')
+const FisheyeText = safeLazy('@playground/demos/fisheye-text/FisheyeText', 'fisheye-text', 'FisheyeText')
+const FigpalCursor = safeLazy('@playground/demos/figpal-cursor/FigpalCursor', 'figpal-cursor', 'FigpalCursor')
+const CursorMorph = safeLazy('@playground/demos/cursor-morph/CursorMorph', 'cursor-morph', 'CursorMorph')
+const ThemeSidebar = safeLazy('@playground/demos/theme-sidebar/ThemeSidebar', 'theme-sidebar', 'ThemeSidebar')
+const TaskRanking = safeLazy('@playground/demos/task-ranking/TaskRanking', 'task-ranking', 'TaskRanking')
+const DvdBounce = safeLazy('@playground/demos/dvd-bounce/DvdBounce', 'dvd-bounce', 'DvdBounce')
+const SlideUnlock = safeLazy('@playground/demos/slide-unlock/SlideUnlock', 'slide-unlock', 'SlideUnlock')
+const FigmaHighfive = safeLazy('@playground/demos/figma-highfive/FigmaHighfive', 'figma-highfive', 'FigmaHighfive')
+const FrameGuide = safeLazy('@playground/demos/frame-guide/FrameGuide', 'frame-guide', 'FrameGuide')
 
 function DemoPage({ children }: { children: React.ReactNode }) {
   return (
@@ -29,24 +44,30 @@ function DemoPage({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Helper: only render a route if the component exists
+function DemoRoute({ path, Component }: { path: string; Component: React.LazyExoticComponent<React.ComponentType> | null }) {
+  if (!Component) return null
+  return <Route path={path} element={<DemoPage><Component /></DemoPage>} />
+}
+
 export function PlaygroundRoutes() {
   return (
     <Routes>
       <Route index element={<PlaygroundWrapper><PlaygroundGallery /></PlaygroundWrapper>} />
-      <Route path="water-ripple" element={<DemoPage><WaterRipple /></DemoPage>} />
-      <Route path="glass-pull" element={<DemoPage><GlassPull /></DemoPage>} />
-      <Route path="magnetic-button" element={<DemoPage><MagneticButton /></DemoPage>} />
-      <Route path="text-scramble" element={<DemoPage><TextScramble /></DemoPage>} />
-      <Route path="elastic-toggle" element={<DemoPage><ElasticToggle /></DemoPage>} />
-      <Route path="fisheye-text" element={<DemoPage><FisheyeText /></DemoPage>} />
-      <Route path="figpal-cursor" element={<DemoPage><FigpalCursor /></DemoPage>} />
-      <Route path="cursor-morph" element={<DemoPage><CursorMorph /></DemoPage>} />
-      <Route path="theme-sidebar" element={<DemoPage><ThemeSidebar /></DemoPage>} />
-      <Route path="task-ranking" element={<DemoPage><TaskRanking /></DemoPage>} />
-      <Route path="dvd-bounce" element={<DemoPage><DvdBounce /></DemoPage>} />
-      <Route path="slide-unlock" element={<DemoPage><SlideUnlock /></DemoPage>} />
-      <Route path="figma-highfive" element={<DemoPage><FigmaHighfive /></DemoPage>} />
-      <Route path="frame-guide" element={<DemoPage><FrameGuide /></DemoPage>} />
+      <DemoRoute path="water-ripple" Component={WaterRipple} />
+      <DemoRoute path="glass-pull" Component={GlassPull} />
+      <DemoRoute path="magnetic-button" Component={MagneticButton} />
+      <DemoRoute path="text-scramble" Component={TextScramble} />
+      <DemoRoute path="elastic-toggle" Component={ElasticToggle} />
+      <DemoRoute path="fisheye-text" Component={FisheyeText} />
+      <DemoRoute path="figpal-cursor" Component={FigpalCursor} />
+      <DemoRoute path="cursor-morph" Component={CursorMorph} />
+      <DemoRoute path="theme-sidebar" Component={ThemeSidebar} />
+      <DemoRoute path="task-ranking" Component={TaskRanking} />
+      <DemoRoute path="dvd-bounce" Component={DvdBounce} />
+      <DemoRoute path="slide-unlock" Component={SlideUnlock} />
+      <DemoRoute path="figma-highfive" Component={FigmaHighfive} />
+      <DemoRoute path="frame-guide" Component={FrameGuide} />
     </Routes>
   )
 }

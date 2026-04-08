@@ -17,42 +17,42 @@ export interface Project {
 }
 
 export interface Section {
+  label?: string // short uppercase label (e.g. "Work", "Building", "Earlier")
   context: string[] // paragraph(s) before links — supports inline HTML for links
   projects: Project[]
 }
 
 export const sections: Section[] = [
   {
+    label: '',
     context: [
-      'I own product problems\u2009—\u2009from setting direction with leadership to shipping the details. Lately, that means building AI into how my team designs and ships.',
+      'I own product problems\u2009—\u2009from setting direction to shipping the details. Right now I\u2019m deep in AI tooling\u2009—\u2009designing it for my team and using it to ship my own apps.',
     ],
     projects: [
-      { id: 'mochi-ai-tooling', title: 'AI tooling to automate internal workflows', projectId: 'mochi-ai', href: '/project/mochi-ai-tooling', isLink: true, company: 'Mochi Health', year: '2026', caseStudySlug: 'mochi-ai-tooling', videoPreview: '/images/preview-mochi-tooling.mp4', summary: 'Mochi\u2019s institutional knowledge lived in individuals\u2019 heads. I built a shared context layer and a Claude Code plugin on top of it\u2009\u2014\u2009composable skills that automate specs, bug triage, database queries, and project management for anyone at the company.' },
-      { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-subscriptions', videoPreview: '/images/preview-mochi-subs.mp4', summary: 'Mochi\u2019s billing and medication fulfillment ran on independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I redesigned subscriptions around event-driven billing, gave patients control over their refill schedule, and cut $200\u2013300k/month in infrastructure costs.' },
-      { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-progress-tracker', videoPreview: '/images/preview-mochi-tracker.mp4', summary: 'Mochi\u2019s progress tracker existed but nobody used it. I drove a 53% increase in weekly active users, then identified its real value\u2009\u2014\u2009a single source of truth for patient weight data\u2009\u2014\u2009and built the integration that made it critical to the clinical workflow.' },
+      { id: 'mochi-ai-tooling', title: 'AI tooling to automate internal workflows', projectId: 'mochi-ai', href: '/project/mochi-ai-tooling', isLink: true, company: 'Mochi Health', year: '2026', caseStudySlug: 'mochi-ai-tooling', videoPreview: '/images/preview-mochi-tooling.mp4', summary: 'AI tools are only as good as the context they have. I built a documentation layer and a Claude Code plugin that gives anyone at the company an AI assistant that actually knows the product.' },
+      { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-subscriptions', videoPreview: '/images/preview-mochi-subs.mp4', summary: 'Billing and fulfillment were two independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I worked with two engineers to rebuild billing scheduling logic from scratch so charges only trigger on shipment. Eliminated >$200k/month in payment processing overhead; 90%+ of users migrated.' },
+      { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-progress-tracker', videoPreview: '/images/preview-mochi-tracker.mp4', summary: 'Mochi tracked weight in two places that didn\u2019t talk to each other. I unified them\u2009\u2014\u2009provider-recorded weights now appear automatically in the patient\u2019s tracker. Separately, I redesigned the tracker with mobile support: 53% increase in weekly active users within two weeks.' },
     ],
   },
   {
-    context: [
-      'Outside of work, I\u2019m always building\u2009—\u2009apps, tools, experiments. Here\u2019s what I\u2019m working on right now.',
-    ],
+    label: 'Building tools on the side',
+    context: [],
     projects: [
-      { id: 'forge', title: 'Optimizing your AI development workflow', projectId: 'forge', href: '/project/forge', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'forge', videoPreview: '/images/preview-forge.mp4', status: 'In progress', summary: 'I built a Claude Code plugin that watches how you use Claude, detects patterns (repeated corrections, repeated workflows, missing hooks), and proposes infrastructure improvements\u2009\u2014\u2009rules, skills, hooks, agents, reference docs. It manages your Claude Code configuration as a living system rather than something you set up once and forget.' },
-      { id: 'language-app', title: 'Voice-first language practice with personalized feedback', projectId: 'language-app', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nMost language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: real-time voice conversations with AI, and a feed of corrections and feedback generated from things you actually said. Practice speaking when you can, consume personalized feedback when you can\u2019t.' },
-      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'detect', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nMisinformation isn\u2019t always spread by lies. More often, perpetrators use subtle manipulation tactics that can be hard to recognize: fear-mongering, false dichotomies, ad hominem attacks. Inspired by my research on misinformation at the UW, I\u2019m building a Chrome extension that uses LLMs to identify and explain manipulative language on the web.' },
-      { id: 'todo-priority', title: 'A todo list for focus and prioritization', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'I\u2019ve never had a todo list I actually liked. I designed and built a native iOS/macOS app around one constraint: your active list can only hold three tasks. Add as many as you want to the backlog\u2009\u2014\u2009comparison-based ranking keeps everything prioritized so you never have to decide what\u2019s next. Currently in TestFlight.', status: 'In progress' },
+      { id: 'forge', title: 'Optimizing your AI development workflow', projectId: 'forge', href: '/project/forge', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'forge', videoPreview: '/images/preview-forge.mp4', status: 'In progress', summary: 'Claude Code\u2019s configuration infrastructure is powerful, but keeping it optimized is real work. Forge watches your sessions, detects patterns, and proposes improvements\u2009\u2014\u2009rules, hooks, skills, scoped artifacts. Everything is a proposal you review. Nothing auto-applies.' },
+      { id: 'language-app', title: 'Voice-first language practice with personalized feedback', projectId: 'language-app', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nMost language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: real-time voice conversations powered by native audio models, and an async feed of corrections generated from things you actually said. Practice speaking when you can, consume personalized feedback when you can\u2019t.' },
+      { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'detect', href: '', isLink: false, company: 'Personal project', year: '2026', status: 'In progress', previewDescription: '[IN PROGRESS]\nI\u2019m building a Chrome extension that uses LLMs to identify and explain manipulative language on the web\u2009\u2014\u2009fear-mongering, false dichotomies, ad hominem attacks. The subtle tactics that are hardest to recognize. Inspired by my research on misinformation at UW.' },
+      { id: 'todo-priority', title: 'A todo list for focus and prioritization', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'Most todo apps give you a list and leave the rest to you. I built one that maintains itself\u2009\u2014\u2009every task gets ranked through pairwise comparisons, and your active list can only hold three at a time. Finish one, pull the next.', status: 'In progress' },
     ],
   },
   {
-    context: [
-      'Since I started designing in 2020, I’ve explored challenges across different domains.',
-    ],
+    label: 'Earlier work',
+    context: [],
     projects: [
-      { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, company: 'Sony \u00d7 University of Washington', year: '2024', caseStudySlug: 'sony-screenless-tv', videoPreview: '/prototypes/sony-preview.mp4', summary: 'Master\u2019s capstone for Sony\u2019s TV division. We researched how mixed reality could shape home entertainment\u2009\u2014\u2009and learned that the thing people value most about watching together isn\u2019t the content, it\u2019s the connection.' },
-      { id: 'cip-misinfo', title: 'Framing election misinformation', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, company: 'UW Center for an Informed Public', year: '2024', caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json', summary: 'Qualitative research with Dr. Kate Starbird\u2019s group at UW\u2019s Center for an Informed Public. Contributed to two papers presented at CSCW 2025 on how misleading claims about elections take shape through interactions between factual evidence and distorted political frames.' },
-      { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, company: 'University of Washington Information Technology', year: '2024', caseStudySlug: 'uw-design-system', videoPreview: '/prototypes/uw-preview.mp4', summary: 'UW-IT wanted a design system but progress had stalled at foundations. I kicked off component design, created role-aware documentation templates, and defined the process for building\u2009\u2014\u2009and actually following\u2009\u2014\u2009the system.' },
-      { id: 'duo-flags', title: 'Making Duolingo\u2019s use of flags more inclusive', projectId: 'duo', href: '/project/duolingo-languages-flags', isLink: true, company: 'Personal project', year: '2022', caseStudySlug: 'duolingo-languages-flags', summary: 'A small subset of flags are often used to represent languages, but their relationship is messy. In this personal project, I redesigned Duolingo\u2019s course selection UI to fix a system that excludes, confuses, and often doesn\u2019t follow its own logic. I also mapped out a scalable path to use even more flags to represent more people.' },
-      { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/eat-local-vt', isLink: true, company: 'Addison County Relocalization Network', year: '2021', caseStudySlug: 'eat-local-vt', summary: 'COVID-19 shut down farmers markets across Vermont. I gathered eight engineers, taught myself product design, and shipped a cross-platform app that connected 1,100+ customers to 300+ local farms.' },
+      { id: 'sony-screenless', title: 'Screenless TV: Designing for shared reality', projectId: 'sony', href: '/project/sony-screenless-tv', isLink: true, company: 'Sony \u00d7 University of Washington', year: '2024', caseStudySlug: 'sony-screenless-tv', videoPreview: '/prototypes/sony-preview.mp4', summary: 'People watch TV together for connection, not just content. For my master\u2019s capstone at UW, I led design on a speculative project for Sony\u2019s TV division\u2009\u2014\u2009a volumetric display with angle-specific imagery and directional audio. Personalization without isolation.' },
+      { id: 'cip-misinfo', title: 'Framing election misinformation', projectId: 'cip', href: '/project/cip-election-misinformation', isLink: true, company: 'UW Center for an Informed Public', year: '2024', caseStudySlug: 'cip-election-misinformation', lottiePreview: '/images/preview-cip.json', summary: 'Working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public, I analyzed how election misinformation spreads through framing, not fabrication. I helped build a framework mapping how identical evidence gets assembled into opposing claims. Two papers presented at CSCW 2025.' },
+      { id: 'uw-system', title: 'Building the system that builds the system', projectId: 'uw', href: '/project/uw-design-system', isLink: true, company: 'University of Washington Information Technology', year: '2024', caseStudySlug: 'uw-design-system', videoPreview: '/prototypes/uw-preview.mp4', summary: 'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.' },
+      { id: 'duo-flags', title: 'Making Duolingo\u2019s use of flags more inclusive', projectId: 'duo', href: '/project/duolingo-languages-flags', isLink: true, company: 'Personal project', year: '2022', caseStudySlug: 'duolingo-languages-flags', summary: 'Duolingo represents every language with a flag, but the mapping can\u2019t follow logic because no logic exists. Replace flags with ISO-639 language codes in course selection; repurpose flags everywhere else to highlight the cultural diversity the current system erases.' },
+      { id: 'acorn-covid', title: 'Connecting farmers and customers during COVID-19', projectId: 'acorn', href: '/project/eat-local-vt', isLink: true, company: 'Addison County Relocalization Network', year: '2021', caseStudySlug: 'eat-local-vt', summary: 'First app I ever shipped. Taught myself product design as a college student, gathered a team of eight, and built a cross-platform app connecting Vermont customers to local farms after COVID shut down farmers markets. 300+ farms, 1,100+ downloads.' },
     ],
   },
 ]
@@ -106,6 +106,18 @@ export const linkPreviews: Record<string, LinkPreview> = {
     image: '/images/preview-linkedin.png',
     alt: 'Ben Yamron LinkedIn profile',
     backgroundColor: '#ffffff',
+  },
+  x: {
+    id: 'x',
+    image: '/images/preview-x.png',
+    alt: 'Ben Yamron on X',
+    backgroundColor: '#000000',
+  },
+  github: {
+    id: 'github',
+    image: '/images/preview-github.png',
+    alt: 'Ben Yamron on GitHub',
+    backgroundColor: '#0d1117',
   },
 }
 

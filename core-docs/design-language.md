@@ -133,24 +133,20 @@ Theme transitions take `500ms ease-in-out` — slow enough to register as intent
 
 ## Typography
 
-### The two-voice system
+### The typography system
 
-The site uses a serif/sans pairing — a calculated risk that rewards typographic literacy without calling attention to itself. The pairing should feel inevitable, not decorative: someone who doesn't know fonts thinks "this looks clean," someone who does thinks "they chose well."
+The site uses a serif/sans pairing where the serif is reserved exclusively for headings. The heading is the one moment of editorial voice — everything else is clean sans.
 
-Beyond the typeface pairing, the two fonts map to two distinct voices on the page:
+- **Serif (Literata)** = headings only. The 36px heading anchors the page with enough typographic personality to signal taste. One serif element, used once per page, creates impact without competing with the content.
+- **Sans (Onest)** = everything else — narrative, project links, subtitles, case study body. A single voice for all body content, differentiated by color and size rather than font switching.
 
-- **Serif voice (Literata)** = the author speaking — heading, narrative context, about section. This is Ben's editorial voice: who he is, how he thinks, what he cares about.
-- **Sans voice (Onest)** = the work speaking — project links, functional elements. This is navigational: what he built, where to find it.
-
-This split is more meaningful than "serif = big, sans = everything else." The narrative text (section intros, about paragraphs) is functionally closer to the heading than to the project links — it sets context and establishes tone. Giving it the serif voice creates a clear editorial backbone that the sans project links hang from. A visitor reads the serif passages as authored prose, then scans the sans links as action items.
+This produces a two-tier hierarchy: **serif heading** and **sans everything else**. Within the sans tier, color does the work — `--text-dark` for actionable elements (link titles), `--text-grey` for contextual elements (narrative, subtitles). No ambiguous middle tiers.
 
 ### Typeface roles
 
-- **Headings**: **Literata** (Google Fonts), weight **300**. A contemporary serif designed for screen reading — generous x-height, open counters, soft serifs. At 300 weight, it's light and elegant without feeling fragile. It doesn't announce "I chose a serif" — it just reads well and feels considered. The warmth and modernity signal taste to typographically literate visitors without calling attention to itself.
-- **Narrative**: **Literata**, weight **300**. The same serif voice as headings, at a smaller size (22px vs 36px). Differentiated from headings by size and color (`--text-grey` vs `--text-dark`). The shared typeface and weight create a familial connection — the narrative reads as a natural continuation of the heading's voice, not a separate element.
-- **Body / links**: **Onest** (Google Fonts), weight **400**. A warm, rounded sans-serif with enough personality to feel authored but not so much that it distracts. The rounded terminals echo Literata's softer curves, creating cohesive warmth across the pairing. At 400 weight, it's grounded enough for sustained reading while staying light.
-
-The weight gap (300 serif / 400 sans) creates hierarchy through contrast rather than emphasis — the serif voice is lighter and more refined, the sans voice is slightly more substantial. Combined with the size scale and color roles, this produces a clear 4-tier typographic hierarchy without any element needing to be bold.
+- **Headings**: **Literata** (Google Fonts), weight **300**. A contemporary serif designed for screen reading — generous x-height, open counters, soft serifs. At 300 weight, it's light and elegant without feeling fragile. Used only for h1 elements (homepage hero, case study titles).
+- **Body / narrative / links**: **Onest** (Google Fonts), weight **400**. A warm, rounded sans-serif with enough personality to feel authored but not so much that it distracts. Used for all non-heading text: narrative paragraphs, project link titles, subtitles, case study body, about section.
+- **Data / code**: **IBM Plex Mono**, weight **400**. Used only for data values (e.g. contribution counts) where monospace is a functional requirement.
 
 The pairing was chosen to be a "nod to those with an eye for taste" — both fonts are newer, less common choices that a design-literate person would clock as intentional, while someone who doesn't know fonts just thinks "this looks clean."
 
@@ -160,16 +156,15 @@ All sizes are defined as CSS custom properties (`--text-size-*`) in `src/styles/
 
 | Element | Token | Font | Default | Line height | Color role |
 |---------|-------|------|---------|-------------|------------|
-| Display (case study hero h1) | `--text-size-display` | Literata | 48px | 1.2 | Heading (high contrast) |
-| Title (h1) | `--text-size-title` | Literata | 36px | 1.2 | Heading (high contrast) |
-| Section heading (case study h2) | `--text-size-section-heading` | Literata | 28px | 1.2 | Heading (high contrast) |
-| Narrative (section intros, about) | `--text-size-narrative` | Literata | 22px | 1.4 | Tertiary (muted) |
-| Project links / body | `--text-size-body` | Onest | 18px | 1.4 | Heading (high contrast) |
-| Image summary | `--text-size-summary` | Literata | 15px | 1.5 | Tertiary (muted) |
-| Meta / captions | `--text-size-caption` | Onest | 14px | 1.4 | Grey (low contrast) |
-| Legend / tooltips | `--text-size-small` | Onest | 13px | 1.3 | Grey (low contrast) |
+| Display (case study hero h1) | `--text-size-display` | Literata | 48px | 1.2 | `--text-dark` |
+| Title (h1) | `--text-size-title` | Literata | 36px | 1.2 | `--text-dark` |
+| Section heading (case study h2) | `--text-size-section-heading` | Literata | 28px | 1.2 | `--text-dark` |
+| Narrative / body / links | `--text-size-body` | Onest | 18px | 1.4 | `--text-grey` (narrative) / `--text-dark` (links) |
+| Image summary | `--text-size-summary` | Onest | 15px | 1.5 | `--text-grey` |
+| Subtitles / captions | `--text-size-caption` | Onest | 14px | 1.4 | `--text-grey`, uppercase, 0.02em tracking |
+| Legend / tooltips | `--text-size-small` | Onest | 13px | 1.3 | `--text-grey` |
 
-The main page uses a 3-tier scale: 36px heading → 22px narrative → 18px links. The heading is the identity statement, the narrative sets editorial context, and the links are navigational. The 36→22 step (1.64×) is large enough to maintain clear heading dominance. The 22→18 step (1.22×) is subtle — narrative and links are differentiated primarily by font, weight, and color rather than dramatic size contrast. Case study pages extend the scale with a 48px display size for the hero, 28px section headings, and 14px for captions. The full scale follows a roughly 1.2–1.33× progression: 13 → 14 → 15 → 18 → 22 → 28 → 36 → 48.
+The homepage uses a 3-size scale: 36px Literata heading → 18px Onest body → 14px Onest subtitles. Within the 18px tier, color differentiates: `--text-dark` for project link titles (scannable, actionable), `--text-grey` for narrative paragraphs (contextual, recedes). The 36→18 step (2×) creates clear heading dominance. The 18→14 step differentiates subtitles via size, case (uppercase), and letter-spacing.
 
 ### Responsive typography scaling
 
@@ -194,11 +189,10 @@ Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238
 
 ### What typography does NOT do
 
-- No text-transform (no uppercase labels or small caps)
-- No decorative letter-spacing on content text
 - Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.
-- No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence. **Exception:** a monospace face (IBM Plex Mono) is permitted for `<code>` elements displaying data values (e.g. contribution counts), where monospace is a functional requirement rather than a design choice.
-- No weight variation within a role — all headings share one weight, all body text shares one weight
+- No more than two typefaces — the serif/sans pairing is the system; a third font would break coherence. **Exception:** IBM Plex Mono for data values (e.g. contribution counts) where monospace is a functional requirement.
+- No weight variation within a role — all headings share one weight (300), all body text shares one weight (400)
+- Uppercase + letter-spacing is reserved for subtitle/metadata elements only — never on narrative or heading text
 
 ---
 
@@ -211,11 +205,11 @@ Spacing follows a descending hierarchy that mirrors content hierarchy:
 | Gap | Where | Why |
 |-----|-------|-----|
 | 80px | Between main content and footer controls | The footer is structurally separate — a tool, not content. The large gap signals "this is secondary." |
+| 64px | Between hero and sections; between content sections | One consistent "major break" rhythm. Hero → section → section → about all share the same gap. |
 | 64px | Left/right column padding (top) | Structural padding. "Page margin" level. |
-| 56px | Between content sections | Between-section separation. Enough to signal a new group, close enough to sustain a narrative throughline. |
-| 40px | Between title and first section | Heading-to-content gap. Tighter than between-section to keep the title connected to what follows. |
-| 32px | Between narrative text and project cards within a section; between about section paragraphs | Within-section separation. Clearly groups cards under their context paragraph. Also used between about section paragraphs — the 22px serif text needs more air than 24px provided at 18px. |
-| 24px | Between project links within a section | Tight enough to read as a group, loose enough that the glass hover effect has room to exist. |
+| 24px | Between about section paragraphs | Consistent with other section spacing. |
+| 18px | Project card vertical padding | Creates ~36px between adjacent card titles. Tight enough to scan as a list, with room for the glass hover effect. |
+| 12px | Between narrative text and project cards within a section | Proximity principle — narrative clearly "owns" the cards below it. Combined with 64px between sections, creates a 5:1 ratio that makes grouping unambiguous. |
 | 8px | Between context paragraphs | Near-zero gap — multiple paragraphs read as a single narrative block. |
 
 ### The two-column model

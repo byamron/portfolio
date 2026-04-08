@@ -1,0 +1,20 @@
+[
+  {
+    "id": "dev-server-skill",
+    "type": "skill",
+    "path": ".claude/skills/dev/SKILL.md",
+    "applied_at": "2026-03-27"
+  },
+  {
+    "id": "auto-eslint-hook",
+    "type": "hook",
+    "path": ".claude/settings.json",
+    "applied_at": "2026-03-27"
+  },
+  {
+    "id": "push-workflow-skill",
+    "type": "skill",
+    "path": ".claude/skills/push/SKILL.md",
+    "applied_at": "2026-03-27"
+  }
+]

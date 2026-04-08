@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { CaseStudy } from '@/data/case-study-content'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
-import { narrativeStyle } from '@/styles/shared'
+import { useTypography } from '@/contexts/TypographyContext'
 
 // Shared heading style — single source of truth for both narrow and wide layouts
 const headingStyle = {
@@ -35,6 +35,7 @@ interface CaseStudyLayoutAProps {
 
 export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, videoPreview }: CaseStudyLayoutAProps) {
   const reducedMotion = useReducedMotion()
+  const { narrativeStyle } = useTypography()
   const narrativeRef = useRef<HTMLDivElement>(null)
 
   // Glass highlight for paper link cards and contact CTA within the narrative
@@ -86,16 +87,9 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   // Text content — narrative paragraphs or subtitle fallback
   const textContent = (
     <>
-      <style>{`
-        .cs-narrative strong {
-          color: var(--cs-strong-color, var(--text-dark));
-          font-weight: var(--cs-strong-weight, 300);
-        }
-      `}</style>
-      {narrative.map((html, i) => (
+{narrative.map((html, i) => (
         <p
           key={i}
-          className="cs-narrative"
           style={{
             ...narrativeStyle,
             fontFamily: 'var(--cs-body-font, ' + narrativeStyle.fontFamily + ')',
@@ -121,7 +115,7 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
           style={{
             width: 'fit-content',
             alignSelf: 'flex-start',
-            padding: '24px 16px',
+            padding: '18px 16px',
             margin: '0 -16px',
             borderRadius: 16,
             fontSize: 'var(--text-size-body)',
