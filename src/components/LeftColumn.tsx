@@ -21,13 +21,19 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
 
   useEffect(() => {
     if (navigatingProjectId) {
-      fadeOutGlass(280, 150)
+      fadeOutGlass()
     }
   }, [navigatingProjectId, fadeOutGlass])
   return (
-    <main
+    <motion.main
       ref={contentRef}
       className="left-column"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: navigatingProjectId ? 0 : 1 }}
+      transition={navigatingProjectId
+        ? { duration: 0.28, delay: 0.15 }
+        : { duration: 0.35, delay: 0.12 }
+      }
       style={{
         width: fullWidth ? '100%' : '50%',
         padding:
@@ -35,15 +41,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
         position: 'relative',
       }}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: navigatingProjectId ? 0 : 1 }}
-        transition={navigatingProjectId
-          ? { duration: 0.28, delay: 0.15 }
-          : { duration: 0.35, delay: 0.12 }
-        }
-        style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 'var(--content-max-width)', margin: '0 auto' }}>
         <HeroTitle />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
 
@@ -66,7 +64,7 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
           <SignatureAnimation />
 
         </div>
-      </motion.div>
-    </main>
+      </div>
+    </motion.main>
   )
 }
