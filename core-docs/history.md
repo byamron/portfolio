@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-11 — Replace activity toggle text with inline chevron
+
+**Branch:** `activity-chevron-icon`
+
+**Summary:** Simplified the contribution heatmap header by removing the right-aligned "View activity" / "Collapse" button text and replacing it with a small chevron icon placed inline after the contribution count text. The entire header was already clickable, so the separate toggle label was redundant and caused alignment issues.
+
+**Changes:**
+- Removed right-aligned toggle text span ("View activity" / "Collapse") from heatmap header
+- Added chevron SVG as trailing icon after "GitHub contributions in {year}" text
+- Chevron rotates 180° on expand/collapse with CSS transition
+- Sparkline now stays visible when the graph is expanded (previously animated out, causing cursor position shift)
+- Simplified sparkline from animated `motion.span` to static `span` (no more collapse/expand animation)
+- Cleaned up dead code: removed `hasExpandedOnce` ref, `sparkDuration` variable
+- Changed header flex alignment from `baseline` to `center` for proper chevron vertical centering
+
 ## 2026-04-07 — Merge typography unification + copy rewrite, redesign section hierarchy
 
 **Branch:** `merge-both-prs-preview` (supersedes `text-size-unify` PR #155 and `update-case-study-copy` PR #156)
