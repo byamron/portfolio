@@ -43,7 +43,6 @@ export interface GlassConfig {
   cardLeanRamp: number
   clearDelay: number
   cardSelector: string
-  tightBounds: boolean
   // Light mode cursor light tuning
   lightCursorIntensity: number
   lightCursorSaturation: number
@@ -72,12 +71,10 @@ export const GLASS_DEFAULTS: GlassConfig = {
   cardLeanRamp: 0.10,
   clearDelay: 150,
   cardSelector: '[data-link-card]',
-  // Light mode cursor light tuning
   lightCursorIntensity: 1.8,
   lightCursorSaturation: 45,
   lightCursorLightness: 50,
   lightEdgeIntensity: 0.8,
-  tightBounds: false,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -186,6 +183,10 @@ function setupGlassHighlight(
   // Glass pressure
   let glassPressure = 0
 
+  // Pending fade-in RAFs (tracked so they can be cancelled on early leave)
+  let fadeInRaf1: number | null = null
+  let fadeInRaf2: number | null = null
+
   // Reduced motion
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 
@@ -194,15 +195,18 @@ function setupGlassHighlight(
   }
   prefersReducedMotion.addEventListener('change', handleMotionChange)
 
-  // -- Helpers --
+  // -- Cached theme state (updated on theme-changed, avoids per-frame DOM reads) --
 
-  function getAccentHue(): number {
+  let cachedHue = (() => {
     const raw = getComputedStyle(document.documentElement).getPropertyValue('--accent-hue').trim()
     return parseFloat(raw) || 34
-  }
+  })()
+  let cachedDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
-  function isDarkMode(): boolean {
-    return document.documentElement.getAttribute('data-theme') === 'dark'
+  function refreshThemeCache(): void {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--accent-hue').trim()
+    cachedHue = parseFloat(raw) || 34
+    cachedDark = document.documentElement.getAttribute('data-theme') === 'dark'
   }
 
   function setBackdropFilter(el: HTMLElement, value: string): void {
@@ -251,9 +255,10 @@ function setupGlassHighlight(
 
   function skinPillBase(): void {
     if (!pill) return
+    refreshThemeCache()
     const cfg = configRef.current
-    const hue = getAccentHue()
-    const dark = isDarkMode()
+    const hue = cachedHue
+    const dark = cachedDark
 
     pill.style.borderRadius = `${cfg.borderRadius}px`
 
@@ -287,15 +292,32 @@ function setupGlassHighlight(
 
   // -- Fade --
 
+  function cancelPendingFadeIn(): void {
+    if (fadeInRaf1 !== null) { cancelAnimationFrame(fadeInRaf1); fadeInRaf1 = null }
+    if (fadeInRaf2 !== null) { cancelAnimationFrame(fadeInRaf2); fadeInRaf2 = null }
+  }
+
   function fadeIn(): void {
-    if (!pill) return
+    if (!pill || !currentCard) return // guard against ghost pill from stale double-RAF
     const d = prefersReducedMotion.matches ? 0 : configRef.current.fadeDuration
     pill.style.transition = `opacity ${d}ms ease`
     pill.style.opacity = '1'
   }
 
+  function scheduleFadeIn(): void {
+    cancelPendingFadeIn()
+    fadeInRaf1 = requestAnimationFrame(() => {
+      fadeInRaf1 = null
+      fadeInRaf2 = requestAnimationFrame(() => {
+        fadeInRaf2 = null
+        fadeIn()
+      })
+    })
+  }
+
   function fadeOut(): void {
     if (!pill) return
+    cancelPendingFadeIn()
     const d = prefersReducedMotion.matches ? 0 : configRef.current.fadeDuration
     if (prefersReducedMotion.matches) {
       pill.style.transition = 'opacity 0ms'
@@ -413,18 +435,29 @@ function setupGlassHighlight(
     rafId = null
     if (!currentCard || !pill) return
 
-    // Handle deferred scroll
+    // Handle deferred scroll — update targets only so the spring animates smoothly.
+    // Only snap values on large jumps (e.g., programmatic scroll) to avoid teleporting.
     if (scrollDirty) {
       scrollDirty = false
       cachedContainerRect = null
       const pos = getCardPosition(currentCard)
+      const jumpX = Math.abs(pos.x - state.baseX)
+      const jumpY = Math.abs(pos.y - state.baseY)
       state.baseX = pos.x; state.baseY = pos.y
       state.baseW = pos.w; state.baseH = pos.h
-      springs.x.value = springs.x.target = pos.x
-      springs.y.value = springs.y.target = pos.y
-      springs.w.value = springs.w.target = pos.w
-      springs.h.value = springs.h.target = pos.h
-      springs.x.velocity = springs.y.velocity = springs.w.velocity = springs.h.velocity = 0
+      if (jumpX > pos.h || jumpY > pos.h) {
+        // Large discontinuity — snap to avoid long spring chase
+        springs.x.value = springs.x.target = pos.x
+        springs.y.value = springs.y.target = pos.y
+        springs.w.value = springs.w.target = pos.w
+        springs.h.value = springs.h.target = pos.h
+        springs.x.velocity = springs.y.velocity = springs.w.velocity = springs.h.velocity = 0
+      }
+      // Always update targets — spring will converge naturally for small scrolls
+      springs.x.target = pos.x
+      springs.y.target = pos.y
+      springs.w.target = pos.w
+      springs.h.target = pos.h
     }
 
     const cfg = configRef.current
@@ -436,29 +469,32 @@ function setupGlassHighlight(
 
     computePullTargets()
 
-    // Sub-step for stability
+    // Sub-step all springs (including entrance) for numerical stability
     const SUB_STEP = 0.004
     let remaining = dt
     let activeX = false, activeY = false, activeW = false, activeH = false
+    let entranceActive = false
     while (remaining > 0) {
       const step = Math.min(remaining, SUB_STEP)
       activeX = stepSpring(springs.x, step, k, c) || activeX
       activeY = stepSpring(springs.y, step, k, c) || activeY
       activeW = stepSpring(springs.w, step, k, c) || activeW
       activeH = stepSpring(springs.h, step, k, c) || activeH
+      // Entrance spring — same sub-stepping to prevent overshoot on frame drops
+      if (!prefersReducedMotion.matches) {
+        const eForce = -ENTRANCE_K * (entranceScale - entranceTarget) - ENTRANCE_C * entranceVel
+        entranceVel += eForce * step
+        entranceScale += entranceVel * step
+        if (Math.abs(entranceScale - entranceTarget) > 0.001 || Math.abs(entranceVel) > 0.01) {
+          entranceActive = true
+        }
+      }
       remaining -= step
     }
-
-    // Entrance spring
-    if (!prefersReducedMotion.matches) {
-      const entranceForce = -ENTRANCE_K * (entranceScale - entranceTarget) - ENTRANCE_C * entranceVel
-      entranceVel += entranceForce * dt
-      entranceScale += entranceVel * dt
-    } else {
+    if (prefersReducedMotion.matches) {
       entranceScale = entranceTarget
       entranceVel = 0
     }
-    const entranceActive = Math.abs(entranceScale - entranceTarget) > 0.001 || Math.abs(entranceVel) > 0.01
 
     // Glass pressure
     const springSpeed = Math.sqrt(springs.x.velocity ** 2 + springs.y.velocity ** 2)
@@ -478,8 +514,8 @@ function setupGlassHighlight(
     const { sx, sy } = getVelocityStretch()
     const w = springs.w.value
     const h = springs.h.value
-    const hue = getAccentHue()
-    const dark = isDarkMode()
+    const hue = cachedHue
+    const dark = cachedDark
 
     // ── Pill lean + tilt ──
     let leanX = 0, leanY = 0
@@ -660,7 +696,7 @@ function setupGlassHighlight(
       lastPillW = Math.round(pos.w)
       lastPillH = Math.round(pos.h)
 
-      requestAnimationFrame(() => { requestAnimationFrame(() => { fadeIn() }) })
+      scheduleFadeIn()
     } else {
       state.baseX = pos.x; state.baseY = pos.y
       state.baseW = pos.w; state.baseH = pos.h
@@ -738,7 +774,7 @@ function setupGlassHighlight(
       lastPillW = Math.round(pos.w)
       lastPillH = Math.round(pos.h)
 
-      requestAnimationFrame(() => { requestAnimationFrame(() => { fadeIn() }) })
+      scheduleFadeIn()
     } else {
       state.baseX = pos.x; state.baseY = pos.y
       state.baseW = pos.w; state.baseH = pos.h
@@ -754,7 +790,9 @@ function setupGlassHighlight(
 
   function handleFocusOut(e: FocusEvent): void {
     const related = e.relatedTarget as HTMLElement | null
-    if (related?.closest?.(configRef.current.cardSelector)) return
+    // Only keep pill alive if focus moved to a card within THIS container
+    const relatedCard = related?.closest?.(configRef.current.cardSelector) as HTMLElement | null
+    if (relatedCard && container.contains(relatedCard)) return
     releaseCardLean()
     currentCard = null
     fadeOut()
@@ -799,6 +837,7 @@ function setupGlassHighlight(
 
   function navigationFadeOut(duration = configRef.current.fadeDuration, delay = 0): void {
     if (!pill) return
+    cancelPendingFadeIn()
     releaseCardLean()
     currentCard = null
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
@@ -812,6 +851,7 @@ function setupGlassHighlight(
   // -- Cleanup --
 
   const cleanup = () => {
+    cancelPendingFadeIn()
     releaseCardLean()
     stopLoop()
     removeScrollListeners()
@@ -823,6 +863,7 @@ function setupGlassHighlight(
     document.removeEventListener('theme-changed', skinPillBase)
     prefersReducedMotion.removeEventListener('change', handleMotionChange)
     pill?.remove()
+    pill = null
     container.removeAttribute('data-glass-highlight-active')
     if (resizeTimer) clearTimeout(resizeTimer)
     if (clearTimer) clearTimeout(clearTimer)

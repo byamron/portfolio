@@ -24,7 +24,6 @@ export function AboutSection() {
     pillMaxTilt: 0.5,
     cardMaxLean: 0,
     pullStrength: 0,
-    tightBounds: true,
     clearDelay: 300,
     cardSelector: '[data-contact-card]',
   })

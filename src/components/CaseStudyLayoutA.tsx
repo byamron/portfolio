@@ -45,7 +45,6 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
     pillMaxTilt: 0.5,
     cardMaxLean: 0,
     pullStrength: 0,
-    tightBounds: true,
     clearDelay: 300,
     cardSelector: '[data-link-card], [data-contact-card]',
   })
