@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-12 — Add shake-and-settle animation to contribution sparkline
+
+**Branch:** `sparkline-animation`
+
+**Summary:** The collapsed GitHub contribution sparkline bars now animate on every open/close toggle. Bars grow to randomized heights (wave + noise pattern, different each toggle via incrementing key seed), then spring back to their actual data positions. Uses `motion.rect` with damped spring physics (stiffness 180, damping 12, mass 0.6) and a left-to-right stagger delay. Reduced motion preference falls back to static bars.
+
+---
+
 ## 2026-04-12 — Replace lerp-based glass hover with spring-physics system
 
 **Branch:** `glass-hover-upgrade`
