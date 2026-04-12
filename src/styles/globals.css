@@ -287,18 +287,6 @@ p a {
   outline-offset: 2px !important;
 }
 
-/* Sidebar trigger jiggle — draws attention after image-click accent cycle */
-@keyframes sidebar-jiggle {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-3px); }
-  40% { transform: translateX(3px); }
-  60% { transform: translateX(-2px); }
-  80% { transform: translateX(1px); }
-}
-.sidebar-jiggle {
-  animation: sidebar-jiggle 400ms ease-in-out;
-}
-
 /* Coming-soon click nudge — shake with lagging scale swell */
 @keyframes coming-soon-nudge {
   0%   { transform: translateX(0)    scale(1); }

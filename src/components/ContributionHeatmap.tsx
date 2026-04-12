@@ -170,7 +170,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
   const [isHoveringGrid, setIsHoveringGrid] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [expandAnimDone, setExpandAnimDone] = useState(false)
-  const hasExpandedOnce = useRef(false)
+
   const [scrollOpacity, setScrollOpacity] = useState(0.3)
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -733,7 +733,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
         })}
       </svg>
     )
-    const sparkDuration = prefersReducedMotion || collapseTransition === 'none' ? 0 : 0.25
+
 
     // Animation variants for the expandable grid content
     // When reduced motion is preferred, all durations collapse to 0 (instant show/hide)
@@ -820,25 +820,15 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
         >
           {/* Header row — click to toggle collapsed/expanded */}
           <button
-            onClick={() => { if (!isExpanded) hasExpandedOnce.current = true; setExpandAnimDone(false); setIsExpanded(v => !v) }}
+            onClick={() => { setExpandAnimDone(false); setIsExpanded(v => !v) }}
             onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.025)' } }}
             onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = 'transparent' } }}
-            style={{ display: 'flex', alignItems: 'baseline', gap: 12, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
           >
             {sparkPos === 'left' && (
-              <AnimatePresence>
-                {!isExpanded && (
-                  <motion.span
-                    key="spark-l"
-                    initial={hasExpandedOnce.current ? { opacity: 0, width: 0 } : false}
-                    animate={{ opacity: 1, width: sparkWidth, transition: { duration: sparkDuration } }}
-                    exit={{ opacity: 0, width: 0, transition: { duration: sparkDuration } }}
-                    style={{ position: 'relative', flexShrink: 0, height: 0, clipPath: 'inset(-20px 0)' }}
-                  >
-                    {sparkSvg}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              <span style={{ position: 'relative', flexShrink: 0, width: sparkWidth, height: 0, clipPath: 'inset(-20px 0)' }}>
+                {sparkSvg}
+              </span>
             )}
 
             <span style={{
@@ -860,37 +850,14 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
             </span>
 
             {sparkPos === 'right' && (
-              <AnimatePresence>
-                {!isExpanded && (
-                  <motion.span
-                    key="spark-r"
-                    initial={hasExpandedOnce.current ? { opacity: 0, width: 0 } : false}
-                    animate={{ opacity: 1, width: sparkWidth, transition: { duration: sparkDuration } }}
-                    exit={{ opacity: 0, width: 0, transition: { duration: sparkDuration } }}
-                    style={{ position: 'relative', flexShrink: 0, height: 0, clipPath: 'inset(-20px 0)' }}
-                  >
-                    {sparkSvg}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              <span style={{ position: 'relative', flexShrink: 0, width: sparkWidth, height: 0, clipPath: 'inset(-20px 0)' }}>
+                {sparkSvg}
+              </span>
             )}
 
-            {/* Right side: View activity (collapsed) ↔ Collapse (expanded) in same position */}
-            <span style={{
-              fontFamily: "'Onest', sans-serif",
-              fontSize: 'var(--text-size-small)',
-              fontWeight: 400,
-              color: 'var(--text-grey)',
-              marginLeft: 'auto',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}>
-              {isExpanded ? 'Collapse' : 'View activity'}
-              <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ display: 'block', transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.25s ease' }}>
-                <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
+            <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ display: 'block', transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.25s ease', flexShrink: 0 }}>
+              <path d="M1 1l3 3 3-3" stroke="var(--text-grey)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
 
           {/* Expandable grid content */}
