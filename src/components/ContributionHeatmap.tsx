@@ -170,6 +170,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
   const [isHoveringGrid, setIsHoveringGrid] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [expandAnimDone, setExpandAnimDone] = useState(false)
+  const [sparkAnimKey, setSparkAnimKey] = useState(0)
 
   const [scrollOpacity, setScrollOpacity] = useState(0.3)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -719,15 +720,46 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
       <svg width={sparkWidth} height={sparkHeight} style={{ display: 'block', flexShrink: 0, position: 'absolute', top: 0, transform: `translateY(-${sparkHeight - 2}px)` }}>
         {weeklyTotals.map((total, i) => {
           const h = Math.max(1, (total / maxWeekly) * (sparkHeight - 2))
+          if (prefersReducedMotion) {
+            return (
+              <rect
+                key={i}
+                x={i * (barWidth + barGap)}
+                y={sparkHeight - h}
+                width={barWidth}
+                height={h}
+                rx={0.5}
+                fill={contribFill(total, maxWeekly, hue, bgIntensity, isDark)}
+              />
+            )
+          }
+          // Shake-and-settle: bars always grow taller, then settle back
+          const wave = (Math.sin(i * 0.5 + sparkAnimKey * 2.3) + 1) * 0.5 // 0–1
+          const noise = (Math.cos(i * 3.7 + sparkAnimKey * 5.1) + 1) * 0.5 // 0–1
+          const grow = 0.3 + (wave * 0.5 + noise * 0.3) // 0.3–1.1 extra
+          const shuffledH = Math.min(sparkHeight - 1, h + (sparkHeight - h) * grow)
           return (
-            <rect
-              key={i}
+            <motion.rect
+              key={`${sparkAnimKey}-${i}`}
               x={i * (barWidth + barGap)}
-              y={sparkHeight - h}
               width={barWidth}
-              height={h}
               rx={0.5}
               fill={contribFill(total, maxWeekly, hue, bgIntensity, isDark)}
+              initial={{
+                y: sparkHeight - shuffledH,
+                height: shuffledH,
+              }}
+              animate={{
+                y: sparkHeight - h,
+                height: h,
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 180,
+                damping: 12,
+                mass: 0.6,
+                delay: i * 0.006,
+              }}
             />
           )
         })}
@@ -820,7 +852,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
         >
           {/* Header row — click to toggle collapsed/expanded */}
           <button
-            onClick={() => { setExpandAnimDone(false); setIsExpanded(v => !v) }}
+            onClick={() => { setExpandAnimDone(false); setSparkAnimKey(k => k + 1); setIsExpanded(v => !v) }}
             onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.025)' } }}
             onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = 'transparent' } }}
             style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
