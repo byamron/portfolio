@@ -210,6 +210,25 @@ p a {
   border-color: transparent;
 }
 
+/* Focus-visible for contact cards and back links */
+[data-contact-card]:focus-visible,
+[data-back-link]:focus-visible {
+  outline: 2px solid var(--swatch);
+  outline-offset: 2px;
+}
+[data-contact-card]:focus:not(:focus-visible),
+[data-back-link]:focus:not(:focus-visible) {
+  outline: none;
+}
+[data-glass-highlight-active] [data-contact-card]:focus-visible,
+[data-glass-highlight-active] [data-back-link]:focus-visible {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
 /* Responsive: hide right column below 900px */
 @media (max-width: 899px) {
   .layout-root {
