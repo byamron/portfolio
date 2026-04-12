@@ -386,8 +386,8 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 | 250ms | View Transition root crossfade, sidebar close delay | Slightly slower than action tempo — used for transitions that involve layout shifts. |
 | 280ms | Left column exit fade, case study exit fade | Content departure. Quick enough to not delay navigation. |
 | 300ms | Image cross-fade, braille sweep total (6×50ms), hero image morph, summary text fade, contact link clear delay | Perceptible transition. The user sees the change happening. |
-| 350ms | Left column entry fade | Content arrival. Slightly slower than departure — settling in feels more natural than leaving. |
-| 400ms | Spring press recovery, sidebar jiggle, tight-bounds-to-stack clear delay | Physical responses. Slow enough to feel like a real material bouncing back. |
+| 350ms | Entrance section stagger, left column entry fade | Content arrival. Slightly slower than departure — settling in feels more natural than leaving. |
+| 400ms | Spring press recovery, sidebar entrance fade, tight-bounds-to-stack clear delay | Physical responses. Slow enough to feel like a real material bouncing back. |
 | 500ms | Theme/accent transitions, default portrait return, arrow slide-out | Environmental shifts. Slower because the whole atmosphere is changing. |
 
 ### The default easing
@@ -404,7 +404,7 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 | `cubic-bezier(0.4, 0, 0.2, 1)` | Material | View Transition hero morph | Precise, mechanical. A designed surface sliding into position. |
 | `cubic-bezier(0.22, 1, 0.36, 1)` | Quint Out | Arrow slide-out on link click | Flick. Fast start, long gentle coast — like flicking something off a table. |
 | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Spring | Image click press recovery | Bounce-back. Overshoots target then settles — a physical spring. Only for direct user-initiated press actions. |
-| `ease-in-out` | Built-in | Theme transitions (500ms), background color (500ms), sidebar jiggle | Symmetric. Appropriate for environmental shifts where neither start nor end should feel abrupt. |
+| `ease-in-out` | Built-in | Theme transitions (500ms), background color (500ms) | Symmetric. Appropriate for environmental shifts where neither start nor end should feel abrupt. |
 
 ### Glass pill choreography
 
@@ -517,7 +517,7 @@ Hovering a project link swaps the right-column image to a project-specific previ
 Clicking the right-column portrait image cycles through accent colors in order (table → portrait → sky → pizza → vineyard → table…). This interaction transforms the passive image area into a playful discovery mechanism:
 
 - **Spring press**: On click, the image scales to `0.985` instantly (no transition), then returns to `1.0` with `transition: 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'` (Spring easing with overshoot). The overshoot creates a subtle "bounce" that makes the click feel physically responsive.
-- **Accent cycle**: Dispatches `accent-cycled` custom event, triggering the sidebar jiggle (see **Sidebar jiggle** below). The accent change fires the full environmental shift (background + image + glass + browser chrome).
+- **Accent cycle**: Dispatches `accent-cycled` custom event. The accent change fires the full environmental shift (background + image + glass + browser chrome).
 - **Accessibility**: `tabIndex={0}`, `role="button"`, `aria-label="Cycle accent color"`. Keyboard-operable.
 
 > **Note on the Spring easing**: This is the only intentional overshoot on the site. The anti-pattern "no bouncy/springy overshoots" applies to ambient or continuous animations. A spring press on a direct click action is a deliberate, user-initiated physical response — the overshoot confirms "your action registered" in the same way a physical button springs back.
@@ -604,16 +604,26 @@ Three icon buttons in the sidebar toolbar, matching the appearance mode layout (
 
 Active mode: full opacity + outline ring. Inactive: 0.4 opacity. Glass pill shared with appearance modes or isolated per group. Persisted to `localStorage.cursorMode`.
 
-### Sidebar jiggle
+### Entrance choreography
 
-When the accent color is cycled (via clicking the portrait image), the sidebar trigger dot plays a horizontal nudge animation:
+On initial page load, the site reveals itself in a three-beat sequence with per-element cascade. The entrance only plays once per session (gated by a module-level timestamp in `src/utils/entranceState.ts`). Route-back transitions use the standard opacity fade.
 
-- **Keyframe**: `0 → -3px → 3px → -2px → 1px → 0` (damped oscillation)
-- **Duration**: 400ms, `ease-in-out`
-- **Trigger**: Custom DOM event `accent-cycled`, dispatched by `ImageDisplay` on portrait click
-- **Implementation**: CSS class `sidebar-jiggle` applied on event, removed on `animationend`
+**Three beats at 350ms intervals:**
 
-This creates a cause-and-effect pairing: clicking the image shifts the environment (accent cycle) and the sidebar trigger physically reacts — a small moment of delight that connects two otherwise separate interface elements.
+| Beat | Element | Start | Duration | Animation |
+|------|---------|-------|----------|-----------|
+| 1 | Hero heading | 100ms | 450ms | opacity + blur(5px→0) |
+| 2 | Portrait image | 350ms | 300ms | scale(0.98→1) + blur(4.5→0) |
+| 3+ | Content sections | 450ms, 800ms, 1150ms, 1500ms | 450ms each | per-element cascade within each section |
+| Coda | Sidebar trigger | 1800ms | 400ms | opacity fade |
+
+**Per-element cascade within each section:** When a section's beat arrives, its internal elements (heading, narrative paragraph, project cards) cascade at 70ms intervals. This creates a fluid wave within each beat rather than the section appearing as a block.
+
+**Interaction guard:** `pointerEvents: 'none'` on the left column until the last section's animation completes. This prevents the glass hover pill from appearing on invisible cards during the entrance.
+
+**Reduced motion:** All choreography disabled. `useReducedMotion()` → `shouldChoreograph = false` → falls back to the standard simple opacity fade.
+
+**Implementation:** Framer Motion variants with nested `staggerChildren` — container staggers sections at 350ms, each section wrapper staggers its children at 70ms. The portrait delay is independent (set on `ImageDisplay.tsx` transition). All timing values are centralized in `src/utils/entranceState.ts`.
 
 ### Sidebar atmospheric zone
 
