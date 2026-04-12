@@ -2,6 +2,37 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-12 — Replace lerp-based glass hover with spring-physics system
+
+**Branch:** `glass-hover-upgrade`
+
+**Summary:** Replaced the entire glass highlight engine with a damped spring solver ported from the ui-playground's GlassPull demo. Springs for all positional properties (x, y, w, h) with 4ms sub-stepping for frame-drop stability. The lerp-based system produced exponential decay with no momentum; the spring system produces overshoot, settle, and a weighted quality that feels alive.
+
+**New visual effects:**
+- Cursor-as-light-source: accent-tinted radial gradient (circle, not ellipse) tracks cursor position within the pill. Dark mode uses near-white (L90, S15); light mode uses mid-tone accent (L50, S45) at higher intensity (1.8x) to punch through the light background. Same "light source" metaphor in both modes.
+- Cursor-reactive edge highlight: inset box-shadow shifts with cursor for surface curvature feel
+- Glass pressure: fill opacity modulates with spring velocity — pill brightens during motion
+- Entrance spring: pill scales from 0.70→1.0 with its own spring (k=350, c=22)
+- Exit scale-down: 0.96 with ease-in on fadeOut
+- Velocity-based stretch/squash: continuous deformation driven by spring velocity
+- Edge pull: pill stretches toward adjacent cards at edges with volume preservation
+
+**Retained from previous implementation:** Pill lean + tilt, card text lean with edge-fade, focus/keyboard support, scroll/resize handling, glass-break zones, reduced motion support, theme reactivity, navigation fadeOut sync.
+
+**Production review fixes:**
+- Cached `getAccentHue()`/`isDarkMode()` to avoid per-frame `getComputedStyle` DOM reads
+- Removed `tightBounds` config (no-op since card-stack detection was removed)
+- Sub-stepped entrance spring alongside position springs for frame-drop stability
+- Tracked and cancellable fade-in RAFs to prevent ghost pill on early mouse-leave
+- Scoped `handleFocusOut` card check to current container for multi-instance correctness
+- Scroll updates spring targets only (not values/velocities) for smooth animation during scroll
+- Added `:focus-visible` CSS rules for `[data-contact-card]` and `[data-back-link]`
+- Added `startLoop()`/`addScrollListeners()` to `handleFocusIn` first-card path
+
+**Config defaults (tuned via dev panel):** stiffness 340, damping 27, pill lean 1.0, tilt 1.0, card lean 0.4, stretch 0.04, entrance 0.70, pull 0.20, edge zone 0.12, pressure 0.04, highlight 0.12, cursor light 0.04. Light mode: intensity 1.8x, saturation 45%, lightness 50%, edge 0.8x.
+
+**Design language updated:** Glass pill choreography section rewritten to document spring solver, entrance/exit springs, cursor-as-light-source, edge highlight, glass pressure, and edge pull.
+
 ## 2026-04-07 — Merge typography unification + copy rewrite, redesign section hierarchy
 
 **Branch:** `merge-both-prs-preview` (supersedes `text-size-unify` PR #155 and `update-case-study-copy` PR #156)

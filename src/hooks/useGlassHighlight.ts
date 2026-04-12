@@ -187,13 +187,9 @@ function setupGlassHighlight(
   let fadeInRaf1: number | null = null
   let fadeInRaf2: number | null = null
 
-  // Reduced motion
+  // Reduced motion — the MediaQueryList is checked at each decision point in the loop.
+  // No listener needed; the .matches property is live.
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-
-  function handleMotionChange(): void {
-    // Runtime decisions check prefersReducedMotion.matches directly
-  }
-  prefersReducedMotion.addEventListener('change', handleMotionChange)
 
   // -- Cached theme state (updated on theme-changed, avoids per-frame DOM reads) --
 
@@ -445,7 +441,8 @@ function setupGlassHighlight(
       const jumpY = Math.abs(pos.y - state.baseY)
       state.baseX = pos.x; state.baseY = pos.y
       state.baseW = pos.w; state.baseH = pos.h
-      if (jumpX > pos.h || jumpY > pos.h) {
+      const jumpThreshold = Math.max(pos.h, 50)
+      if (jumpX > jumpThreshold || jumpY > jumpThreshold) {
         // Large discontinuity — snap to avoid long spring chase
         springs.x.value = springs.x.target = pos.x
         springs.y.value = springs.y.target = pos.y
@@ -774,6 +771,8 @@ function setupGlassHighlight(
       lastPillW = Math.round(pos.w)
       lastPillH = Math.round(pos.h)
 
+      addScrollListeners()
+      startLoop()
       scheduleFadeIn()
     } else {
       state.baseX = pos.x; state.baseY = pos.y
@@ -861,7 +860,6 @@ function setupGlassHighlight(
     container.removeEventListener('focusin', handleFocusIn, true)
     container.removeEventListener('focusout', handleFocusOut, true)
     document.removeEventListener('theme-changed', skinPillBase)
-    prefersReducedMotion.removeEventListener('change', handleMotionChange)
     pill?.remove()
     pill = null
     container.removeAttribute('data-glass-highlight-active')
