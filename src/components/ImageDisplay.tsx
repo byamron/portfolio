@@ -4,6 +4,7 @@ import { useMatch } from 'react-router-dom'
 
 const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
+import { isInitialEntrance, entrancePreset } from '@/utils/entranceState'
 import { useTheme } from '@/contexts/ThemeContext'
 import { transitionSettings as ts } from '@/contexts/TransitionContext'
 import { projectsById, projectImageMap, defaultImageMap, linkPreviews, getProjectForSlug } from '@/data/projects'
@@ -26,6 +27,7 @@ export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
   const reducedMotion = useReducedMotion()
+  const isEntranceRef = useRef(isInitialEntrance())
   const csDisplayMode = 'metadata' as const
 
   // Detect case study route
@@ -398,6 +400,7 @@ export function ImageDisplay() {
             }}
             transition={{
               duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
+              delay: isEntranceRef.current && isPortrait && !reducedMotion ? entrancePreset.portraitDelay : 0,
               ease: ts.easing,
             }}
             style={imageWrapperStyle}

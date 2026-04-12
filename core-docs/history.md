@@ -14,6 +14,44 @@ Decision log and completed work, in reverse chronological order.
 
 ---
 
+## 2026-04-12 — Entrance choreography: three-beat reveal with per-element cascade
+
+**Branch:** `design-critique`
+
+**Summary:** Added a considered entrance sequence to the home page. On initial load, the site reveals itself in three beats at 350ms intervals: hero heading, portrait image, then content sections. Within each content section, individual elements (headings, narrative paragraphs, project cards) cascade at 70ms intervals, creating a fluid downward wave. The sidebar trigger dot fades in last at 1.8s. Total entrance duration: ~2.2s.
+
+**What changed:**
+- `src/utils/entranceState.ts` (new) — Module-level timestamp gate (`isInitialEntrance()`) and centralized timing values
+- `src/components/LeftColumn.tsx` — Framer Motion variants with nested staggerChildren: container staggers sections at 350ms, each section cascades its children at 70ms. `pointerEvents: 'none'` during entrance prevents glass hover on invisible cards.
+- `src/components/ImageDisplay.tsx` — 350ms delay on initial portrait entrance to sync as beat 2
+- `src/components/SidebarThemeControls.tsx` — Trigger dot fade-in at 1.8s delay on first load; removed sidebar jiggle (useEffect + CSS class)
+- `src/styles/globals.css` — Removed `@keyframes sidebar-jiggle` and `.sidebar-jiggle` class
+- `core-docs/design-language.md` — Replaced sidebar jiggle section with entrance choreography documentation
+
+**Decisions:**
+- Three-beat structure (hero → portrait → content) chosen over simultaneous fade because the hero needs 350ms alone to establish identity before the project list appears. Information design, not decoration.
+- Per-element cascade at 70ms reads as a wave, not individual animations. Faster (40ms) was imperceptible; slower (120ms+) felt like a loading skeleton.
+- Section-level stagger at 350ms chosen through A/B testing with dev toggle. Faster intervals (150ms) didn't register as intentional; longer (500ms+) felt like the site was withholding content.
+- Sidebar jiggle replaced by delayed entrance reveal — more atmospheric, same discoverability purpose.
+- `pointerEvents: 'none'` guard during entrance prevents glass hover from appearing on invisible cards (same class of bug as the page transition glass artifact).
+- Entrance only plays once per session (1-second window from module load). Route-back transitions use the existing simple opacity fade.
+
+---
+
+## 2026-04-11 — Replace activity toggle text with inline chevron
+
+**Branch:** `activity-chevron-icon`
+
+**Summary:** Simplified the contribution heatmap header by removing the right-aligned "View activity" / "Collapse" button text and replacing it with a small chevron icon placed inline after the contribution count text. The entire header was already clickable, so the separate toggle label was redundant and caused alignment issues.
+
+**Changes:**
+- Removed right-aligned toggle text span ("View activity" / "Collapse") from heatmap header
+- Added chevron SVG as trailing icon after "GitHub contributions in {year}" text
+- Chevron rotates 180° on expand/collapse with CSS transition
+- Sparkline now stays visible when the graph is expanded (previously animated out, causing cursor position shift)
+- Simplified sparkline from animated `motion.span` to static `span` (no more collapse/expand animation)
+- Cleaned up dead code: removed `hasExpandedOnce` ref, `sparkDuration` variable
+- Changed header flex alignment from `baseline` to `center` for proper chevron vertical centering
 ## 2026-04-07 — Merge typography unification + copy rewrite, redesign section hierarchy
 
 **Branch:** `merge-both-prs-preview` (supersedes `text-size-unify` PR #155 and `update-case-study-copy` PR #156)

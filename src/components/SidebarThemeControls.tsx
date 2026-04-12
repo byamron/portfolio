@@ -4,6 +4,7 @@ import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
 import { useIsWide } from '@/hooks/useMediaQuery'
+import { isInitialEntrance, entrancePreset } from '@/utils/entranceState'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -317,6 +318,7 @@ export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const prefersReducedMotion = useReducedMotion()
+  const isEntrance = useRef(isInitialEntrance()).current
   const slideProps = { x: hovered ? 0 : 20, y: 0 }
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
@@ -423,21 +425,6 @@ export function SidebarThemeControls() {
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
 
-  // Jiggle the trigger dot when accent is cycled via image click
-  useEffect(() => {
-    const handler = () => {
-      const el = triggerRef.current
-      if (!el) return
-      el.classList.remove('sidebar-jiggle')
-      void el.offsetHeight
-      el.classList.add('sidebar-jiggle')
-      const cleanup = () => el.classList.remove('sidebar-jiggle')
-      el.addEventListener('animationend', cleanup, { once: true })
-    }
-    document.addEventListener('accent-cycled', handler)
-    return () => document.removeEventListener('accent-cycled', handler)
-  }, [])
-
   // Gradient strip pointer handlers (continuous drag support)
   const updateFromPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -540,7 +527,10 @@ export function SidebarThemeControls() {
           />
         )}
       </AnimatePresence>
-      <div
+      <motion.div
+        initial={isEntrance && !prefersReducedMotion ? { opacity: 0 } : false}
+        animate={{ opacity: 1 }}
+        transition={isEntrance && !prefersReducedMotion ? { duration: 0.4, delay: entrancePreset.sidebarDelay, ease: 'easeOut' } : { duration: 0 }}
         style={{
           position: 'absolute',
           right: 16,
@@ -854,7 +844,7 @@ export function SidebarThemeControls() {
             </>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
