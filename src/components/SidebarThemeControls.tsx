@@ -19,14 +19,6 @@ const cursorOptions: { mode: CursorMode; label: string; icon: 'cursor' | 'circle
 
 const ACCENT_ORDER: AccentColor[] = ['table', 'portrait', 'pizza', 'vineyard', 'sky']
 
-function readSwatchColors(): { color: AccentColor; swatch: string }[] {
-  const style = getComputedStyle(document.documentElement)
-  return ACCENT_ORDER.map(color => ({
-    color,
-    swatch: style.getPropertyValue(`--swatch-${color}`).trim() || 'gray',
-  }))
-}
-
 const motionEase = [0.25, 0.46, 0.45, 0.94]
 
 // Pill: 36×36, centered on each control
@@ -42,10 +34,6 @@ function lerp(a: number, b: number, t: number): number {
 }
 
 const KEYBOARD_STEP = 0.05
-
-function swatchToHsla(swatch: string, alpha: number): string {
-  return swatch.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`)
-}
 
 // ---------------------------------------------------------------------------
 // Mini glass pill for sidebar controls
@@ -330,16 +318,8 @@ export function SidebarThemeControls() {
   const [isDragging, setIsDragging] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const slideProps = { x: hovered ? 0 : 20, y: 0 }
-  const [accents, setAccents] = useState<{ color: AccentColor; swatch: string }[]>(
-    () => ACCENT_ORDER.map(color => ({ color, swatch: 'gray' }))
-  )
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
-
-  // Read swatch colors after CSS has loaded
-  useEffect(() => {
-    setAccents(readSwatchColors())
-  }, [])
   const { cursorMode, setCursorMode } = useCursor()
   const closeTimeout = useRef<ReturnType<typeof setTimeout>>(null)
   const swatchesRef = useRef<HTMLDivElement>(null)
@@ -438,7 +418,7 @@ export function SidebarThemeControls() {
     }
   }, [setupPills])
 
-  const activeSwatch = accents.find(a => a.color === accentColor) ?? accents[0] ?? { color: 'table' as AccentColor, swatch: 'gray' }
+  const activeSwatchVar = `var(--swatch-${accentColor})`
 
   const thumbRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
@@ -479,13 +459,13 @@ export function SidebarThemeControls() {
       if (triggerRef.current) {
         triggerRef.current.style.opacity = String(lerp(0.45, 1.0, t))
         triggerRef.current.style.boxShadow = t > 0.01
-          ? `0 0 ${lerp(0, 14, t).toFixed(1)}px ${swatchToHsla(activeSwatch.swatch, lerp(0, 0.5, t))}`
+          ? `0 0 ${lerp(0, 14, t).toFixed(1)}px color-mix(in srgb, ${activeSwatchVar} ${Math.round(lerp(0, 0.5, t) * 100)}%, transparent)`
           : 'none'
       }
       const meta = document.querySelector('meta[name="theme-color"]')
       if (meta) meta.setAttribute('content', bg)
     }
-  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatch.swatch])
+  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatchVar])
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -589,10 +569,10 @@ export function SidebarThemeControls() {
             width: 16,
             height: 16,
             borderRadius: 5,
-            background: activeSwatch.swatch,
+            background: activeSwatchVar,
             opacity: lerp(0.45, 1.0, bgIntensity),
             boxShadow: bgIntensity > 0.01
-              ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px ${swatchToHsla(activeSwatch.swatch, lerp(0, 0.5, bgIntensity))}`
+              ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px color-mix(in srgb, ${activeSwatchVar} ${Math.round(lerp(0, 0.5, bgIntensity) * 100)}%, transparent)`
               : 'none',
             transition: 'background 200ms ease-in-out, opacity 300ms ease-in-out, box-shadow 300ms ease-in-out',
             flexShrink: 0,
@@ -641,11 +621,12 @@ export function SidebarThemeControls() {
             aria-label="Accent color"
             style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: swatchGap }}
           >
-            {accents.map((item, i) => {
-              const isActive = accentColor === item.color
+            {ACCENT_ORDER.map((color, i) => {
+              const isActive = accentColor === color
+              const cssVar = `var(--swatch-${color})`
               return (
                 <motion.div
-                  key={item.color}
+                  key={color}
                   animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
                   transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * 0.04 : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
@@ -654,13 +635,13 @@ export function SidebarThemeControls() {
                     data-sidebar-control
                     role="radio"
                     aria-checked={isActive}
-                    aria-label={`${item.color} theme`}
+                    aria-label={`${color} theme`}
                     tabIndex={hovered ? 0 : -1}
-                    onClick={() => setAccentColor(item.color)}
+                    onClick={() => setAccentColor(color)}
                     style={{
                       width: swatchSize, height: swatchSize, borderRadius: 6,
-                      background: item.swatch, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
-                      outline: isActive ? `1.5px solid color-mix(in srgb, ${item.swatch} 50%, transparent)` : 'none',
+                      background: cssVar, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
+                      outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : 'none',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                     }}
                   />

@@ -2,6 +2,18 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-12 — Fix grey swatches on mobile
+
+**Branch:** `fix-grey-swatches-mobile`
+
+**Problem:** Sidebar accent swatches appeared grey on mobile. The `readSwatchColors()` function read CSS custom properties via `getComputedStyle` in a one-shot `useEffect([], [])`. In production, the JS module can execute before the CSS stylesheet is applied (the `<script type="module">` precedes the `<link rel="stylesheet">` in the HTML), so `getPropertyValue` returns empty strings and the swatches fall back to `'gray'` permanently. Also, the `swatchToHsla` helper assumed HSL input, but Lightning CSS compiles to hex in production — so the trigger dot's box-shadow glow was silently broken.
+
+**Fix:** Removed JS-based CSS variable reading entirely. Swatches now use `var(--swatch-{color})` directly in inline styles, resolved by the browser at paint time (after CSS is guaranteed to be applied). Replaced `swatchToHsla` with `color-mix()` for alpha-blended shadows.
+
+**Files changed:** `src/components/SidebarThemeControls.tsx`
+
+---
+
 ## 2026-04-07 — Merge typography unification + copy rewrite, redesign section hierarchy
 
 **Branch:** `merge-both-prs-preview` (supersedes `text-size-unify` PR #155 and `update-case-study-copy` PR #156)
