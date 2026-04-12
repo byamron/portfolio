@@ -20,7 +20,10 @@ export function AboutSection() {
   const contactRef = useRef<HTMLDivElement>(null)
   useGlassHighlight(contactRef, {
     borderRadius: 8,
-    maxPull: 3,
+    pillMaxLean: 0.5,
+    pillMaxTilt: 0.5,
+    cardMaxLean: 0,
+    pullStrength: 0,
     tightBounds: true,
     clearDelay: 300,
     cardSelector: '[data-contact-card]',
