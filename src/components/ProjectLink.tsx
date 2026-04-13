@@ -95,7 +95,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
         data-link-card
         data-project-id={project.id}
         role="group"
-        aria-label={`${project.title}${project.status ? ` — ${project.status}` : ''}`}
+        aria-label={`${project.title}${project.status ? ` — ${project.status}` : ''} — preview only`}
         onMouseEnter={() => setHoveredProjectId(project.id)}
         onMouseLeave={() => setHoveredProjectId(null)}
         onClick={() => document.dispatchEvent(new CustomEvent('coming-soon-clicked'))}

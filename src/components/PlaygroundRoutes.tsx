@@ -15,7 +15,7 @@ const hasDemo = (name: string) =>
 function safeLazy(path: string, name: string, exportName: string) {
   if (!hasDemo(name)) return null
   return lazy(() =>
-    import(/* @vite-ignore */ path).then(m => ({ default: (m as Record<string, React.ComponentType>)[exportName] }))
+    import(/* @vite-ignore */ path).then(m => { const Component = (m as Record<string, React.ComponentType>)[exportName]; return { default: Component ?? (() => null) } })
   )
 }
 

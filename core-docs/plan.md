@@ -368,15 +368,11 @@ src/
 ### 3.3 — GlassHighlight (Animated Pill)
 
 - [x] Single absolutely-positioned pill on LeftColumn container
-- [x] One unified RAF lerp loop drives ALL pill movement (card-to-card slides + gravitational pull)
-  - `lerpSpeed: 0.15` — exponential decay produces smooth deceleration
-  - No CSS transitions on transform/width/height — RAF owns all positioning
-  - Stretch/squash deformation via Web Animations API (`composite: 'add'`)
-  - Gravitational pull: `pow(t, 1.5)` ramp, volume preservation, 0.25 max stretch, 0.15 max translate
-  - Smart lifecycle: stops on settle (0.3px threshold), restarts on mousemove
+- [x] Damped spring solver (k=340, c=27) with 4ms sub-stepping — replaces the original lerp system (see Phase 7.1 for full details)
 - [x] Glass visual: 6-layer recipe (fill, radial highlight, backdrop blur, inner glow, border, shape)
+- [x] Cursor-as-light-source, edge highlight, glass pressure, entrance/exit springs, stretch/squash
 - [x] Theme reactivity via MutationObserver on `data-accent`/`data-theme`
-- [x] Reduced motion: `lerpSpeed: 1` (instant snap), all deformation/pull disabled
+- [x] Reduced motion: instant snap, all deformation/physics disabled
 
 ### 3.4 — Image Swap on Hover
 
@@ -518,6 +514,92 @@ GlassPanel (local state)
 7. **Phase 6: Deployment** — ship
 
 Each phase produces a working, visually coherent state. No phase leaves the site broken.
+
+---
+
+## Phase 7: Craft & Studio Metaphor
+
+**Goal:** Push the site beyond faithful replication into a craft showcase. The site should feel like visiting a designer's studio — every surface is considered, every control is an object you want to touch, and the environment responds to you.
+
+This phase is inspired by an 8-lens design critique (fidgetability, morphing & flow continuity, complexity, hospitality, conceptual depth, reduction, metaphor integrity, materiality). The ideas below are the portfolio-specific applications of that thinking.
+
+### 7.1 — Spring-Physics Glass Hover (done — merged to `next-update`, PR #163)
+
+Replaced the lerp-based glass pill with a damped spring solver. Merged to `next-update` via PR #163:
+
+- [x] Damped spring solver (k=340, c=27) with 4ms sub-stepping for frame-drop stability
+- [x] Cursor-as-light-source: accent-tinted radial gradient tracks cursor within pill
+- [x] Cursor-reactive edge highlight: inset box-shadow shifts for surface curvature feel
+- [x] Glass pressure: fill opacity modulates with spring velocity — pill brightens during motion
+- [x] Entrance spring: pill scales from 0.70→1.0 with dedicated spring (k=350, c=22)
+- [x] Exit scale-down: 0.96 with ease-in on fadeOut
+- [x] Velocity-based stretch/squash: continuous deformation driven by spring velocity
+- [x] Edge pull: pill stretches toward adjacent cards with volume preservation
+
+### 7.2 — Entrance Choreography (done — merged to `next-update`, PR #161)
+
+Three-beat reveal with per-element cascade on initial page load. Merged to `next-update` via PR #161:
+
+- [x] Three beats at 350ms intervals: hero heading → portrait image → content sections
+- [x] Per-element cascade within each section at 70ms intervals (fluid downward wave)
+- [x] Sidebar trigger fades in last at 1.8s
+- [x] Interaction guard (`pointerEvents: 'none'`) during entrance prevents glass hover on invisible cards
+- [x] Reduced motion: all choreography disabled, falls back to simple opacity fade
+- [x] Session-gated: entrance only plays once per session (module-level timestamp in `entranceState.ts`)
+
+### 7.3 — Studio Light Metaphor
+
+The sidebar is physically close to the portrait. Making the controls directly affect the image turns the sidebar from "settings panel" into "studio controls" — reinforcing the central metaphor of visiting a designer's workspace.
+
+- [ ] **Mode switcher as physical light switch** — On = light mode, off = dark mode. Replace the classic monitor/sun/moon icons with a switch metaphor. System mode needs a semi-separate indicator or click state. The toggle should feel tactile, not decorative.
+- [ ] **Directional studio lighting on portraits** — A sidebar control that adjusts the direction of a simulated light source on the portrait image. Creates a direct, visible connection between sidebar interaction and right-column response.
+- [ ] **Portrait glass/light effects** — Subtle glassy effects on portraits that become more apparent during interactions (parallax, hover). Soft glow that plays off the light source direction. Should not be obvious at rest — reveals itself when you engage.
+- [ ] ? What's the right fidelity level — CSS filters/gradients, or WebGL/shader-based?
+- [ ] ? How does directional light interact with theme transitions (the 500ms environmental shift)?
+- [ ] ? Does portrait lighting persist across accent changes, or does each accent have a "natural" light direction?
+
+### 7.4 — Fluid Shaders as Brand Motif
+
+Subtle, fluid shaders as a recurring material across interactive surfaces. Reference implementation: benyamron.com/slide-to-unlock. Shaders demonstrate engineering/design boundary fluency and become a recognizable signature.
+
+- [ ] **Mode switcher shader** — Fluid shader treatment on the light switch toggle. Should feel like the surface is alive, not painted.
+- [ ] **Accent swatches shader** — Each swatch has a subtle fluid surface that responds to hover or proximity.
+- [ ] **Cursor overlay shader** — Blended with the inverted cursor color as a mask/overlay. Adds depth to the custom cursor without changing its fundamental behavior.
+- [ ] ? Where else could shaders appear without overdoing it? Glass pill surface? Sidebar background?
+- [ ] ? Performance budget — shader complexity vs. battery/frame-rate impact on lower-end devices.
+- [ ] ? Reduced motion: do shaders count as motion, or are they ambient enough to keep?
+- [ ] Keep them subtle — they should feel like material properties, not effects. Cool and fluid, never trying too hard.
+
+### 7.5 — Custom Cursor Polish
+
+The morphing/invert cursor exists but transitions weren't smooth enough to ship. It's currently dead code. The goal is to make it the default (non-touch) cursor if transitions can be made buttery smooth.
+
+- [ ] **Rebuild morphing transitions** — Current state-to-state transitions (idle ↔ arrow ↔ coming-soon ↔ hand) need to feel continuous, not stepped. Investigate spring-based cursor morphs (same spring solver as glass pill?).
+- [ ] **Figpal mode stays** — Not negotiable. Keep it as an option.
+- [ ] **Shader overlay on cursor** — Layer a fluid shader (from 7.4) that blends with the inverted color as a mask. Enhancement layer, not replacement.
+- [ ] ? Is spring-based cursor morphing viable at cursor-tracking frame rates, or does it need a different approach?
+- [ ] ? How does the cursor shader interact with the glass pill's cursor-as-light-source effect?
+
+### 7.6 — Sidebar as Premium Experience
+
+Theme controls should be elevated into a top-tier fidgetable experience — the kind of thing people spend several minutes playing with. The sidebar's proximity to the portrait creates studio-visit metaphor opportunities. These controls are part of the portfolio's argument, not chrome.
+
+- [ ] **Materiality for each control** — Mode switcher, accent swatches, intensity slider should each feel like a considered physical object (weight, resistance, snap). Not a settings panel — a collection of instruments.
+- [ ] **Physics-based interactions** — Spring-loaded swatches, momentum on the intensity slider, satisfying detents. Every control rewards touch.
+- [ ] **Ambient shader surfaces** — Tie into the fluid shader motif (7.4) so the sidebar feels continuous with the rest of the site's material language.
+- [ ] ? Should the sidebar have its own entrance choreography (staggered reveals of individual controls)?
+- [ ] ? How does sidebar fidgetability interact with the glass pill — do they share a physics system or stay independent?
+- [ ] ? Is there a "zen garden" quality to the controls — something meditative about adjusting them, separate from their functional purpose?
+
+### Phase 7 Priority
+
+Ordered by impact and readiness:
+
+1. **7.1 + 7.2** — Done. Both merged to `next-update` (PRs #161, #163). Deploy when `next-update → main`.
+2. **7.3 Studio light** — The conceptual anchor. Defines the metaphor that 7.4–7.6 build on.
+3. **7.5 Cursor polish** — High-visibility craft. The cursor is the first thing a designer notices.
+4. **7.6 Sidebar elevation** — Turns the controls into a destination, not a utility.
+5. **7.4 Fluid shaders** — The recurring motif that ties everything together. Comes last because it's an enhancement layer on top of 7.3–7.6, not a prerequisite.
 
 ---
 

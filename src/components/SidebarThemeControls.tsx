@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
@@ -137,11 +137,15 @@ function setupControlPill(container: HTMLElement): () => void {
     }
   }
 
-  function loop(): void {
+  let lastTime = 0
+
+  function loop(now: number): void {
     rafId = null
     if (!currentControl || !pill) return
 
-    const lr = 0.2
+    const dt = lastTime ? Math.min((now - lastTime) / 1000, 0.032) : 0.016
+    lastTime = now
+    const lr = 1 - Math.pow(0.8, dt * 60)
 
     state.currentX += (state.targetX - state.currentX) * lr
     state.currentY += (state.targetY - state.currentY) * lr
@@ -187,6 +191,7 @@ function setupControlPill(container: HTMLElement): () => void {
 
   function showPillForControl(control: HTMLElement, prevControl: HTMLElement | null): void {
     currentControl = control
+    lastTime = 0 // reset so first frame uses default dt
     const pos = getControlPosition(control)
 
     if (!prevControl) {
@@ -319,7 +324,7 @@ export function SidebarThemeControls() {
   const [isDragging, setIsDragging] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const isEntrance = useRef(isInitialEntrance()).current
-  const slideProps = { x: hovered ? 0 : 20, y: 0 }
+  const slideProps = useMemo(() => ({ x: hovered ? 0 : 20, y: 0 }), [hovered])
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
   const { cursorMode, setCursorMode } = useCursor()
@@ -331,6 +336,7 @@ export function SidebarThemeControls() {
   const cleanupModePill = useRef<(() => void) | null>(null)
   const cleanupCursorPill = useRef<(() => void) | null>(null)
   const draggingRef = useRef(false)
+  useEffect(() => () => { if (draggingRef.current) document.body.style.transition = '' }, [])
   const pendingIntensity = useRef<number | null>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const isWide = useIsWide()
@@ -576,8 +582,8 @@ export function SidebarThemeControls() {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               cursor: 'pointer',
               pointerEvents: 'auto',
             }}

@@ -157,6 +157,7 @@ interface TooltipState {
   cellHeight: number
 }
 
+/** Computed once on module load — stale if the tab spans midnight Dec 31 (acceptable). */
 const CURRENT_YEAR = new Date().getFullYear()
 
 export type SparkPos = 'left' | 'right'
@@ -911,7 +912,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
                   exit={anim.exit}
                   onAnimationComplete={() => setExpandAnimDone(true)}
                   onAnimationStart={() => setExpandAnimDone(false)}
-                  style={{ overflow: expandAnimDone ? 'visible' : 'hidden', transformOrigin: 'top center' }}
+                  style={{ overflow: expandAnimDone ? 'visible' : 'clip', transformOrigin: 'top center' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
                     {svgContent}

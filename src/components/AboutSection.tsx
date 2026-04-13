@@ -40,6 +40,9 @@ export function AboutSection() {
         marginBottom: 4,
       }}>How I work</h2>
       <p style={narrativeStyle}>
+        I own product problems{'\u2009'}&mdash;{'\u2009'}from setting direction to shipping the details. Right now I{'\u2019'}m deep in AI tooling{'\u2009'}&mdash;{'\u2009'}designing it for my team and using it to ship my own apps.
+      </p>
+      <p style={narrativeStyle}>
         I do my best work shaping early-stage ideas — setting direction in ambiguity, getting technical with engineers, building in code.
       </p>
 

@@ -482,7 +482,7 @@ function setupGlassHighlight(
         const eForce = -ENTRANCE_K * (entranceScale - entranceTarget) - ENTRANCE_C * entranceVel
         entranceVel += eForce * step
         entranceScale += entranceVel * step
-        if (Math.abs(entranceScale - entranceTarget) > 0.001 || Math.abs(entranceVel) > 0.01) {
+        if (Math.abs(entranceScale - entranceTarget) > 0.01 || Math.abs(entranceVel) > 0.05) {
           entranceActive = true
         }
       }
@@ -496,7 +496,7 @@ function setupGlassHighlight(
     // Glass pressure
     const springSpeed = Math.sqrt(springs.x.velocity ** 2 + springs.y.velocity ** 2)
     const targetPressure = prefersReducedMotion.matches ? 0 : Math.min(springSpeed / 300, 1) * cfg.glassPressure
-    glassPressure += (targetPressure - glassPressure) * 0.1
+    glassPressure += (targetPressure - glassPressure) * (1 - Math.pow(0.9, dt * 60))
     const pressureActive = glassPressure > 0.001
 
     const settled = !activeX && !activeY && !activeW && !activeH && !entranceActive && !pressureActive
@@ -544,47 +544,49 @@ function setupGlassHighlight(
     }
 
     // ── Cursor-as-light-source + ambient edge highlight ──
-    const d = Math.sqrt(nx * nx + ny * ny)
-    const clampNx = Math.max(-1, Math.min(1, nx))
-    const clampNy = Math.max(-1, Math.min(1, ny))
-    const hlPctX = ((clampNx + 1) / 2 * 100).toFixed(1)
-    const hlPctY = ((clampNy + 1) / 2 * 100).toFixed(1)
-    const clIntensity = cfg.cursorLight * (1 + (1 - Math.min(d * 0.6, 1)) * 0.5)
+    if (!prefersReducedMotion.matches) {
+      const d = Math.sqrt(nx * nx + ny * ny)
+      const clampNx = Math.max(-1, Math.min(1, nx))
+      const clampNy = Math.max(-1, Math.min(1, ny))
+      const hlPctX = ((clampNx + 1) / 2 * 100).toFixed(1)
+      const hlPctY = ((clampNy + 1) / 2 * 100).toFixed(1)
+      const clIntensity = cfg.cursorLight * (1 + (1 - Math.min(d * 0.6, 1)) * 0.5)
 
-    // Edge highlight: shifts with cursor for surface curvature
-    const ambientHL = cfg.highlightIntensity
-    const shadowX = clampNx * 0.8
-    const shadowY = 0.5 + clampNy * 0.5
-    const edgeIntensity = ambientHL + (1 - Math.min(d, 1)) * ambientHL * 0.5
+      // Edge highlight: shifts with cursor for surface curvature
+      const ambientHL = cfg.highlightIntensity
+      const shadowX = clampNx * 0.8
+      const shadowY = 0.5 + clampNy * 0.5
+      const edgeIntensity = ambientHL + (1 - Math.min(d, 1)) * ambientHL * 0.5
 
-    // Compose: cursor radial gradient + glass fill (with pressure)
-    const baseOpacity = dark ? 0.12 : 0.08
-    const fillOpacity = (baseOpacity + glassPressure).toFixed(3)
+      // Compose: cursor radial gradient + glass fill (with pressure)
+      const baseOpacity = dark ? 0.12 : 0.08
+      const fillOpacity = (baseOpacity + glassPressure).toFixed(3)
 
-    // Cursor light uses a fixed-radius circle so it looks properly radial
-    // regardless of card aspect ratio (cards are wide + short)
-    const lightRadius = Math.max(h * 1.2, 60)
+      // Cursor light uses a fixed-radius circle so it looks properly radial
+      // regardless of card aspect ratio (cards are wide + short)
+      const lightRadius = Math.max(h * 1.2, 60)
 
-    // Cursor-as-light-source: accent-tinted radial in both modes.
-    // Dark mode: high lightness, low saturation — reads as a light source with a hint of color.
-    // Light mode: configurable — lightness, saturation, and intensity multiplier are tunable
-    // to get the accent color visible against the light background.
-    const lightL = dark ? 90 : cfg.lightCursorLightness
-    const lightS = dark ? 15 : cfg.lightCursorSaturation
-    const lightAlpha = dark ? clIntensity : clIntensity * cfg.lightCursorIntensity
-    const lightFade = dark ? clIntensity * 0.1 : clIntensity * cfg.lightCursorIntensity * 0.1
+      // Cursor-as-light-source: accent-tinted radial in both modes.
+      // Dark mode: high lightness, low saturation — reads as a light source with a hint of color.
+      // Light mode: configurable — lightness, saturation, and intensity multiplier are tunable
+      // to get the accent color visible against the light background.
+      const lightL = dark ? 90 : cfg.lightCursorLightness
+      const lightS = dark ? 15 : cfg.lightCursorSaturation
+      const lightAlpha = dark ? clIntensity : clIntensity * cfg.lightCursorIntensity
+      const lightFade = dark ? clIntensity * 0.1 : clIntensity * cfg.lightCursorIntensity * 0.1
 
-    pill.style.background = `radial-gradient(circle ${lightRadius.toFixed(0)}px at ${hlPctX}% ${hlPctY}%, hsla(${hue}, ${lightS}%, ${lightL}%, ${lightAlpha.toFixed(3)}), hsla(${hue}, ${lightS}%, ${lightL}%, ${lightFade.toFixed(3)}) 55%, transparent 100%), hsla(${hue}, 20%, ${dark ? '55%' : '40%'}, ${fillOpacity})`
+      pill.style.background = `radial-gradient(circle ${lightRadius.toFixed(0)}px at ${hlPctX}% ${hlPctY}%, hsla(${hue}, ${lightS}%, ${lightL}%, ${lightAlpha.toFixed(3)}), hsla(${hue}, ${lightS}%, ${lightL}%, ${lightFade.toFixed(3)}) 55%, transparent 100%), hsla(${hue}, 20%, ${dark ? '55%' : '40%'}, ${fillOpacity})`
 
-    if (dark) {
-      pill.style.boxShadow = `inset ${shadowX.toFixed(2)}px ${shadowY.toFixed(2)}px 0 0 rgba(255,255,255,${edgeIntensity.toFixed(3)}), inset 0 -0.5px 0 0 rgba(0,0,0,0.06)`
-    } else {
-      pill.style.boxShadow = `inset ${shadowX.toFixed(2)}px ${shadowY.toFixed(2)}px 0 0 hsla(${hue}, ${lightS}%, ${lightL}%, ${(edgeIntensity * cfg.lightEdgeIntensity).toFixed(3)}), inset 0 -0.5px 0 0 rgba(0,0,0,0.04)`
+      if (dark) {
+        pill.style.boxShadow = `inset ${shadowX.toFixed(2)}px ${shadowY.toFixed(2)}px 0 0 rgba(255,255,255,${edgeIntensity.toFixed(3)}), inset 0 -0.5px 0 0 rgba(0,0,0,0.06)`
+      } else {
+        pill.style.boxShadow = `inset ${shadowX.toFixed(2)}px ${shadowY.toFixed(2)}px 0 0 hsla(${hue}, ${lightS}%, ${lightL}%, ${(edgeIntensity * cfg.lightEdgeIntensity).toFixed(3)}), inset 0 -0.5px 0 0 rgba(0,0,0,0.04)`
+      }
     }
 
     // ── Card text lean ──
     if (leanedCard && mouseActive && !prefersReducedMotion.matches) {
-      leanIntensity += (1 - leanIntensity) * cfg.cardLeanRamp
+      leanIntensity += (1 - leanIntensity) * (1 - Math.pow(1 - cfg.cardLeanRamp, dt * 60))
       if (leanIntensity > 0.99) leanIntensity = 1
       const cardDist = Math.sqrt(nx * nx + ny * ny)
       const cardT = Math.min(cardDist, 1)
@@ -685,11 +687,12 @@ function setupGlassHighlight(
       }
       glassPressure = 0
 
-      pill!.style.transition = 'none'
+      if (!pill) return
+      pill.style.transition = 'none'
       const initScale = prefersReducedMotion.matches ? 1 : cfg.entranceScale
-      pill!.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${initScale})`
-      pill!.style.width = `${pos.w}px`
-      pill!.style.height = `${pos.h}px`
+      pill.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${initScale})`
+      pill.style.width = `${pos.w}px`
+      pill.style.height = `${pos.h}px`
       lastPillW = Math.round(pos.w)
       lastPillH = Math.round(pos.h)
 
@@ -764,10 +767,11 @@ function setupGlassHighlight(
       entranceScale = 1 // no entrance spring on keyboard
       glassPressure = 0
 
-      pill!.style.transition = 'none'
-      pill!.style.transform = `translate(${pos.x}px, ${pos.y}px)`
-      pill!.style.width = `${pos.w}px`
-      pill!.style.height = `${pos.h}px`
+      if (!pill) return
+      pill.style.transition = 'none'
+      pill.style.transform = `translate(${pos.x}px, ${pos.y}px)`
+      pill.style.width = `${pos.w}px`
+      pill.style.height = `${pos.h}px`
       lastPillW = Math.round(pos.w)
       lastPillH = Math.round(pos.h)
 

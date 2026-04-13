@@ -25,6 +25,11 @@ body {
   transition: background-color 500ms ease-in-out;
 }
 
+/* Suppress background transition during entrance to avoid competing repaints */
+body.entrance-active {
+  transition: none;
+}
+
 #root {
   overflow-x: hidden;
 }

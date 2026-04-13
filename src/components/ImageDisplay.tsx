@@ -96,7 +96,7 @@ export function ImageDisplay() {
     void el.offsetHeight
     el.style.transition = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
     el.style.transform = 'scale(1)'
-  }, [])
+  }, [reducedMotion])
 
   const handleClick = useCallback(() => {
     if (isCaseStudy) return // don't cycle accent on case study pages
@@ -133,6 +133,10 @@ export function ImageDisplay() {
     setImageLoaded(true)
   }, [imageSrc])
 
+  const handleImageError = useCallback(() => {
+    setImageLoaded(true)
+  }, [])
+
   // For default portraits, consider them loaded (preloaded on mount)
   const effectiveOpacity = useMemo(() => {
     if (!isPreview) return 1 // portraits are preloaded
@@ -160,6 +164,38 @@ export function ImageDisplay() {
 
   const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
 
+  const isPortrait = !project && !linkPreview
+
+  // Flash prevention: hold old image key until new image loads.
+  // Portraits and non-image content (video, lottie, text) update immediately.
+  // Static previews hold the old key with a 500ms timeout for broken URLs.
+  const [displayedKey, setDisplayedKey] = useState(contentKey)
+  const displayedKeyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (displayedKeyTimer.current) { clearTimeout(displayedKeyTimer.current); displayedKeyTimer.current = null }
+
+    // Portraits, video, lottie, text descriptions — update immediately
+    if (isPortrait || videoUrl || lottieUrl || (previewDescription && !hasMedia)) {
+      setDisplayedKey(contentKey)
+      return
+    }
+
+    // Static image previews — wait for load or 500ms timeout
+    if (imageLoaded) {
+      setDisplayedKey(contentKey)
+    } else {
+      displayedKeyTimer.current = setTimeout(() => {
+        setDisplayedKey(contentKey)
+        displayedKeyTimer.current = null
+      }, 500)
+    }
+
+    return () => {
+      if (displayedKeyTimer.current) { clearTimeout(displayedKeyTimer.current); displayedKeyTimer.current = null }
+    }
+  }, [contentKey, imageLoaded, isPortrait, videoUrl, lottieUrl, previewDescription, hasMedia])
+
   // Measure text zone height → CSS variable for dynamic media bottom padding.
   // Non-portrait media uses padding-bottom: var(--text-zone-h) to stay above the text zone,
   // while portraits fill the full container (no padding). This replaces the old fixed
@@ -182,9 +218,6 @@ export function ImageDisplay() {
     }
   }, [showTextZone])
 
-  // Portraits fill with cover; static link previews (resume, LinkedIn) fill like
-  // portraits but use contain + background color; project previews use contain with padding.
-  const isPortrait = !project && !linkPreview
   // Dynamic bottom padding: non-portrait media avoids the text zone via a CSS variable
   // set by the ResizeObserver. Portrait/link-preview wrappers don't use this (they fill everything).
   const mediaBottomPad = showTextZone ? 'calc(var(--text-zone-h, 0px) + 24px)' : '0'
@@ -276,7 +309,7 @@ export function ImageDisplay() {
       <AnimatePresence mode="wait">
         {previewDescription && !hasMedia ? (
           <motion.div
-            key={contentKey}
+            key={displayedKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
             exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
@@ -329,7 +362,7 @@ export function ImageDisplay() {
           </motion.div>
         ) : videoUrl ? (
           <motion.div
-            key={contentKey}
+            key={displayedKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
             exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
@@ -362,7 +395,7 @@ export function ImageDisplay() {
           </motion.div>
         ) : lottieUrl && lottieData ? (
           <motion.div
-            key={contentKey}
+            key={displayedKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
             exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
@@ -389,19 +422,19 @@ export function ImageDisplay() {
           </motion.div>
         ) : (
           <motion.div
-            key={contentKey}
-            initial={{
-              opacity: 0,
-              scale: isPortrait ? ts.portraitEnterScale : ts.previewEnterScale,
-              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitEnterBlur : ts.previewEnterBlur}px)`,
-            }}
-            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{
-              opacity: 0,
-              scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale,
-              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)`,
-              transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' },
-            }}
+            key={displayedKey}
+            initial={isPortrait
+              ? { opacity: 0 }
+              : { opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }
+            }
+            animate={isPortrait
+              ? { opacity: 1 }
+              : { opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }
+            }
+            exit={isPortrait
+              ? { opacity: 0, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }
+              : { opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }
+            }
             transition={{
               duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
               delay: isEntranceRef.current && isPortrait && !reducedMotion ? entrancePreset.portraitDelay : 0,
@@ -413,6 +446,7 @@ export function ImageDisplay() {
               src={imageSrc!}
               alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
               onLoad={handleImageLoad}
+              onError={handleImageError}
               style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
             />
           </motion.div>
