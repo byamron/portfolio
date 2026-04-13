@@ -4,6 +4,7 @@ import { useMatch } from 'react-router-dom'
 
 const Lottie = lazy(() => import('lottie-react'))
 import { useHover } from '@/contexts/HoverContext'
+import { isInitialEntrance, entrancePreset } from '@/utils/entranceState'
 import { useTheme } from '@/contexts/ThemeContext'
 import { transitionSettings as ts } from '@/contexts/TransitionContext'
 import { projectsById, projectImageMap, defaultImageMap, linkPreviews, getProjectForSlug } from '@/data/projects'
@@ -26,6 +27,10 @@ export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
   const reducedMotion = useReducedMotion()
+  const isEntranceRef = useRef(isInitialEntrance())
+  // Clear entrance flag after mount so the 350ms portrait delay only applies to the initial page load,
+  // not to every subsequent portrait re-entrance after hover.
+  useEffect(() => { isEntranceRef.current = false }, [])
   const csDisplayMode = 'metadata' as const
 
   // Detect case study route
@@ -91,7 +96,7 @@ export function ImageDisplay() {
     void el.offsetHeight
     el.style.transition = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
     el.style.transform = 'scale(1)'
-  }, [])
+  }, [reducedMotion])
 
   const handleClick = useCallback(() => {
     if (isCaseStudy) return // don't cycle accent on case study pages
@@ -128,6 +133,10 @@ export function ImageDisplay() {
     setImageLoaded(true)
   }, [imageSrc])
 
+  const handleImageError = useCallback(() => {
+    setImageLoaded(true)
+  }, [])
+
   // For default portraits, consider them loaded (preloaded on mount)
   const effectiveOpacity = useMemo(() => {
     if (!isPreview) return 1 // portraits are preloaded
@@ -155,6 +164,8 @@ export function ImageDisplay() {
 
   const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
 
+  const isPortrait = !project && !linkPreview
+
   // Measure text zone height → CSS variable for dynamic media bottom padding.
   // Non-portrait media uses padding-bottom: var(--text-zone-h) to stay above the text zone,
   // while portraits fill the full container (no padding). This replaces the old fixed
@@ -177,9 +188,6 @@ export function ImageDisplay() {
     }
   }, [showTextZone])
 
-  // Portraits fill with cover; static link previews (resume, LinkedIn) fill like
-  // portraits but use contain + background color; project previews use contain with padding.
-  const isPortrait = !project && !linkPreview
   // Dynamic bottom padding: non-portrait media avoids the text zone via a CSS variable
   // set by the ResizeObserver. Portrait/link-preview wrappers don't use this (they fill everything).
   const mediaBottomPad = showTextZone ? 'calc(var(--text-zone-h, 0px) + 24px)' : '0'
@@ -268,13 +276,13 @@ export function ImageDisplay() {
       </div>
 
       {/* Media — absolutely positioned, with bottom padding to avoid text zone */}
-      <AnimatePresence mode="sync">
+      <AnimatePresence mode="wait">
         {previewDescription && !hasMedia ? (
           <motion.div
             key={contentKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
@@ -327,7 +335,7 @@ export function ImageDisplay() {
             key={contentKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
@@ -360,7 +368,7 @@ export function ImageDisplay() {
             key={contentKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
@@ -385,19 +393,12 @@ export function ImageDisplay() {
         ) : (
           <motion.div
             key={contentKey}
-            initial={{
-              opacity: 0,
-              scale: isPortrait ? ts.portraitEnterScale : ts.previewEnterScale,
-              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitEnterBlur : ts.previewEnterBlur}px)`,
-            }}
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{
-              opacity: 0,
-              scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale,
-              filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)`,
-            }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{
-              duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
+              duration: reducedMotion ? 0 : ts.previewDuration,
+              delay: isEntranceRef.current && isPortrait && !reducedMotion ? entrancePreset.portraitDelay : 0,
               ease: ts.easing,
             }}
             style={imageWrapperStyle}
@@ -406,6 +407,7 @@ export function ImageDisplay() {
               src={imageSrc!}
               alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
               onLoad={handleImageLoad}
+              onError={handleImageError}
               style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
             />
           </motion.div>
@@ -421,7 +423,7 @@ export function ImageDisplay() {
             bottom: 0,
             left: 0,
             right: 0,
-            minHeight: (summary || (isCaseStudy && metadataItems)) ? TEXT_ZONE_MIN_HEIGHT : 0,
+            minHeight: TEXT_ZONE_MIN_HEIGHT,
             display: 'grid',
             pointerEvents: 'none',
           }}

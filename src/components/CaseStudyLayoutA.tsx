@@ -41,8 +41,10 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   // Glass highlight for paper link cards and contact CTA within the narrative
   useGlassHighlight(narrativeRef, {
     borderRadius: 16,
-    maxPull: 3,
-    tightBounds: true,
+    pillMaxLean: 0.5,
+    pillMaxTilt: 0.5,
+    cardMaxLean: 0,
+    pullStrength: 0,
     clearDelay: 300,
     cardSelector: '[data-link-card], [data-contact-card]',
   })

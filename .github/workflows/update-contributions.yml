@@ -2,7 +2,7 @@ name: Update GitHub Contributions
 
 on:
   schedule:
-    - cron: '0 8 * * *' # Daily at midnight PST (1am PDT)
+    - cron: '0 14 * * *' # 6am PST / 7am PDT — fresh before the workday
   workflow_dispatch: # Manual trigger
 
 permissions:

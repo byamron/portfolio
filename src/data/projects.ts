@@ -25,9 +25,7 @@ export interface Section {
 export const sections: Section[] = [
   {
     label: '',
-    context: [
-      'I own product problems\u2009—\u2009from setting direction to shipping the details. Right now I\u2019m deep in AI tooling\u2009—\u2009designing it for my team and using it to ship my own apps.',
-    ],
+    context: [],
     projects: [
       { id: 'mochi-ai-tooling', title: 'AI tooling to automate internal workflows', projectId: 'mochi-ai', href: '/project/mochi-ai-tooling', isLink: true, company: 'Mochi Health', year: '2026', caseStudySlug: 'mochi-ai-tooling', videoPreview: '/images/preview-mochi-tooling.mp4', summary: 'AI tools are only as good as the context they have. I built a documentation layer and a Claude Code plugin that gives anyone at the company an AI assistant that actually knows the product.' },
       { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-subscriptions', videoPreview: '/images/preview-mochi-subs.mp4', summary: 'Billing and fulfillment were two independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I worked with two engineers to rebuild billing scheduling logic from scratch so charges only trigger on shipment. Eliminated >$200k/month in payment processing overhead; 90%+ of users migrated.' },
@@ -94,6 +92,7 @@ export const linkPreviews: Record<string, LinkPreview> = {
     video: '/images/preview-mochi-health.mp4',
     alt: 'Mochi Health website',
     backgroundColor: '#2b2ba0',
+    summary: 'joinmochi.com',
   },
   email: {
     id: 'email',

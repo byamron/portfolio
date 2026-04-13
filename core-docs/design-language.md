@@ -386,8 +386,8 @@ Motion on this site serves two purposes: it communicates state changes (somethin
 | 250ms | View Transition root crossfade, sidebar close delay | Slightly slower than action tempo — used for transitions that involve layout shifts. |
 | 280ms | Left column exit fade, case study exit fade | Content departure. Quick enough to not delay navigation. |
 | 300ms | Image cross-fade, braille sweep total (6×50ms), hero image morph, summary text fade, contact link clear delay | Perceptible transition. The user sees the change happening. |
-| 350ms | Left column entry fade | Content arrival. Slightly slower than departure — settling in feels more natural than leaving. |
-| 400ms | Spring press recovery, sidebar jiggle, tight-bounds-to-stack clear delay | Physical responses. Slow enough to feel like a real material bouncing back. |
+| 350ms | Entrance section stagger, left column entry fade | Content arrival. Slightly slower than departure — settling in feels more natural than leaving. |
+| 400ms | Spring press recovery, sidebar entrance fade, tight-bounds-to-stack clear delay | Physical responses. Slow enough to feel like a real material bouncing back. |
 | 500ms | Theme/accent transitions, default portrait return, arrow slide-out | Environmental shifts. Slower because the whole atmosphere is changing. |
 
 ### The default easing
@@ -404,42 +404,58 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 | `cubic-bezier(0.4, 0, 0.2, 1)` | Material | View Transition hero morph | Precise, mechanical. A designed surface sliding into position. |
 | `cubic-bezier(0.22, 1, 0.36, 1)` | Quint Out | Arrow slide-out on link click | Flick. Fast start, long gentle coast — like flicking something off a table. |
 | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Spring | Image click press recovery | Bounce-back. Overshoots target then settles — a physical spring. Only for direct user-initiated press actions. |
-| `ease-in-out` | Built-in | Theme transitions (500ms), background color (500ms), sidebar jiggle | Symmetric. Appropriate for environmental shifts where neither start nor end should feel abrupt. |
+| `ease-in-out` | Built-in | Theme transitions (500ms), background color (500ms) | Symmetric. Appropriate for environmental shifts where neither start nor end should feel abrupt. |
 
 ### Glass pill choreography
 
 **First hover** (appear):
 1. Pill is placed instantly at the card's position (no transition — `transition: none`)
-2. Pill fades in over 200ms
-3. The pill never "flies in" from off-screen. It materializes in place.
+2. Entrance spring scales from `entranceScale` (default 0.70) to 1.0 — pill "breathes in" as it appears
+3. Pill fades in over 200ms (concurrent with the scale spring)
 
 **Sliding between cards**:
-1. Lerp-based interpolation at 0.12 per frame via `requestAnimationFrame` — creates a smooth "chasing" feel
-2. Lean + tilt naturally point toward the target card during transitions, providing directional intent feedback
-3. Position, width, and height all interpolate simultaneously
+1. Damped spring solver (k=340, c=27) drives position, width, and height — creates overshoot, settle, and a weighted quality that lerp cannot achieve
+2. 4ms sub-stepping for numerical stability across frame rate variations
+3. Velocity-based stretch/squash: pill deforms along the axis of movement proportional to spring velocity (stretchAmount: 0.04, squashAmount: 0.004)
+4. Lean + tilt naturally point toward the target card during transitions
 
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
-2. No position change — it fades where it is
-3. **Card stack boundary**: The pill only clears when the cursor leaves the bounds of the card stack — vertically (above the first card or below the last card) or horizontally (past the current card's left/right edges). Moving between cards — even through gaps, context paragraphs, or section breaks — keeps the hover alive. A 150ms delay before clearing softens the exit. Horizontal bounds use the current card's width, not the union of all cards — this prevents a wide card from extending the hover zone of narrower cards.
+2. Slight scale-down to 0.96 with `ease-in` — a gentle "receding" impression
+3. A 150ms delay before clearing softens the exit when cursor leaves a card
+
+**Cursor-as-light-source**:
+- Accent-tinted radial gradient tracks the cursor position within the pill
+- Dark mode: `hsla(hue, 15%, 90%, intensity)` — near-white with faint accent tint, reads as a light source
+- Light mode: `hsla(hue, 45%, 50%, intensity * 1.8)` — accent color comes through, same "light source" metaphor
+- Cursor light uses a fixed-radius circle (not percentage-based ellipse) so it looks radial regardless of card aspect ratio
+- Intensity: 0.04 base, stronger at cursor center, fading to transparent at 55% radius
+
+**Cursor-reactive edge highlight**:
+- Inset box-shadow shifts with cursor position to simulate light catching the near edge (surface curvature)
+- Dark mode: white highlights. Light mode: accent-tinted shadows at configurable intensity.
+
+**Glass pressure**:
+- Fill opacity modulates with spring velocity — pill brightens subtly during motion, calms at rest
+- Default: 0.04 maximum additional opacity
 
 ### Directional feedback: lean + tilt
 
-When the cursor moves toward the edge of a hovered card, the glass pill responds with two subtle CSS transform effects. This replaces the earlier clip-path pentagon deformation system with a simpler, GPU-composited approach that's free of visual artifacts.
+When the cursor moves toward the edge of a hovered card, the glass pill responds with two subtle CSS transform effects.
 
-**Lean** — The pill translates up to 2.5px toward the cursor direction, creating a "drawn toward" feeling. The effect is intentionally subtle — it should reward deliberate edge-seeking, not distract during casual browsing.
+**Lean** — The pill translates up to `pillMaxLean` (default 1.0px) toward the cursor direction.
 
-**Tilt** — The pill rotates up to 0.75° to provide cross-axis positional feedback. When the cursor is in the top-right corner, the top-right corner of the pill visually follows. This communicates spatial awareness beyond simple attraction.
+**Tilt** — The pill rotates up to `pillMaxTilt` (default 1.0°) to provide cross-axis positional feedback.
 
-- **Dead zone**: Inner 78% of the card (`deadZone: 0.78`). Cursor in the center and middle area of the card produces no lean or tilt. Effect activates only in the outer 22% — the cursor must be near the edge to trigger any movement. For a typical 60px-tall card, the cursor must be within ~6.6px of the edge. Casual vertical movement through a card should not trigger the effect.
-- **Pull curve**: `t = 1 - exp(-rawD * 2.0)` — exponential approach from 0 to 1. Moderate onset that ramps up toward the boundary, reinforcing the "barely-there until you notice it" principle.
-- **Lean formula**: `leanX = dirX * t * maxLean`, `leanY = dirY * t * maxLean` where `maxLean = 2.5px` and `dir` is the unit vector from card center to cursor.
-- **Tilt formula**: `rotateDeg = (cnx * dirY * |dirY| + cny * dirX * |dirX|) * maxTilt * t` — uses `dirY * |dirY|` (preserving sign, squaring magnitude) to ensure symmetric rotation in all quadrants. `cnx`/`cny` are clamped normalized cursor positions.
-- **Config**: `maxPull` controls activation. `maxPull: 0` disables lean + tilt entirely (no directional feedback). Any positive value activates lean (2.5px) + tilt (0.75°).
-- **Lerp rate**: 0.12 per frame — creates a "chasing" feel. Animated via `requestAnimationFrame` loop, not CSS transitions.
-- **Settle threshold**: 0.3px — when all four dimensions (x, y, width, height) are within 0.3px of target, the loop snaps to exact values and stops.
-- **No clip-path**: The pill uses only `transform: translate() rotate()` — no SVG path generation, no clip-path manipulation. This is GPU-composited and never triggers layout or paint.
-- **Border + inner glow**: Always applied regardless of `maxPull` value. The simplified transform approach doesn't require oversized clip regions, so the pill's border and inner glow are always visible.
+**Card text lean** — The card's text content shifts toward the cursor (default 0.4px max) with edge-fade to zero near boundaries.
+
+- **Dead zone**: Inner 60% of the card (`pillDeadZone: 0.4`). Only the outer 40% triggers lean/tilt.
+- **Pull curve**: `t = 1 - exp(-rawD * 2.0)` — exponential approach.
+- **No clip-path**: The pill uses only `transform: translate() rotate() scale()` — GPU-composited, no layout or paint.
+
+### Edge pull
+
+When the cursor approaches the top or bottom edge of a card (within `edgeZone`, default 12% of card height), the pill stretches toward the adjacent card with volume preservation (width narrows as height grows). Configurable via `pullStrength` (default 0.20) and `edgeZone`.
 
 ### Image transitions
 
@@ -452,7 +468,7 @@ When the cursor moves toward the edge of a hovered card, the glass pill responds
 - No entrance animations on page load (content is immediately present)
 - No scroll-triggered animations or parallax
 - No loading spinners or skeleton screens
-- No ambient bouncy/springy overshoots (exception: Spring easing is used for direct user-initiated press actions like image click, where overshoot confirms the physical response)
+- No ambient bouncy/springy overshoots (exceptions: Spring easing for image click press, and the glass pill's damped spring solver which produces subtle positional overshoot on card-to-card transitions — this overshoot is the source of the pill's "alive" quality and is critically damped enough to avoid visible bounce)
 - No motion that continues after the user stops interacting (exception: figpal cursor trailing settles to rest after the cursor stops)
 - No motion without a direct cause — every animation traces back to a specific user action (hover, click, drag)
 
@@ -517,7 +533,7 @@ Hovering a project link swaps the right-column image to a project-specific previ
 Clicking the right-column portrait image cycles through accent colors in order (table → portrait → sky → pizza → vineyard → table…). This interaction transforms the passive image area into a playful discovery mechanism:
 
 - **Spring press**: On click, the image scales to `0.985` instantly (no transition), then returns to `1.0` with `transition: 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'` (Spring easing with overshoot). The overshoot creates a subtle "bounce" that makes the click feel physically responsive.
-- **Accent cycle**: Dispatches `accent-cycled` custom event, triggering the sidebar jiggle (see **Sidebar jiggle** below). The accent change fires the full environmental shift (background + image + glass + browser chrome).
+- **Accent cycle**: Dispatches `accent-cycled` custom event. The accent change fires the full environmental shift (background + image + glass + browser chrome).
 - **Accessibility**: `tabIndex={0}`, `role="button"`, `aria-label="Cycle accent color"`. Keyboard-operable.
 
 > **Note on the Spring easing**: This is the only intentional overshoot on the site. The anti-pattern "no bouncy/springy overshoots" applies to ambient or continuous animations. A spring press on a direct click action is a deliberate, user-initiated physical response — the overshoot confirms "your action registered" in the same way a physical button springs back.
@@ -604,16 +620,26 @@ Three icon buttons in the sidebar toolbar, matching the appearance mode layout (
 
 Active mode: full opacity + outline ring. Inactive: 0.4 opacity. Glass pill shared with appearance modes or isolated per group. Persisted to `localStorage.cursorMode`.
 
-### Sidebar jiggle
+### Entrance choreography
 
-When the accent color is cycled (via clicking the portrait image), the sidebar trigger dot plays a horizontal nudge animation:
+On initial page load, the site reveals itself in a three-beat sequence with per-element cascade. The entrance only plays once per session (gated by a module-level timestamp in `src/utils/entranceState.ts`). Route-back transitions use the standard opacity fade.
 
-- **Keyframe**: `0 → -3px → 3px → -2px → 1px → 0` (damped oscillation)
-- **Duration**: 400ms, `ease-in-out`
-- **Trigger**: Custom DOM event `accent-cycled`, dispatched by `ImageDisplay` on portrait click
-- **Implementation**: CSS class `sidebar-jiggle` applied on event, removed on `animationend`
+**Three beats at 350ms intervals:**
 
-This creates a cause-and-effect pairing: clicking the image shifts the environment (accent cycle) and the sidebar trigger physically reacts — a small moment of delight that connects two otherwise separate interface elements.
+| Beat | Element | Start | Duration | Animation |
+|------|---------|-------|----------|-----------|
+| 1 | Hero heading | 100ms | 450ms | opacity + blur(5px→0) |
+| 2 | Portrait image | 350ms | 300ms | scale(0.98→1) + blur(4.5→0) |
+| 3+ | Content sections | 450ms, 800ms, 1150ms, 1500ms | 450ms each | per-element cascade within each section |
+| Coda | Sidebar trigger | 1800ms | 400ms | opacity fade |
+
+**Per-element cascade within each section:** When a section's beat arrives, its internal elements (heading, narrative paragraph, project cards) cascade at 70ms intervals. This creates a fluid wave within each beat rather than the section appearing as a block.
+
+**Interaction guard:** `pointerEvents: 'none'` on the left column until the last section's animation completes. This prevents the glass hover pill from appearing on invisible cards during the entrance.
+
+**Reduced motion:** All choreography disabled. `useReducedMotion()` → `shouldChoreograph = false` → falls back to the standard simple opacity fade.
+
+**Implementation:** Framer Motion variants with nested `staggerChildren` — container staggers sections at 350ms, each section wrapper staggers its children at 70ms. The portrait delay is independent (set on `ImageDisplay.tsx` transition). All timing values are centralized in `src/utils/entranceState.ts`.
 
 ### Sidebar atmospheric zone
 

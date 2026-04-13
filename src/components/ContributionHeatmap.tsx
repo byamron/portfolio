@@ -157,6 +157,7 @@ interface TooltipState {
   cellHeight: number
 }
 
+/** Computed once on module load — stale if the tab spans midnight Dec 31 (acceptable). */
 const CURRENT_YEAR = new Date().getFullYear()
 
 export type SparkPos = 'left' | 'right'
@@ -170,7 +171,8 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
   const [isHoveringGrid, setIsHoveringGrid] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [expandAnimDone, setExpandAnimDone] = useState(false)
-  const hasExpandedOnce = useRef(false)
+  const [sparkAnimKey, setSparkAnimKey] = useState(0)
+
   const [scrollOpacity, setScrollOpacity] = useState(0.3)
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -719,21 +721,52 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
       <svg width={sparkWidth} height={sparkHeight} style={{ display: 'block', flexShrink: 0, position: 'absolute', top: 0, transform: `translateY(-${sparkHeight - 2}px)` }}>
         {weeklyTotals.map((total, i) => {
           const h = Math.max(1, (total / maxWeekly) * (sparkHeight - 2))
+          if (prefersReducedMotion) {
+            return (
+              <rect
+                key={i}
+                x={i * (barWidth + barGap)}
+                y={sparkHeight - h}
+                width={barWidth}
+                height={h}
+                rx={0.5}
+                fill={contribFill(total, maxWeekly, hue, bgIntensity, isDark)}
+              />
+            )
+          }
+          // Shake-and-settle: bars always grow taller, then settle back
+          const wave = (Math.sin(i * 0.5 + sparkAnimKey * 2.3) + 1) * 0.5 // 0–1
+          const noise = (Math.cos(i * 3.7 + sparkAnimKey * 5.1) + 1) * 0.5 // 0–1
+          const grow = 0.3 + (wave * 0.5 + noise * 0.3) // 0.3–1.1 extra
+          const shuffledH = Math.min(sparkHeight - 1, h + (sparkHeight - h) * grow)
           return (
-            <rect
-              key={i}
+            <motion.rect
+              key={`${sparkAnimKey}-${i}`}
               x={i * (barWidth + barGap)}
-              y={sparkHeight - h}
               width={barWidth}
-              height={h}
               rx={0.5}
               fill={contribFill(total, maxWeekly, hue, bgIntensity, isDark)}
+              initial={{
+                y: sparkHeight - shuffledH,
+                height: shuffledH,
+              }}
+              animate={{
+                y: sparkHeight - h,
+                height: h,
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 180,
+                damping: 12,
+                mass: 0.6,
+                delay: i * 0.006,
+              }}
             />
           )
         })}
       </svg>
     )
-    const sparkDuration = prefersReducedMotion || collapseTransition === 'none' ? 0 : 0.25
+
 
     // Animation variants for the expandable grid content
     // When reduced motion is preferred, all durations collapse to 0 (instant show/hide)
@@ -820,25 +853,15 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
         >
           {/* Header row — click to toggle collapsed/expanded */}
           <button
-            onClick={() => { if (!isExpanded) hasExpandedOnce.current = true; setExpandAnimDone(false); setIsExpanded(v => !v) }}
+            onClick={() => { setExpandAnimDone(false); setSparkAnimKey(k => k + 1); setIsExpanded(v => !v) }}
             onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.025)' } }}
             onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = 'transparent' } }}
-            style={{ display: 'flex', alignItems: 'baseline', gap: 12, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
           >
             {sparkPos === 'left' && (
-              <AnimatePresence>
-                {!isExpanded && (
-                  <motion.span
-                    key="spark-l"
-                    initial={hasExpandedOnce.current ? { opacity: 0, width: 0 } : false}
-                    animate={{ opacity: 1, width: sparkWidth, transition: { duration: sparkDuration } }}
-                    exit={{ opacity: 0, width: 0, transition: { duration: sparkDuration } }}
-                    style={{ position: 'relative', flexShrink: 0, height: 0, clipPath: 'inset(-20px 0)' }}
-                  >
-                    {sparkSvg}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              <span style={{ position: 'relative', flexShrink: 0, width: sparkWidth, height: 0, clipPath: 'inset(-20px 0)' }}>
+                {sparkSvg}
+              </span>
             )}
 
             <span style={{
@@ -860,37 +883,14 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
             </span>
 
             {sparkPos === 'right' && (
-              <AnimatePresence>
-                {!isExpanded && (
-                  <motion.span
-                    key="spark-r"
-                    initial={hasExpandedOnce.current ? { opacity: 0, width: 0 } : false}
-                    animate={{ opacity: 1, width: sparkWidth, transition: { duration: sparkDuration } }}
-                    exit={{ opacity: 0, width: 0, transition: { duration: sparkDuration } }}
-                    style={{ position: 'relative', flexShrink: 0, height: 0, clipPath: 'inset(-20px 0)' }}
-                  >
-                    {sparkSvg}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              <span style={{ position: 'relative', flexShrink: 0, width: sparkWidth, height: 0, clipPath: 'inset(-20px 0)' }}>
+                {sparkSvg}
+              </span>
             )}
 
-            {/* Right side: View activity (collapsed) ↔ Collapse (expanded) in same position */}
-            <span style={{
-              fontFamily: "'Onest', sans-serif",
-              fontSize: 'var(--text-size-small)',
-              fontWeight: 400,
-              color: 'var(--text-grey)',
-              marginLeft: 'auto',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}>
-              {isExpanded ? 'Collapse' : 'View activity'}
-              <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ display: 'block', transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.25s ease' }}>
-                <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
+            <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ display: 'block', transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.25s ease', flexShrink: 0 }}>
+              <path d="M1 1l3 3 3-3" stroke="var(--text-grey)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
 
           {/* Expandable grid content */}
@@ -912,7 +912,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
                   exit={anim.exit}
                   onAnimationComplete={() => setExpandAnimDone(true)}
                   onAnimationStart={() => setExpandAnimDone(false)}
-                  style={{ overflow: expandAnimDone ? 'visible' : 'hidden', transformOrigin: 'top center' }}
+                  style={{ overflow: expandAnimDone ? 'visible' : 'clip', transformOrigin: 'top center' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
                     {svgContent}

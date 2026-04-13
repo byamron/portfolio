@@ -20,10 +20,10 @@ import { useIsWide } from '@/hooks/useMediaQuery'
 function AppContent() {
   const { pathname } = useLocation()
   const demoRoutes = ['/slide-to-unlock', '/dvd', '/high-five']
-  const isStandalone = pathname.startsWith('/havana/') || pathname.startsWith('/playground') || demoRoutes.includes(pathname)
+  const isStandalone = pathname.startsWith('/havana/') || pathname === '/playground' || pathname.startsWith('/playground/') || demoRoutes.includes(pathname)
   const isWide = useIsWide()
 
-  useEffect(() => { preloadPortraitImages(); preloadPreviewImages() }, [])
+  useEffect(() => { if (isStandalone) return; preloadPortraitImages(); preloadPreviewImages() }, [isStandalone])
 
   return (
     <>
