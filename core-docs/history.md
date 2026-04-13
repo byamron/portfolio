@@ -2,6 +2,16 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-13 — Update UW design system copy
+
+**Branch:** `uw-copy-update`
+
+**Summary:** Revised title and descriptions for the UW design system project across the home page project card and case study. Changed title from "Building the system that builds the system" to "Kickstarting an early-stage design system." Reframed copy to acknowledge that UW-IT had already started building their design system (colors and principles existed) rather than implying they had no process at all. Updated "limited overrides" to "strong defaults, but still enough flexibility to be useful in the real world."
+
+**Files changed:** `src/data/case-study-content.ts`, `src/data/projects.ts`
+
+---
+
 ## 2026-04-12 — Fix Mochi preview alignment and eliminate media overlap transitions
 
 **Branch:** `fix-mochi-preview-position`

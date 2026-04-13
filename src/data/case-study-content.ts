@@ -186,20 +186,20 @@ export const mochiSubscriptions: CaseStudy = {
 
 export const uwDesignSystem: CaseStudy = {
   id: 'uw-design-system',
-  title: 'Building the system that builds the system',
+  title: 'Kickstarting an early-stage design system',
   subtitle:
-    'UW-IT had colors and principles but no components, no documentation, and no process for building either. I designed the first components and the system for how the system gets built.',
+    'UW-IT had started building a design system that existed only as colors and principles—there were no components yet. I designed the first three components and the documentation structure for everything that would follow.',
   timeline: '2024',
   narrative: [
-    'UW-IT manages digital services for 90,000+ students, faculty, and staff. Their design system existed only as colors and principles\u2009\u2014\u2009no components, no documentation, no process for building either. I designed the first three components and\u2009\u2014\u2009more importantly\u2009\u2014\u2009the process and documentation structure for everything that would follow. Documentation toggled code snippets by role. A framework dropdown let teams grab code in their stack. Engineers could adopt without changing how they already worked.',
-    'The hard part was deciding what the system shouldn\u2019t do. Infinite customization isn\u2019t flexibility\u2009\u2014\u2009it\u2019s abdication. I scoped components with strong defaults and limited overrides, and wrote explicit guidance on when to break from the system rather than pretending it covers everything.',
+    'UW-IT manages digital services for 90,000+ students, faculty, and staff. They had started building a design system that existed only as colors and principles\u2009\u2014\u2009there were no components yet. I designed the first three components and the documentation structure for everything that would follow. Documentation toggled code snippets by role. A framework dropdown let teams grab code in their stack. Engineers could adopt without changing how they already worked.',
+    'The hard part was deciding what the system shouldn\u2019t do. Infinite customization isn\u2019t flexibility\u2009\u2014\u2009it\u2019s abdication. I scoped components with strong defaults, but still enough flexibility to be useful in the real world, and wrote explicit guidance on when to break from the system rather than pretending it covers everything.',
   ],
   sections: [
     {
       id: 'uw-context',
       heading: 'UW-IT manages digital services for 90,000+ students, faculty, and staff',
       paragraphs: [
-        'Their design system existed as colors and principles \u2014 no components, no documentation, no established process for building either.',
+        'They had started building a design system that existed only as colors and principles\u2009\u2014\u2009there were no components yet.',
       ],
       visual: null,
     },
