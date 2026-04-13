@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-12 — Fix Mochi preview alignment and eliminate media overlap transitions
+
+**Branch:** `fix-mochi-preview-position`
+
+**Problem:** Hovering the "Mochi Health" hero link and the first project card produced previews at different Y positions — the Mochi preview jumped because it had no text description, so its text zone was 0 height while project cards had `TEXT_ZONE_MIN_HEIGHT`. Additionally, `AnimatePresence mode="sync"` caused the portrait and preview to render simultaneously during cross-fade transitions.
+
+**Changes:**
+- Added `summary: 'joinmochi.com'` to the Mochi link preview data, giving it a text zone matching project cards
+- Changed text zone `minHeight` from conditional (based on summary presence) to always `TEXT_ZONE_MIN_HEIGHT` — stabilizes `--text-zone-h` CSS variable so `mediaBottomPad` never shifts during transitions
+- Changed media `AnimatePresence` from `mode="sync"` to `mode="wait"` — exiting element fully exits (120ms fast exit) before entering element starts. Eliminates all portrait/preview overlap.
+- Fixed entrance choreography delay leak: `isEntranceRef` was never cleared after mount, causing the 350ms portrait entrance delay (intended for initial page load only) to apply on every hover-out. Added `useEffect` to clear the ref after mount.
+
+**Files changed:** `src/components/ImageDisplay.tsx`, `src/data/projects.ts`
+
+---
+
 ## 2026-04-12 — Add shake-and-settle animation to contribution sparkline
 
 **Branch:** `sparkline-animation`
