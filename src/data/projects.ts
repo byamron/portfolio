@@ -94,6 +94,7 @@ export const linkPreviews: Record<string, LinkPreview> = {
     video: '/images/preview-mochi-health.mp4',
     alt: 'Mochi Health website',
     backgroundColor: '#2b2ba0',
+    summary: 'joinmochi.com',
   },
   email: {
     id: 'email',

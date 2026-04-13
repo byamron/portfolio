@@ -28,6 +28,9 @@ export function ImageDisplay() {
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
   const reducedMotion = useReducedMotion()
   const isEntranceRef = useRef(isInitialEntrance())
+  // Clear entrance flag after mount so the 350ms portrait delay only applies to the initial page load,
+  // not to every subsequent portrait re-entrance after hover.
+  useEffect(() => { isEntranceRef.current = false }, [])
   const csDisplayMode = 'metadata' as const
 
   // Detect case study route
@@ -270,13 +273,13 @@ export function ImageDisplay() {
       </div>
 
       {/* Media — absolutely positioned, with bottom padding to avoid text zone */}
-      <AnimatePresence mode="sync">
+      <AnimatePresence mode="wait">
         {previewDescription && !hasMedia ? (
           <motion.div
             key={contentKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
@@ -329,7 +332,7 @@ export function ImageDisplay() {
             key={contentKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
@@ -362,7 +365,7 @@ export function ImageDisplay() {
             key={contentKey}
             initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
             animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)` }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
             style={{
               position: 'absolute',
@@ -397,6 +400,7 @@ export function ImageDisplay() {
               opacity: 0,
               scale: isPortrait ? ts.portraitExitScale : ts.previewExitScale,
               filter: reducedMotion ? 'none' : `blur(${isPortrait ? ts.portraitExitBlur : ts.previewExitBlur}px)`,
+              transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' },
             }}
             transition={{
               duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
@@ -424,7 +428,7 @@ export function ImageDisplay() {
             bottom: 0,
             left: 0,
             right: 0,
-            minHeight: (summary || (isCaseStudy && metadataItems)) ? TEXT_ZONE_MIN_HEIGHT : 0,
+            minHeight: TEXT_ZONE_MIN_HEIGHT,
             display: 'grid',
             pointerEvents: 'none',
           }}
