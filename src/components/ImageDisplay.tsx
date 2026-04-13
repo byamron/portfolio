@@ -393,20 +393,11 @@ export function ImageDisplay() {
         ) : (
           <motion.div
             key={contentKey}
-            initial={isPortrait
-              ? { opacity: 0 }
-              : { opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }
-            }
-            animate={isPortrait
-              ? { opacity: 1 }
-              : { opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }
-            }
-            exit={isPortrait
-              ? { opacity: 0, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }
-              : { opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }
-            }
+            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
             transition={{
-              duration: reducedMotion ? 0 : isPortrait ? ts.portraitDuration : ts.previewDuration,
+              duration: reducedMotion ? 0 : ts.previewDuration,
               delay: isEntranceRef.current && isPortrait && !reducedMotion ? entrancePreset.portraitDelay : 0,
               ease: ts.easing,
             }}
