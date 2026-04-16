@@ -164,7 +164,7 @@ export type SparkPos = 'left' | 'right'
 export type CollapseTransition = 'none' | 'drawer' | 'crossfade' | 'scatter' | 'height'
 
 export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, sparkPos = 'left', collapseTransition = 'none' }: { displayMode?: HeatmapMode; vizGap?: number; sparkPos?: SparkPos; collapseTransition?: CollapseTransition }) {
-  const { grid, totalContributions, maxCount, todayCoord, todayStr } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
+  const { grid, totalContributions, maxCount, todayCoord } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [focusedCell, setFocusedCell] = useState<{ week: number; day: number } | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
@@ -770,7 +770,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
 
     // Animation variants for the expandable grid content
     // When reduced motion is preferred, all durations collapse to 0 (instant show/hide)
-    const gridAnimations: Record<CollapseTransition, { initial: Record<string, unknown>; animate: Record<string, unknown>; exit: Record<string, unknown> }> = prefersReducedMotion ? {
+    const gridAnimations = prefersReducedMotion ? {
       none: { initial: {}, animate: {}, exit: {} },
       drawer: { initial: { opacity: 0 }, animate: { opacity: 1, transition: { duration: 0 } }, exit: { opacity: 0, transition: { duration: 0 } } },
       crossfade: { initial: { opacity: 0 }, animate: { opacity: 1, transition: { duration: 0 } }, exit: { opacity: 0, transition: { duration: 0 } } },
@@ -801,41 +801,6 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
     }
     const anim = gridAnimations[collapseTransition]
 
-    const githubFooter = (
-      <div style={{
-        alignSelf: 'flex-start',
-        fontFamily: "'Onest', sans-serif",
-        fontSize: 'var(--text-size-small)',
-        fontWeight: 400,
-        color: 'var(--text-grey)',
-      }}>
-        <a
-          href="https://github.com/byamron"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-link-card
-          data-border-radius="8"
-          onMouseEnter={onLinkEnter}
-          onMouseLeave={onLinkLeave}
-          onFocus={onLinkEnter}
-          onBlur={onLinkLeave}
-          style={{
-            color: 'var(--text-grey)',
-            textDecoration: 'underline',
-            textDecorationColor: 'var(--text-underline)',
-            textUnderlineOffset: 3,
-            padding: '6px 10px',
-            margin: '0 -10px',
-            borderRadius: 8,
-            border: '0.1px solid transparent',
-          }}
-        >
-          GitHub
-        </a>
-        {' — Most repos are private (sorry).'}
-      </div>
-    )
-
     return (
       <section ref={sectionRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', marginTop: marginOffset }}>
         <div
@@ -851,12 +816,28 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
             flexDirection: 'column',
           }}
         >
-          {/* Header row — click to toggle collapsed/expanded */}
-          <button
-            onClick={() => { setExpandAnimDone(false); setSparkAnimKey(k => k + 1); setIsExpanded(v => !v) }}
-            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.025)' } }}
-            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = 'transparent' } }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
+          {/* Header row — click to toggle; word "GitHub" in the text is the link */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-expanded={isExpanded}
+            onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+              // Ignore clicks that originated inside the GitHub link
+              if ((e.target as HTMLElement).closest('a')) return
+              setExpandAnimDone(false); setSparkAnimKey(k => k + 1); setIsExpanded(v => !v)
+            }}
+            onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+              // Only respond when the div itself is focused — not when Space/Enter
+              // bubbles up from the inner link
+              if (e.target !== e.currentTarget) return
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setExpandAnimDone(false); setSparkAnimKey(k => k + 1); setIsExpanded(v => !v)
+              }
+            }}
+            onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.025)' } }}
+            onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { if (!isExpanded) { const outer = e.currentTarget.parentElement; if (outer) outer.style.background = 'transparent' } }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: '100%' }}
           >
             {sparkPos === 'left' && (
               <span style={{ position: 'relative', flexShrink: 0, width: sparkWidth, height: 0, clipPath: 'inset(-20px 0)' }}>
@@ -879,7 +860,34 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
                 background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                 padding: '2px 6px',
                 borderRadius: 4,
-              }}>{totalContributions}</code> GitHub contributions in {CURRENT_YEAR}
+              }}>{totalContributions}</code>{' '}
+              <a
+                href="https://github.com/byamron"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-link-card
+                data-border-radius="8"
+                onMouseEnter={onLinkEnter}
+                onMouseLeave={onLinkLeave}
+                onFocus={onLinkEnter}
+                onBlur={onLinkLeave}
+                style={{
+                  display: 'inline-block',
+                  lineHeight: 1,
+                  verticalAlign: 'baseline',
+                  color: 'var(--text-grey)',
+                  textDecoration: 'underline',
+                  textDecorationColor: 'var(--text-underline)',
+                  textUnderlineOffset: 3,
+                  padding: '4px 8px',
+                  margin: '0 -8px',
+                  borderRadius: 8,
+                  border: '0.1px solid transparent',
+                }}
+              >
+                GitHub
+              </a>
+              {` contributions in ${CURRENT_YEAR}`}
             </span>
 
             {sparkPos === 'right' && (
@@ -891,14 +899,13 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
             <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ display: 'block', transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.25s ease', flexShrink: 0 }}>
               <path d="M1 1l3 3 3-3" stroke="var(--text-grey)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </button>
+          </div>
 
           {/* Expandable grid content */}
           {collapseTransition === 'none' ? (
             isExpanded && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
                 {svgContent}
-                {githubFooter}
               </div>
             )
           ) : (
@@ -916,7 +923,6 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
                     {svgContent}
-                    {githubFooter}
                   </div>
                 </motion.div>
               )}

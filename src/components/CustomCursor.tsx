@@ -208,7 +208,7 @@ export function CustomCursor() {
 
       document.addEventListener('theme-changed', applyTint)
 
-      ;(container as any).__tintCleanup = () => document.removeEventListener('theme-changed', applyTint)
+      ;(container as HTMLElement & { __tintCleanup?: () => void }).__tintCleanup = () => document.removeEventListener('theme-changed', applyTint)
     } else {
       // figpal
       removeCursorNoneStyle()
@@ -485,7 +485,7 @@ export function CustomCursor() {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       removeCursorNoneStyle()
       for (const el of elements) {
-        ;(el as any).__tintCleanup?.()
+        ;(el as HTMLElement & { __tintCleanup?: () => void }).__tintCleanup?.()
         el.remove()
       }
       containerRef.current = null

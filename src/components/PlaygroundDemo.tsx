@@ -10,11 +10,11 @@ function safeLazy(loader: () => Promise<Record<string, unknown>>, exportName: st
 }
 
 const demos = {
-  // @ts-ignore — submodule may not exist in all worktrees
+  // @ts-expect-error — submodule may not exist in all worktrees
   'slide-unlock': safeLazy(() => import('@playground/demos/slide-unlock/SlideUnlock'), 'SlideUnlock'),
-  // @ts-ignore — submodule may not exist in all worktrees
+  // @ts-expect-error — submodule may not exist in all worktrees
   'dvd-bounce': safeLazy(() => import('@playground/demos/dvd-bounce/DvdBounce'), 'DvdBounce'),
-  // @ts-ignore — submodule may not exist in all worktrees
+  // @ts-expect-error — submodule may not exist in all worktrees
   'figma-highfive': safeLazy(() => import('@playground/demos/figma-highfive/FigmaHighfive'), 'FigmaHighfive'),
 } as const
 
