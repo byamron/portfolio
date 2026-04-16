@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-// @ts-ignore — submodule may not exist in all worktrees
+// @ts-expect-error — submodule may not exist in all worktrees
 import { bg, demoPalettes, text } from '@playground/palette'
 
 const demos = [
