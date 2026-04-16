@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-15 — Consolidate GitHub link into contribution heatmap header
+
+**Branch:** `move-github-link`
+
+**Summary:** Removed the "GitHub — Most repos are private (sorry)." line that appeared below the expanded contribution grid. The word "GitHub" inside the existing header text ("<code>N</code> GitHub contributions in {year}") now carries the link (same underlined + hover-pill treatment). This collapses two mentions of GitHub into one and removes a line of copy that wasn't pulling its weight.
+
+**Changes:**
+- Replaced the header `<button>` wrapper with a `<div role="button" tabIndex={0} aria-expanded={isExpanded}>` because `<a>` cannot nest inside `<button>`. Keyboard activation (Enter/Space) preserved via `onKeyDown`.
+- Styled the inline `<a>` using the existing inline-link pattern from `HeroTitle.tsx` (Mochi Health link): `display: inline-block`, `lineHeight: 1`, `verticalAlign: baseline`, `padding: 4px 8px`, `margin: 0 -8px` so the hover pill extends over adjacent text without pushing the line box.
+- Guarded event bubbling: the div's `onClick` ignores clicks originating inside the `<a>` (via `closest('a')`), and the div's `onKeyDown` bails out when `e.target !== e.currentTarget` so pressing Space while the link is focused doesn't also toggle the collapse.
+- Adjusted the hover-to-preview-expanded-background effect to look up `parentElement` (one level), matching the new DOM structure.
+
+**Files changed:** `src/components/ContributionHeatmap.tsx`
+
+---
+
 ## 2026-04-13 — Update UW design system copy
 
 **Branch:** `uw-copy-update`
