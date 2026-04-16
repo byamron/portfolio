@@ -162,7 +162,7 @@ export function ImageDisplay() {
     return () => { cancelled = true }
   }, [lottieUrl])
 
-  const lottieLastFrame = lottieData ? (lottieData as any).op ?? 0 : 0
+  const lottieLastFrame = lottieData ? (lottieData as { op?: number }).op ?? 0 : 0
 
   const isPortrait = !project && !linkPreview
 
@@ -178,7 +178,7 @@ export function ImageDisplay() {
       return
     }
     const observer = new ResizeObserver(entries => {
-      const height = entries[0].borderBoxSize[0].blockSize
+      const height = entries[0]?.borderBoxSize?.[0]?.blockSize ?? 0
       container.style.setProperty('--text-zone-h', `${height}px`)
     })
     observer.observe(el)

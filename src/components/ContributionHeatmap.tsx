@@ -164,7 +164,7 @@ export type SparkPos = 'left' | 'right'
 export type CollapseTransition = 'none' | 'drawer' | 'crossfade' | 'scatter' | 'height'
 
 export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, sparkPos = 'left', collapseTransition = 'none' }: { displayMode?: HeatmapMode; vizGap?: number; sparkPos?: SparkPos; collapseTransition?: CollapseTransition }) {
-  const { grid, totalContributions, maxCount, todayCoord, todayStr } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
+  const { grid, totalContributions, maxCount, todayCoord } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [focusedCell, setFocusedCell] = useState<{ week: number; day: number } | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number } | null>(null)
@@ -770,7 +770,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
 
     // Animation variants for the expandable grid content
     // When reduced motion is preferred, all durations collapse to 0 (instant show/hide)
-    const gridAnimations: Record<CollapseTransition, { initial: Record<string, unknown>; animate: Record<string, unknown>; exit: Record<string, unknown> }> = prefersReducedMotion ? {
+    const gridAnimations = prefersReducedMotion ? {
       none: { initial: {}, animate: {}, exit: {} },
       drawer: { initial: { opacity: 0 }, animate: { opacity: 1, transition: { duration: 0 } }, exit: { opacity: 0, transition: { duration: 0 } } },
       crossfade: { initial: { opacity: 0 }, animate: { opacity: 1, transition: { duration: 0 } }, exit: { opacity: 0, transition: { duration: 0 } } },
