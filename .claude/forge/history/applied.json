@@ -16,5 +16,77 @@
     "type": "skill",
     "path": ".claude/skills/push/SKILL.md",
     "applied_at": "2026-03-27"
+  },
+  {
+    "id": "auto-eslint-hook",
+    "type": "hook",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": "",
+    "tracking": {
+      "source": "post_action",
+      "pattern_id": "auto-eslint-hook"
+    }
+  },
+  {
+    "id": "pre-pr-scope-review-rule",
+    "type": "claude_md_entry",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": ""
+  },
+  {
+    "id": "pre-merge-final-approval-gate",
+    "type": "claude_md_entry",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": ""
+  },
+  {
+    "id": "extract-technical-context-to-ref",
+    "type": "demotion",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": ""
+  },
+  {
+    "id": "auto-vitest-hook",
+    "type": "hook",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": "",
+    "tracking": {
+      "source": "post_action",
+      "pattern_id": "auto-vitest-hook"
+    }
+  },
+  {
+    "id": "migrate-link-to-skill",
+    "type": "skill_update",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": "",
+    "tracking": {
+      "source": "repeated_prompt",
+      "pattern_id": "migrate-link-to-skill"
+    }
+  },
+  {
+    "id": "regression-check-rule",
+    "type": "claude_md_entry",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": ""
+  },
+  {
+    "id": "animation-physical-accuracy-rule",
+    "type": "rule",
+    "applied_at": "2026-04-19T21:40:55.473850Z",
+    "evidence_summary": "",
+    "description": "",
+    "tracking": {
+      "source": "correction",
+      "pattern_id": "animation-physical-accuracy-rule"
+    }
   }
 ]
