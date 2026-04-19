@@ -13,7 +13,12 @@ You are running the push workflow. Follow every step in order. Do not skip steps
 
 - Read all modified files and check for errors, type issues, or inconsistencies.
 - Fix any issues found. Do not introduce new scope.
-- If a lint or type check command is configured, run it.
+
+## Step 1b: Lint and test
+
+- Run `npx eslint --no-warn-ignored --quiet --max-warnings 0 src/` to check for lint errors. Fix any issues found.
+- Run `npx vitest run` to execute the test suite. Fix any failures.
+- If either check fails and the fix is non-trivial, report to the user before proceeding.
 
 ## Step 2: Pre-flight checks
 

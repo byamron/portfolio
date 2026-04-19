@@ -1,0 +1,42 @@
+{
+  "category_precision": {
+    "hook": {
+      "approved": 2,
+      "dismissed": 0
+    },
+    "claude_md_entry": {
+      "approved": 3,
+      "dismissed": 0
+    },
+    "demotion": {
+      "approved": 1,
+      "dismissed": 0
+    },
+    "skill_update": {
+      "approved": 1,
+      "dismissed": 0
+    },
+    "rule": {
+      "approved": 1,
+      "dismissed": 0
+    }
+  },
+  "dismissal_reasons": {},
+  "modification_signals": {
+    "hook": {
+      "narrowed_scope": 2
+    },
+    "claude_md_entry": {
+      "rewrote_content": 1
+    },
+    "demotion": {
+      "minor_tweaks": 1
+    }
+  },
+  "safety_gate": {
+    "triggered": false,
+    "signal_count": 0,
+    "threshold": 3
+  },
+  "skip_counts": {}
+}
