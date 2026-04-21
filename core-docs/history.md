@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-04-21 — Fix heatmap click focus, keyboard focus target, and prod deploy chain
+
+**Branch:** `fix-heatmap-click-focus`
+
+**Summary:** Three related fixes around the contribution heatmap and the daily data pipeline.
+
+**Heatmap — click focus bug:** Clicking the expanded grid jumped focus to January 1st because `handleFocus` unconditionally iterated to the first `inYear` cell. Added a `focusedViaPointer` ref set by `onPointerDown` so the focus handler skips the keyboard-style navigation when focus came from a pointer event.
+
+**Heatmap — keyboard focus target:** When tabbing into the grid, focus now lands on today's cell (using the existing `todayCoord`) instead of the first or last cell. Falls back to the most recent `inYear` cell if today isn't available. This matches the WAI-ARIA roving tabindex pattern — one Tab stop into the grid, then arrow keys for intra-grid navigation, with the tooltip revealed on focus (no Enter required).
+
+**Heatmap — focus ring clipping:** Added `overflow="visible"` to the SVG and 2px padding on the container so the focus outline draws fully on edge cells without shifting the grid content (preferred over expanding the viewBox, which would have misaligned the month labels).
+
+**Deploy chain:** Production had been stale since 2026-04-16 because daily "Update contribution data" commits were pushed by the Actions default `GITHUB_TOKEN`, which does not trigger other workflows. Added a `workflow_run` trigger to `deploy.yml` so the deploy fires when the contribution workflow completes on `main`. Added an `if:` guard on the build job to skip deploys when the upstream workflow_run failed. Added a warning comment to `update-contributions.yml` flagging that renaming it breaks the chain.
+
+**Files changed:** `src/components/ContributionHeatmap.tsx`, `.github/workflows/deploy.yml`, `.github/workflows/update-contributions.yml`
+
+---
+
 ## 2026-04-15 — Consolidate GitHub link into contribution heatmap header
 
 **Branch:** `move-github-link`

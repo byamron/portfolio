@@ -1,6 +1,11 @@
 ---
-description: "Start a dev server for testing. Use this PROACTIVELY after completing any feature implementation, bug fix, or code change — do not wait for the user to ask. Also use when the user explicitly requests a dev server or test link."
-allowed-tools: ["Bash"]
+name: link
+description: >
+  Start a dev server for testing. Use this PROACTIVELY after completing any
+  feature implementation, bug fix, or code change — do not wait for the user
+  to ask. Also use when the user explicitly requests a dev server or test link.
+allowed-tools:
+  - Bash
 ---
 
 # /link — Start dev server and send test link
