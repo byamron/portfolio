@@ -303,20 +303,37 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
     })
   }, [grid])
 
+  // Track pointer-initiated focus to avoid jumping to January on click
+  const focusedViaPointer = useRef(false)
+
+  const handlePointerDown = useCallback(() => {
+    focusedViaPointer.current = true
+  }, [])
+
   const handleFocus = useCallback(() => {
-    for (let w = 0; w < grid.length; w++) {
+    if (focusedViaPointer.current) {
+      focusedViaPointer.current = false
+      return
+    }
+    // Prefer today's cell; fall back to the most recent inYear cell
+    if (todayCoord) {
+      setFocusedCell(todayCoord)
+      return
+    }
+    for (let w = grid.length - 1; w >= 0; w--) {
       const week = grid[w]
       if (!week) continue
-      for (let d = 0; d < week.length; d++) {
+      for (let d = 6; d >= 0; d--) {
         if (week[d]?.inYear) {
           setFocusedCell({ week: w, day: d })
           return
         }
       }
     }
-  }, [grid])
+  }, [grid, todayCoord])
 
   const handleBlur = useCallback(() => {
+    focusedViaPointer.current = false
     setFocusedCell(null)
     setTooltip(null)
   }, [])
@@ -476,15 +493,17 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
       data-glass-break
       tabIndex={0}
       aria-label="Contribution heatmap. Use arrow keys to navigate days."
+      onPointerDown={handlePointerDown}
       onKeyDown={handleKeyDown}
       onFocus={handleFocus}
       onBlur={handleBlur}
-      style={{ position: 'relative', outline: 'none' }}
+      style={{ position: 'relative', outline: 'none', padding: 2 }}
     >
       <svg
         ref={svgRef}
         width="100%"
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+        overflow="visible"
         role="img"
         aria-label={`GitHub contribution graph: ${totalContributions} contributions in ${CURRENT_YEAR}`}
         onMouseMove={handleMouseMove}
