@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Chain from the contribution data workflow — commits pushed by a workflow
+  # using the default GITHUB_TOKEN don't trigger other workflows, so we chain
+  # via workflow_run. The string below must match the `name:` in
+  # update-contributions.yml exactly; renaming it silently breaks deploys.
+  workflow_run:
+    workflows: ["Update GitHub Contributions"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -16,6 +24,8 @@ concurrency:
 
 jobs:
   build:
+    # Skip when the upstream workflow_run failed (still run on push/dispatch)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

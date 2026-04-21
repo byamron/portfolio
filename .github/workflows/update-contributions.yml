@@ -1,3 +1,5 @@
+# Do not rename this workflow. The `name:` below is referenced by deploy.yml's
+# `workflow_run` trigger; changing it silently breaks the daily prod deploy.
 name: Update GitHub Contributions
 
 on:
