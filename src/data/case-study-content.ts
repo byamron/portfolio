@@ -10,6 +10,19 @@ export interface CaseStudySection {
   visual: { id: string; caption: string } | null
 }
 
+export interface DecisionItem {
+  id: string
+  title: string
+  caption: string
+  image?: string
+}
+
+export interface DecisionCategory {
+  type: 'product' | 'craft' | 'technical'
+  heading: string
+  items: DecisionItem[]
+}
+
 export interface CaseStudy {
   id: string
   title: string
@@ -26,6 +39,8 @@ export interface CaseStudy {
   heroVisual?: { id: string; caption: string }
   /** Gallery items for the case study. */
   gallery?: unknown[]
+  /** Decision sections (product, craft, technical) with captioned visuals. */
+  decisions?: DecisionCategory[]
 }
 
 export const mochiAiTooling: CaseStudy = {
@@ -386,6 +401,36 @@ export const trioTodoList: CaseStudy = {
     },
   ],
   gallery: [],
+  decisions: [
+    {
+      type: 'product',
+      heading: 'Product Decisions',
+      items: [
+        { id: 'trio-pd-1', title: 'The 3-task constraint', caption: 'Most todo apps show everything; Trio forces prioritization by limiting active tasks to three.' },
+        { id: 'trio-pd-2', title: 'Pairwise comparison over drag-to-sort', caption: 'Binary choices produce better rankings than asking people to manually order a list.' },
+        { id: 'trio-pd-3', title: 'No labels, no tags, no categories', caption: 'Every feature you don\u2019t add is a decision about what the product is.' },
+        { id: 'trio-pd-4', title: 'Backlog as secondary, not a tab', caption: 'Pulled up quickly to add something, then dismissed. Keeps focus on today.' },
+        { id: 'trio-pd-5', title: 'Cross-platform support', caption: 'Same experience across mobile and desktop.' },
+      ],
+    },
+    {
+      type: 'craft',
+      heading: 'Craft Decisions',
+      items: [
+        { id: 'trio-cd-1', title: 'Drawer animation', caption: 'Seven iterations on a single drawer animation.' },
+        { id: 'trio-cd-2', title: 'Backlog morph', caption: 'Capsule button \u2192 full-width sheet, corner radius/width/height/opacity driven by a single value.' },
+        { id: 'trio-cd-3', title: 'Color and font customizability', caption: 'Hand-tuned per-hue saturation curves, five themes, font options.' },
+      ],
+    },
+    {
+      type: 'technical',
+      heading: 'Technical Decisions',
+      items: [
+        { id: 'trio-td-1', title: 'Rank-order logic', caption: 'Binary search caps comparisons at log\u2082(n). Biased-to-top search for demotions. Deferred ranking on queue bumps.' },
+        { id: 'trio-td-2', title: 'CloudKit with no telemetry', caption: 'Sync across devices without collecting user data.' },
+      ],
+    },
+  ],
 }
 
 export const forge: CaseStudy = {
@@ -398,6 +443,111 @@ export const forge: CaseStudy = {
     'Claude Code\u2019s configuration infrastructure is powerful\u2009\u2014\u2009rules, hooks, skills, agents, references, all scoped and layered. Keeping it optimized as your project evolves is real work. Forge does it for you. It\u2019s a Claude Code plugin that treats your configuration as a living body of work\u2009\u2014\u2009watching your sessions, detecting patterns in your workflow, and continuously proposing improvements that keep your setup sharp.',
     'Keep correcting Claude about the same thing? Forge drafts a rule. Always running pytest after an edit? Forge drafts a hook. A bloated CLAUDE.md? Forge breaks it into scoped artifacts that only load when relevant. Stale rules get flagged for removal. Proposals go through a two-stage pipeline\u2009\u2014\u2009Python preprocessing to detect candidates, then an LLM quality gate to filter noise. Forge also learns from your feedback: dismiss a proposal for low impact and it deflates similar scores next time; approve one and it monitors whether the pattern actually stops. Everything is a proposal you review. Nothing auto-applies.',
     'I got a working version in two days and run it actively across my other projects, iterating on the results.',
+  ],
+  decisions: [
+    {
+      type: 'product',
+      heading: 'Product Decisions',
+      items: [
+        { id: 'forge-pd-1', title: 'Proposals, not automation', caption: 'Everything surfaced for review, nothing auto-applies. Configuration is ongoing work — the user should always decide.' },
+        { id: 'forge-pd-2', title: 'What Forge watches for', caption: 'Taxonomy of improvement types: recurrent corrections \u2192 rules, repeated actions \u2192 hooks, bloated CLAUDE.md \u2192 scoped artifacts, unused rules \u2192 removal.' },
+        { id: 'forge-pd-3', title: 'Feedback learning loop', caption: 'Dismiss a proposal for low impact and it deflates similar scores next time. Approve one and it monitors whether the pattern actually stops.' },
+      ],
+    },
+    {
+      type: 'craft',
+      heading: 'Craft Decisions',
+      items: [
+        { id: 'forge-cd-1', title: 'AskUserQuestion implementation', caption: 'How proposals are presented to the user for review \u2014 skimmable, approve or dismiss in under 5 seconds.' },
+        { id: 'forge-cd-2', title: 'Report output format', caption: 'The structure and readability of what you see after running a Forge report.' },
+      ],
+    },
+    {
+      type: 'technical',
+      heading: 'Technical Decisions',
+      items: [
+        { id: 'forge-td-1', title: 'Phased analysis to save tokens', caption: 'Python preprocessing detects candidates cheaply, then an LLM quality gate filters false positives. Both stages are necessary \u2014 Python alone produces too much noise, LLM alone is too expensive.' },
+        { id: 'forge-td-2', title: 'Background strategy', caption: 'Analysis runs without blocking the user\u2019s workflow \u2014 you keep working while Forge watches.' },
+        { id: 'forge-td-3', title: 'Reporting and feedback scoring', caption: 'How proposal scores adapt based on your decisions \u2014 a simple feedback signal that avoids the complexity of a full ML model.' },
+      ],
+    },
+  ],
+}
+
+export const languageApp: CaseStudy = {
+  id: 'language-app',
+  title: 'Voice-first language practice with personalized feedback',
+  subtitle:
+    'Most language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: real-time voice conversations and an async feed of corrections generated from things you actually said.',
+  timeline: '2026',
+  narrative: [
+    'Most language apps teach you to tap and swipe\u2009\u2014\u2009not speak. The core interaction is matching, dragging, and multiple choice. Speaking practice is an afterthought, relegated to optional sections. And feedback is disconnected from what you actually practiced.',
+    'I\u2019m building a native iOS app that inverts the model. Two modes: real-time voice conversations powered by native audio models, and an async feed of corrections generated from things you actually said. Practice speaking when you have a moment\u2009\u2014\u2009walking, cooking, waiting. Review personalized corrections during downtime. The key insight is separating when you can practice from when you can receive feedback\u2009\u2014\u2009decoupling the two doubles the available windows for both.',
+  ],
+  decisions: [
+    {
+      type: 'product',
+      heading: 'Product Decisions',
+      items: [
+        { id: 'lang-pd-1', title: 'Decoupling practice from feedback', caption: 'Speak when you can, review corrections when you can. Two timelines, not one\u2009\u2014\u2009separating them doubles the available windows for both.' },
+        { id: 'lang-pd-2', title: 'Voice-first, not tap-first', caption: 'Built for speaking as the primary interaction, not gamified tapping. The mic is the main input.' },
+        { id: 'lang-pd-3', title: 'Corrections from your own speech', caption: 'Personalized feedback from real attempts, not pre-written lessons everyone gets.' },
+      ],
+    },
+    {
+      type: 'craft',
+      heading: 'Craft Decisions',
+      items: [
+        { id: 'lang-cd-1', title: 'Shader use', caption: 'Visual atmosphere through shaders\u2009\u2014\u2009the app feels alive, not flat.' },
+        { id: 'lang-cd-2', title: 'Feed design for corrections', caption: 'Replace social media scrolling with something useful\u2009\u2014\u2009a feed of personalized corrections you can consume during downtime.' },
+      ],
+    },
+    {
+      type: 'technical',
+      heading: 'Technical Decisions',
+      items: [
+        { id: 'lang-td-1', title: 'Native iOS audio models', caption: 'Native over cloud-based speech recognition\u2009\u2014\u2009lower latency, better privacy, offline capability.' },
+      ],
+    },
+  ],
+}
+
+export const manipulationIdentifier: CaseStudy = {
+  id: 'manipulation-identifier',
+  title: 'Detecting manipulative language on the web',
+  subtitle:
+    'Most misinformation tools focus on false claims. The harder problem is true facts presented in a misleading frame. I\u2019m building a Chrome extension that identifies and explains manipulative rhetoric\u2009\u2014\u2009the subtle tactics that are hardest to recognize.',
+  timeline: '2026',
+  narrative: [
+    'Election misinformation doesn\u2019t spread through fabrication\u2009\u2014\u2009it spreads through framing. A photo, a statistic, a real policy change becomes misleading depending on the narrative wrapped around it. I saw this firsthand working with Dr. Kate Starbird\u2019s research group at UW\u2019s Center for an Informed Public.',
+    'I\u2019m building a Chrome extension that uses LLMs to identify and explain manipulative language tactics on the web\u2009\u2014\u2009fear-mongering, false dichotomies, ad hominem attacks. Not just flagging what\u2019s false, but explaining how true facts get assembled into misleading frames. The goal is teaching pattern recognition, not creating dependence on the tool.',
+  ],
+  decisions: [
+    {
+      type: 'product',
+      heading: 'Product Decisions',
+      items: [
+        { id: 'manip-pd-1', title: 'Framing, not facts', caption: 'The research insight: identical evidence gets assembled into opposing claims depending on narrative frame. The problem isn\u2019t what\u2019s said, it\u2019s how it\u2019s framed.' },
+        { id: 'manip-pd-2', title: 'Explanation over verdict', caption: 'The goal is teaching pattern recognition, not creating dependence\u2009\u2014\u2009explain why language is manipulative and which tactic it uses.' },
+      ],
+    },
+    {
+      type: 'craft',
+      heading: 'Craft Decisions',
+      items: [
+        { id: 'manip-cd-1', title: 'In-context highlighting', caption: 'Annotate manipulative passages inline on the page so you see them in context, not extracted from it.' },
+        { id: 'manip-cd-2', title: 'Sidebar as a familiar pattern', caption: 'Using the sidebar paradigm users already know from AI browser tools.' },
+      ],
+    },
+    {
+      type: 'technical',
+      heading: 'Technical Decisions',
+      items: [
+        { id: 'manip-td-1', title: 'Client-side analysis', caption: 'Tradeoffs of running analysis locally\u2009\u2014\u2009latency, privacy, cost, and accuracy.' },
+        { id: 'manip-td-2', title: 'Bring your own key', caption: 'User provides their own API key, no intermediary\u2009\u2014\u2009privacy by design.' },
+        { id: 'manip-td-3', title: 'Prompt engineering and classification', caption: 'Where to draw the line between persuasion and manipulation, and how to avoid political bias in detection.' },
+      ],
+    },
   ],
 }
 
@@ -412,4 +562,6 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'eat-local-vt': acornEatLocalVt,
   'trio-todo-list': trioTodoList,
   'forge': forge,
+  'language-app': languageApp,
+  'manipulation-identifier': manipulationIdentifier,
 }
