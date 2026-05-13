@@ -153,7 +153,7 @@ React Router integration complete. All 8 case study project cards on the home pa
 - [x] Remove dev `ViewSwitcher` toggle, `CaseStudyPrototype`, unused `CaseStudy.tsx` markdown renderer
 - [x] Fix side projects without case studies → `isLink: false` (grey non-interactive text)
 - [ ] Add real visuals to case studies (currently using `PlaceholderVisual`)
-- [ ] SPA fallback for production deployment (Netlify `_redirects` or equivalent)
+- [ ] SPA fallback for production deployment (GitHub Pages `404.html` redirect or equivalent)
 
 ---
 
@@ -472,7 +472,7 @@ src/
 
 ### 6.2 — Hosting
 
-- [ ] Deploy to Vercel (or Netlify)
+- [x] Deploy to GitHub Pages
 - [ ] Custom domain setup
 - [ ] HTTPS, caching headers, compression
 
