@@ -2,6 +2,29 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-05-12 — Fix stuck [IN PROGRESS] description on rapid hover
+
+**Branch:** `fix-in-progress-hover-stuck`
+
+**Problem:** Hovering an [IN PROGRESS] project (language-app, detect-manip — the two with `previewDescription` and no media) and then quickly moving to another card or empty space could leave the description text stuck in the right column's media area. Once stuck, it persisted across subsequent hovers and even across navigation to a case study page and back. The text-zone summary below it continued updating correctly the whole time, so the hover state machine was fine — the bug was isolated to the media-area `AnimatePresence`.
+
+**Root cause:** Framer Motion's `AnimatePresence` exit lifecycle is fragile under rapid interruption. When an in-flight enter animation is interrupted by a new key, the resulting exit animation's completion callback occasionally never fires → `safeToRemove` never runs → the element stays held in AnimatePresence's exiting set indefinitely. Because `RightColumn` is intentionally persistent across routes (commit 68c8b5a), the stuck element survives navigation. Two earlier attempts (unifying the wrapper into a single stable `motion.div`, then switching `mode="wait"` → default sync) didn't fix it because both still depend on Framer Motion's exit-callback contract.
+
+**Fix:** Removed `AnimatePresence` from the media swap entirely. The wrapper is now a plain `<motion.div key={contentKey}>` — React's normal reconciliation unmounts the old and mounts the new on key change, with no exit-callback contract to fail. To avoid a one-frame empty flicker between unmount and the new fade-in, the new wrapper's `initial.opacity` is `1` (not `0`); entrance is conveyed by `scale: 0.98 → 1` and `filter: blur(5px) → blur(0)` over 250ms. Old content vanishes the instant the new mounts.
+
+**Other improvements bundled in:**
+- Consolidated the four-branch ternary (each previously returning a separately-styled `motion.div`) into one stable wrapper with branch-specific layout (`padding`, `overflow`/`borderRadius` for portraits) in a computed `mediaWrapperStyle`. Drops `imageWrapperStyle`.
+- Moved the lottie drop-shadow from `style.filter` on the wrapper to an inner `<div>`. Framer Motion's `animate.filter` (blur) was silently overriding the wrapper's `filter: dropShadow`, so `cip-misinfo`'s drop-shadow was being lost at the settled state. Now visible.
+- Extracted the description-text IIFE into a module-scope `renderDescriptionContent(text)` helper. Removes closure dependence on `previewDescription` (which becomes null when hover clears).
+
+**Trade-off:** Lost the 120ms opacity fade-out on the old content. The visible transition is now "old snaps out → new appears blurred → sharpens to crisp" rather than the prior cross-fade. Felt acceptable in testing.
+
+**Future exploration:** A fade-out *can* be re-added without reintroducing the bug, by managing an outgoing layer manually with React state + a `setTimeout` instead of relying on Framer Motion's lifecycle (two stacked `motion.div`s, the outgoing one animating `opacity: 0` while a manual timer clears it after the fade duration). Not done now because: (a) the snappier no-exit behavior is acceptable, and (b) a manual layered approach has burned this codebase before (see commit 34b2929, which removed the prior `displayedKey` mechanism). Worth doing as a focused follow-up with careful testing against rapid hover and case study navigation.
+
+**Files changed:** `src/components/ImageDisplay.tsx`
+
+---
+
 ## 2026-04-21 — Fix heatmap click focus, keyboard focus target, and prod deploy chain
 
 **Branch:** `fix-heatmap-click-focus`
