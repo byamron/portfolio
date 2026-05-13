@@ -23,6 +23,46 @@ const summaryStyle: React.CSSProperties = {
 // beyond this if the summary is long enough (no line clamp), preventing cutoff.
 const TEXT_ZONE_MIN_HEIGHT = 'clamp(100px, 16vh, 180px)'
 
+// Text-only preview content for [IN PROGRESS] projects (no media). Pure function of
+// the text so the JSX subtree is self-contained — no closures over component state
+// that could become null on the next render.
+function renderDescriptionContent(text: string) {
+  const nlIdx = text.indexOf('\n')
+  const heading = nlIdx >= 0 ? text.slice(0, nlIdx) : text
+  const body = nlIdx >= 0 ? text.slice(nlIdx + 1) : null
+  return (
+    <div style={{ maxWidth: 480, margin: 0 }}>
+      <p
+        style={{
+          ...summaryStyle,
+          fontSize: 'var(--text-size-summary)',
+          fontWeight: 400,
+          lineHeight: 1.6,
+          color: 'var(--text-dark)',
+          textAlign: 'center',
+          margin: 0,
+        }}
+      >
+        {heading}
+      </p>
+      {body && (
+        <p
+          style={{
+            ...summaryStyle,
+            fontSize: 'var(--text-size-summary)',
+            lineHeight: 1.6,
+            color: 'var(--text-grey)',
+            textAlign: 'left',
+            marginTop: 24,
+          }}
+        >
+          {body}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function ImageDisplay() {
   const { hoveredProjectId, hoveredLinkId, navigatingProjectId } = useHover()
   const { accentColor, resolvedAppearance, cycleAccent } = useTheme()
@@ -209,24 +249,22 @@ export function ImageDisplay() {
           filter: dropShadow,
         }
 
-  const imageWrapperStyle: React.CSSProperties = isPortrait
-    ? {
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        borderRadius: 32,
-      }
-    : {
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: `0 5% ${mediaBottomPad}`,
-      }
+  // Wrapper style for the media motion.div. Branch-specific layout (padding,
+  // overflow clip for portraits) lives here so the inner content nodes stay simple.
+  const isDescriptionBranch = !!previewDescription && !hasMedia
+  const mediaWrapperStyle: React.CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: isDescriptionBranch
+      ? '0 32px'
+      : isPortrait
+        ? undefined
+        : `0 5% ${mediaBottomPad}`,
+    ...(isPortrait ? { overflow: 'hidden', borderRadius: 32 } : {}),
+  }
 
   // Metadata for case study text zone
   const metadataItems = useMemo(() => {
@@ -275,111 +313,50 @@ export function ImageDisplay() {
         {linkPreview ? linkPreview.alt : project ? project.title : `Portrait, ${accentColor} theme`}
       </div>
 
-      {/* Media — absolutely positioned, with bottom padding to avoid text zone */}
-      <AnimatePresence mode="wait">
-        {previewDescription && !hasMedia ? (
-          <motion.div
-            key={contentKey}
-            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
-            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
-            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 32px',
-            }}
-          >
-            {(() => {
-              const nlIdx = previewDescription.indexOf('\n')
-              const heading = nlIdx >= 0 ? previewDescription.slice(0, nlIdx) : previewDescription
-              const body = nlIdx >= 0 ? previewDescription.slice(nlIdx + 1) : null
-              return (
-                <div style={{ maxWidth: 480, margin: 0 }}>
-                  <p
-                    style={{
-                      ...summaryStyle,
-                      fontSize: 'var(--text-size-summary)',
-                      fontWeight: 400,
-                      lineHeight: 1.6,
-                      color: 'var(--text-dark)',
-                      textAlign: 'center',
-                      margin: 0,
-                    }}
-                  >
-                    {heading}
-                  </p>
-                  {body && (
-                    <p
-                      style={{
-                        ...summaryStyle,
-                        fontSize: 'var(--text-size-summary)',
-                        lineHeight: 1.6,
-                        color: 'var(--text-grey)',
-                        textAlign: 'left',
-                        marginTop: 24,
-                      }}
-                    >
-                      {body}
-                    </p>
-                  )}
-                </div>
-              )
-            })()}
-          </motion.div>
+      {/* Media — no AnimatePresence. RightColumn is persistent across routes
+          (commit 68c8b5a), and on fast hover an AnimatePresence exit animation
+          can hang with safeToRemove never firing — leaving the old motion.div
+          stuck in AnimatePresence's exiting set indefinitely, surviving across
+          navigation and subsequent hover changes. Driving the swap purely via
+          React reconciliation (key change → unmount old, mount new) sidesteps
+          that contract entirely. The new motion.div's initial→animate covers
+          the entrance; we start at opacity 1 with blur+scale so there's no
+          empty-frame flicker on swap. */}
+      <motion.div
+        key={contentKey}
+        initial={{ opacity: 1, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
+        animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
+        transition={{
+          duration: reducedMotion ? 0 : ts.previewDuration,
+          delay: isEntranceRef.current && isPortrait && !reducedMotion ? entrancePreset.portraitDelay : 0,
+          ease: ts.easing,
+        }}
+        style={mediaWrapperStyle}
+      >
+        {isDescriptionBranch ? (
+          renderDescriptionContent(previewDescription!)
         ) : videoUrl ? (
-          <motion.div
-            key={contentKey}
-            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
-            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
-            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
+          <video
+            src={videoUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={linkPreview?.alt ?? project!.title}
             style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: `0 5% ${mediaBottomPad}`,
-            }}
-          >
-            <video
-              src={videoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              aria-label={linkPreview?.alt ?? project!.title}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: project?.id === 'sony-screenless' ? 'cover' : 'contain',
-                aspectRatio: project?.id === 'sony-screenless' ? '4 / 3' : undefined,
-                borderRadius: 32,
-                filter: dropShadow,
-              }}
-            />
-          </motion.div>
-        ) : lottieUrl && lottieData ? (
-          <motion.div
-            key={contentKey}
-            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
-            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
-            transition={{ duration: reducedMotion ? 0 : ts.previewDuration, ease: ts.easing }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: project?.id === 'sony-screenless' ? 'cover' : 'contain',
+              aspectRatio: project?.id === 'sony-screenless' ? '4 / 3' : undefined,
+              borderRadius: 32,
               filter: dropShadow,
-              padding: `0 5% ${mediaBottomPad}`,
             }}
-          >
+          />
+        ) : lottieUrl && lottieData ? (
+          // Inner div carries the drop-shadow: the wrapper's `filter` is owned by
+          // Framer Motion's animate.filter (blur), which would silently override
+          // any `filter` set on the wrapper.
+          <div style={{ width: '100%', height: '100%', filter: dropShadow }}>
             <Suspense fallback={null}>
               <Lottie
                 animationData={lottieData}
@@ -389,30 +366,17 @@ export function ImageDisplay() {
                 style={{ width: '100%', height: '100%' }}
               />
             </Suspense>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div
-            key={contentKey}
-            initial={{ opacity: 0, scale: ts.previewEnterScale, filter: reducedMotion ? 'none' : `blur(${ts.previewEnterBlur}px)` }}
-            animate={{ opacity: 1, scale: 1, filter: reducedMotion ? 'none' : 'blur(0px)' }}
-            exit={{ opacity: 0, scale: ts.previewExitScale, filter: reducedMotion ? 'none' : `blur(${ts.previewExitBlur}px)`, transition: { duration: reducedMotion ? 0 : 0.12, ease: 'easeIn' } }}
-            transition={{
-              duration: reducedMotion ? 0 : ts.previewDuration,
-              delay: isEntranceRef.current && isPortrait && !reducedMotion ? entrancePreset.portraitDelay : 0,
-              ease: ts.easing,
-            }}
-            style={imageWrapperStyle}
-          >
-            <img
-              src={imageSrc!}
-              alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
-            />
-          </motion.div>
+          <img
+            src={imageSrc!}
+            alt={linkPreview ? linkPreview.alt : project ? project.title : 'Ben Yamron portrait'}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            style={{ ...imgStyle, opacity: effectiveOpacity, transition: `opacity ${ts.imageLoadFadeDuration}ms ease-in` }}
+          />
         )}
-      </AnimatePresence>
+      </motion.div>
 
       {/* Text zone — summary on home, metadata on case study (metadata variant only) */}
       {showTextZone && (
