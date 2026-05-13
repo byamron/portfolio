@@ -102,22 +102,10 @@ Remove the component files, their imports, their render calls, and any hook/CSS 
 - Push to the relevant remote branch on GitHub
 - Reference any related issues in the commit message if applicable
 
-### 11. Branching and Deploy Strategy
+### 11. Branching Strategy
 
-Netlify auto-deploys every push to `main`. The free tier allows **20 deploys/month** (resets on the 14th). To avoid burning deploys on every PR:
+The site is hosted on GitHub Pages, which auto-deploys every push to `main` with no per-deploy budget. The `next-update` branch is still used as a staging branch for organizational reasons — to keep `main`'s history readable and to allow batching related features into a single deploy — but it is **not** a deploy-budget mechanism.
 
-- **Feature branches → `next-update`**: All new work is merged into `next-update` via PR. This does NOT trigger a deploy.
-- **`next-update` → `main`**: Only merge when intentionally ready to deploy. Each merge costs 1 deploy.
-- **Batching**: Accumulate multiple features on `next-update` and deploy them together in a single merge to conserve credits.
-
-**Deploy tracking** is maintained in `core-docs/deploys.md`. Every merge to `main` must be logged there.
-
-### 12. Deploy Awareness (Claude Responsibility)
-
-At the start of every conversation, Claude must:
-1. Check `core-docs/deploys.md` for the current deploy count.
-2. Report: **"Deploys this cycle: X / 20 (Y remaining, resets [date])"**.
-3. If the user is about to merge to `main`, remind them of the deploy cost and remaining credits.
-4. After any merge to `main`, update `core-docs/deploys.md` with the new entry.
-5. When a new billing cycle starts (current date ≥ 14th and no current-cycle table exists), archive the previous cycle and start a fresh table.
-6. **Pending deploy nudge**: If `next-update` is ahead of `main` by 3+ merged PRs, or if 7+ days have passed since the last deploy to `main`, mention it once — e.g., "Reminder: 4 features on next-update haven't been deployed yet. Last deploy was 9 days ago." Don't repeat this every message — once per conversation is enough.
+- **Feature branches → `next-update`**: New work is merged into `next-update` via PR.
+- **`next-update` → `main`**: Merge when the queued features are ready to ship together.
+- Daily `Update contribution data` commits push directly to `main`; they bypass `next-update` and that's fine.
