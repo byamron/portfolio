@@ -2,6 +2,23 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-05-18 — Case study copy polish after pre-deploy review
+
+**Branch:** `refine-case-study-copy`
+
+**Summary:** Four small follow-ups to PR #179 surfaced by a staff-engineer/UX/design-engineer pre-deploy review on `next-update`.
+
+- `manipulation-identifier`: worked the Jigsaw "prebunking" link back into para 1 as a placement that positions the project within a broader movement (between the "I built this..." and "It's not about..." sentences). Added parenthetical "(another core inspiration for this project)" after the link.
+- `manipulation-identifier`: cut trailing "In active development." from para 3 — duplicates the "In progress" status pill on the card.
+- `language-app`: cut trailing "In active development." from para 3 — same reason.
+- `trio-todo-list`: timeline `'Jan – Mar 2026'` → `'2026'` to resolve contradiction with `status: 'In progress'`, and to match the year-only format of the other side projects.
+
+Voice critique on `language-app` ("having fun tuning the personality", "playing with shaders") was reviewed and kept — that's Ben's intentional casual register for this case study.
+
+**Files changed:** `src/data/case-study-content.ts`, `core-docs/history.md`.
+
+---
+
 ## 2026-05-17 — Detect-manipulation card → case study
 
 **Branch:** `replace-todo-hover-video`
