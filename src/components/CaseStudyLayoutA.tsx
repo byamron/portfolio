@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import type { CaseStudy } from '@/data/case-study-content'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { useTypography } from '@/contexts/TypographyContext'
+import { VideoPreview } from '@/components/VideoPreview'
 
 // Shared heading style — single source of truth for both narrow and wide layouts
 const headingStyle = {
@@ -57,20 +58,10 @@ export function CaseStudyLayoutA({ data, isNarrow, previewImage, lottiePreview, 
   // Narrow-only media element (wide layout uses the persistent RightColumn)
   const narrowMediaElement = isNarrow && hasMedia ? (
     videoPreview ? (
-      <video
+      <VideoPreview
         src={videoPreview}
-        autoPlay
-        muted
-        loop
-        playsInline
-        aria-label={data.title}
-        style={{
-          maxWidth: '100%',
-          maxHeight: '100%',
-          objectFit: data.id === 'sony-screenless-tv' ? 'cover' : 'contain',
-          aspectRatio: data.id === 'sony-screenless-tv' ? '4 / 3' : undefined,
-          borderRadius: 32,
-        }}
+        alt={data.title}
+        fitCover={data.id === 'sony-screenless-tv'}
       />
     ) : previewImage ? (
       <img
