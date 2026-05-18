@@ -44,6 +44,7 @@ function AppContent() {
         <Route path="/high-five" element={<Suspense fallback={null}><PlaygroundDemo slug="figma-highfive" /></Suspense>} />
         {/* Redirect old portfolio URLs to current routes */}
         <Route path="/eat-local-vt" element={<Navigate to="/project/eat-local-vt" replace />} />
+        <Route path="/project/forge" element={<Navigate to="/project/optimizing-my-workflow" replace />} />
         <Route path="/about" element={<Navigate to="/" replace />} />
         <Route path="/rivet" element={<Navigate to="/" replace />} />
       </Routes>

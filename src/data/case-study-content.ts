@@ -388,15 +388,41 @@ export const trioTodoList: CaseStudy = {
   gallery: [],
 }
 
-export const forge: CaseStudy = {
-  id: 'forge',
-  title: 'Optimizing your AI development workflow',
+export const languageApp: CaseStudy = {
+  id: 'language-app',
+  title: 'Voice-first language practice with personalized feedback',
   subtitle:
-    'Claude Code\u2019s configuration infrastructure is powerful, but keeping it optimized is real work. Forge watches your sessions, detects patterns, and proposes improvements\u2009\u2014\u2009rules, hooks, skills, scoped artifacts. Everything is a proposal you review. Nothing auto-applies.',
+    'Most language apps teach you to tap and swipe — not speak. I’m building an iOS app with two modes: a five-minute voice conversation with an AI partner, and a feed of corrections built from things you actually said.',
   timeline: '2026',
   narrative: [
-    'Claude Code\u2019s configuration infrastructure is powerful\u2009\u2014\u2009rules, hooks, skills, agents, references, all scoped and layered. Keeping it optimized as your project evolves is real work. Forge does it for you. It\u2019s a Claude Code plugin that treats your configuration as a living body of work\u2009\u2014\u2009watching your sessions, detecting patterns in your workflow, and continuously proposing improvements that keep your setup sharp.',
-    'Keep correcting Claude about the same thing? Forge drafts a rule. Always running pytest after an edit? Forge drafts a hook. A bloated CLAUDE.md? Forge breaks it into scoped artifacts that only load when relevant. Stale rules get flagged for removal. Proposals go through a two-stage pipeline\u2009\u2014\u2009Python preprocessing to detect candidates, then an LLM quality gate to filter noise. Forge also learns from your feedback: dismiss a proposal for low impact and it deflates similar scores next time; approve one and it monitors whether the pattern actually stops. Everything is a proposal you review. Nothing auto-applies.',
+    'Most language-learning apps underindex on speaking practice, and the ones that let you speak with an AI often cost $20–30 a month. I wanted to practice exactly the way I wanted, for a fraction of that. So I’m building an app for intermediate-to-advanced language learners who don’t need a curriculum — they need to talk, and they need to know what to fix. I built the app with two modes: voice calling with an AI partner powered by the Gemini Live API, and a feed of corrections synthesized from things you actually said. No streaks, no XP, no levels.',
+    'I’ve been having fun tuning the personality of the AI to facilitate conversations that I actually want to have, and keeping the rest of the app quiet around that core function. I’ve been playing with shaders to add some subtle visual accents, and building a delivery system for highly personalized corrections that are actionable and easy to understand.',
+    'Built solo on iOS 26. Privacy first. BYOK keeps the app affordable. In active development.',
+  ],
+}
+
+export const manipulationIdentifier: CaseStudy = {
+  id: 'manipulation-identifier',
+  title: 'Detecting manipulative language on the web',
+  subtitle:
+    'A Chrome extension that uses LLMs to identify and explain psychological manipulation tactics on the pages you read — fear-mongering, false dichotomies, ad hominem attacks, and others. Highlight and explain, never block.',
+  timeline: '2025 – 2026',
+  narrative: [
+    'In my <a href="/project/cip-election-misinformation" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">research on misinformation</a> at the University of Washington, I learned that misinformation often isn’t about outright lies or incorrect facts — it’s about the way information is framed. Sources use a range of manipulation tactics and logical fallacies to stretch the truth and create alternate realities, whether or not they ever actually lie. In a world of information overload and competing realities, it matters that people can think critically about what they read. I built this browser extension to identify and surface those tactics and fallacies, so readers can engage with content more deliberately. It’s not about fact-checking or discrediting anyone in particular — it’s about giving readers the tools to question and validate what they’re being asked to believe, and to recognize when someone is trying to mislead them with manipulative logic.',
+    'The extension highlights tactics inline on the page, color-coded by category (logical, rhetorical, credibility), and explains them in a side panel. It never blocks or hides page content. By default, the UI stays quiet — short definitions, lower-confidence flags rendered softer. A "Why?" toggle on each flag lets readers zoom in for the full explanation when they want to learn more.',
+    'With many tactics and an LLM doing the labeling, false positives are a bigger problem than missed tactics. I built an evaluation harness around a hand-curated test corpus so prompt changes can be measured rather than guessed at. BYOK Gemini key, no telemetry, nothing collected. In active development.',
+  ],
+}
+
+export const optimizingMyWorkflow: CaseStudy = {
+  id: 'optimizing-my-workflow',
+  title: 'Optimizing my AI development workflow',
+  subtitle:
+    'Claude Code\u2019s configuration infrastructure is powerful, but keeping it optimized is real work. I built a Claude Code plugin that watches your sessions, detects patterns, and proposes improvements\u2009\u2014\u2009rules, hooks, skills, scoped artifacts. Everything is a proposal you review. Nothing auto-applies.',
+  timeline: '2026',
+  narrative: [
+    'Claude Code\u2019s configuration infrastructure is powerful\u2009\u2014\u2009rules, hooks, skills, agents, references, all scoped and layered. Keeping it optimized as your project evolves is real work. I built a Claude Code plugin that does it for you\u2009\u2014\u2009treating your configuration as a living body of work, watching your sessions, detecting patterns in your workflow, and continuously proposing improvements that keep your setup sharp.',
+    'Keep correcting Claude about the same thing? The plugin drafts a rule. Always running pytest after an edit? It drafts a hook. A bloated CLAUDE.md? It breaks the file into scoped artifacts that only load when relevant. Stale rules get flagged for removal. Proposals go through a two-stage pipeline\u2009\u2014\u2009Python preprocessing to detect candidates, then an LLM quality gate to filter noise. The plugin also learns from your feedback: dismiss a proposal for low impact and it deflates similar scores next time; approve one and it monitors whether the pattern actually stops. Everything is a proposal you review. Nothing auto-applies.',
     'I got a working version in two days and run it actively across my other projects, iterating on the results.',
   ],
 }
@@ -411,5 +437,7 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'duolingo-languages-flags': duolingoLanguagesFlags,
   'eat-local-vt': acornEatLocalVt,
   'trio-todo-list': trioTodoList,
-  'forge': forge,
+  'language-app': languageApp,
+  'manipulation-identifier': manipulationIdentifier,
+  'optimizing-my-workflow': optimizingMyWorkflow,
 }
