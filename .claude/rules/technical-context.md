@@ -23,6 +23,20 @@ The project uses **Tailwind CSS v4** for styling:
 - **Appearance toggle**: 3-mode toggle (system/light/dark) with Phosphor Icons (monitor/sun/moon), localStorage persistence (`"appearanceMode"` key), system preference detection, and browser meta theme-color integration.
 - **Glass hover style**: The pill uses the "frost" mode — blur + accent tint + thin border, mode-aware shading. Config defaults and slider ranges documented in `core-docs/design-language.md`.
 
+## Hover-preview videos:
+
+- **Loading model**: `src/utils/preloadImages.ts` explicitly skips `.mp4` files. Videos are never preloaded — they fetch on first hover (or on case study page mount). Always encode with `+faststart` so playback begins mid-buffer.
+- **Display slot**: 528×720 CSS pixels in the right column. Encode at **1056-wide** (`-vf "scale=1056:-2"`) for an exact 2× retina match — sharper text/icon edges on screen-recording content, where soft upscaling is most visible.
+- **Standard recipe** (H.264 MP4, no audio, sized to drop into `public/images/preview-*.mp4`):
+  ```
+  ffmpeg -y -i SRC.mov -an -c:v libx264 -crf 24 -preset slow \
+    -profile:v high -pix_fmt yuv420p \
+    -vf "scale=1056:-2" -movflags +faststart \
+    public/images/preview-NAME.mp4
+  ```
+- **Knobs to turn if size is off-target**: CRF 22 (sharper, ~1.5× size), CRF 26 (smaller, slightly noisier). Scale `720:-2` drops file size ~50% with visible softening on retina. Match siblings (~1.4–3.5 MB typical).
+- **macOS without ffmpeg**: `avconvert` is preinstalled but doesn't expose CRF — its presets are coarse (`PresetMediumQuality` ≈ soft 1.8 MB; `PresetAppleM4V720pHD` ≈ sharp 8+ MB) and not viable for tuning. Install ffmpeg via static binary from evermeet.cx (≈26 MB, drops into `~/bin/`).
+
 ## Typography:
 
 - **Fonts**: Literata (serif, 300) for headings/narrative, Onest (sans, 400) for body/links
