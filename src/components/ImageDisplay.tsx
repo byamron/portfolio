@@ -9,6 +9,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { transitionSettings as ts } from '@/contexts/TransitionContext'
 import { projectsById, projectImageMap, defaultImageMap, linkPreviews, getProjectForSlug } from '@/data/projects'
 import { caseStudiesBySlug } from '@/data/case-study-content'
+import { VideoPreview } from '@/components/VideoPreview'
 
 // Projects whose previews need a subtle shadow to separate from the background
 const needsShadow = new Set(['cip-misinfo', 'acorn-covid', 'duo-flags'])
@@ -336,21 +337,11 @@ export function ImageDisplay() {
         {isDescriptionBranch ? (
           renderDescriptionContent(previewDescription!)
         ) : videoUrl ? (
-          <video
+          <VideoPreview
             src={videoUrl}
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-label={linkPreview?.alt ?? project!.title}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: project?.id === 'sony-screenless' ? 'cover' : 'contain',
-              aspectRatio: project?.id === 'sony-screenless' ? '4 / 3' : undefined,
-              borderRadius: 32,
-              filter: dropShadow,
-            }}
+            alt={linkPreview?.alt ?? project!.title}
+            fitCover={project?.id === 'sony-screenless'}
+            dropShadow={dropShadow}
           />
         ) : lottieUrl && lottieData ? (
           // Inner div carries the drop-shadow: the wrapper's `filter` is owned by

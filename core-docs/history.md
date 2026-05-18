@@ -2,6 +2,26 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-05-18 — Pre-deploy perf: video ready-gate + async fonts
+
+**Branch:** `perf-video-ready-gate-and-async-fonts`
+
+**Summary:** Two performance/reliability optimizations identified during the staff-engineer/UX/design-engineer triage on deploy PR #181.
+
+- **`src/components/VideoPreview.tsx` (new)**: small shared component with a load-gated opacity fade (`onLoadedData` → `opacity: 0 → 1` over 160ms CSS transition) and `preload="metadata"`. Resolves the first-hover empty-frame flash on `<video>` elements. Gate lives inside the keyed child so it doesn't interact with AnimatePresence lifecycles — safe against the May 12 rapid-hover bug class.
+- **`src/components/ImageDisplay.tsx` + `src/components/CaseStudyLayoutA.tsx`**: replace inline `<video>` blocks with `<VideoPreview>`. Behavior preserved (sony-only `objectFit: cover` + `aspectRatio: 4/3` passed via `fitCover` prop; dropShadow passed through where applicable).
+- **`index.html`**: load Google Fonts non-render-blocking via the `media="print" onload="this.media='all'"` pattern, with a `<noscript>` fallback. Saves ~200–400ms of render-blocking time on cold loads. `&display=swap` and the existing preconnect lines mean text remains visible during the swap.
+
+**Not applied (flagged for separate decisions):**
+- Add a label to section 1 of `projects.ts` (currently unlabeled — asymmetric with sections 2 and 3)
+- Reciprocal link from `cip-election-misinformation` case study back to `manipulation-identifier`
+- Differentiate openers between `mochi-ai-tooling` and `optimizing-my-workflow` (both lead with "Claude Code configuration is powerful but…")
+- Four consecutive "In progress" status pills in the side-projects section reads as visual monotony — consider differentiated labels
+
+**Files changed:** `index.html`, `src/components/VideoPreview.tsx` (new), `src/components/ImageDisplay.tsx`, `src/components/CaseStudyLayoutA.tsx`, `core-docs/history.md`.
+
+---
+
 ## 2026-05-18 — Case study copy polish after pre-deploy review
 
 **Branch:** `refine-case-study-copy`
