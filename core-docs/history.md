@@ -2,6 +2,85 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-05-18 — Pre-deploy perf: video ready-gate + async fonts
+
+**Branch:** `perf-video-ready-gate-and-async-fonts`
+
+**Summary:** Two performance/reliability optimizations identified during the staff-engineer/UX/design-engineer triage on deploy PR #181.
+
+- **`src/components/VideoPreview.tsx` (new)**: small shared component with a load-gated opacity fade (`onLoadedData` → `opacity: 0 → 1` over 160ms CSS transition) and `preload="metadata"`. Resolves the first-hover empty-frame flash on `<video>` elements. Gate lives inside the keyed child so it doesn't interact with AnimatePresence lifecycles — safe against the May 12 rapid-hover bug class.
+- **`src/components/ImageDisplay.tsx` + `src/components/CaseStudyLayoutA.tsx`**: replace inline `<video>` blocks with `<VideoPreview>`. Behavior preserved (sony-only `objectFit: cover` + `aspectRatio: 4/3` passed via `fitCover` prop; dropShadow passed through where applicable).
+- **`index.html`**: load Google Fonts non-render-blocking via the `media="print" onload="this.media='all'"` pattern, with a `<noscript>` fallback. Saves ~200–400ms of render-blocking time on cold loads. `&display=swap` and the existing preconnect lines mean text remains visible during the swap.
+
+**Not applied (flagged for separate decisions):**
+- Add a label to section 1 of `projects.ts` (currently unlabeled — asymmetric with sections 2 and 3)
+- Reciprocal link from `cip-election-misinformation` case study back to `manipulation-identifier`
+- Differentiate openers between `mochi-ai-tooling` and `optimizing-my-workflow` (both lead with "Claude Code configuration is powerful but…")
+- Four consecutive "In progress" status pills in the side-projects section reads as visual monotony — consider differentiated labels
+
+**Files changed:** `index.html`, `src/components/VideoPreview.tsx` (new), `src/components/ImageDisplay.tsx`, `src/components/CaseStudyLayoutA.tsx`, `core-docs/history.md`.
+
+---
+
+## 2026-05-18 — Case study copy polish after pre-deploy review
+
+**Branch:** `refine-case-study-copy`
+
+**Summary:** Four small follow-ups to PR #179 surfaced by a staff-engineer/UX/design-engineer pre-deploy review on `next-update`.
+
+- `manipulation-identifier`: worked the Jigsaw "prebunking" link back into para 1 as a placement that positions the project within a broader movement (between the "I built this..." and "It's not about..." sentences). Added parenthetical "(another core inspiration for this project)" after the link.
+- `manipulation-identifier`: cut trailing "In active development." from para 3 — duplicates the "In progress" status pill on the card.
+- `language-app`: cut trailing "In active development." from para 3 — same reason.
+- `trio-todo-list`: timeline `'Jan – Mar 2026'` → `'2026'` to resolve contradiction with `status: 'In progress'`, and to match the year-only format of the other side projects.
+
+Voice critique on `language-app` ("having fun tuning the personality", "playing with shaders") was reviewed and kept — that's Ben's intentional casual register for this case study.
+
+**Files changed:** `src/data/case-study-content.ts`, `core-docs/history.md`.
+
+---
+
+## 2026-05-17 — Detect-manipulation card → case study
+
+**Branch:** `replace-todo-hover-video`
+
+**Summary:** Same playbook as the language-app promotion: flipped the detect-manip card from an [IN PROGRESS] text placeholder into a real hoverable preview + brief case study.
+
+**Preview:** `public/images/preview-detect-manip.mp4` — 2.83 MB. Source was already H.264 at 1158 kbps, so a CRF 27 re-encode actually *grew* the file. Stream-copied instead (`ffmpeg -c:v copy -an -movflags +faststart`) to preserve the source losslessly and just add faststart. New rule to remember: if the source bitrate is already in the sibling range (~1–1.5 Mbps), skip re-encoding — it loses quality and rarely saves bytes.
+
+**Project entry** (`src/data/projects.ts`): detect-manip flipped from `previewDescription` to `videoPreview` + `summary` + `href: '/project/manipulation-identifier'` + `isLink: true` + `caseStudySlug: 'manipulation-identifier'`. `status: 'In progress'` preserved.
+
+**Case study** (`src/data/case-study-content.ts`, new `manipulationIdentifier`, registered under slug `manipulation-identifier`): three-paragraph narrative aligned with forge / language-app / mochi-ai-tooling. Pitch + thesis ("educate, don't censor"); design beats (multi-category taxonomy, confidence scores, progressive disclosure, author-vs-source attribution, BYOK/no-telemetry); the hard problem (false positives kill trust faster than missed tactics; eval harness, hand-curated test corpus, precision-first iteration). Ben asked the case study stay general — no precision/recall percentages or corpus-size specifics in the public copy, since those numbers shift between prompt iterations.
+
+**Source material:** `/Users/benyamron/dev/manipulation-identifier/CLAUDE.md` + `core-docs/plan.md`.
+
+**Files changed:** `src/data/projects.ts`, `src/data/case-study-content.ts`, `public/images/preview-detect-manip.mp4` (new), `core-docs/history.md`.
+
+---
+
+## 2026-05-17 — Hover-preview video encoding + language-app case study
+
+**Branch:** `replace-todo-hover-video`
+
+**Summary:** Three things in one pass — replaced the to-do hover preview with a sharper retina-friendly encode, promoted the language-app card from a text-only [IN PROGRESS] placeholder into a real hoverable preview + case study, and codified the encoding recipe that produced both.
+
+**Encoding recipe** (new section in `.claude/rules/technical-context.md`):
+- H.264 MP4, CRF 24, `-preset slow`, scaled to 1056-wide (exact 2× the 528-wide display slot for retina match), no audio, `+faststart`.
+- Discovered the hard way that macOS's preinstalled `avconvert` has no CRF knob — its presets are either soft-1.8 MB or sharp-8 MB with nothing usable in between. Installed ffmpeg 8.1.1 static binary from evermeet.cx into `~/bin/` to get per-frame quality control.
+- `src/utils/preloadImages.ts:20` already skips `.mp4` from the preload pass, so hover previews never touch initial page load — bytes only get paid on hover or on case study mount. This is what makes 3–5 MB hover previews acceptable.
+
+**To-do preview swap:** `public/images/preview-todo-priority.mp4` went from a soft 1.87 MB (avconvert PresetMediumQuality) → sharp 3.51 MB (ffmpeg 1056×1408 CRF 24). Filename unchanged so no code edits.
+
+**Language-app card → case study:**
+- `src/data/projects.ts`: language-app entry flipped from `previewDescription` text-only placeholder to a hoverable card — `videoPreview: '/images/preview-language-app.mp4'`, `href: '/project/language-app'`, `isLink: true`, `caseStudySlug: 'language-app'`, new `summary`. `status: 'In progress'` preserved.
+- `public/images/preview-language-app.mp4`: 2.78 MB (CRF 27, no scale filter — Ben provided a re-cropped + trimmed source at 1036×1382 / 19.3s that's already at retina target size and the right aspect ratio for the 528×720 slot). Earlier iterations: 9:16 source at 1080×1920 / 21.7s → 5.6 MB at CRF 24, 4.17 MB at CRF 26, 3.63 MB at CRF 27; same-CRF re-encode of the corrected-aspect source → 3.17 MB; same again after trim → 2.78 MB. Lesson: source crop + duration trim dominate file size; CRF is the last knob, not the first.
+- `src/data/case-study-content.ts`: new `languageApp` case study, three-paragraph narrative aligned with the brevity of forge / eat-local-vt / duolingo — pitch framed around the cost gap (competitor voice-AI apps run $20–30/mo; BYOK was the path to practicing for cents instead), one paragraph on the design work (Call screen minimalism, prompt-engineered AI personality, fluid-motion shader as audio indicator — explicitly called out as the part of the project Ben had the most fun with), one on stack + privacy posture. Source material drawn from `/Users/benyamron/dev/language-app/docs/agent/` (CLAUDE.md, ROADMAP, UX_GUIDELINES, CHANGELOG).
+- Slug is `language-app` (Ben preference — not the internal `havana` codename, even though `/havana/privacy` is already public).
+- No App.tsx changes needed — `/project/:slug` is generic and `caseStudiesBySlug` registration is enough.
+
+**Files changed:** `src/data/projects.ts`, `src/data/case-study-content.ts`, `public/images/preview-todo-priority.mp4`, `public/images/preview-language-app.mp4` (new), `.claude/rules/technical-context.md`, `core-docs/history.md`.
+
+---
+
 ## 2026-05-12 — Fix stuck [IN PROGRESS] description on rapid hover
 
 **Branch:** `fix-in-progress-hover-stuck`
