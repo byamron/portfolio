@@ -19,7 +19,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const staticRoutes = [
   '/',
   '/havana/privacy',
+  '/arcade',
 ]
+
+// Arcade demo slugs — must mirror the allowlist in
+// src/components/arcade/demos.ts and src/pages/ArcadeDemo.tsx.
+const arcadeSlugs = [
+  'dvd-bounce',
+  'slide-unlock',
+  'glass-pull',
+  'theme-sidebar',
+  'color-hold-pick',
+  'figma-highfive',
+  'git-toggle',
+  'page-transition',
+  'github-sparkline',
+]
+const arcadeRoutes = arcadeSlugs.map(s => `/arcade/${s}`)
 
 // Derive project routes from the source of truth
 const projectRoutes = sections
@@ -27,7 +43,7 @@ const projectRoutes = sections
   .filter(p => p.isLink && p.caseStudySlug)
   .map(p => `/project/${p.caseStudySlug}`)
 
-const allRoutes = [...staticRoutes, ...projectRoutes]
+const allRoutes = [...staticRoutes, ...arcadeRoutes, ...projectRoutes]
 
 const today = new Date().toISOString().split('T')[0]
 

@@ -12,15 +12,16 @@ import { RightColumn } from '@/components/RightColumn'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
-const PlaygroundRoutes = lazy(() => import('@/components/PlaygroundRoutes').then(m => ({ default: m.PlaygroundRoutes })))
 const PlaygroundDemo = lazy(() => import('@/components/PlaygroundDemo').then(m => ({ default: m.PlaygroundDemo })))
+const Arcade = lazy(() => import('@/pages/Arcade').then(m => ({ default: m.Arcade })))
+const ArcadeDemo = lazy(() => import('@/pages/ArcadeDemo').then(m => ({ default: m.ArcadeDemo })))
 import { preloadPortraitImages, preloadPreviewImages } from '@/utils/preloadImages'
 import { useIsWide } from '@/hooks/useMediaQuery'
 
 function AppContent() {
   const { pathname } = useLocation()
-  const demoRoutes = ['/slide-to-unlock', '/dvd', '/high-five']
-  const isStandalone = pathname.startsWith('/havana/') || pathname === '/playground' || pathname.startsWith('/playground/') || demoRoutes.includes(pathname)
+  const demoRoutes = ['/slide-to-unlock', '/high-five']
+  const isStandalone = pathname.startsWith('/havana/') || pathname === '/arcade' || pathname.startsWith('/arcade/') || demoRoutes.includes(pathname)
   const isWide = useIsWide()
 
   useEffect(() => { if (isStandalone) return; preloadPortraitImages(); preloadPreviewImages() }, [isStandalone])
@@ -38,9 +39,10 @@ function AppContent() {
         <Route path="/" element={<Layout />} />
         <Route path="/project/:slug" element={<CaseStudyPage />} />
         <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
-        <Route path="/playground/*" element={<Suspense fallback={null}><PlaygroundRoutes /></Suspense>} />
+        <Route path="/arcade" element={<Suspense fallback={null}><Arcade /></Suspense>} />
+        <Route path="/arcade/:slug" element={<Suspense fallback={null}><ArcadeDemo /></Suspense>} />
         <Route path="/slide-to-unlock" element={<Suspense fallback={null}><PlaygroundDemo slug="slide-unlock" /></Suspense>} />
-        <Route path="/dvd" element={<Suspense fallback={null}><PlaygroundDemo slug="dvd-bounce" /></Suspense>} />
+        <Route path="/dvd" element={<Navigate to="/arcade/dvd-bounce" replace />} />
         <Route path="/high-five" element={<Suspense fallback={null}><PlaygroundDemo slug="figma-highfive" /></Suspense>} />
         {/* Redirect old portfolio URLs to current routes */}
         <Route path="/eat-local-vt" element={<Navigate to="/project/eat-local-vt" replace />} />
