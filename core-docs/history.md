@@ -2,6 +2,26 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-06-01 — Flock easter egg on the "X" contact link
+
+**Branch:** `port-flock-hover-to-about`
+
+**Summary:** Ported the Flock hover interaction from the `ui-playground` repo into the About section as a quiet easter egg. Hovering the "X" contact link triggers a 150ms settle delay, a ~240ms jagged glass-crack draw with a bell-curve stress shake on the pill, a ~260ms hold, then a wedge-shard shatter (3–5 shards under gravity/drag/rotation/fade) followed by a 4–10 bird burst from the cursor with per-bird flap-rate jitter, head bob, drop-shadow-as-second-SVG-path (not CSS filter, for perf), and a gentle climb arc. Sustained-hover stragglers fire at 2s (1–3 birds, randomized) and 5s (a lone bird with a 0.5s mid-flight head-turn). Invisible at rest. Other contact links unchanged.
+
+**Tuned defaults** (vs. the playground demo): flight speed 180 → **210 px/s** (+17%) because the contact line sits in the left column so birds have most of the viewport to cross; flap rate 4.5 → **4.8 Hz** to keep cadence proportional to the new speed without making the burst feel hurried; fracture start delay 200 → **150 ms** so the crack lands feel "caused" by the hover rather than delayed. A temporary `FlockDevPanel` was used during tuning and stripped before ship.
+
+- **`src/hooks/useGlassHighlight.ts`**: extended the hook's public API with five imperative methods needed by Flock — `spikePressure`, `setPillVisible`, `getPillRect`, `shakeFor`, `cancelShake`. Existing `fadeOut` preserved. Loop now layers a hold-and-ease-out spike envelope on the pill's fill opacity, a bell-curve translate shake (sin(πt) envelope, ≈10Hz/≈12Hz x/y with a 60° phase offset), and pill-suppression handling for the shatter window. All gated by `prefers-reduced-motion`.
+- **`src/utils/birdSwarm.ts` (new)**: standalone bird-swarm engine ported from the playground. Bird SVG is built once and cloned per bird with a shadow path baked in as a second `<path>` behind the bird (CSS filter drop-shadow forces full re-rasterization on Safari/iOS and made the flap choppy). DocumentFragment-batched insertions so a 10-bird burst hits the DOM once.
+- **`src/utils/shatter.ts` (new)**: physics shatter system. Shard polygons share spoke geometry with the preview cracks so the pill breaks along the exact lines the user saw. Cracks are clipped to a rounded-rect clipPath matching the pill; shards are unclipped so they fly free. Opacity attribute writes are cached per-shard to skip the first ~450ms of identical "1.00" writes.
+- **`src/components/FlockX.tsx` (new)**: wrapper component that renders the X anchor with `data-contact-card` preserved (so the existing glass pill still works), attaches Flock hover/touch/focus handlers, and portals the bird + shatter layers to `document.body` at `z-index: 9999`/`9998` so they fly above all chrome. Skips entirely on `(pointer: coarse)` and `(prefers-reduced-motion: reduce)`. Crack/shard colors read live from `--accent-hue` + `data-theme` at trigger time so the effect tracks the current theme.
+- **`src/components/AboutSection.tsx`**: swapped the X `<a>` for `<FlockX>`. The existing `useGlassHighlight` return value is now captured (`glassApi`) and passed in. No layout or visual changes at rest.
+
+**Verification:** `tsc -b` clean. Lint clean. Dev server compiles and serves `FlockX` (the production `npm run build` fails on a pre-existing `ui-playground` submodule issue unrelated to this branch — verified by reverting these changes and observing the same failure).
+
+**Files changed:** `src/hooks/useGlassHighlight.ts`, `src/components/AboutSection.tsx`, `src/utils/birdSwarm.ts` (new), `src/utils/shatter.ts` (new), `src/components/FlockX.tsx` (new), `core-docs/history.md`.
+
+---
+
 ## 2026-05-18 — Pre-deploy perf: video ready-gate + async fonts
 
 **Branch:** `perf-video-ready-gate-and-async-fonts`

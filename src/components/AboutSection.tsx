@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react'
 import { useHover } from '@/contexts/HoverContext'
 import { useGlassHighlight } from '../hooks/useGlassHighlight'
 import { useTypography } from '@/contexts/TypographyContext'
+import { FlockX } from './FlockX'
 
 const linkCardStyle = {
   color: 'inherit',
@@ -18,7 +19,7 @@ export function AboutSection() {
   const onLinkEnter = useCallback((id: string) => { setHoveringLink(true); setHoveredLinkId(id) }, [setHoveringLink, setHoveredLinkId])
   const onLinkLeave = useCallback(() => { setHoveringLink(false); setHoveredLinkId(null) }, [setHoveringLink, setHoveredLinkId])
   const contactRef = useRef<HTMLDivElement>(null)
-  useGlassHighlight(contactRef, {
+  const glassApi = useGlassHighlight(contactRef, {
     borderRadius: 8,
     pillMaxLean: 0.5,
     pillMaxTilt: 0.5,
@@ -54,7 +55,13 @@ export function AboutSection() {
           You can say hi if you see me running around SF, or you can contact me via{' '}
           <a href="mailto:ben.yamron@icloud.com" data-contact-card style={linkCardStyle} onMouseEnter={() => onLinkEnter('email')} onMouseLeave={onLinkLeave} onFocus={() => onLinkEnter('email')} onBlur={onLinkLeave}>email</a>,{' '}
           <a href="https://www.linkedin.com/in/benyamron" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle} onMouseEnter={() => onLinkEnter('linkedin')} onMouseLeave={onLinkLeave} onFocus={() => onLinkEnter('linkedin')} onBlur={onLinkLeave}>LinkedIn</a>, or{' '}
-          <a href="https://x.com/BenYamron" target="_blank" rel="noopener noreferrer" data-contact-card style={linkCardStyle} onMouseEnter={() => onLinkEnter('x')} onMouseLeave={onLinkLeave} onFocus={() => onLinkEnter('x')} onBlur={onLinkLeave}>X</a>.
+          <FlockX
+            href="https://x.com/BenYamron"
+            style={linkCardStyle}
+            onLinkEnter={() => onLinkEnter('x')}
+            onLinkLeave={onLinkLeave}
+            glassApi={glassApi}
+          >X</FlockX>.
         </p>
         <p style={narrativeStyle}>
           Take a look at my{' '}

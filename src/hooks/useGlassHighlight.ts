@@ -107,43 +107,94 @@ function stepSpring(s: SpringState, dt: number, k: number, c: number): boolean {
 // Hook
 // ═══════════════════════════════════════════════════════════════
 
+export interface GlassHighlightHandle {
+  fadeOut: (duration?: number, delay?: number) => void
+  /** One-shot pulse on the pill's fill opacity. Used to couple external
+   *  events (e.g. a flock launch) to a brief pill intensification. */
+  spikePressure: (amount: number) => void
+  /** Suppress or restore the pill's visibility. Used by the shatter
+   *  effect — the pill "becomes" the shards and returns once they're gone. */
+  setPillVisible: (visible: boolean) => void
+  /** Read the pill's current bounding rect in viewport coords (or null if
+   *  not visible). */
+  getPillRect: () => DOMRect | null
+  /** Add a small high-frequency translate jitter to the pill that builds
+   *  over `durationMs` on a bell curve. Used to signal stress before the
+   *  glass breaks. */
+  shakeFor: (durationMs: number, maxPx?: number) => void
+  /** Stop any in-progress shake immediately. */
+  cancelShake: () => void
+}
+
 export function useGlassHighlight(
   containerRef: RefObject<HTMLElement | null>,
   config?: Partial<GlassConfig>,
-): { fadeOut: (duration?: number, delay?: number) => void } {
+): GlassHighlightHandle {
   const configRef = useRef<GlassConfig>({ ...GLASS_DEFAULTS, ...config })
   configRef.current = { ...GLASS_DEFAULTS, ...config }
 
-  const fadeOutRef = useRef<(duration?: number, delay?: number) => void>(() => {})
+  const apiRef = useRef<SetupGlassHighlightAPI | null>(null)
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
     if (window.matchMedia('(pointer: coarse)').matches) return
 
-    const { cleanup, fadeOut } = setupGlassHighlight(container, configRef)
-    fadeOutRef.current = fadeOut
+    const api = setupGlassHighlight(container, configRef)
+    apiRef.current = api
     return () => {
-      fadeOutRef.current = () => {}
-      cleanup()
+      apiRef.current = null
+      api.cleanup()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stableFadeOut = useCallback((duration?: number, delay?: number) => {
-    fadeOutRef.current(duration, delay)
+    apiRef.current?.fadeOut(duration, delay)
+  }, [])
+  const spikePressure = useCallback((amount: number) => {
+    apiRef.current?.spikePressure(amount)
+  }, [])
+  const setPillVisible = useCallback((visible: boolean) => {
+    apiRef.current?.setPillVisible(visible)
+  }, [])
+  const getPillRect = useCallback((): DOMRect | null => {
+    return apiRef.current?.getPillRect() ?? null
+  }, [])
+  const shakeFor = useCallback((durationMs: number, maxPx?: number) => {
+    apiRef.current?.shakeFor(durationMs, maxPx)
+  }, [])
+  const cancelShake = useCallback(() => {
+    apiRef.current?.cancelShake()
   }, [])
 
-  return { fadeOut: stableFadeOut }
+  return {
+    fadeOut: stableFadeOut,
+    spikePressure,
+    setPillVisible,
+    getPillRect,
+    shakeFor,
+    cancelShake,
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
 // Imperative glass highlight system
 // ═══════════════════════════════════════════════════════════════
 
+interface SetupGlassHighlightAPI {
+  cleanup: () => void
+  fadeOut: (duration?: number, delay?: number) => void
+  spikePressure: (amount: number) => void
+  setPillVisible: (visible: boolean) => void
+  getPillRect: () => DOMRect | null
+  shakeFor: (durationMs: number, maxPx?: number) => void
+  cancelShake: () => void
+}
+
 function setupGlassHighlight(
   container: HTMLElement,
   configRef: React.MutableRefObject<GlassConfig>,
-): { cleanup: () => void; fadeOut: (duration?: number, delay?: number) => void } {
+): SetupGlassHighlightAPI {
   let pill: HTMLDivElement | null = null
   let currentCard: HTMLElement | null = null
   let rafId: number | null = null
@@ -182,6 +233,23 @@ function setupGlassHighlight(
 
   // Glass pressure
   let glassPressure = 0
+
+  // External spike: brief brighten of the pill fill in response to a
+  // discrete event (e.g. a flock launch). Independent of the spring's
+  // smoothing so it has its own clear hold-and-decay envelope.
+  let spikeAmount = 0
+  let spikeStartMs = 0
+  const SPIKE_HOLD_MS = 130
+  const SPIKE_DECAY_MS = 380
+
+  // External suppression of pill visibility (shatter effect).
+  let pillSuppressed = false
+
+  // Shake: small sin-wave translate wobble on a bell-curve envelope.
+  let shakeStartMs = 0
+  let shakeDurationMs = 0
+  let shakeMaxPx = 0
+  const SHAKE_DEFAULT_MAX_PX = 0.9
 
   // Pending fade-in RAFs (tracked so they can be cancelled on early leave)
   let fadeInRaf1: number | null = null
@@ -295,6 +363,7 @@ function setupGlassHighlight(
 
   function fadeIn(): void {
     if (!pill || !currentCard) return // guard against ghost pill from stale double-RAF
+    if (pillSuppressed) return
     const d = prefersReducedMotion.matches ? 0 : configRef.current.fadeDuration
     pill.style.transition = `opacity ${d}ms ease`
     pill.style.opacity = '1'
@@ -498,8 +567,10 @@ function setupGlassHighlight(
     const targetPressure = prefersReducedMotion.matches ? 0 : Math.min(springSpeed / 300, 1) * cfg.glassPressure
     glassPressure += (targetPressure - glassPressure) * (1 - Math.pow(0.9, dt * 60))
     const pressureActive = glassPressure > 0.001
+    const spikeActive = spikeAmount > 0
+    const shakeActive = shakeDurationMs > 0
 
-    const settled = !activeX && !activeY && !activeW && !activeH && !entranceActive && !pressureActive
+    const settled = !activeX && !activeY && !activeW && !activeH && !entranceActive && !pressureActive && !spikeActive && !shakeActive
 
     if (settled) {
       springs.x.value = springs.x.target
@@ -558,9 +629,24 @@ function setupGlassHighlight(
       const shadowY = 0.5 + clampNy * 0.5
       const edgeIntensity = ambientHL + (1 - Math.min(d, 1)) * ambientHL * 0.5
 
+      // External spike envelope: hold then ease-out, layered on top of
+      // the spring-smoothed pressure for a clearly-readable pulse.
+      let spikeContribution = 0
+      if (spikeAmount > 0) {
+        const elapsed = now - spikeStartMs
+        if (elapsed < SPIKE_HOLD_MS) {
+          spikeContribution = spikeAmount
+        } else if (elapsed < SPIKE_HOLD_MS + SPIKE_DECAY_MS) {
+          const st = (elapsed - SPIKE_HOLD_MS) / SPIKE_DECAY_MS
+          spikeContribution = spikeAmount * Math.pow(1 - st, 3)
+        } else {
+          spikeAmount = 0
+        }
+      }
+
       // Compose: cursor radial gradient + glass fill (with pressure)
       const baseOpacity = dark ? 0.12 : 0.08
-      const fillOpacity = (baseOpacity + glassPressure).toFixed(3)
+      const fillOpacity = (baseOpacity + glassPressure + spikeContribution).toFixed(3)
 
       // Cursor light uses a fixed-radius circle so it looks properly radial
       // regardless of card aspect ratio (cards are wide + short)
@@ -603,7 +689,25 @@ function setupGlassHighlight(
     const tx = springs.x.value - (w * (sx - 1)) / 2 + leanX
     const ty = springs.y.value - (h * (sy - 1)) / 2 + leanY
     const es = Math.max(0.01, entranceScale)
-    pill.style.transform = `translate(${tx}px, ${ty}px) rotate(${rotateDeg}deg) scale(${sx * es}, ${sy * es})`
+
+    // Shake: gentle sin-wave wobble on a bell-curve envelope (sin(πt)).
+    // X and Y carry sin waves at ≈10Hz / ≈12Hz with a 60° phase offset, so
+    // the pill traces a slow tilted ellipse rather than a sharp tremor.
+    let shakeOffsetX = 0
+    let shakeOffsetY = 0
+    if (shakeDurationMs > 0) {
+      const elapsed = now - shakeStartMs
+      const st = elapsed / shakeDurationMs
+      if (st >= 1) {
+        shakeDurationMs = 0
+      } else {
+        const amp = Math.sin(st * Math.PI) * shakeMaxPx
+        shakeOffsetX = Math.sin(now * 0.0628) * amp
+        shakeOffsetY = Math.sin(now * 0.0754 + Math.PI / 3) * amp
+      }
+    }
+
+    pill.style.transform = `translate(${tx + shakeOffsetX}px, ${ty + shakeOffsetY}px) rotate(${rotateDeg}deg) scale(${sx * es}, ${sy * es})`
 
     const roundedW = Math.round(w)
     const roundedH = Math.round(h)
@@ -871,5 +975,59 @@ function setupGlassHighlight(
     if (clearTimer) clearTimeout(clearTimer)
   }
 
-  return { cleanup, fadeOut: navigationFadeOut }
+  function spikePressure(amount: number): void {
+    // The spike's decay/reset lives in the cursor-light block, which is
+    // skipped under reduced motion — without this guard the loop would
+    // never settle. Mirrors shakeFor's guard.
+    if (prefersReducedMotion.matches) return
+    spikeAmount = amount
+    spikeStartMs = performance.now()
+    if (currentCard && pill) {
+      state.lastTime = 0
+      startLoop()
+    }
+  }
+
+  function setPillVisible(visible: boolean): void {
+    pillSuppressed = !visible
+    if (!pill) return
+    if (!visible) {
+      pill.style.transition = 'none'
+      pill.style.opacity = '0'
+    } else {
+      const d = prefersReducedMotion.matches ? 0 : configRef.current.fadeDuration
+      pill.style.transition = `opacity ${d}ms ease`
+      pill.style.opacity = currentCard ? '1' : '0'
+    }
+  }
+
+  function getPillRect(): DOMRect | null {
+    if (!pill || pillSuppressed) return null
+    return pill.getBoundingClientRect()
+  }
+
+  function shakeFor(durationMs: number, maxPx?: number): void {
+    if (prefersReducedMotion.matches) return
+    shakeStartMs = performance.now()
+    shakeDurationMs = durationMs
+    shakeMaxPx = maxPx ?? SHAKE_DEFAULT_MAX_PX
+    if (currentCard && pill) {
+      state.lastTime = 0
+      startLoop()
+    }
+  }
+
+  function cancelShake(): void {
+    shakeDurationMs = 0
+  }
+
+  return {
+    cleanup,
+    fadeOut: navigationFadeOut,
+    spikePressure,
+    setPillVisible,
+    getPillRect,
+    shakeFor,
+    cancelShake,
+  }
 }
