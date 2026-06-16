@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-06-16 — Two new AI-native case studies: Flow + health-tracker
+
+**Branch:** `case-study-gaps-audit`
+
+**Summary:** Added two linked keystone case studies to close the portfolio's biggest gap for senior-PD roles at AI-native companies (Anthropic/OpenAI/Ramp/Stripe/The Browser Company): user-facing AI / human↔agent interaction design. Grounded in current job-posting research and verified against the real `~/dev/flow` and `~/dev/health-tracker` codebases. Both are content-only additions to `src/data/case-study-content.ts` (+ `caseStudiesBySlug` entries); **neither is wired into `projects.ts` yet** — they render only by direct URL (`/project/flow`, `/project/health-tracker`) pending preview-video assets, so they are not yet visible in the homepage list.
+
+- **Flow** (`flow`): "Designing trust into agentic coding." Framed around trust, not oversight — Ben is a non-technical designer who can't verify engineering by reading code, so the real problem is translating intent into output he can trust on two axes (design + engineering). Three trust axes: intent (plan audited/critiqued → he approves), design (multi-lens review + screenshot verification + HTML walkthrough with click-to-pin annotation layer → feedback updates docs), engineering (Anthropic best-practices alignment + automated correctness/a11y/security reviews + merge gate). Includes the §divergence beat answering "doesn't the agent flatten the design?" — divergence is deliberately upstream of the loop (curate early via chat + HTML iterations + design-language docs encoding his decision framework; steer once a direction lands).
+- **health-tracker** (`health-tracker`): "A health app that gets out of your way." Companion to Flow (Flow is the system; health-tracker is the proof). Reframe: most health apps make data the core function and show too much; this is for people who just want to know they're healthy and doing okay — surface a few metrics with honest interpretation, then get out of the way. Adaptive home page (the data picks the lead), observing-not-prescribing voice ("Sleep ran short," never "you didn't sleep enough"), on-device/private, and the AI-native workflow (conceived in a Claude chat → 17 rounds of HTML iteration → built with Flow). In progress (design system complete, build underway).
+
+**Note on rendering:** discovered that `CaseStudyLayoutA` renders only `title` + `narrative` (+ paperLinks/contactCTA/media). The `sections`, `heroVisual`, and `gallery` fields are authored but **not displayed by any component**. Both new studies carry full `sections`, but the shippable copy was concentrated in `narrative`. Wiring `sections` + visuals into the layout would lift every case study — captured as a separate follow-up.
+
+**Mochi AI Tooling rewrite** (the "context, not capability" reframe) is intentionally **not** in this branch — being done in the `mochi-internal-tools-case-studies` workspace to avoid same-file conflicts.
+
+**Verification:** `tsc -b` clean throughout. Dev server compiles and serves both routes.
+
+**Files changed:** `src/data/case-study-content.ts`, `core-docs/history.md`.
+
+---
+
 ## 2026-06-01 — Flock easter egg on the "X" contact link
 
 **Branch:** `port-flock-hover-to-about`

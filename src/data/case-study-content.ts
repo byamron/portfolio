@@ -427,6 +427,143 @@ export const optimizingMyWorkflow: CaseStudy = {
   ],
 }
 
+export const flow: CaseStudy = {
+  id: 'flow',
+  title: 'Designing trust into agentic coding',
+  subtitle:
+    'AI coding let me build things I couldn’t before, and I wanted to build more, faster — without babysitting the agent or lowering the bar. Flow is a Claude Code plugin that turns my intent into output I can trust on both axes I care about: a non-technical designer’s system for shipping production software where the engineering is sound and the design quality goes up, not down.',
+  timeline: '2026',
+  narrative: [
+    'AI coding let me build things I could never build before, and I leaned in hard. The next limit was scale: I wanted to build more, faster, without driving the agent prompt by prompt — I wanted to hand it a real plan and trust it to execute. Flow is the Claude Code plugin I built to make that trust possible.',
+    'I’m a designer, not an engineer — I’m not reading the code. So the problem was never reviewing every change; it was translating my intent into something I could trust was actually good, on the two axes I care about: design and engineering. I can judge the design. I can’t personally verify the engineering. Flow is built so I stay in control where my judgment is real, and the system supplies the judgment I can’t.',
+    'It comes down to three things: my intent gets audited and critiqued into a plan I approve; the design gets reviewed from multiple lenses, verified visually, and handed back to me to direct; and the engineering gets held to Anthropic’s agent best practices and reviewed for correctness, accessibility, and security before I make the final call to merge. I build things I couldn’t have built alone — and the design comes out better, not worse.',
+  ],
+  heroVisual: {
+    id: 'hero-flow',
+    caption: 'A Flow pull request — the visual walkthrough, the design and engineering reviews, and the merge gate I hold.',
+  },
+  sections: [
+    {
+      id: 'flow-trust',
+      heading: 'The constraint stopped being what I could build',
+      paragraphs: [
+        'AI coding removed the ceiling on what I could make — I was shipping things that used to be out of reach. The new bottleneck was trust: a long autonomous run can produce something that looks done and isn’t, and as a non-technical designer I can’t catch the engineering problems by reading the diff. Building more, faster only matters if I can trust what comes out. Flow is a system for earning that trust — not a way to watch the agent work.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'flow-intent',
+      heading: 'Intent: the plan gets audited and critiqued before I approve it',
+      paragraphs: [
+        'I don’t want to find problems in the output — I want them caught in the plan, where they’re cheap. Flow audits and critiques every plan for unverified assumptions and scope drift, iterates on it automatically, then stops for my approval. I’m reviewing at the altitude I actually think at — direction and scope — not implementation. Nothing gets built until the intent is right.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'flow-design',
+      heading: 'Design: much of it happens in code, so the walkthrough is how I steer',
+      paragraphs: [
+        'Much of this design happens in code, not a Figma canvas — the running output is the artifact. That makes the feedback surface the whole game: how fast I can get signal on what the agent produced, and how efficiently I can push it further. Flow hands me a tailored walkthrough that’s already been through the review cycle, so I’m reacting to polished output instead of raw drafts. Inline annotations let me pin a comment to a specific screen, and one click sends the whole set back to the agent. My feedback also updates the project’s design-language docs, so the bar I set holds on the next run.',
+      ],
+      visual: {
+        id: 'flow-walkthrough-render',
+        caption: 'The HTML walkthrough that opens every PR — screenshots of what changed, with a click-to-pin layer for dropping feedback exactly where it belongs.',
+      },
+    },
+    {
+      id: 'flow-divergence',
+      heading: 'The agent converges — the divergence is mine, on purpose',
+      paragraphs: [
+        'The obvious risk with letting an agent make most of the decisions and only showing me polished output is that I skip the messy, divergent iteration where design actually happens. I handle that before I enter the loop. Early on I curate heavily — talking through the idea in a chat, exploring divergent directions through quick HTML iterations, jumping into Figma when I need to — and I write the design-language documentation that encodes my decision framework, so the hundreds of small choices the agent makes downstream inherit my intent. Once we’ve landed on a direction, I switch to steering. Flow is the convergence-and-verification loop; the divergence is deliberately upstream, and it’s mine.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'flow-engineering',
+      heading: 'Engineering: I trust the merge because the loop reviewed what I can’t',
+      paragraphs: [
+        'The judgment I can’t supply, the system does — for real, not for show. The loop is aligned to Anthropic’s agent best practices and runs independent reviews for engineering correctness, accessibility, and security before anything reaches me, each one able to send the work back. By the time I’m at the merge gate, I’m not approving code I can’t read — I’m approving output that already passed the checks an engineer would run. That’s what makes the final gate mine to hold.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'flow-thesis',
+      heading: 'Building beyond my own skill set, without lowering the bar',
+      paragraphs: [
+        'Flow is infrastructure, but what I’m really designing is the relationship between a designer and an autonomous system: stay in control where my judgment is real — intent and design — delegate the verification I can’t do myself, and hold the bar high on both. The result is that I ship production software I could never have built alone, trust what it does, and the design is better for it. I run Flow on everything I build, including itself.',
+      ],
+      visual: null,
+    },
+  ],
+  gallery: [],
+}
+
+export const healthTracker: CaseStudy = {
+  id: 'health-tracker',
+  title: 'A health app that gets out of your way',
+  subtitle:
+    'Most health apps make data the whole point — more metrics, more charts, more than anyone can understand or act on. This one is for people who just want to know they’re healthy and generally doing okay: it surfaces a few metrics with honest interpretation, tells you what you need to know, and lets you get on with your life. A privacy-first iOS app built entirely on-device — and the first project I conceived in a Claude chat, explored through seventeen rounds of HTML iteration, and built with Flow from the start.',
+  timeline: '2026',
+  narrative: [
+    'Most health apps make data the core function — comprehensive dashboards, endless charts, more numbers than anyone can understand or act on. But you don’t fix your health inside an app, and most people don’t want to manage it there either. They just want to know they’re healthy and generally doing okay. So that’s what I built: a few metrics with light, honest interpretation, and nothing else competing for your attention. Open it, get the answer, get on with your day.',
+    'That one idea drives the rest. The home page isn’t a fixed dashboard — it reads what your data is doing and shows only what’s worth your attention, which most days is a single calm line. The copy observes instead of prescribing: “Sleep ran short,” never “you didn’t sleep enough.” Every metric is drawn the way that represents it honestly, not whatever fills the space. No streaks, no opaque readiness score, no green-for-good, red-for-bad coding of your own body. And it’s all on-device — HealthKit for the data, Apple’s on-device model for the words — so nothing leaves your phone.',
+    'It’s also the first project I took fully through the process I’ve been refining for designing in code: I pressure-tested the philosophy in a Claude chat before drawing anything, explored it through seventeen rounds of HTML iteration, then built it with Flow. It’s still in progress — the design system is done, the build is underway.',
+  ],
+  heroVisual: {
+    id: 'hero-health-tracker',
+    caption: 'The adaptive home page — the same app rendering calm, a single shift, and a notable trend on three different days.',
+  },
+  sections: [
+    {
+      id: 'ht-attention',
+      heading: 'Most days, the home screen is a single calm line',
+      paragraphs: [
+        'The home page doesn’t show the same dashboard every day. It reads what the data is doing and renders at one of three volumes: a quiet sentence when everything is steady, a single row when one metric shifts, a full chart only when a trend clears three independent bars — magnitude, persistence, and isolation from correlated noise. It never inflates a level to fill space, so most days it stays quiet. Most apps show you everything and leave you to find what matters; this finds it and stays quiet about the rest.',
+      ],
+      visual: {
+        id: 'ht-home-states',
+        caption: 'The three attention volumes — paragraph, rows, and anchor chart — triggered by what the data has earned, not a fixed template.',
+      },
+    },
+    {
+      id: 'ht-rangebar',
+      heading: 'Heart rate is a range, so I drew it as one',
+      paragraphs: [
+        'Most apps collapse heart rate to a line or a daily average and throw away its texture — it’s actually sampled hundreds of times a day. I passed on the usual line chart and used a range bar: floor at the period low, ceiling at the high, a marker at the median, set against a soft band of your personal baseline. The chart itself teaches that heart rate is a range, not a single number. Every scope — day, week, month, year — uses the same chart, so the eye attends to the data instead of relearning the visual each time.',
+      ],
+      visual: {
+        id: 'ht-range-bar',
+        caption: 'The heart-rate range bar — low, high, and median against a personal-baseline band, consistent across every time scope.',
+      },
+    },
+    {
+      id: 'ht-voice',
+      heading: 'The app observes; it never moralizes your body',
+      paragraphs: [
+        'The interpretation layer follows one rule: state what’s true, never tell the user who they are. “Sleep ran short” — the data is the subject — instead of “you didn’t sleep enough,” which is an accusation. Sage means steady, clay means worth noticing; there’s no red, and no good/bad coding of your own metrics. When the on-device model writes the prose, those rules are guardrails, not suggestions: it can state what the data shows and lightly name population-level patterns, but never claim a story about your life.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'ht-palette',
+      heading: 'An ambient palette that reads the room',
+      paragraphs: [
+        'The background shifts along two independent axes, neither announced. Time of day moves the light — its angle tracks the sun across the day. Mood moves the warmth — a five-step rested-to-activated spectrum driven by heart-rate signals, expressed only as saturation and warmth, never as layout. I kept them separate on purpose: merging them would imply a story the data doesn’t support, like “evening means relaxed.” Almost no one will consciously notice it, and that’s the point — the app should feel like it’s paying attention even when it’s silent.',
+      ],
+      visual: null,
+    },
+    {
+      id: 'ht-workflow',
+      heading: 'Conceived in a chat, iterated in HTML, built with Flow',
+      paragraphs: [
+        'This is the first project I took through the full process I’ve been building toward. It started in a Claude conversation, pressure-testing the philosophy against its counterarguments before I drew a thing. I explored it through seventeen rounds of HTML iteration — each one reframing a specific question and locking a principle, not polishing pixels — then built it with Flow. The design-language documentation I wrote along the way — the attention thresholds, the voice rules, the color logic — is the decision framework the agent builds against, which is how a one-person project holds a production-grade bar.',
+      ],
+      visual: null,
+    },
+  ],
+  gallery: [],
+}
+
 export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'mochi-ai-tooling': mochiAiTooling,
   'mochi-progress-tracker': mochiProgressTracker,
@@ -440,4 +577,6 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'language-app': languageApp,
   'manipulation-identifier': manipulationIdentifier,
   'optimizing-my-workflow': optimizingMyWorkflow,
+  'flow': flow,
+  'health-tracker': healthTracker,
 }
