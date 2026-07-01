@@ -1,10 +1,10 @@
 ---
-name: voice-check
+name: voice
 description: >
   Review copy against Ben's voice guidelines and flag anything corny, fluffy,
   AI-sounding, overstated, or low-signal — with plain rewrites. Use for case
   study copy (primary) and any portfolio copy (About, summaries, link text).
-  Trigger with /voice-check, or phrases like "voice check", "is this corny",
+  Trigger with /voice, or phrases like "voice check", "is this corny",
   "does this sound like AI", "run this against the voice doc", "de-corny this",
   "copyedit this". Use PROACTIVELY before finalizing any case study copy.
 allowed-tools:
@@ -14,7 +14,7 @@ allowed-tools:
   - Bash
 ---
 
-# /voice-check — Review copy against Ben's voice
+# /voice — Review copy against Ben's voice
 
 You are doing an adversarial, cold read of copy against Ben's writing voice. The goal: catch anything corny, AI-sounding, fluffy, overstated, repetitive, or low-signal, and offer a plain rewrite — without flattening the meaning or the signal on Ben's design / critical-thinking / systems-thinking / builder skill.
 
@@ -57,7 +57,7 @@ Return findings tightly:
 
 ## Step 5: Apply (only if asked)
 
-If the user asked to fix (e.g. `/voice-check --fix`, "and fix them"), apply the accepted rewrites to the source file(s) and confirm what changed. For strings in `case-study-content.ts` / `projects.ts` that contain em-dashes or curly quotes, prefer a small Python span-replace (ASCII anchors) over `Edit` if `Edit` fails to match — the file mixes thin-space and regular-space em-dashes. Run `node_modules/.bin/tsc -b` after edits. Otherwise, report only and let Ben choose.
+If the user asked to fix (e.g. `/voice --fix`, "and fix them"), apply the accepted rewrites to the source file(s) and confirm what changed. For strings in `case-study-content.ts` / `projects.ts` that contain em-dashes or curly quotes, prefer a small Python span-replace (ASCII anchors) over `Edit` if `Edit` fails to match — the file mixes thin-space and regular-space em-dashes. Run `node_modules/.bin/tsc -b` after edits. Otherwise, report only and let Ben choose.
 
 ## Note
 
