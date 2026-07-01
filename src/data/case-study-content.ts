@@ -30,14 +30,13 @@ export interface CaseStudy {
 
 export const mochiAiTooling: CaseStudy = {
   id: 'mochi-ai-tooling',
-  title: 'AI tools that know how the product works',
-  subtitle:
-    'Mochi ran on institutional knowledge held by a few people. I built a shared source of truth for how the product works — and tools on top of it for design, dev, and product work — that let me ship, test, and shape the product far beyond a designer’s usual reach.',
-  timeline: '2025–2026',
+  title: 'AI tooling to automate internal workflows',
+  subtitle: 'AI tools are only as good as the context they have. I built a documentation layer and a Claude Code plugin that gives anyone at the company an AI assistant that actually knows the product.',
+  timeline: '2025\u20132026',
   narrative: [
-    'Like most startups, Mochi optimized for shipping fast, not for documenting how things worked — so the product ran on institutional knowledge held by a few people. Everyone else waited on them, and those few got pulled off their own work to answer. The company moved at the speed of whoever held the answer.',
-    'So I built a shared source of truth for how the product works — specialized knowledge about the codebase and the business — and, on top of it, tools for more specialized work: design, dev, and product. Keeping it current mattered as much as building it: stale documentation is worse than none, because people and AI trust it and build on the outdated fact. An audit found 1 in 5 facts had drifted, so I made the system maintain itself — a scheduled routine reads each week’s code changes, judges what matters, and rewrites the docs, checking every claim against the source.',
-    'For me, it dissolved the usual limits on what a designer can do alone. With these tools I now ship to production myself — bug fixes, UX polish, and design-system updates, in code; set up and run my own testing; inform product strategy with my own data; and build internal tools on top, like the <a href="/project/patient-state-factory" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Patient State Factory</a>. Others use them too, but I’m the clearest proof of what they unlock.',
+    'AI tools are only as good as the context they have. At Mochi, that context\u2009\u2014\u2009how the code maps to features, when things changed and why, how database tables connect\u2009\u2014\u2009lived in people\u2019s heads. I built a documentation layer and a Claude Code plugin on top of it that gives anyone at the company an AI assistant that actually knows the product.',
+    'The plugin uses Claude Code skills for different workflows: writing product specs, tracing bugs to the code changes that caused them, querying the database, managing project tickets. The skills compose\u2009\u2014\u2009a single bug report can pull from version history, the database, and project management to surface the full picture without switching tools. Anyone\u2009\u2014\u2009designers, engineers, PMs\u2009\u2014\u2009can install it and use it immediately.',
+    'Now I\u2019m turning the knowledge layer into a reusable context repository\u2009\u2014\u2009a foundation other people can build specialized tools on top of without starting from scratch. Lower the barrier, and useful internal tools get built fast.',
   ],
 }
 
@@ -428,24 +427,9 @@ export const optimizingMyWorkflow: CaseStudy = {
   ],
 }
 
-export const patientStateFactory: CaseStudy = {
-  id: 'patient-state-factory',
-  title: 'Patient State Factory: any account, any state',
-  subtitle:
-    'Testing on Mochi’s platform meant setting up account states by hand — dozens of database fields, every time. I built a panel that puts any account into any state in one click, so testing stops being gated by who’ll do the manual work.',
-  timeline: '2026',
-  narrative: [
-    'To test how anything works on Mochi’s platform, you first need a patient account in the exact state you’re testing — mid-refill with a failed payment, mid-onboarding, a denied request. Getting an account there meant changing it by hand in the database, dozens of interdependent fields at a time. That friction wasn’t just slow; it decided who could participate — engineers often skipped it, non-technical teammates couldn’t do it at all, and testing defaulted to production, where in a healthcare product real patient data can slip.',
-    'So I built a panel that puts any account into any state in one click — and the right design came from rejecting two earlier tries. First I drove the staging database with an AI prompt, which proved the setup could be automated, but not reliably. Then I built the simplest version: fake the state on the frontend, instantly, with no backend changes. It was elegant, and I threw it away — you can’t follow a real flow against a simulation. The Factory does the harder thing: one click runs the cascading scripts that make every interdependent change for real, so the account behaves exactly as it would for a patient.',
-    'It works because it stands on the <a href="/project/mochi-ai-tooling" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">knowledge layer</a>: the scripts know which dependencies to touch because the shared mappings spell them out, and each version got more reliable as those mappings grew — the clearest proof the layer compounds.',
-    'What changed is that testing stops being gated by who’ll do the manual work. Engineers set up states in seconds; anyone can reproduce one to see how the product behaves; and more people can test, weigh in, and even contribute. It removes one major barrier in staging, not all of them, but it’s the one that kept most people out.',
-  ],
-}
-
 export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'mochi-ai-tooling': mochiAiTooling,
-  'patient-state-factory': patientStateFactory,
-  // 'mochi-progress-tracker' intentionally unregistered — hidden from UI & URL; mochiProgressTracker export above is preserved for future restore.
+  'mochi-progress-tracker': mochiProgressTracker,
   'mochi-subscriptions': mochiSubscriptions,
   'uw-design-system': uwDesignSystem,
   'sony-screenless-tv': sonyScreenlessTv,

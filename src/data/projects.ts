@@ -27,9 +27,9 @@ export const sections: Section[] = [
     label: '',
     context: [],
     projects: [
-      { id: 'mochi-ai-tooling', title: 'AI tools that know how the product works', projectId: 'mochi-ai', href: '/project/mochi-ai-tooling', isLink: true, company: 'Mochi Health', year: '2026', caseStudySlug: 'mochi-ai-tooling', videoPreview: '/images/preview-mochi-tooling.mp4', summary: 'Mochi ran on institutional knowledge held by a few people. I built a shared source of truth for how the product works — and tools on top of it for design, dev, and product work — that let me ship, test, and shape the product far beyond a designer’s usual reach.' },
-      { id: 'patient-state-factory', title: 'Patient State Factory: any account, any state', projectId: 'patient-state-factory', href: '/project/patient-state-factory', isLink: true, company: 'Mochi Health', year: '2026', caseStudySlug: 'patient-state-factory', previewDescription: 'Patient State Factory\nTesting on Mochi’s platform meant setting up account states by hand — dozens of database fields, every time. I built a panel that puts any account into any state in one click, so testing stops being gated by who’ll do the manual work.' },
+      { id: 'mochi-ai-tooling', title: 'AI tooling to automate internal workflows', projectId: 'mochi-ai', href: '/project/mochi-ai-tooling', isLink: true, company: 'Mochi Health', year: '2026', caseStudySlug: 'mochi-ai-tooling', videoPreview: '/images/preview-mochi-tooling.mp4', summary: 'AI tools are only as good as the context they have. I built a documentation layer and a Claude Code plugin that gives anyone at the company an AI assistant that actually knows the product.' },
       { id: 'mochi-billing', title: 'Improving billing UX for our core subscriptions model', projectId: 'cip', href: '/project/mochi-subscriptions', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-subscriptions', videoPreview: '/images/preview-mochi-subs.mp4', summary: 'Billing and fulfillment were two independent systems\u2009\u2014\u2009patients got charged whether their medication shipped or not. I worked with two engineers to rebuild billing scheduling logic from scratch so charges only trigger on shipment. Eliminated >$200k/month in payment processing overhead; 90%+ of users migrated.' },
+      { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-progress-tracker', videoPreview: '/images/preview-mochi-tracker.mp4', summary: 'Mochi tracked weight in two places that didn\u2019t talk to each other. I unified them\u2009\u2014\u2009provider-recorded weights now appear automatically in the patient\u2019s tracker. Separately, I redesigned the tracker with mobile support: 53% increase in weekly active users within two weeks.' },
     ],
   },
   {
@@ -54,11 +54,6 @@ export const sections: Section[] = [
     ],
   },
 ]
-
-// Weight tracker case study — hidden from the site for now, kept for future restore.
-// To re-enable: add mochiTrackerProject back into the first section's projects array
-// and restore the 'mochi-progress-tracker' entry in caseStudiesBySlug (case-study-content.ts).
-export const mochiTrackerProject: Project = { id: 'mochi-tracker', title: 'Boosting engagement with our in-app weight tracker', projectId: 'mochi-tracker', href: '/project/mochi-progress-tracker', isLink: true, company: 'Mochi Health', year: '2025', caseStudySlug: 'mochi-progress-tracker', videoPreview: '/images/preview-mochi-tracker.mp4', summary: 'Mochi tracked weight in two places that didn\u2019t talk to each other. I unified them\u2009\u2014\u2009provider-recorded weights now appear automatically in the patient\u2019s tracker. Separately, I redesigned the tracker with mobile support: 53% increase in weekly active users within two weeks.' }
 
 // projectId → preview image (only static-image projects; video/lottie projects are handled separately)
 export const projectImageMap: Record<string, string> = {
