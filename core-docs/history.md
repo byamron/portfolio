@@ -2,6 +2,35 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-06-16 — Two new AI-native case studies: Flow + health-tracker
+
+**Branch:** `case-study-gaps-audit`
+
+**Summary:** Added two linked keystone case studies to close the portfolio's biggest gap for senior-PD roles at AI-native companies (Anthropic/OpenAI/Ramp/Stripe/The Browser Company): user-facing AI / human↔agent interaction design. Grounded in current job-posting research and verified against the real `~/dev/flow` and `~/dev/health-tracker` codebases. Both are added to `src/data/case-study-content.ts` (+ `caseStudiesBySlug`) and wired into `projects.ts` ("Building tools on the side", `status: In progress`) with `previewDescription` text placeholders in the image slot — **no preview video yet**, so going live is a one-line `previewDescription → videoPreview` swap once recordings exist. Public exposure stays gated by the eventual `next-update → main` deploy.
+
+- **Flow** (`flow`): "Designing trust into agentic coding." Framed around trust, not oversight — Ben is a non-technical designer who can't verify engineering by reading code, so the real problem is translating intent into output he can trust on two axes (design + engineering). Three trust axes: intent (plan audited/critiqued → he approves), design (multi-lens review + screenshot verification + HTML walkthrough with click-to-pin annotation layer → feedback updates docs), engineering (Anthropic best-practices alignment + automated correctness/a11y/security reviews + merge gate). Includes the §divergence beat answering "doesn't the agent flatten the design?" — divergence is deliberately upstream of the loop (curate early via chat + HTML iterations + design-language docs encoding his decision framework; steer once a direction lands).
+- **health-tracker** (`health-tracker`): "A health app that gets out of your way." Companion to Flow (Flow is the system; health-tracker is the proof). Reframe: most health apps make data the core function and show too much; this is for people who just want to know they're healthy and doing okay — surface a few metrics with honest interpretation, then get out of the way. Adaptive home page (the data picks the lead), observing-not-prescribing voice ("Sleep ran short," never "you didn't sleep enough"), on-device/private, and the AI-native workflow (conceived in a Claude chat → 17 rounds of HTML iteration → built with Flow). In progress (design system complete, build underway).
+
+**Note on rendering:** discovered that `CaseStudyLayoutA` renders only `title` + `narrative` (+ paperLinks/contactCTA/media). The `sections`, `heroVisual`, and `gallery` fields are authored but **not displayed by any component**. Both new studies carry full `sections`, but the shippable copy was concentrated in `narrative`. Wiring `sections` + visuals into the layout would lift every case study — captured as a separate follow-up.
+
+**Copy revision (same branch, after review):** rewrote both narratives (narrative is the only field that renders).
+- **Flow** — reframed for an insider audience (readers have used AI for coding): *"I build a lot with AI, and Flow is where I make my coding loops more autonomous without letting quality slip."* Dropped the repeated "I'm a non-technical designer / can't read code" framing to a single light touch. New spine: two human gates (plan + merge) → layered design + engineering review in between → a **feedback loop that learns** (agent self-review + human gate feedback logged and fed back so reviews sharpen over time) → everything **documented for observability**. Title unchanged.
+- **health-tracker** — corrected a framing error: **"few metrics" is MVP scope, not a principle** — the goal is a *comprehensive* tracker that competes on UX, not a minimalist one. New pitch: comprehensive but far more considerate of attention — leads with insight/interpretation, doesn't overwhelm with dashboards, doesn't alarm; **high signal, low effort**. Deemphasized the voice example (`"Sleep ran short"`) and the built-with-AI angle (table stakes now). Retitled *"A health tracker that leads with insight, not dashboards."*
+
+**Flow ↔ Forge convergence (noted for later):** Flow (v1.11.0 local) has added a lesson-harvest / `/flow:contribute` loop — the same transcript-analysis + feedback-learning pattern Forge (`~/dev/forge`, renamed "Noticed" on its remote) pioneered, now applied to Flow's own reviewers/gates. Per Ben, the transcript-analysis work is being folded into Flow, so the **`optimizing-my-workflow` (Forge) case study is slated to be retired/absorbed into Flow later** — not done here. Flow's "it learns" pillar was written to set that up. (The two now sit adjacent in the projects list with some thematic overlap; acceptable until Forge's study is retired.)
+
+**Stale hidden data:** the Flow `sections[]` still carry the old "trust axes / can't-read-code" framing. They don't render, so they weren't rewritten — flagged for cleanup if/when section rendering is wired.
+
+**New voice doc:** fixed a corny Flow line (*"The one thing I won't trade for speed is quality"* → *"The challenge is holding quality steady as I hand off more of the work"*) and, prompted by it, created `core-docs/case-study-voice.md` — concrete anti-corny / high-signal copy rules distilled from Ben's actual edits across the charlotte-v5 and los-angeles-v1 sessions (mined from Claude Code transcripts), with a before/after table. Referenced from `guidelines.md` and added to the CLAUDE.md core-docs table. It's a living doc — grows with each round of Ben's copy feedback.
+
+**Mochi AI Tooling rewrite** (the "context, not capability" reframe) is intentionally **not** in this branch — being done in the `mochi-internal-tools-case-studies` workspace to avoid same-file conflicts.
+
+**Verification:** `tsc -b` clean throughout, `eslint` clean. Dev server compiles and serves both routes.
+
+**Files changed:** `src/data/case-study-content.ts`, `src/data/projects.ts`, `core-docs/case-study-voice.md` (new), `core-docs/guidelines.md`, `CLAUDE.md`, `core-docs/history.md`.
+
+---
+
 ## 2026-06-01 — Flock easter egg on the "X" contact link
 
 **Branch:** `port-flock-hover-to-about`

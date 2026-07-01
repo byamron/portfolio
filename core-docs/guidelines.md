@@ -76,6 +76,8 @@ Write like a senior designer talking to a peer. Trust the reader. Every sentence
 
 **Never:** passionate about, leveraged, delightful, end-to-end (without specificity), "I was responsible for," "I helped with," defensive framing, generic reflection.
 
+For the practical checklist — concrete anti-corny / high-signal rules distilled from Ben's own edits, with before/after examples — see `case-study-voice.md`. Consult it before writing or revising any case study copy.
+
 ---
 
 ## Case study philosophy
