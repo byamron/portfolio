@@ -603,6 +603,17 @@ Ordered by impact and readiness:
 
 ---
 
+## Case study rendering — declarative headings + visual slots (follow-up)
+
+Surfaced by `/flow:staff-review` (push-further lens), 2026-06-15. `CaseStudyLayoutA` currently renders only the `narrative` paragraph array; the `CaseStudy` type's `sections` (declarative headings + per-section `visual`) and `heroVisual` exist in the data model but don't render. Several richer studies (subscriptions, tracker) already carry `sections` data that is currently dark, and the new Mochi internal-tools studies were authored as topic-sentence-led paragraphs to fit the narrative-only renderer.
+
+- [ ] Extend `CaseStudyLayoutA` to render `sections` (declarative heading + paragraphs + optional visual per section), not just flat `narrative`.
+- [ ] Render `heroVisual` and per-section `visual` slots, with an "asset pending" placeholder treatment.
+- [ ] Upgrades every case study at once; scannable declarative headings are core to the case-study philosophy (`core-docs/guidelines.md`).
+- [ ] Pending assets (separate from the renderer work): code↔canvas visuals for the AI-tooling study; the Patient State Factory panel + its three iteration versions; optional adoption anecdote for both closes.
+
+---
+
 ## Reference
 
 The original Framer components have been removed. All visual and interaction specifications are now fully documented in:

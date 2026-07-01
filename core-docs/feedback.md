@@ -2,6 +2,20 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-06-15 — Case study openings must ground the reader before the reframe
+
+**What happened:** First drafts of the Mochi internal-tools case studies opened mid-thought with a bare reframe sentence ("Understanding the product lived inside a few people's heads"). Ben flagged this as casual and hard to read — it drops the reader into the middle without enough context to land.
+
+**What went wrong:** "Start with the reframe, not the brief" (guidelines.md) was applied too literally — the reframe was stated before the reader had any grounding to understand *why* it's a reframe. A reframe only reads as insight if the reader first understands the ordinary situation it's overturning.
+
+**Lesson learned:** Give a short, relatable on-ramp before the reframe. Anchor in a situation the audience already recognizes (e.g., "Like most startups, Mochi optimized for shipping fast, not documenting") — then turn it. The grounding should also expose the *full* shape of the problem, including second-order costs the reader wouldn't think of (thin docs didn't just lock out non-technical staff — they taxed engineers, who got pulled off shipping to run errands only they had access to do). The two-sided cost is more relatable and more complete than the one-sided version.
+
+**How to apply:** Every case study opens by grounding the ordinary situation (1 sentence, relatable), then reframes it. Never lead with a bare insight the reader hasn't been set up to receive. Prefer two-sided problem framing (who's locked out *and* who's overburdened) over one-sided.
+
+**Refinement (same day):** A punchy declarative *fragment* as the first line ("Testing any flow meant building a test account by hand.") is the same drop-in failure even when the words change — it states a conclusion before the reader has the context to parse it, and it reads as sensationalist. The opener must be a full, contextualizing sentence that names the setting (e.g., "To test how anything works on Mochi's platform, you first need…"). Establish *where we are* and *what the thing is* before any turn or punch. If the audience wouldn't understand the first line cold, it's wrong — regardless of how it sounds.
+
+---
+
 ## 2026-03-29 — Component refactors silently revert prior fixes when both branches aren't updated
 
 **What happened:** The case study heading fix (PR #131 — `--text-size-title` at 36px, `marginBottom: 32`) was deployed to main, then reverted twice. The first revert was caught and re-fixed. The second revert happened because PR #135 (persistent right column) refactored `CaseStudyLayoutA.tsx` into separate narrow/wide rendering paths. The narrow path inherited the correct heading values, but the wide path was written with the old pre-fix values (`--text-size-section-heading`, `24px`). Additionally, `next-update` still had the old values, so every subsequent merge from `next-update → main` would re-introduce the regression.
