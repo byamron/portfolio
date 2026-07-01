@@ -21,11 +21,13 @@ Decision log and completed work, in reverse chronological order.
 
 **Stale hidden data:** the Flow `sections[]` still carry the old "trust axes / can't-read-code" framing. They don't render, so they weren't rewritten — flagged for cleanup if/when section rendering is wired.
 
+**New voice doc:** fixed a corny Flow line (*"The one thing I won't trade for speed is quality"* → *"The challenge is holding quality steady as I hand off more of the work"*) and, prompted by it, created `core-docs/case-study-voice.md` — concrete anti-corny / high-signal copy rules distilled from Ben's actual edits across the charlotte-v5 and los-angeles-v1 sessions (mined from Claude Code transcripts), with a before/after table. Referenced from `guidelines.md` and added to the CLAUDE.md core-docs table. It's a living doc — grows with each round of Ben's copy feedback.
+
 **Mochi AI Tooling rewrite** (the "context, not capability" reframe) is intentionally **not** in this branch — being done in the `mochi-internal-tools-case-studies` workspace to avoid same-file conflicts.
 
 **Verification:** `tsc -b` clean throughout, `eslint` clean. Dev server compiles and serves both routes.
 
-**Files changed:** `src/data/case-study-content.ts`, `core-docs/history.md`.
+**Files changed:** `src/data/case-study-content.ts`, `src/data/projects.ts`, `core-docs/case-study-voice.md` (new), `core-docs/guidelines.md`, `CLAUDE.md`, `core-docs/history.md`.
 
 ---
 

@@ -11,6 +11,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 | File | Purpose | When to update |
 |------|---------|----------------|
 | `core-docs/guidelines.md` | Positioning, voice, visual philosophy, case study approach, AI decision filters | When content strategy, voice, or editorial standards change |
+| `core-docs/case-study-voice.md` | Concrete case-study copy rules (anti-corny, high-signal) distilled from Ben's edits, with before/after examples | Before writing/revising case study copy; after Ben gives new copy/voice feedback |
 | `core-docs/design-language.md` | Visual & interaction rules, principles, anti-patterns | When design decisions are made, patterns are established, or visual rules change |
 | `core-docs/plan.md` | Migration plan, visual spec, phase breakdown | When scope changes, phases complete, or new info emerges |
 | `core-docs/workflow.md` | Development process (plan → build → review → feedback loop) | When the process itself needs refinement |
