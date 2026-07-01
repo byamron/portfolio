@@ -431,12 +431,12 @@ export const flow: CaseStudy = {
   id: 'flow',
   title: 'Designing trust into agentic coding',
   subtitle:
-    'AI coding let me build things I couldn’t before, and I wanted to build more, faster — without babysitting the agent or lowering the bar. Flow is a Claude Code plugin that turns my intent into output I can trust on both axes I care about: a non-technical designer’s system for shipping production software where the engineering is sound and the design quality goes up, not down.',
+    'I build a lot with AI, and Flow is where I make my own coding loops run more autonomously without letting quality slip. It’s a Claude Code plugin with two human gates — approving the plan and merging — layered design and engineering review in between, a feedback loop that sharpens the system over time, and a documented record of every run.',
   timeline: '2026',
   narrative: [
-    'AI coding let me build things I could never build before, and I leaned in hard. The next limit was scale: I wanted to build more, faster, without driving the agent prompt by prompt — I wanted to hand it a real plan and trust it to execute. Flow is the Claude Code plugin I built to make that trust possible.',
-    'I’m a designer, not an engineer — I’m not reading the code. So the problem was never reviewing every change; it was translating my intent into something I could trust was actually good, on the two axes I care about: design and engineering. I can judge the design. I can’t personally verify the engineering. Flow is built so I stay in control where my judgment is real, and the system supplies the judgment I can’t.',
-    'It comes down to three things: my intent gets audited and critiqued into a plan I approve; the design gets reviewed from multiple lenses, verified visually, and handed back to me to direct; and the engineering gets held to Anthropic’s agent best practices and reviewed for correctness, accessibility, and security before I make the final call to merge. I build things I couldn’t have built alone — and the design comes out better, not worse.',
+    'I build a lot with AI, and Flow is where I push my own coding loops to run more autonomously — hand off a plan, let the agent execute, and stop steering it prompt by prompt. The one thing I won’t trade for speed is quality, so Flow is really a system for keeping the bar high while I give up the keyboard.',
+    'Two moments stay mine: approving the plan before anything is built, and merging at the end. Everything in between runs through layers of review before it reaches me — design lenses and a visual pass on one side; correctness, accessibility, and security on the other — each able to send the work back. I’m closest to the design review; the engineering reviews cover the parts I’d rather not check by eye. By the merge gate, the work has been vetted the way a good team would vet it.',
+    'What makes it more than a pipeline is that it learns. Feedback — the agent critiquing its own work, and mine at the two gates — gets logged and fed back in, so the same mistake gets caught earlier next time and the reviews sharpen as I go. And every run documents itself: what changed, which checks ran, what got decided. The point isn’t only to ship faster — it’s a loop I can trust and actually see into.',
   ],
   heroVisual: {
     id: 'hero-flow',
@@ -500,14 +500,14 @@ export const flow: CaseStudy = {
 
 export const healthTracker: CaseStudy = {
   id: 'health-tracker',
-  title: 'A health app that gets out of your way',
+  title: 'A health tracker that leads with insight, not dashboards',
   subtitle:
-    'Most health apps make data the whole point — more metrics, more charts, more than anyone can understand or act on. This one is for people who just want to know they’re healthy and generally doing okay: it surfaces a few metrics with honest interpretation, tells you what you need to know, and lets you get on with your life. A privacy-first iOS app built entirely on-device — and the first project I conceived in a Claude chat, explored through seventeen rounds of HTML iteration, and built with Flow from the start.',
+    'Most health apps hand you a dashboard and leave the interpreting to you. I’m building one that’s just as comprehensive but far more considerate about your attention — it does the interpreting, surfaces what’s worth noticing, and never sounds an alarm to do it. High signal, low effort. A private, on-device iOS app, still in progress.',
   timeline: '2026',
   narrative: [
-    'Most health apps make data the core function — comprehensive dashboards, endless charts, more numbers than anyone can understand or act on. But you don’t fix your health inside an app, and most people don’t want to manage it there either. They just want to know they’re healthy and generally doing okay. So that’s what I built: a few metrics with light, honest interpretation, and nothing else competing for your attention. Open it, get the answer, get on with your day.',
-    'That one idea drives the rest. The home page isn’t a fixed dashboard — it reads what your data is doing and shows only what’s worth your attention, which most days is a single calm line. The copy observes instead of prescribing: “Sleep ran short,” never “you didn’t sleep enough.” Every metric is drawn the way that represents it honestly, not whatever fills the space. No streaks, no opaque readiness score, no green-for-good, red-for-bad coding of your own body. And it’s all on-device — HealthKit for the data, Apple’s on-device model for the words — so nothing leaves your phone.',
-    'It’s also the first project I took fully through the process I’ve been refining for designing in code: I pressure-tested the philosophy in a Claude chat before drawing anything, explored it through seventeen rounds of HTML iteration, then built it with Flow. It’s still in progress — the design system is done, the build is underway.',
+    'Most health apps hand you a dashboard and leave the interpreting to you — every metric, all the time, in charts you have to read and rank yourself. I’m building one that’s just as comprehensive but far more considerate about your attention: it does the interpreting, leads with what’s worth noticing, and never sounds an alarm to do it. High signal, low effort.',
+    'The home page reads your data and adapts — it surfaces what changed or needs a look and keeps the rest quiet, so a glance tells you where you stand. Nothing shouts: no red, no readiness score, no ranking your body against yesterday. It tells you what’s going on without telling you how to feel about it.',
+    'It’s a private, on-device iOS app, still in progress — a focused set of metrics now, built to grow into a full tracker. The design system is done; the build is underway.',
   ],
   heroVisual: {
     id: 'hero-health-tracker',

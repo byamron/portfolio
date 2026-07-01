@@ -13,9 +13,17 @@ Decision log and completed work, in reverse chronological order.
 
 **Note on rendering:** discovered that `CaseStudyLayoutA` renders only `title` + `narrative` (+ paperLinks/contactCTA/media). The `sections`, `heroVisual`, and `gallery` fields are authored but **not displayed by any component**. Both new studies carry full `sections`, but the shippable copy was concentrated in `narrative`. Wiring `sections` + visuals into the layout would lift every case study — captured as a separate follow-up.
 
+**Copy revision (same branch, after review):** rewrote both narratives (narrative is the only field that renders).
+- **Flow** — reframed for an insider audience (readers have used AI for coding): *"I build a lot with AI, and Flow is where I make my coding loops more autonomous without letting quality slip."* Dropped the repeated "I'm a non-technical designer / can't read code" framing to a single light touch. New spine: two human gates (plan + merge) → layered design + engineering review in between → a **feedback loop that learns** (agent self-review + human gate feedback logged and fed back so reviews sharpen over time) → everything **documented for observability**. Title unchanged.
+- **health-tracker** — corrected a framing error: **"few metrics" is MVP scope, not a principle** — the goal is a *comprehensive* tracker that competes on UX, not a minimalist one. New pitch: comprehensive but far more considerate of attention — leads with insight/interpretation, doesn't overwhelm with dashboards, doesn't alarm; **high signal, low effort**. Deemphasized the voice example (`"Sleep ran short"`) and the built-with-AI angle (table stakes now). Retitled *"A health tracker that leads with insight, not dashboards."*
+
+**Flow ↔ Forge convergence (noted for later):** Flow (v1.11.0 local) has added a lesson-harvest / `/flow:contribute` loop — the same transcript-analysis + feedback-learning pattern Forge (`~/dev/forge`, renamed "Noticed" on its remote) pioneered, now applied to Flow's own reviewers/gates. Per Ben, the transcript-analysis work is being folded into Flow, so the **`optimizing-my-workflow` (Forge) case study is slated to be retired/absorbed into Flow later** — not done here. Flow's "it learns" pillar was written to set that up. (The two now sit adjacent in the projects list with some thematic overlap; acceptable until Forge's study is retired.)
+
+**Stale hidden data:** the Flow `sections[]` still carry the old "trust axes / can't-read-code" framing. They don't render, so they weren't rewritten — flagged for cleanup if/when section rendering is wired.
+
 **Mochi AI Tooling rewrite** (the "context, not capability" reframe) is intentionally **not** in this branch — being done in the `mochi-internal-tools-case-studies` workspace to avoid same-file conflicts.
 
-**Verification:** `tsc -b` clean throughout. Dev server compiles and serves both routes.
+**Verification:** `tsc -b` clean throughout, `eslint` clean. Dev server compiles and serves both routes.
 
 **Files changed:** `src/data/case-study-content.ts`, `core-docs/history.md`.
 
