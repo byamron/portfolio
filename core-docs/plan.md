@@ -614,6 +614,15 @@ Surfaced by `/flow:staff-review` (push-further lens), 2026-06-15. `CaseStudyLayo
 
 ---
 
+## Hover-preview videos should respect prefers-reduced-motion (follow-up)
+
+Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-video PR, 2026-07-02. `VideoPreview` renders `<video autoPlay loop>` with no `prefers-reduced-motion` guard, so reduced-motion visitors get a continuously looping hover preview — against the site's own accessibility standard ("Respect prefers-reduced-motion… fall back to instant or minimal opacity changes") and the reduced-motion treatment used everywhere else (sidebar backdrop, glass pill, cross-fades). Adding the health-tracker video grows the blast radius (its preview was previously calm static text).
+
+- [ ] Gate `VideoPreview` on `useReducedMotion()` (Framer Motion, already a dependency): when reduced motion is preferred, render with `autoPlay={false}` and seek to frame 0 (`onLoadedMetadata` → `currentTime = 0`) so it paints a crisp poster still instead of looping. No new assets — the first frame is the poster.
+- [ ] Shared component — changes all 6+ hover-preview cards + case-study pages, so it wants its own verification pass rather than riding an asset PR.
+
+---
+
 ## Reference
 
 The original Framer components have been removed. All visual and interaction specifications are now fully documented in:
