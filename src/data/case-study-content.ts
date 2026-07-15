@@ -592,7 +592,7 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'trio-todo-list': trioTodoList,
   'language-app': languageApp,
   'manipulation-identifier': manipulationIdentifier,
-  'optimizing-my-workflow': optimizingMyWorkflow,
+  // 'optimizing-my-workflow' intentionally unregistered — Forge study hidden (superseded by Flow); optimizingMyWorkflow export preserved for restore.
   'flow': flow,
   'health-tracker': healthTracker,
 }
