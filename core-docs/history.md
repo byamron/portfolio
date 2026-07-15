@@ -2,6 +2,34 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-07-02 — Mochi internal-tools case studies + case-study preview videos
+
+**Branches:** `mochi-internal-tools-next-update` (#187), `add-case-study-preview-videos` (#188) — both merged into `next-update`.
+
+**Summary:** Added two Mochi internal-tools case studies, hid the progress-tracker study, and wired hover-preview videos for Patient State Factory, health-tracker, and trio. Content was deep-dived against the real `mochi-context` + `mochi-plugins` repos (copied into `~/Desktop/mochi-repos`).
+
+**AI-tooling rewrite** (`mochi-ai-tooling`, retitled *"AI tools that know how the product works"*): reframed from the old "documentation layer + plugin" pitch to a knowledge-layer + tools story. Spine: a startup optimized for shipping, not documenting, so the product ran on institutional knowledge held by a few people (the company moved at the speed of whoever held the answer) — I built a shared source of truth plus tools on top for design/dev/product work. Volta: *keeping it up to date mattered as much as building it* — stale docs are worse than none; an audit found 1 in 5 facts had drifted, so the system maintains itself (a scheduled routine reads each week’s code changes, judges what matters, and rewrites the docs against source). Close is first-person impact (ship to prod, run testing, inform strategy, build internal tools). Per Ben: no oversell — modest adoption, so lead with range of users + system rigor, not headcount; dropped the shiny closing metrics.
+
+**Patient State Factory** (`patient-state-factory`, new): reframe is *friction, not difficulty* — setting up a staging account state by hand (dozens of interdependent DB fields) wasn’t hard, just tedious, and that friction decided who could participate (engineers skipped it, non-technical teammates couldn’t at all, testing defaulted to prod where patient data can slip). Centerpiece is the three-rejection arc: (1) an AI-prompt `/edit-staging-account` skill proved state could be automated, (2) frontend fixtures were the simplest version but "you can’t follow a real flow against a simulation" so it was thrown away, (3) the Factory runs cascading scripts that make every dependency change for real. Stands on the knowledge layer (cross-linked to the AI-tooling study).
+
+**Hid the progress-tracker study:** removed `mochi-tracker` from the rendered `sections` array (preserved as `export const mochiTrackerProject` with restore notes) and unregistered `'mochi-progress-tracker'` from `caseStudiesBySlug` (route 404s). Leaning on the two source-of-truth registries (`sections` + `caseStudiesBySlug`) drops the study from the homepage, `projectsById`, `getProjectForSlug`, and the sitemap automatically. `mochiProgressTracker` export kept for restore. Chose this over a `hidden?: boolean` flag (staff-review suggestion) because the flag keeps it in the routing registry behind a guard and needs `!hidden` filters in 5+ consumers (incl. the sitemap generator) — a weaker disconnect.
+
+**Preview videos (#188):** cut hover-preview videos for PSF, health-tracker, and trio with the standard recipe (`technical-context.md`): H.264, no audio, 1056-wide (2x retina), +faststart, CRF 24, limited-range `yuv420p(tv)`. Sources for trio/health were 6.3/6.5 MB with audio + ~3.7 Mbps video; re-cut to 2.8/2.9 MB (in the 0.3—3.3 MB sibling band). PSF 742 KB. Switched PSF + health-tracker cards from `previewDescription` (text) to `videoPreview`.
+
+**Editorial lessons (→ `core-docs/feedback.md`):** (1) ground the reader before the reframe — a bare reframe, or a punchy declarative *fragment* as the first line, drops the reader mid-thought; the opener must be a full contextualizing sentence naming the setting. (2) Prefer two-sided problem framing (who’s locked out AND who’s overburdened). Also fixed PSF copy tense consistency (past-frame the problem paragraph; split the knowledge-layer sentence so the past clause isn’t mid present-tense sentence).
+
+**Git saga (base-branch lesson):** #187 was mistakenly opened against `main` and merged there, briefly putting in-progress work on the deploy branch. Reverted `main` with a forward revert commit (no history rewrite), then re-targeted to `next-update` (cherry-pick + conflict resolution to coexist with #185’s Flow/health-tracker). Reaffirmed: **feature branches merge into `next-update`, not `main`.** Then #187 merged into `next-update` before the PSF tense-fix + video landed, so those two stranded items were folded into #188.
+
+**Follow-ups captured (→ `core-docs/plan.md`):** (1) wire `CaseStudyLayoutA` to render `sections` declarative headings + `visual`/`heroVisual` slots (only `narrative` renders today; upgrades every case study). (2) Give `VideoPreview` a `prefers-reduced-motion` guard (autoplay looping video ignores the site’s a11y standard; paint a paused first-frame poster instead) — shared component, wants its own verification pass.
+
+**Reviews:** `/simplify` + four-lens `/flow:staff-review` ran on both PRs — no blockers. Reviewers twice suggested the `hidden` flag and once flagged the inline-link HTML as "fragile" (established pattern, kept); both surfaced as non-blocking.
+
+**Verification:** `tsc -b` clean and all 71 vitest tests pass throughout. Videos probed: no audio, 1056-wide, `yuv420p(tv)`, moov-before-mdat. Note: `npm run build`’s `vite build` step fails on a pre-existing missing `ui-playground/.../slide-unlock` import (from #172) — unrelated, flagged for separate fix.
+
+**Files changed:** `src/data/case-study-content.ts`, `src/data/projects.ts`, `public/images/preview-{patient-state-factory,health-tracker,todo-priority}.mp4`, `public/sitemap.xml`, `core-docs/feedback.md`, `core-docs/plan.md`.
+
+---
+
 ## 2026-06-16 — Two new AI-native case studies: Flow + health-tracker
 
 **Branch:** `case-study-gaps-audit`
