@@ -2,6 +2,16 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-07-22 — The deploy gate is `vite build`, not `npm run build`; check submodule init before calling a build broken
+
+**What happened:** During release review, `npm run build` failed on a missing `ui-playground/.../SlideUnlock` import, which I flagged for several turns as a possible release blocker. Two things resolved it: (1) `ui-playground` is a **git submodule** not initialized in the Conductor worktree (so its files were absent locally); (2) the deploy workflow runs **`npx vite build`** (`.github/workflows/deploy.yml`), not `npm run build` — so `tsc -b` never runs in CI, and the submodule's TypeScript errors never gate the deploy (5 recent deploys all succeeded).
+
+**Lesson learned:** Before treating a failing `npm run build` as a release blocker: (1) check `.gitmodules` / `git submodule status` for uninitialized submodules (`git submodule update --init --recursive`); (2) check the actual deploy command in `.github/workflows/deploy.yml`. This project's real deploy/release gate is **`vite build` + `vitest`** — `vite` transpiles without typechecking, so `tsc -b` errors (especially inside the `ui-playground` submodule) are pre-existing code-quality issues, NOT deploy blockers.
+
+**How to apply:** Gate releases on `vite build` + tests. Don't block a release on `npm run build`/`tsc -b` failures that live in the submodule or that CI never runs.
+
+---
+
 ## 2026-06-15 — Case study openings must ground the reader before the reframe
 
 **What happened:** First drafts of the Mochi internal-tools case studies opened mid-thought with a bare reframe sentence ("Understanding the product lived inside a few people's heads"). Ben flagged this as casual and hard to read — it drops the reader into the middle without enough context to land.
