@@ -2,6 +2,28 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-07-22 — Portfolio polish: preview videos, hide Forge, resume, hero copy, PSF Screen Studio composite
+
+**Branch:** `add-flow-preview-video` (#190 — to `next-update`).
+
+**Summary:** A batch of projects-list polish plus a restyled Patient State Factory preview.
+- **Flow** — added a hover-preview video (`preview-flow.mp4`); every card now has media (closed the "Flow is the lone text card" follow-up from #188).
+- **Hid Forge** (`optimizing-my-workflow`, superseded by Flow) — removed from the rendered `sections` array and unregistered from `caseStudiesBySlug` (route 404s, dropped from sitemap); data preserved as `forgeProject` / `optimizingMyWorkflow` for restore (same pattern as the progress-tracker hide).
+- **Dropped the "In progress" badge** from `language-app` and `detect-manip`.
+- **Refreshed the resume** — replaced `ben-yamron-resume.pdf` and regenerated its hover preview (`preview-resume.png`, rendered page 1 via `sips` at 1224×1584).
+- **Hero copy** — "Currently designing patient experiences at Mochi Health" (was "leading design for"); Mochi link unchanged.
+- **Patient State Factory preview restyled as a Screen Studio composite** — the raw screen recording composited onto the blurred golden-hour background (1440×1080 4:3, 7% side padding, 18px rounded window corners) via ffmpeg + a PIL-generated rounded-corner alpha mask. Also folded in the PSF tense-fix + video stranded when #187 merged before they landed.
+
+**Technical decisions:** All previews use the standard recipe (`technical-context.md`): silent, 1056/1440-wide, `+faststart`, limited-range `yuv420p(tv)`. The ffmpeg composite pre-bakes the blurred background into a static "plate" (per-frame `gblur` was too slow) and hard-caps output duration with `-t` (the `-loop 1` image inputs otherwise render unbounded even with `-shortest` / overlay `shortest=1`).
+
+**Design decision (Ben feedback):** the initial composite included a drop shadow offset straight down; it read as a hard-cornered dark bar under the window, so it was removed — the window sits cleanly on the blurred background with rounded corners top and bottom.
+
+**Reviews:** `/flow:security-review` (clean — static content/data + assets, no new sinks) and `/flow:accessibility-review` (clean — hero copy is a11y-neutral; reduced-motion video guard tracked as a follow-up). `vite build` (the deploy gate) passes; 71 tests pass.
+
+**Follow-ups (in `plan.md`):** render `CaseStudyLayoutA` `sections`/visual slots; `prefers-reduced-motion` guard for `VideoPreview` (autoplay hover videos).
+
+---
+
 ## 2026-07-02 — Mochi internal-tools case studies + case-study preview videos
 
 **Branches:** `mochi-internal-tools-next-update` (#187), `add-case-study-preview-videos` (#188) — both merged into `next-update`.
