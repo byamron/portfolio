@@ -611,6 +611,7 @@ Surfaced by `/flow:staff-review` (push-further lens), 2026-06-15. `CaseStudyLayo
 - [ ] Render `heroVisual` and per-section `visual` slots, with an "asset pending" placeholder treatment.
 - [ ] Upgrades every case study at once; scannable declarative headings are core to the case-study philosophy (`core-docs/guidelines.md`).
 - [ ] Pending assets (separate from the renderer work): code↔canvas visuals for the AI-tooling study; the Patient State Factory panel + its three iteration versions; optional adoption anecdote for both closes.
+- [ ] **When section headings go live, restore the "X, not Y" contrast form on the headings softened during the voice pass** (staff-review, 2026-07-23). The AI-tell pass flattened three declarative takeaway headings into labels/narration — `sony-screenless-tv` (`"Why we rejected wearables"` — restore the values-call takeaway), `mochi-subscriptions` timing heading (`"…and it turned out to be a timing problem"` — restore `"a timing problem, not a data problem"`), `mochi-progress-tracker` conduit heading (restore `"…not a feature"`). Flattening the "not X, but Y" flip was correct for the *narrative* voice, but headings are the one place the crisp contrast still earns its keep as a 30-second scan signpost (`core-docs/guidelines.md`: "Headings should be declarative sentences, not labels"). Audit the full set for the same softening when this lands — the headings are dark today so the change is invisible until then.
 
 ---
 
