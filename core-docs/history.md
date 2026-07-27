@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-07-23 — Case-study voice polish: em-dash convention + staff-review fixes
+
+**Branch:** `case-study-voice-polish` (→ `next-update`). Follows the voice rewrite (#191) and a four-lens `/flow:staff-review` of the `next-update → main` deploy (#192).
+
+**Summary:** Applied the rendered, low-risk fixes the staff review surfaced; deferred the heading + asset work to the rendering follow-up.
+- **Em-dash convention standardized to thin-space** (`U+2009` `—` `U+2009`) across every rendered/authored copy field in `case-study-content.ts` (subtitle, narrative, sections) and `projects.ts` (summaries). The site had drifted: the 9 established studies used thin-wrapped em-dashes while the newer studies (Flow, PSF, health-tracker, language-app, manipulation) + their homepage summaries used regular-space — a visible split in a rendered field (design-engineer lens, byte-confirmed). Chose thin as the target (established majority + finer typography). 109 em-dashes normalized.
+- **Guard test** — added `src/__tests__/emdashConvention.test.ts`, which asserts every em-dash in the rendered copy of `caseStudiesBySlug` + `projects.ts` sections is thin-wrapped, so the split can't silently return. 72 tests pass.
+- **Homepage card summaries brought into voice** (UX lens): the cards had lagged the page rewrite, so a project spoke in two registers card-vs-page. `mochi-billing` ("Eliminated >$200k…; 90%+ of users migrated" → "cut more than $200k/month… Over 90% of users migrated") and `detect-manip` (dropped the "The hard part isn't detection; it's…" flip and the "Educate, don't censor" imperative).
+- **Small nits** — curly-quoted `"prebunking"` and `"Why?"` in the manipulation narrative to match sibling inline quotes; "the outdated fact" → "outdated facts".
+- **`contributions.json`** — refreshed from `origin/main` so the deploy merge doesn't revert ~2 months of cron-updated contribution-graph data (staff-engineer lens; transient but avoidable).
+
+**Deferred (in `plan.md`, rendering follow-up):** when section headings render, restore the "X, not Y" contrast form on the three headings the AI-tell pass flattened into labels (Sony wearables, Subscriptions timing, Tracker conduit) — correct for narrative voice, wrong for scannable headings.
+
+**Skill update (outside repo):** `write-in-my-voice` gained a mandatory "AI-tell sweep" section (colon-reveals, dash-drumrolls, "not X, but Y" flips, one-clause drops, manufactured aphorisms) + checklist item.
+
+**Verification:** `tsc -b` clean; 72 tests pass. No blockers from any of the four lenses.
+
+---
+
 ## 2026-07-22 — Portfolio polish: preview videos, hide Forge, resume, hero copy, PSF Screen Studio composite
 
 **Branch:** `add-flow-preview-video` (#190 — to `next-update`).

@@ -36,7 +36,7 @@ export const mochiAiTooling: CaseStudy = {
   timeline: '2025–2026',
   narrative: [
     'Like most startups, Mochi optimized for shipping fast over documenting how things worked, so the product ran on institutional knowledge held by a few people. Everyone else waited on them, and those few kept getting pulled off their own work to answer. Progress moved at the speed of whoever held the answer.',
-    'So I built a shared source of truth for how the product works — the specialized knowledge about the codebase and the business — and, on top of it, tools for design, dev, and product work. Keeping it current mattered as much as building it. Stale documentation is worse than none, because people and AI trust it and build on the outdated fact. An audit found 1 in 5 facts had drifted, so I made the system maintain itself. A scheduled routine reads each week’s code changes, judges what matters, and rewrites the docs, checking every claim against the source.',
+    'So I built a shared source of truth for how the product works — the specialized knowledge about the codebase and the business — and, on top of it, tools for design, dev, and product work. Keeping it current mattered as much as building it. Stale documentation is worse than none, because people and AI trust it and build on outdated facts. An audit found 1 in 5 facts had drifted, so I made the system maintain itself. A scheduled routine reads each week’s code changes, judges what matters, and rewrites the docs, checking every claim against the source.',
     'For me, it removed the usual limits on what a designer can do alone. With these tools I now ship to production myself (bug fixes, UX polish, and design-system updates, in code), set up and run my own testing, inform product strategy with my own data, and build internal tools on top, like the <a href="/project/patient-state-factory" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Patient State Factory</a>. Other people use them too, but I’m the clearest example of what they open up.',
   ],
 }
@@ -56,7 +56,7 @@ export const mochiProgressTracker: CaseStudy = {
       id: 'tracker-problem',
       heading: 'Only 30% of patients had ever used our progress tracker',
       paragraphs: [
-        'Patients tracked their weight loss in third-party apps instead. The company wanted to invest but couldn’t justify it, since there was no clear connection to revenue. The design reflected that neglect — unclear data visualization, no mobile support, and rigid logging that forced you to enter every metric at once.',
+        'Patients tracked their weight loss in third-party apps instead. The company wanted to invest but couldn’t justify it, since there was no clear connection to revenue. The design reflected that neglect — unclear data visualization, no mobile support, and rigid logging that forced you to enter every metric at once.',
       ],
       visual: null,
     },
@@ -68,18 +68,18 @@ export const mochiProgressTracker: CaseStudy = {
       ],
       visual: {
         id: 'tracker-before-after',
-        caption: 'Before/after of the tracker UI \u2014 the contrast should be immediately obvious.',
+        caption: 'Before/after of the tracker UI\u2009\u2014\u2009the contrast should be immediately obvious.',
       },
     },
     {
       id: 'data-unification',
       heading: 'The tracker’s real value was as a data conduit',
       paragraphs: [
-        'Mochi had two separate systems tracking patient weight — one for patients, one for providers — and neither talked to the other. Patients logged weight in the app, and providers recorded it separately during check-ins. I connected them so provider-recorded weights show up in the patient’s tracker automatically. Patients get a filled-out history without any extra effort, and providers get the timestamped data they need to approve refills. A feature that started as low-priority is now infrastructure the clinical team can’t operate without.',
+        'Mochi had two separate systems tracking patient weight — one for patients, one for providers — and neither talked to the other. Patients logged weight in the app, and providers recorded it separately during check-ins. I connected them so provider-recorded weights show up in the patient’s tracker automatically. Patients get a filled-out history without any extra effort, and providers get the timestamped data they need to approve refills. A feature that started as low-priority is now infrastructure the clinical team can’t operate without.',
       ],
       visual: {
         id: 'data-flow-diagram',
-        caption: 'Data flow diagram \u2014 old state vs. new state showing unified data routing.',
+        caption: 'Data flow diagram\u2009\u2014\u2009old state vs. new state showing unified data routing.',
       },
     },
   ],
@@ -107,7 +107,7 @@ export const mochiSubscriptions: CaseStudy = {
       heading:
         'Billing and fulfillment were two independent systems, and patients paid the price',
       paragraphs: [
-        'Mochi\u2019s billing ran on Stripe\u2019s monthly automation, but medication delivery depended on a multi-step refill process. When anything deviated \u2014 a missed step, a pharmacy delay, a supply issue \u2014 charges kept going while medication didn\u2019t. A pharmacy shutdown made it impossible to ignore: patients went months without medication while charges continued, fraud claims spiked, and churn accelerated.',
+        'Mochi\u2019s billing ran on Stripe\u2019s monthly automation, but medication delivery depended on a multi-step refill process. When anything deviated\u2009\u2014\u2009a missed step, a pharmacy delay, a supply issue\u2009\u2014\u2009charges kept going while medication didn\u2019t. A pharmacy shutdown made it impossible to ignore: patients went months without medication while charges continued, fraud claims spiked, and churn accelerated.',
       ],
       visual: {
         id: 'billing-diagram',
@@ -127,9 +127,9 @@ export const mochiSubscriptions: CaseStudy = {
     {
       id: 'timing-problem',
       heading:
-        'Refill denial rates spiked 3x — and it turned out to be a timing problem',
+        'Refill denial rates spiked 3x — and it turned out to be a timing problem',
       paragraphs: [
-        'Removing the required check-ins meant providers were denying refills they couldn’t confidently approve. The intuitive fix — prompting patients for updated health information — didn’t work, because providers reviewed refills before patients had a chance to respond. So I moved data collection 14 days earlier in the cycle, and the information is already there by the time providers review.',
+        'Removing the required check-ins meant providers were denying refills they couldn’t confidently approve. The intuitive fix — prompting patients for updated health information — didn’t work, because providers reviewed refills before patients had a chance to respond. So I moved data collection 14 days earlier in the cycle, and the information is already there by the time providers review.',
       ],
       visual: {
         id: 'timing-diagram',
@@ -140,9 +140,9 @@ export const mochiSubscriptions: CaseStudy = {
     {
       id: 'delay-feature',
       heading:
-        'Over 20% of subscription churn was preventable \u2014 patients just wanted a break',
+        'Over 20% of subscription churn was preventable\u2009\u2014\u2009patients just wanted a break',
       paragraphs: [
-        'Rigid 28-day cycles meant a patient who wanted a break had to cancel and re-onboard. Leadership wouldn’t approve a true pause, so I designed delay — push your next order out up to three months, and your subscription stays active. It turns full churn into delayed revenue.',
+        'Rigid 28-day cycles meant a patient who wanted a break had to cancel and re-onboard. Leadership wouldn’t approve a true pause, so I designed delay — push your next order out up to three months, and your subscription stays active. It turns full churn into delayed revenue.',
       ],
       visual: {
         id: 'delay-ui',
@@ -154,32 +154,32 @@ export const mochiSubscriptions: CaseStudy = {
   gallery: [
     {
       id: 'subscription-management',
-      caption: 'Subscription management \u2014 the primary patient view for managing their medication plan.',
+      caption: 'Subscription management\u2009\u2014\u2009the primary patient view for managing their medication plan.',
       size: 'full',
     },
     {
       id: 'order-states-mobile',
-      caption: 'Order status tracking on mobile \u2014 clear visibility into where medication is in the fulfillment pipeline.',
+      caption: 'Order status tracking on mobile\u2009\u2014\u2009clear visibility into where medication is in the fulfillment pipeline.',
       size: 'half',
     },
     {
       id: 'billing-history',
-      caption: 'Billing history \u2014 transparent record connecting every charge to a specific order.',
+      caption: 'Billing history\u2009\u2014\u2009transparent record connecting every charge to a specific order.',
       size: 'half',
     },
     {
       id: 'delay-flow-full',
-      caption: 'The complete delay flow \u2014 from selecting a new date through confirmation and updated delivery estimates.',
+      caption: 'The complete delay flow\u2009\u2014\u2009from selecting a new date through confirmation and updated delivery estimates.',
       size: 'full',
     },
     {
       id: 'edge-case-states',
-      caption: 'Edge case handling \u2014 pharmacy delays, supply issues, and provider holds surfaced clearly to patients.',
+      caption: 'Edge case handling\u2009\u2014\u2009pharmacy delays, supply issues, and provider holds surfaced clearly to patients.',
       size: 'half',
     },
     {
       id: 'notification-design',
-      caption: 'Billing and fulfillment notifications \u2014 email and in-app messaging for key subscription events.',
+      caption: 'Billing and fulfillment notifications\u2009\u2014\u2009email and in-app messaging for key subscription events.',
       size: 'half',
     },
   ],
@@ -208,7 +208,7 @@ export const uwDesignSystem: CaseStudy = {
       id: 'uw-components',
       heading: 'I designed the first three components',
       paragraphs: [
-        'But the real deliverable was the system that builds the system — a documentation template that works for both engineers and non-technical designers, a process for turning existing UI patterns into opinionated, reusable components, and clear guidance on what the system shouldn’t do.',
+        'But the real deliverable was the system that builds the system — a documentation template that works for both engineers and non-technical designers, a process for turning existing UI patterns into opinionated, reusable components, and clear guidance on what the system shouldn’t do.',
       ],
       visual: null,
     },
@@ -216,7 +216,7 @@ export const uwDesignSystem: CaseStudy = {
       id: 'uw-insight',
       heading: 'Design systems get adopted when they fit existing workflows instead of demanding new ones',
       paragraphs: [
-        'Code snippets toggled on or off depending on your role, and a framework dropdown let teams grab code in their stack. The system met people where they were on adoption — but it stayed opinionated about the design itself, because infinite customization isn’t really flexibility, it’s just abdication.',
+        'Code snippets toggled on or off depending on your role, and a framework dropdown let teams grab code in their stack. The system met people where they were on adoption — but it stayed opinionated about the design itself, because infinite customization isn’t really flexibility, it’s just abdication.',
       ],
       visual: null,
     },
@@ -237,9 +237,9 @@ export const sonyScreenlessTv: CaseStudy = {
   sections: [
     {
       id: 'sony-research',
-      heading: 'People don\u2019t watch together for the content \u2014 they watch together for the connection',
+      heading: 'People don\u2019t watch together for the content\u2009\u2014\u2009they watch together for the connection',
       paragraphs: [
-        'A speculative vision project for Sony’s TV division (master’s capstone, 2024). Sony asked us to explore how mixed reality might shape home entertainment. We went in expecting to hear about picture quality, and what we heard about instead was compromise — subtitles, volume, lighting — and the fact that people kept watching together anyway. The value people were protecting was presence, more than the content itself.',
+        'A speculative vision project for Sony’s TV division (master’s capstone, 2024). Sony asked us to explore how mixed reality might shape home entertainment. We went in expecting to hear about picture quality, and what we heard about instead was compromise — subtitles, volume, lighting — and the fact that people kept watching together anyway. The value people were protecting was presence, more than the content itself.',
       ],
       visual: null,
     },
@@ -247,7 +247,7 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-wearables',
       heading: 'Why we rejected wearables',
       paragraphs: [
-        'Apple Vision Pro had just launched, so wearables were the obvious path. But you can’t catch someone’s eye during a tense scene through a headset. This was really a values call more than a technical one — we didn’t want to build separate realities optimized for each person. We wanted to preserve a shared one that works for everyone in the room.',
+        'Apple Vision Pro had just launched, so wearables were the obvious path. But you can’t catch someone’s eye during a tense scene through a headset. This was really a values call more than a technical one — we didn’t want to build separate realities optimized for each person. We wanted to preserve a shared one that works for everyone in the room.',
       ],
       visual: null,
     },
@@ -255,7 +255,7 @@ export const sonyScreenlessTv: CaseStudy = {
       id: 'sony-concept',
       heading: 'Screenless TV: shared space, personalized experience',
       paragraphs: [
-        'A volumetric display projected from a flat device — no screen, no headset. Angle-specific imagery lets each viewer see their own subtitles, and directional audio delivers a different volume to each position in the room. Everyone gets their own experience without leaving the shared one.',
+        'A volumetric display projected from a flat device — no screen, no headset. Angle-specific imagery lets each viewer see their own subtitles, and directional audio delivers a different volume to each position in the room. Everyone gets their own experience without leaving the shared one.',
       ],
       visual: {
         id: 'sony-concept-render',
@@ -283,7 +283,7 @@ export const cipElectionMisinformation: CaseStudy = {
   sections: [
     {
       id: 'cip-research',
-      heading: 'Election rumors aren\u2019t about getting the facts wrong \u2014 they\u2019re about framing',
+      heading: 'Election rumors aren\u2019t about getting the facts wrong\u2009\u2014\u2009they\u2019re about framing',
       paragraphs: [
         'I analyzed how misleading claims spread on Twitter during the 2020 and 2022 U.S. elections. What we kept finding was that these claims often start with real evidence — a photo, a statistic, a policy change — and become misleading through the political frame applied to them. We built a framework that maps how the same evidence gets assembled into very different narratives depending on who’s telling the story.',
       ],
@@ -393,10 +393,10 @@ export const languageApp: CaseStudy = {
   id: 'language-app',
   title: 'Voice-first language practice with personalized feedback',
   subtitle:
-    'Most language apps teach you to tap and swipe — not speak. I’m building an iOS app with two modes: a five-minute voice conversation with an AI partner, and a feed of corrections built from things you actually said.',
+    'Most language apps teach you to tap and swipe — not speak. I’m building an iOS app with two modes: a five-minute voice conversation with an AI partner, and a feed of corrections built from things you actually said.',
   timeline: '2026',
   narrative: [
-    'Most language-learning apps underindex on speaking practice, and the ones that let you speak with an AI often run $20–30 a month. I wanted to practice exactly the way I wanted for a fraction of that. So I’m building an app for intermediate-to-advanced learners who don’t need a curriculum — they need to talk, and they need to know what to fix. It has two modes: voice calling with an AI partner powered by the Gemini Live API, and a feed of corrections synthesized from things you actually said. No streaks, no XP, no levels.',
+    'Most language-learning apps underindex on speaking practice, and the ones that let you speak with an AI often run $20–30 a month. I wanted to practice exactly the way I wanted for a fraction of that. So I’m building an app for intermediate-to-advanced learners who don’t need a curriculum — they need to talk, and they need to know what to fix. It has two modes: voice calling with an AI partner powered by the Gemini Live API, and a feed of corrections synthesized from things you actually said. No streaks, no XP, no levels.',
     'I’ve been having fun tuning the AI’s personality so it holds conversations I actually want to have, and keeping the rest of the app quiet around that one core function. I’ve been playing with shaders for some subtle visual accents, and building a delivery system for corrections that are personalized, actionable, and easy to act on.',
     'Built solo on iOS 26. Privacy first. BYOK keeps the app affordable.',
   ],
@@ -406,11 +406,11 @@ export const manipulationIdentifier: CaseStudy = {
   id: 'manipulation-identifier',
   title: 'Detecting manipulative language on the web',
   subtitle:
-    'A Chrome extension that uses LLMs to identify and explain psychological manipulation tactics on the pages you read — fear-mongering, false dichotomies, ad hominem attacks, and others. Highlight and explain, never block.',
+    'A Chrome extension that uses LLMs to identify and explain psychological manipulation tactics on the pages you read — fear-mongering, false dichotomies, ad hominem attacks, and others. Highlight and explain, never block.',
   timeline: '2025 – 2026',
   narrative: [
-    'In my <a href="/project/cip-election-misinformation" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">research on misinformation</a> at the University of Washington, I learned that misinformation often isn’t about outright lies or incorrect facts — it’s about the way information is framed. Sources use a range of manipulation tactics and logical fallacies to stretch the truth and build alternate realities, whether or not they ever technically lie. In a world of information overload and competing realities, it matters that people can think critically about what they read. I built this browser extension to surface those tactics and fallacies so readers can engage with what they’re reading more deliberately. The goal is to help people spot manipulation rather than be shielded from it — closer to <a href="https://prebunking.withgoogle.com/" target="_blank" rel="noopener noreferrer" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Jigsaw’s work on "prebunking"</a> at Google (another core inspiration) than to fact-checking. It doesn’t discredit anyone in particular. It gives readers the tools to question and validate what they’re being asked to believe, and to recognize when someone is trying to mislead them.',
-    'The extension highlights tactics inline on the page, color-coded by category (logical, rhetorical, credibility), and explains them in a side panel. It never blocks or hides content. By default the UI stays quiet — short definitions, and lower-confidence flags rendered softer. A "Why?" toggle on each flag lets readers zoom in for the full explanation when they want it.',
+    'In my <a href="/project/cip-election-misinformation" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">research on misinformation</a> at the University of Washington, I learned that misinformation often isn’t about outright lies or incorrect facts — it’s about the way information is framed. Sources use a range of manipulation tactics and logical fallacies to stretch the truth and build alternate realities, whether or not they ever technically lie. In a world of information overload and competing realities, it matters that people can think critically about what they read. I built this browser extension to surface those tactics and fallacies so readers can engage with what they’re reading more deliberately. The goal is to help people spot manipulation rather than be shielded from it — closer to <a href="https://prebunking.withgoogle.com/" target="_blank" rel="noopener noreferrer" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">Jigsaw’s work on “prebunking”</a> at Google (another core inspiration) than to fact-checking. It doesn’t discredit anyone in particular. It gives readers the tools to question and validate what they’re being asked to believe, and to recognize when someone is trying to mislead them.',
+    'The extension highlights tactics inline on the page, color-coded by category (logical, rhetorical, credibility), and explains them in a side panel. It never blocks or hides content. By default the UI stays quiet — short definitions, and lower-confidence flags rendered softer. A “Why?” toggle on each flag lets readers zoom in for the full explanation when they want it.',
     'With this many tactics and an LLM doing the labeling, false positives are a bigger risk than missed tactics. I built an evaluation harness around a hand-curated test corpus, so prompt changes can be measured instead of guessed at. BYOK Gemini key, no telemetry, nothing collected.',
   ],
 }
@@ -432,16 +432,16 @@ export const flow: CaseStudy = {
   id: 'flow',
   title: 'Designing trust into agentic coding',
   subtitle:
-    'I build a lot with AI, and Flow is where I make my own coding loops run more autonomously without letting quality slip. It’s a Claude Code plugin with two human gates — approving the plan and merging — with layered design and engineering review in between, a feedback loop that sharpens it over time, and a documented record of every run.',
+    'I build a lot with AI, and Flow is where I make my own coding loops run more autonomously without letting quality slip. It’s a Claude Code plugin with two human gates — approving the plan and merging — with layered design and engineering review in between, a feedback loop that sharpens it over time, and a documented record of every run.',
   timeline: '2026',
   narrative: [
-    'I build a lot with AI, and Flow is where I push my own coding loops to run more autonomously — hand off a plan, let the agent execute, and stop steering it prompt by prompt. The challenge is holding quality steady as I hand off more of the work, and that’s what Flow is built for.',
-    'Two moments stay mine. I approve the plan before anything is built, and I merge at the end. Everything in between runs through layers of review before it reaches me — design lenses and a visual pass on one side, correctness, accessibility, and security on the other — and any of them can send the work back. I’m closest to the design review, and the engineering reviews cover the parts I’d rather not check by eye. By the merge gate, the work has been vetted the way a good team would vet it.',
-    'Flow also learns as it goes. Feedback from the agent critiquing its own work, and from me at the two gates, gets logged and fed back in, so the same mistake gets caught earlier next time and the reviews sharpen as I go. Every run documents itself too — what changed, which checks ran, what got decided. Speed was never the whole point. I wanted a loop I can trust and actually see into.',
+    'I build a lot with AI, and Flow is where I push my own coding loops to run more autonomously — hand off a plan, let the agent execute, and stop steering it prompt by prompt. The challenge is holding quality steady as I hand off more of the work, and that’s what Flow is built for.',
+    'Two moments stay mine. I approve the plan before anything is built, and I merge at the end. Everything in between runs through layers of review before it reaches me — design lenses and a visual pass on one side, correctness, accessibility, and security on the other — and any of them can send the work back. I’m closest to the design review, and the engineering reviews cover the parts I’d rather not check by eye. By the merge gate, the work has been vetted the way a good team would vet it.',
+    'Flow also learns as it goes. Feedback from the agent critiquing its own work, and from me at the two gates, gets logged and fed back in, so the same mistake gets caught earlier next time and the reviews sharpen as I go. Every run documents itself too — what changed, which checks ran, what got decided. Speed was never the whole point. I wanted a loop I can trust and actually see into.',
   ],
   heroVisual: {
     id: 'hero-flow',
-    caption: 'A Flow pull request — the visual walkthrough, the design and engineering reviews, and the merge gate I hold.',
+    caption: 'A Flow pull request — the visual walkthrough, the design and engineering reviews, and the merge gate I hold.',
   },
   sections: [
     {
@@ -464,18 +464,18 @@ export const flow: CaseStudy = {
       id: 'flow-design',
       heading: 'Much of the design happens in code, so the walkthrough is how I steer',
       paragraphs: [
-        'Much of this design happens in code rather than on a Figma canvas, so the running output is the artifact. That makes the feedback surface the thing I care most about — how fast I can get signal on what the agent produced, and how efficiently I can push it further. Flow hands me a tailored walkthrough that’s already been through the review cycle, so I’m reacting to polished output instead of raw drafts. Inline annotations let me pin a comment to a specific screen, and one click sends the whole set back to the agent. My feedback also updates the project’s design-language docs, so the bar I set holds on the next run.',
+        'Much of this design happens in code rather than on a Figma canvas, so the running output is the artifact. That makes the feedback surface the thing I care most about — how fast I can get signal on what the agent produced, and how efficiently I can push it further. Flow hands me a tailored walkthrough that’s already been through the review cycle, so I’m reacting to polished output instead of raw drafts. Inline annotations let me pin a comment to a specific screen, and one click sends the whole set back to the agent. My feedback also updates the project’s design-language docs, so the bar I set holds on the next run.',
       ],
       visual: {
         id: 'flow-walkthrough-render',
-        caption: 'The HTML walkthrough that opens every PR — screenshots of what changed, with a click-to-pin layer for dropping feedback exactly where it belongs.',
+        caption: 'The HTML walkthrough that opens every PR — screenshots of what changed, with a click-to-pin layer for dropping feedback exactly where it belongs.',
       },
     },
     {
       id: 'flow-divergence',
       heading: 'The divergent design work happens before I enter the loop',
       paragraphs: [
-        'The obvious risk with letting an agent make most of the decisions and only showing me polished output is that I skip the messy, divergent iteration where design actually happens. I handle that before I enter the loop. Early on I curate heavily — talking through the idea in a chat, exploring divergent directions through quick HTML iterations, jumping into Figma when I need to — and I write the design-language documentation that encodes my decision framework, so the hundreds of small choices the agent makes downstream inherit my intent. Once we’ve landed on a direction, I switch to steering. Flow is the convergence-and-verification loop, and I keep the divergence deliberately upstream.',
+        'The obvious risk with letting an agent make most of the decisions and only showing me polished output is that I skip the messy, divergent iteration where design actually happens. I handle that before I enter the loop. Early on I curate heavily — talking through the idea in a chat, exploring divergent directions through quick HTML iterations, jumping into Figma when I need to — and I write the design-language documentation that encodes my decision framework, so the hundreds of small choices the agent makes downstream inherit my intent. Once we’ve landed on a direction, I switch to steering. Flow is the convergence-and-verification loop, and I keep the divergence deliberately upstream.',
       ],
       visual: null,
     },
@@ -512,7 +512,7 @@ export const healthTracker: CaseStudy = {
   ],
   heroVisual: {
     id: 'hero-health-tracker',
-    caption: 'The adaptive home page — the same app rendering calm, a single shift, and a notable trend on three different days.',
+    caption: 'The adaptive home page — the same app rendering calm, a single shift, and a notable trend on three different days.',
   },
   sections: [
     {
@@ -523,7 +523,7 @@ export const healthTracker: CaseStudy = {
       ],
       visual: {
         id: 'ht-home-states',
-        caption: 'The three attention volumes — paragraph, rows, and anchor chart — triggered by what the data has earned, not a fixed template.',
+        caption: 'The three attention volumes — paragraph, rows, and anchor chart — triggered by what the data has earned, not a fixed template.',
       },
     },
     {
@@ -534,7 +534,7 @@ export const healthTracker: CaseStudy = {
       ],
       visual: {
         id: 'ht-range-bar',
-        caption: 'The heart-rate range bar — low, high, and median against a personal-baseline band, consistent across every time scope.',
+        caption: 'The heart-rate range bar — low, high, and median against a personal-baseline band, consistent across every time scope.',
       },
     },
     {
@@ -557,7 +557,7 @@ export const healthTracker: CaseStudy = {
       id: 'ht-workflow',
       heading: 'Conceived in a chat, iterated in HTML, then built with Flow',
       paragraphs: [
-        'This is the first project I took through the full process I’ve been building toward. It started in a Claude conversation, pressure-testing the philosophy against its counterarguments before I drew anything. I explored it through seventeen rounds of HTML iteration, each one reframing a specific question and locking a principle rather than polishing pixels, and then built it with Flow. The design-language documentation I wrote along the way — the attention thresholds, the voice rules, the color logic — is the decision framework the agent builds against, which is how a one-person project holds a production-grade bar.',
+        'This is the first project I took through the full process I’ve been building toward. It started in a Claude conversation, pressure-testing the philosophy against its counterarguments before I drew anything. I explored it through seventeen rounds of HTML iteration, each one reframing a specific question and locking a principle rather than polishing pixels, and then built it with Flow. The design-language documentation I wrote along the way — the attention thresholds, the voice rules, the color logic — is the decision framework the agent builds against, which is how a one-person project holds a production-grade bar.',
       ],
       visual: null,
     },
@@ -572,7 +572,7 @@ export const patientStateFactory: CaseStudy = {
     'Testing on Mochi’s platform meant setting up account states by hand — dozens of database fields, every time. I built a panel that puts any account into any state in one click, so testing stops being gated by who’ll do the manual work.',
   timeline: '2026',
   narrative: [
-    'Testing anything on Mochi’s platform meant first getting a patient account into the exact state you needed — mid-refill with a failed payment, mid-onboarding, a denied request. That meant changing the account by hand in the database, dozens of interdependent fields at a time. The friction did more than slow people down; it decided who could participate. Engineers often skipped it, non-technical teammates couldn’t do it at all, and testing defaulted to production, where real patient data can slip in a healthcare product.',
+    'Testing anything on Mochi’s platform meant first getting a patient account into the exact state you needed — mid-refill with a failed payment, mid-onboarding, a denied request. That meant changing the account by hand in the database, dozens of interdependent fields at a time. The friction did more than slow people down; it decided who could participate. Engineers often skipped it, non-technical teammates couldn’t do it at all, and testing defaulted to production, where real patient data can slip in a healthcare product.',
     'So I built a panel that puts any account into any state in one click. The right design came from throwing two earlier tries away. First I drove the staging database with an AI prompt, which proved the setup could be automated but not reliably. Then I built the simplest version, faking the state on the frontend, instantly, with no backend changes. It was elegant, but I threw it away, because you can’t follow a real flow against a simulation. The Factory does it for real instead. One click runs the cascading scripts that make every interdependent change, so the account behaves exactly as it would for a patient.',
     'It works because it stands on the <a href="/project/mochi-ai-tooling" data-contact-card style="color: var(--text-grey); text-decoration: underline; text-decoration-color: var(--text-underline); text-underline-offset: 4px; padding: 4px 8px; margin: 0 -8px; display: inline-block;">knowledge layer</a>, where the shared mappings already spell out which dependencies each script needs to touch. It’s also a good sign the layer compounds, because each version of the Factory got more reliable as the mappings grew.',
     'The result is that testing stopped being gated by who would do the manual work. Engineers set up states in seconds, anyone can reproduce a state to see how the product behaves, and more people can test, weigh in, and even contribute. It removes one major barrier in staging rather than all of them, but it’s the one that kept most people out.',
@@ -582,7 +582,7 @@ export const patientStateFactory: CaseStudy = {
 export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'mochi-ai-tooling': mochiAiTooling,
   'patient-state-factory': patientStateFactory,
-  // 'mochi-progress-tracker' intentionally unregistered — hidden from UI & URL; mochiProgressTracker export above is preserved for future restore.
+  // 'mochi-progress-tracker' intentionally unregistered — hidden from UI & URL; mochiProgressTracker export above is preserved for future restore.
   'mochi-subscriptions': mochiSubscriptions,
   'uw-design-system': uwDesignSystem,
   'sony-screenless-tv': sonyScreenlessTv,
@@ -592,7 +592,7 @@ export const caseStudiesBySlug: Record<string, CaseStudy> = {
   'trio-todo-list': trioTodoList,
   'language-app': languageApp,
   'manipulation-identifier': manipulationIdentifier,
-  // 'optimizing-my-workflow' intentionally unregistered — Forge study hidden (superseded by Flow); optimizingMyWorkflow export preserved for restore.
+  // 'optimizing-my-workflow' intentionally unregistered — Forge study hidden (superseded by Flow); optimizingMyWorkflow export preserved for restore.
   'flow': flow,
   'health-tracker': healthTracker,
 }
