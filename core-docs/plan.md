@@ -603,6 +603,27 @@ Ordered by impact and readiness:
 
 ---
 
+## Case study rendering — declarative headings + visual slots (follow-up)
+
+Surfaced by `/flow:staff-review` (push-further lens), 2026-06-15. `CaseStudyLayoutA` currently renders only the `narrative` paragraph array; the `CaseStudy` type's `sections` (declarative headings + per-section `visual`) and `heroVisual` exist in the data model but don't render. Several richer studies (subscriptions, tracker) already carry `sections` data that is currently dark, and the new Mochi internal-tools studies were authored as topic-sentence-led paragraphs to fit the narrative-only renderer.
+
+- [ ] Extend `CaseStudyLayoutA` to render `sections` (declarative heading + paragraphs + optional visual per section), not just flat `narrative`.
+- [ ] Render `heroVisual` and per-section `visual` slots, with an "asset pending" placeholder treatment.
+- [ ] Upgrades every case study at once; scannable declarative headings are core to the case-study philosophy (`core-docs/guidelines.md`).
+- [ ] Pending assets (separate from the renderer work): code↔canvas visuals for the AI-tooling study; the Patient State Factory panel + its three iteration versions; optional adoption anecdote for both closes.
+- [ ] **When section headings go live, restore the "X, not Y" contrast form on the headings softened during the voice pass** (staff-review, 2026-07-23). The AI-tell pass flattened three declarative takeaway headings into labels/narration — `sony-screenless-tv` (`"Why we rejected wearables"` — restore the values-call takeaway), `mochi-subscriptions` timing heading (`"…and it turned out to be a timing problem"` — restore `"a timing problem, not a data problem"`), `mochi-progress-tracker` conduit heading (restore `"…not a feature"`). Flattening the "not X, but Y" flip was correct for the *narrative* voice, but headings are the one place the crisp contrast still earns its keep as a 30-second scan signpost (`core-docs/guidelines.md`: "Headings should be declarative sentences, not labels"). Audit the full set for the same softening when this lands — the headings are dark today so the change is invisible until then.
+
+---
+
+## Hover-preview videos should respect prefers-reduced-motion (follow-up)
+
+Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-video PR, 2026-07-02. `VideoPreview` renders `<video autoPlay loop>` with no `prefers-reduced-motion` guard, so reduced-motion visitors get a continuously looping hover preview — against the site's own accessibility standard ("Respect prefers-reduced-motion… fall back to instant or minimal opacity changes") and the reduced-motion treatment used everywhere else (sidebar backdrop, glass pill, cross-fades). Adding the health-tracker video grows the blast radius (its preview was previously calm static text).
+
+- [ ] Gate `VideoPreview` on `useReducedMotion()` (Framer Motion, already a dependency): when reduced motion is preferred, render with `autoPlay={false}` and seek to frame 0 (`onLoadedMetadata` → `currentTime = 0`) so it paints a crisp poster still instead of looping. No new assets — the first frame is the poster.
+- [ ] Shared component — changes all 6+ hover-preview cards + case-study pages, so it wants its own verification pass rather than riding an asset PR.
+
+---
+
 ## Reference
 
 The original Framer components have been removed. All visual and interaction specifications are now fully documented in:

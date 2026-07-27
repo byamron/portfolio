@@ -2,6 +2,104 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-07-23 — Case-study voice polish: em-dash convention + staff-review fixes
+
+**Branch:** `case-study-voice-polish` (→ `next-update`). Follows the voice rewrite (#191) and a four-lens `/flow:staff-review` of the `next-update → main` deploy (#192).
+
+**Summary:** Applied the rendered, low-risk fixes the staff review surfaced; deferred the heading + asset work to the rendering follow-up.
+- **Em-dash convention standardized to thin-space** (`U+2009` `—` `U+2009`) across every rendered/authored copy field in `case-study-content.ts` (subtitle, narrative, sections) and `projects.ts` (summaries). The site had drifted: the 9 established studies used thin-wrapped em-dashes while the newer studies (Flow, PSF, health-tracker, language-app, manipulation) + their homepage summaries used regular-space — a visible split in a rendered field (design-engineer lens, byte-confirmed). Chose thin as the target (established majority + finer typography). 109 em-dashes normalized.
+- **Guard test** — added `src/__tests__/emdashConvention.test.ts`, which asserts every em-dash in the rendered copy of `caseStudiesBySlug` + `projects.ts` sections is thin-wrapped, so the split can't silently return. 72 tests pass.
+- **Homepage card summaries brought into voice** (UX lens): the cards had lagged the page rewrite, so a project spoke in two registers card-vs-page. `mochi-billing` ("Eliminated >$200k…; 90%+ of users migrated" → "cut more than $200k/month… Over 90% of users migrated") and `detect-manip` (dropped the "The hard part isn't detection; it's…" flip and the "Educate, don't censor" imperative).
+- **Small nits** — curly-quoted `"prebunking"` and `"Why?"` in the manipulation narrative to match sibling inline quotes; "the outdated fact" → "outdated facts".
+- **`contributions.json`** — refreshed from `origin/main` so the deploy merge doesn't revert ~2 months of cron-updated contribution-graph data (staff-engineer lens; transient but avoidable).
+
+**Deferred (in `plan.md`, rendering follow-up):** when section headings render, restore the "X, not Y" contrast form on the three headings the AI-tell pass flattened into labels (Sony wearables, Subscriptions timing, Tracker conduit) — correct for narrative voice, wrong for scannable headings.
+
+**Skill update (outside repo):** `write-in-my-voice` gained a mandatory "AI-tell sweep" section (colon-reveals, dash-drumrolls, "not X, but Y" flips, one-clause drops, manufactured aphorisms) + checklist item.
+
+**Verification:** `tsc -b` clean; 72 tests pass. No blockers from any of the four lenses.
+
+---
+
+## 2026-07-22 — Portfolio polish: preview videos, hide Forge, resume, hero copy, PSF Screen Studio composite
+
+**Branch:** `add-flow-preview-video` (#190 — to `next-update`).
+
+**Summary:** A batch of projects-list polish plus a restyled Patient State Factory preview.
+- **Flow** — added a hover-preview video (`preview-flow.mp4`); every card now has media (closed the "Flow is the lone text card" follow-up from #188).
+- **Hid Forge** (`optimizing-my-workflow`, superseded by Flow) — removed from the rendered `sections` array and unregistered from `caseStudiesBySlug` (route 404s, dropped from sitemap); data preserved as `forgeProject` / `optimizingMyWorkflow` for restore (same pattern as the progress-tracker hide).
+- **Dropped the "In progress" badge** from `language-app` and `detect-manip`.
+- **Refreshed the resume** — replaced `ben-yamron-resume.pdf` and regenerated its hover preview (`preview-resume.png`, rendered page 1 via `sips` at 1224×1584).
+- **Hero copy** — "Currently designing patient experiences at Mochi Health" (was "leading design for"); Mochi link unchanged.
+- **Patient State Factory preview restyled as a Screen Studio composite** — the raw screen recording composited onto the blurred golden-hour background (1440×1080 4:3, 7% side padding, 18px rounded window corners) via ffmpeg + a PIL-generated rounded-corner alpha mask. Also folded in the PSF tense-fix + video stranded when #187 merged before they landed.
+
+**Technical decisions:** All previews use the standard recipe (`technical-context.md`): silent, 1056/1440-wide, `+faststart`, limited-range `yuv420p(tv)`. The ffmpeg composite pre-bakes the blurred background into a static "plate" (per-frame `gblur` was too slow) and hard-caps output duration with `-t` (the `-loop 1` image inputs otherwise render unbounded even with `-shortest` / overlay `shortest=1`).
+
+**Design decision (Ben feedback):** the initial composite included a drop shadow offset straight down; it read as a hard-cornered dark bar under the window, so it was removed — the window sits cleanly on the blurred background with rounded corners top and bottom.
+
+**Reviews:** `/flow:security-review` (clean — static content/data + assets, no new sinks) and `/flow:accessibility-review` (clean — hero copy is a11y-neutral; reduced-motion video guard tracked as a follow-up). `vite build` (the deploy gate) passes; 71 tests pass.
+
+**Follow-ups (in `plan.md`):** render `CaseStudyLayoutA` `sections`/visual slots; `prefers-reduced-motion` guard for `VideoPreview` (autoplay hover videos).
+
+---
+
+## 2026-07-02 — Mochi internal-tools case studies + case-study preview videos
+
+**Branches:** `mochi-internal-tools-next-update` (#187), `add-case-study-preview-videos` (#188) — both merged into `next-update`.
+
+**Summary:** Added two Mochi internal-tools case studies, hid the progress-tracker study, and wired hover-preview videos for Patient State Factory, health-tracker, and trio. Content was deep-dived against the real `mochi-context` + `mochi-plugins` repos (copied into `~/Desktop/mochi-repos`).
+
+**AI-tooling rewrite** (`mochi-ai-tooling`, retitled *"AI tools that know how the product works"*): reframed from the old "documentation layer + plugin" pitch to a knowledge-layer + tools story. Spine: a startup optimized for shipping, not documenting, so the product ran on institutional knowledge held by a few people (the company moved at the speed of whoever held the answer) — I built a shared source of truth plus tools on top for design/dev/product work. Volta: *keeping it up to date mattered as much as building it* — stale docs are worse than none; an audit found 1 in 5 facts had drifted, so the system maintains itself (a scheduled routine reads each week’s code changes, judges what matters, and rewrites the docs against source). Close is first-person impact (ship to prod, run testing, inform strategy, build internal tools). Per Ben: no oversell — modest adoption, so lead with range of users + system rigor, not headcount; dropped the shiny closing metrics.
+
+**Patient State Factory** (`patient-state-factory`, new): reframe is *friction, not difficulty* — setting up a staging account state by hand (dozens of interdependent DB fields) wasn’t hard, just tedious, and that friction decided who could participate (engineers skipped it, non-technical teammates couldn’t at all, testing defaulted to prod where patient data can slip). Centerpiece is the three-rejection arc: (1) an AI-prompt `/edit-staging-account` skill proved state could be automated, (2) frontend fixtures were the simplest version but "you can’t follow a real flow against a simulation" so it was thrown away, (3) the Factory runs cascading scripts that make every dependency change for real. Stands on the knowledge layer (cross-linked to the AI-tooling study).
+
+**Hid the progress-tracker study:** removed `mochi-tracker` from the rendered `sections` array (preserved as `export const mochiTrackerProject` with restore notes) and unregistered `'mochi-progress-tracker'` from `caseStudiesBySlug` (route 404s). Leaning on the two source-of-truth registries (`sections` + `caseStudiesBySlug`) drops the study from the homepage, `projectsById`, `getProjectForSlug`, and the sitemap automatically. `mochiProgressTracker` export kept for restore. Chose this over a `hidden?: boolean` flag (staff-review suggestion) because the flag keeps it in the routing registry behind a guard and needs `!hidden` filters in 5+ consumers (incl. the sitemap generator) — a weaker disconnect.
+
+**Preview videos (#188):** cut hover-preview videos for PSF, health-tracker, and trio with the standard recipe (`technical-context.md`): H.264, no audio, 1056-wide (2x retina), +faststart, CRF 24, limited-range `yuv420p(tv)`. Sources for trio/health were 6.3/6.5 MB with audio + ~3.7 Mbps video; re-cut to 2.8/2.9 MB (in the 0.3—3.3 MB sibling band). PSF 742 KB. Switched PSF + health-tracker cards from `previewDescription` (text) to `videoPreview`.
+
+**Editorial lessons (→ `core-docs/feedback.md`):** (1) ground the reader before the reframe — a bare reframe, or a punchy declarative *fragment* as the first line, drops the reader mid-thought; the opener must be a full contextualizing sentence naming the setting. (2) Prefer two-sided problem framing (who’s locked out AND who’s overburdened). Also fixed PSF copy tense consistency (past-frame the problem paragraph; split the knowledge-layer sentence so the past clause isn’t mid present-tense sentence).
+
+**Git saga (base-branch lesson):** #187 was mistakenly opened against `main` and merged there, briefly putting in-progress work on the deploy branch. Reverted `main` with a forward revert commit (no history rewrite), then re-targeted to `next-update` (cherry-pick + conflict resolution to coexist with #185’s Flow/health-tracker). Reaffirmed: **feature branches merge into `next-update`, not `main`.** Then #187 merged into `next-update` before the PSF tense-fix + video landed, so those two stranded items were folded into #188.
+
+**Follow-ups captured (→ `core-docs/plan.md`):** (1) wire `CaseStudyLayoutA` to render `sections` declarative headings + `visual`/`heroVisual` slots (only `narrative` renders today; upgrades every case study). (2) Give `VideoPreview` a `prefers-reduced-motion` guard (autoplay looping video ignores the site’s a11y standard; paint a paused first-frame poster instead) — shared component, wants its own verification pass.
+
+**Reviews:** `/simplify` + four-lens `/flow:staff-review` ran on both PRs — no blockers. Reviewers twice suggested the `hidden` flag and once flagged the inline-link HTML as "fragile" (established pattern, kept); both surfaced as non-blocking.
+
+**Verification:** `tsc -b` clean and all 71 vitest tests pass throughout. Videos probed: no audio, 1056-wide, `yuv420p(tv)`, moov-before-mdat. Note: `npm run build`’s `vite build` step fails on a pre-existing missing `ui-playground/.../slide-unlock` import (from #172) — unrelated, flagged for separate fix.
+
+**Files changed:** `src/data/case-study-content.ts`, `src/data/projects.ts`, `public/images/preview-{patient-state-factory,health-tracker,todo-priority}.mp4`, `public/sitemap.xml`, `core-docs/feedback.md`, `core-docs/plan.md`.
+
+---
+
+## 2026-06-16 — Two new AI-native case studies: Flow + health-tracker
+
+**Branch:** `case-study-gaps-audit`
+
+**Summary:** Added two linked keystone case studies to close the portfolio's biggest gap for senior-PD roles at AI-native companies (Anthropic/OpenAI/Ramp/Stripe/The Browser Company): user-facing AI / human↔agent interaction design. Grounded in current job-posting research and verified against the real `~/dev/flow` and `~/dev/health-tracker` codebases. Both are added to `src/data/case-study-content.ts` (+ `caseStudiesBySlug`) and wired into `projects.ts` ("Building tools on the side", `status: In progress`) with `previewDescription` text placeholders in the image slot — **no preview video yet**, so going live is a one-line `previewDescription → videoPreview` swap once recordings exist. Public exposure stays gated by the eventual `next-update → main` deploy.
+
+- **Flow** (`flow`): "Designing trust into agentic coding." Framed around trust, not oversight — Ben is a non-technical designer who can't verify engineering by reading code, so the real problem is translating intent into output he can trust on two axes (design + engineering). Three trust axes: intent (plan audited/critiqued → he approves), design (multi-lens review + screenshot verification + HTML walkthrough with click-to-pin annotation layer → feedback updates docs), engineering (Anthropic best-practices alignment + automated correctness/a11y/security reviews + merge gate). Includes the §divergence beat answering "doesn't the agent flatten the design?" — divergence is deliberately upstream of the loop (curate early via chat + HTML iterations + design-language docs encoding his decision framework; steer once a direction lands).
+- **health-tracker** (`health-tracker`): "A health app that gets out of your way." Companion to Flow (Flow is the system; health-tracker is the proof). Reframe: most health apps make data the core function and show too much; this is for people who just want to know they're healthy and doing okay — surface a few metrics with honest interpretation, then get out of the way. Adaptive home page (the data picks the lead), observing-not-prescribing voice ("Sleep ran short," never "you didn't sleep enough"), on-device/private, and the AI-native workflow (conceived in a Claude chat → 17 rounds of HTML iteration → built with Flow). In progress (design system complete, build underway).
+
+**Note on rendering:** discovered that `CaseStudyLayoutA` renders only `title` + `narrative` (+ paperLinks/contactCTA/media). The `sections`, `heroVisual`, and `gallery` fields are authored but **not displayed by any component**. Both new studies carry full `sections`, but the shippable copy was concentrated in `narrative`. Wiring `sections` + visuals into the layout would lift every case study — captured as a separate follow-up.
+
+**Copy revision (same branch, after review):** rewrote both narratives (narrative is the only field that renders).
+- **Flow** — reframed for an insider audience (readers have used AI for coding): *"I build a lot with AI, and Flow is where I make my coding loops more autonomous without letting quality slip."* Dropped the repeated "I'm a non-technical designer / can't read code" framing to a single light touch. New spine: two human gates (plan + merge) → layered design + engineering review in between → a **feedback loop that learns** (agent self-review + human gate feedback logged and fed back so reviews sharpen over time) → everything **documented for observability**. Title unchanged.
+- **health-tracker** — corrected a framing error: **"few metrics" is MVP scope, not a principle** — the goal is a *comprehensive* tracker that competes on UX, not a minimalist one. New pitch: comprehensive but far more considerate of attention — leads with insight/interpretation, doesn't overwhelm with dashboards, doesn't alarm; **high signal, low effort**. Deemphasized the voice example (`"Sleep ran short"`) and the built-with-AI angle (table stakes now). Retitled *"A health tracker that leads with insight, not dashboards."*
+
+**Flow ↔ Forge convergence (noted for later):** Flow (v1.11.0 local) has added a lesson-harvest / `/flow:contribute` loop — the same transcript-analysis + feedback-learning pattern Forge (`~/dev/forge`, renamed "Noticed" on its remote) pioneered, now applied to Flow's own reviewers/gates. Per Ben, the transcript-analysis work is being folded into Flow, so the **`optimizing-my-workflow` (Forge) case study is slated to be retired/absorbed into Flow later** — not done here. Flow's "it learns" pillar was written to set that up. (The two now sit adjacent in the projects list with some thematic overlap; acceptable until Forge's study is retired.)
+
+**Stale hidden data:** the Flow `sections[]` still carry the old "trust axes / can't-read-code" framing. They don't render, so they weren't rewritten — flagged for cleanup if/when section rendering is wired.
+
+**New voice doc:** fixed a corny Flow line (*"The one thing I won't trade for speed is quality"* → *"The challenge is holding quality steady as I hand off more of the work"*) and, prompted by it, created `core-docs/case-study-voice.md` — concrete anti-corny / high-signal copy rules distilled from Ben's actual edits across the charlotte-v5 and los-angeles-v1 sessions (mined from Claude Code transcripts), with a before/after table. Referenced from `guidelines.md` and added to the CLAUDE.md core-docs table. It's a living doc — grows with each round of Ben's copy feedback.
+
+**Mochi AI Tooling rewrite** (the "context, not capability" reframe) is intentionally **not** in this branch — being done in the `mochi-internal-tools-case-studies` workspace to avoid same-file conflicts.
+
+**Verification:** `tsc -b` clean throughout, `eslint` clean. Dev server compiles and serves both routes.
+
+**Files changed:** `src/data/case-study-content.ts`, `src/data/projects.ts`, `core-docs/case-study-voice.md` (new), `core-docs/guidelines.md`, `CLAUDE.md`, `core-docs/history.md`.
+
+---
+
 ## 2026-06-01 — Flock easter egg on the "X" contact link
 
 **Branch:** `port-flock-hover-to-about`
