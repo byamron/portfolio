@@ -12,6 +12,7 @@ import { RightColumn } from '@/components/RightColumn'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
+import { TrioPrivacyPolicy } from '@/components/TrioPrivacyPolicy'
 import { NotFound } from '@/components/NotFound'
 const PlaygroundRoutes = lazy(() => import('@/components/PlaygroundRoutes').then(m => ({ default: m.PlaygroundRoutes })))
 const PlaygroundDemo = lazy(() => import('@/components/PlaygroundDemo').then(m => ({ default: m.PlaygroundDemo })))
@@ -21,7 +22,7 @@ import { useIsWide } from '@/hooks/useMediaQuery'
 function AppContent() {
   const { pathname } = useLocation()
   const demoRoutes = ['/slide-to-unlock', '/dvd', '/high-five']
-  const isStandalone = pathname.startsWith('/havana/') || pathname === '/playground' || pathname.startsWith('/playground/') || demoRoutes.includes(pathname)
+  const isStandalone = pathname.startsWith('/havana/') || pathname.startsWith('/trio/') || pathname === '/playground' || pathname.startsWith('/playground/') || demoRoutes.includes(pathname)
   const isWide = useIsWide()
 
   useEffect(() => { if (isStandalone) return; preloadPortraitImages(); preloadPreviewImages() }, [isStandalone])
@@ -39,6 +40,7 @@ function AppContent() {
         <Route path="/" element={<Layout />} />
         <Route path="/project/:slug" element={<CaseStudyPage />} />
         <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
+        <Route path="/trio/privacy" element={<TrioPrivacyPolicy />} />
         <Route path="/playground/*" element={<Suspense fallback={null}><PlaygroundRoutes /></Suspense>} />
         <Route path="/slide-to-unlock" element={<Suspense fallback={null}><PlaygroundDemo slug="slide-unlock" /></Suspense>} />
         <Route path="/dvd" element={<Suspense fallback={null}><PlaygroundDemo slug="dvd-bounce" /></Suspense>} />
