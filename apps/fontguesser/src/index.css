@@ -1,0 +1,337 @@
+@import 'tailwindcss';
+
+/*
+  The chrome is set in the platform UI stack, deliberately.
+
+  Every Google Font is a possible answer, so setting any interface element in
+  one would leak information — a player who recognises the nav is halfway to the
+  answer. The system stack sits outside the answer space entirely, loads
+  instantly, and stays visually subordinate to the specimen, which is the only
+  thing on the page that should be asking for attention.
+*/
+@layer base {
+  :root {
+    color-scheme: light dark;
+    --paper: #fbfaf8;
+    --paper-sunk: #f4f2ed;
+    --ink: #1a1815;
+    --ink-muted: #625c52;
+    --ink-faint: #6f695e;
+    --rule: #e6e1d8;
+    --accent: #2a6b45;
+    --accent-soft: #e8f0e9;
+    --warn: #9a6b1f;
+    --warn-soft: #f5ecdb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14130f;
+      --paper-sunk: #1c1a16;
+      --ink: #f2efe8;
+      --ink-muted: #a9a294;
+      --ink-faint: #9b9486;
+      --rule: #2b2822;
+      --accent: #7fb894;
+      --accent-soft: #1c2a21;
+      --warn: #d4a961;
+      --warn-soft: #2a2317;
+    }
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+}
+
+/*
+  Wrong-guess shake.
+
+  Deliberately CSS rather than a Framer `animate` prop: driving it from React
+  meant keying the specimen to retrigger it, which remounted the whole sheet and
+  threw away whatever text and slider settings the player had set up to
+  interrogate the face. A class that is added and removed leaves the subtree
+  alone.
+*/
+/*
+  Linear, with the amplitude doing the decay.
+
+  A timing function is applied between *every* pair of keyframes, not across the
+  whole animation — so an eased shake decelerates to a dead stop and
+  re-accelerates from zero once per keyframe. That stutter was the mechanical
+  feel. Let the decay carry it and keep the curve out of the way.
+*/
+@keyframes shake {
+  0% { transform: translate3d(0, 0, 0); }
+  15% { transform: translate3d(-6px, 0, 0); }
+  30% { transform: translate3d(5px, 0, 0); }
+  45% { transform: translate3d(-3.5px, 0, 0); }
+  60% { transform: translate3d(2px, 0, 0); }
+  75% { transform: translate3d(-1px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@layer utilities {
+  .shaking {
+    animation: shake 280ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shaking {
+      animation: none;
+    }
+  }
+}
+
+/*
+  The specimen controls.
+
+  A native range input brings its own chrome — a thick track, a chunky bevelled
+  thumb — which is exactly what makes the control bars on most foundry sites
+  look bolted on. Rebuilt here as a hairline track with a small solid thumb, so
+  the apparatus reads as one more rule on the page rather than as UI.
+*/
+@layer components {
+  .ctl {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 2.5rem;
+    height: 12px; /* pointer target; the visible track is drawn thinner below */
+    background: transparent;
+    cursor: ew-resize;
+    outline: none;
+  }
+
+  .ctl::-webkit-slider-runnable-track {
+    height: 1px;
+    background: var(--rule);
+  }
+  .ctl::-moz-range-track {
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .ctl::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 9px;
+    height: 9px;
+    margin-top: -4px;
+    border: none;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .ctl::-moz-range-thumb {
+    width: 9px;
+    height: 9px;
+    border: none;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .ctl:hover::-webkit-slider-thumb,
+  .ctl:focus-visible::-webkit-slider-thumb {
+    background: var(--ink);
+    transform: scale(1.18);
+  }
+  .ctl:hover::-moz-range-thumb,
+  .ctl:focus-visible::-moz-range-thumb {
+    background: var(--ink);
+    transform: scale(1.18);
+  }
+
+  /*
+    `--accent-soft` measured 1.11:1 against paper — invisible, on a control
+    whose outline is suppressed. And hover and focus-visible shared a treatment,
+    so keyboard focus was indistinguishable from the mouse passing over.
+  */
+  .ctl:focus-visible::-webkit-slider-thumb {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
+  }
+  .ctl:focus-visible::-moz-range-thumb {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
+  }
+
+  /* Firefox paints a platform-accent progress fill over the hairline otherwise. */
+  .ctl::-moz-range-progress {
+    height: 1px;
+    background: var(--rule);
+  }
+}
+
+/*
+  Correct-answer feedback.
+
+  A brief green bloom around the edges of the page instead of a "CORRECT" label.
+  The answer names itself a beat later anyway, so a word saying so is redundant —
+  and light at the perimeter registers in peripheral vision without taking up a
+  line in a layout that is otherwise all typography.
+
+  Inset shadows only, so nothing overlays the type, and it removes itself.
+*/
+@keyframes edge-glow {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@layer components {
+  .edge-glow {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    will-change: opacity;
+    /*
+      Held tight to the perimeter. A wide, soft spread reads as a full-screen
+      wash tinting the specimen you are meant to be looking at — the point is a
+      flicker of colour at the edge of vision, not a filter over the page.
+    */
+    box-shadow:
+      inset 0 0 70px -34px var(--accent),
+      inset 0 0 18px -9px var(--accent);
+    animation: edge-glow 1050ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .edge-glow {
+      animation: none;
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* Small tracked-out caps, used for every piece of interface labelling. */
+@utility label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  ── Arrival and departure ────────────────────────────────────────────────────
+
+  The flashing had one root cause in every incarnation: something changed while
+  it could be seen. Content swapped inside a layer that was still fading; data
+  arrived into a reveal that was already visible; two fade systems ran over the
+  top of each other. The cure is sequencing, not curves.
+
+  App drives a three-beat stage — exit (fade out, content frozen), hold (blank;
+  swap, load, settle), enter (fade in, top to bottom). This block is the whole
+  motion system: opacity only, linear, one stagger unit. Nothing here can move
+  or resize an element, so nothing here can cause a jump.
+*/
+[data-layer],
+[data-line] {
+  grid-area: stack;
+}
+[data-layer][data-state='out'],
+[data-line][data-state='out'] {
+  pointer-events: none;
+}
+
+/*
+  Sections. At rest they are visible; the delay only shapes arrival, running
+  top to bottom in 50ms steps — under the ~60–80ms threshold where a sequence
+  starts to read as separate events rather than one page arriving.
+*/
+[data-fade] {
+  opacity: 1;
+  transition: opacity 240ms linear;
+  transition-delay: calc(200ms + var(--i, 0) * 50ms);
+}
+
+/*
+  The display line: the one deliberate cross-dissolve. It is the only element
+  that persists through a round — the headline the player has been reading
+  resolves into the answer's name — and it sits in a fixed-height cell, so the
+  overlap costs no movement.
+*/
+[data-line] {
+  opacity: 1;
+  transition: opacity 280ms linear;
+}
+[data-line][data-state='out'] {
+  opacity: 0;
+}
+
+/* Inside a hidden round-state, sections are hidden and leave quickly. */
+[data-state='out'] [data-fade] {
+  opacity: 0;
+  transition-duration: 160ms;
+  transition-delay: 0ms;
+}
+
+/*
+  Departure and the blank beat. Everything leaves fast and together; while the
+  page is held blank, transitions are off entirely, so the content swap cannot
+  animate anything — the old round is gone before the data is allowed to change.
+*/
+[data-stage='exit'] [data-fade],
+[data-stage='exit'] [data-line] {
+  opacity: 0;
+  transition-duration: 160ms;
+  transition-delay: 0ms;
+}
+[data-stage='hold'] [data-fade],
+[data-stage='hold'] [data-line] {
+  opacity: 0;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-fade],
+  [data-line] {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

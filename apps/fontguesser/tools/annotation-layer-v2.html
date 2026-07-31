@@ -1,0 +1,745 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+  ANNOTATION LAYER v2 — prototype for review
+
+  Merges the two layers that exist today:
+    KEPT FROM FLOW  · DOM-element snapping (walk-up past chrome / non-visual
+                      tags / sub-8px boxes), ↑/↓ to widen-narrow the target,
+                      content-derived anchors that survive regeneration
+                      (data-pin-id → nearest heading + tag + role + text),
+                      and the located-descriptor export grouped by section.
+    KEPT FROM RIPE  · A floating dock instead of a full-width page header,
+                      a notes panel for managing comments, the numbered
+                      teardrop pin.
+    NEW             · Edit any note (ripe could only delete), hide-pins to
+                      see the design unobstructed, batch copy, batch delete.
+
+  Deliberately NOT carried over from ripe: its tag+child-index anchor paths.
+  They break the moment the document is re-rendered — which for a report
+  regenerated every iteration is most of the time.
+
+  Chrome is two controls. Everything else lives in the panel, so nothing
+  floats over the design except a pin and a button.
+
+  file:// safe: no native confirm/alert/prompt, execCommand clipboard with a
+  visible select-and-copy fallback, localStorage persistence, no network.
+═══════════════════════════════════════════════════════════════════════════ -->
+<style>
+  #an-dock, #an-panel, #an-pop, #an-toast, #an-hl, #an-pins, #an-copybox {
+    --an-ink: #1c1c1e; --an-bg: #ffffff; --an-line: #e3e3e6;
+    --an-muted: #6b6b70; --an-accent: #0a5fb0; --an-danger: #b3261e;
+    --an-shadow: 0 16px 40px -16px rgba(0,0,0,.45);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    box-sizing: border-box;
+  }
+  @media (prefers-color-scheme: dark) {
+    #an-dock, #an-panel, #an-pop, #an-toast, #an-hl, #an-pins, #an-copybox {
+      --an-ink: #ececf0; --an-bg: #1c1c1f; --an-line: #33333a;
+      --an-muted: #9a9aa2; --an-accent: #5aa3e8; --an-danger: #e5715f;
+      --an-shadow: 0 16px 40px -16px rgba(0,0,0,.7);
+    }
+  }
+  #an-dock *, #an-panel *, #an-pop *, #an-copybox * { box-sizing: border-box; }
+
+  /* ---- dock: the only persistent chrome ---- */
+  #an-dock {
+    position: fixed; right: 20px; bottom: 20px; z-index: 2147483000;
+    display: flex; gap: 8px; align-items: center;
+  }
+  #an-dock button {
+    border: 1px solid var(--an-line); background: var(--an-bg); color: var(--an-ink);
+    border-radius: 999px; cursor: pointer; font: 600 13px/1 inherit;
+    box-shadow: var(--an-shadow); display: flex; align-items: center; gap: 7px;
+    padding: 11px 16px; transition: background .15s, color .15s, border-color .15s;
+  }
+  #an-dock button:hover { border-color: var(--an-muted); }
+  #an-dock button:focus-visible { outline: 2px solid var(--an-accent); outline-offset: 2px; }
+  #an-pin[aria-pressed="true"] { background: var(--an-accent); border-color: var(--an-accent); color: #fff; }
+  #an-pin .an-x { font-size: 14px; line-height: 1; }
+  #an-chip { display: none; min-width: 40px; justify-content: center; font-variant-numeric: tabular-nums; }
+  #an-chip.has { display: flex; }
+  #an-chip[aria-expanded="true"] { border-color: var(--an-muted); }
+
+  /* ---- picking ---- */
+  html.an-picking, html.an-picking * { cursor: crosshair !important; }
+  #an-hl {
+    position: fixed; z-index: 2147482000; pointer-events: none; display: none;
+    border: 2px solid var(--an-accent); border-radius: 3px;
+    background: color-mix(in srgb, var(--an-accent) 10%, transparent);
+  }
+
+  /* ---- pins ---- */
+  #an-pins { position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 2147482500; }
+  #an-pins.hidden { display: none; }
+  .an-pin {
+    position: absolute; width: 22px; height: 22px; padding: 0; border: 0;
+    border-radius: 50% 50% 50% 4px; background: var(--an-accent); color: #fff;
+    font: 700 11px/22px -apple-system, system-ui, sans-serif; text-align: center;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    transform: translate(-50%, -100%);
+  }
+  .an-pin:focus-visible { outline: 2px solid var(--an-ink); outline-offset: 2px; }
+  .an-pin.lost { background: var(--an-muted); }
+
+  /* ---- panel ---- */
+  #an-panel {
+    position: fixed; right: 20px; bottom: 78px; z-index: 2147483000;
+    width: 340px; max-width: calc(100vw - 40px); max-height: 60vh;
+    display: none; flex-direction: column; overflow: hidden;
+    background: var(--an-bg); color: var(--an-ink);
+    border: 1px solid var(--an-line); border-radius: 14px; box-shadow: var(--an-shadow);
+  }
+  #an-panel.open { display: flex; }
+  #an-phead {
+    display: flex; align-items: center; gap: 2px; padding: 9px 8px 9px 14px;
+    border-bottom: 1px solid var(--an-line); flex-shrink: 0;
+  }
+  #an-phead b { font: 600 13px/1 inherit; margin-right: auto; white-space: nowrap; }
+  #an-phead button {
+    border: 1px solid transparent; background: none; color: var(--an-muted);
+    border-radius: 7px; cursor: pointer; padding: 5px; display: grid; place-items: center;
+    width: 28px; height: 28px; flex-shrink: 0;
+  }
+  #an-phead button:hover { color: var(--an-ink); border-color: var(--an-line); }
+  #an-phead button:focus-visible { outline: 2px solid var(--an-accent); outline-offset: 1px; }
+  #an-phead svg { width: 16px; height: 16px; display: block; }
+  /* Accent marks a NON-default state, so a quiet header stays quiet: pins hidden,
+     or hover-outlining switched off. Both are things you'd want a reminder about. */
+  #an-eye[aria-pressed="true"], #an-snap[aria-pressed="false"] { color: var(--an-accent); }
+  #an-close { font: 15px/1 inherit; }
+
+  /* the snap outline flashes on commit when live outlining is off, so you still
+     see what got captured without an outline chasing the cursor the whole time */
+  #an-hl.an-flash { transition: opacity .18s ease; opacity: 1; }
+  #an-hl.an-fade { opacity: 0; }
+
+  /* batch actions live in a footer, away from close, with room for real labels */
+  #an-pfoot {
+    display: flex; gap: 8px; padding: 9px 12px; flex-shrink: 0;
+    border-top: 1px solid var(--an-line);
+  }
+  #an-pfoot button {
+    flex: 1; border: 1px solid var(--an-line); background: transparent; color: var(--an-ink);
+    border-radius: 8px; padding: 7px 10px; font: 600 12.5px/1 inherit; cursor: pointer;
+  }
+  #an-pfoot button:hover { border-color: var(--an-muted); }
+  #an-pfoot button:focus-visible { outline: 2px solid var(--an-accent); outline-offset: 1px; }
+  #an-wipe { color: var(--an-muted); flex: 0 0 auto; }
+  #an-wipe:hover { color: var(--an-danger); border-color: var(--an-danger); }
+  #an-wipe.arm { background: var(--an-danger); border-color: var(--an-danger); color: #fff; }
+  #an-list { overflow-y: auto; padding: 4px 0; flex: 1; }
+  .an-item {
+    display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px 10px 14px;
+    cursor: pointer; border-left: 2px solid transparent;
+  }
+  .an-item + .an-item { border-top: 1px solid var(--an-line); }
+  .an-item:hover { border-left-color: var(--an-accent); }
+  .an-item .an-n {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%; margin-top: 1px;
+    background: var(--an-accent); color: #fff; font: 700 10px/18px inherit; text-align: center;
+  }
+  .an-item.lost .an-n { background: var(--an-muted); }
+  .an-item .an-body { min-width: 0; flex: 1; }
+  .an-item .an-meta {
+    font: 11px/1.4 inherit; color: var(--an-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .an-item .an-text { font: 13.5px/1.45 inherit; margin-top: 2px; overflow-wrap: anywhere; }
+  .an-item .an-del {
+    flex-shrink: 0; border: 0; background: none; color: var(--an-muted);
+    font: 15px/1 inherit; cursor: pointer; padding: 2px 4px; opacity: 0;
+  }
+  .an-item:hover .an-del, .an-item .an-del:focus-visible { opacity: 1; }
+  .an-item .an-del:hover { color: var(--an-danger); }
+  #an-empty { padding: 16px 14px; font: 13px/1.5 inherit; color: var(--an-muted); }
+
+  /* ---- editor popover ---- */
+  #an-pop {
+    position: fixed; z-index: 2147483100; width: 320px;
+    background: var(--an-bg); color: var(--an-ink);
+    border: 1px solid var(--an-line); border-radius: 12px; padding: 12px;
+    box-shadow: var(--an-shadow);
+  }
+  #an-pop[hidden] { display: none; }
+  #an-meta {
+    font: 11px/1.4 inherit; color: var(--an-muted); margin-bottom: 8px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #an-text {
+    width: 100%; min-height: 74px; resize: vertical;
+    background: transparent; color: var(--an-ink);
+    border: 1px solid var(--an-line); border-radius: 8px; padding: 8px 10px;
+    font: 14px/1.45 inherit;
+  }
+  #an-text:focus-visible { outline: 2px solid var(--an-accent); outline-offset: 1px; }
+  #an-hint { font: 11px/1.4 inherit; color: var(--an-muted); margin-top: 6px; }
+  #an-prow { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  #an-prow button {
+    border: 1px solid var(--an-line); background: transparent; color: var(--an-ink);
+    border-radius: 8px; padding: 6px 12px; font: 600 12.5px/1 inherit; cursor: pointer;
+  }
+  #an-prow button:focus-visible { outline: 2px solid var(--an-accent); outline-offset: 1px; }
+  #an-save { background: var(--an-accent); border-color: var(--an-accent); color: #fff; }
+  #an-del { margin-right: auto; color: var(--an-muted); }
+  #an-del:hover { color: var(--an-danger); border-color: var(--an-danger); }
+
+  /* ---- toast ---- */
+  #an-toast {
+    position: fixed; right: 20px; bottom: 78px; z-index: 2147483200;
+    background: var(--an-ink); color: var(--an-bg);
+    border-radius: 9px; padding: 9px 13px; font: 13px/1.4 inherit;
+    max-width: 320px; opacity: 0; transform: translateY(4px);
+    transition: opacity .2s, transform .2s; pointer-events: none;
+  }
+  #an-toast.show { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    #an-toast, #an-dock button { transition: none; }
+  }
+
+  /* ---- copy fallback ---- */
+  #an-copybox {
+    position: fixed; inset: 0; z-index: 2147483400; display: grid; place-items: center;
+    background: rgba(0,0,0,.45); padding: 20px;
+  }
+  #an-copybox .an-sheet {
+    width: min(620px, 100%); background: var(--an-bg); color: var(--an-ink);
+    border: 1px solid var(--an-line); border-radius: 14px; padding: 16px; box-shadow: var(--an-shadow);
+  }
+  #an-copybox h3 { margin: 0 0 4px; font: 600 15px/1.3 inherit; }
+  #an-copybox p { margin: 0 0 10px; font: 13px/1.5 inherit; color: var(--an-muted); }
+  #an-copybox textarea {
+    width: 100%; height: 220px; resize: vertical; background: transparent; color: var(--an-ink);
+    border: 1px solid var(--an-line); border-radius: 9px; padding: 10px 12px;
+    font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  #an-copybox button {
+    margin-top: 10px; border: 1px solid var(--an-line); background: transparent;
+    color: var(--an-ink); border-radius: 8px; padding: 7px 14px; font: 600 12.5px/1 inherit; cursor: pointer;
+  }
+</style>
+
+<div id="an-dock">
+  <button id="an-pin" type="button" aria-pressed="false" title="Add a comment to an element">
+    <span class="an-x" aria-hidden="true">✛</span><span>Comment</span>
+  </button>
+  <button id="an-chip" type="button" aria-expanded="false" title="Show comments">0</button>
+</div>
+
+<div id="an-panel" role="dialog" aria-label="Comments">
+  <div id="an-phead">
+    <b id="an-ptitle">Comments</b>
+    <button id="an-snap" type="button" aria-pressed="true" aria-label="Outline elements while hovering" title="Outline elements while hovering">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke-dasharray="3 2"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <button id="an-eye" type="button" aria-pressed="false" aria-label="Hide pins on the page" title="Hide pins on the page">
+      <svg id="an-eye-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z"/><circle cx="8" cy="8" r="1.9"/>
+      </svg>
+    </button>
+    <button id="an-close" type="button" aria-label="Close comments" title="Close">✕</button>
+  </div>
+  <div id="an-list"></div>
+  <div id="an-pfoot">
+    <button id="an-copy" type="button" title="Copy all comments">Copy all</button>
+    <button id="an-wipe" type="button" title="Delete all comments">Delete all</button>
+  </div>
+</div>
+
+<div id="an-hl" aria-hidden="true"></div>
+<div id="an-pins"></div>
+
+<div id="an-pop" hidden role="dialog" aria-label="Edit comment">
+  <div id="an-meta"></div>
+  <textarea id="an-text" placeholder="What about this element?"></textarea>
+  <div id="an-hint">↵ saves · ⇧↵ new line · Esc cancels · dictate with your macOS shortcut</div>
+  <div id="an-prow">
+    <button id="an-del" type="button">Delete</button>
+    <button id="an-cancel" type="button">Cancel</button>
+    <button id="an-save" type="button">Save</button>
+  </div>
+</div>
+
+<div id="an-toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "flow-annotations-v2:" + location.pathname;
+  var CHROME = "#an-dock,#an-panel,#an-pop,#an-toast,#an-hl,#an-pins,#an-copybox";
+  var SKIP = { HTML: 1, BODY: 1, SCRIPT: 1, STYLE: 1, HEAD: 1, META: 1, LINK: 1, BR: 1 };
+  var HSEL = "h1,h2,h3,h4,h5,h6";
+  var MIN = 8, DEF = { x: 0.5, y: 0.15 };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { notes = []; }
+  if (!Array.isArray(notes)) notes = [];
+
+  var picking = false, current = null, upStack = [], active = null, armed = false, armTimer = null;
+
+  // Preference, not per-document state — it rides along with the reviewer, so it lives
+  // under its own key and survives regeneration. Default on (outline follows the cursor).
+  var PREF = "flow-annotations-v2:snapPreview";
+  var snapPreview = true;
+  try { snapPreview = localStorage.getItem(PREF) !== "0"; } catch (e) {}
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch (e) {} }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function isChrome(el) { return !!(el && el.closest && el.closest(CHROME)); }
+  function cssesc(s) { return (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/["\\]/g, "\\$&"); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  var toastTimer = null;
+  function toast(msg, ms) {
+    var t = $("an-toast"); t.textContent = msg; t.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, ms || 2600);
+  }
+
+  // ---- targeting (from flow) ------------------------------------------------------
+  function pickTarget(el) {
+    while (el && el.nodeType === 1) {
+      if (isChrome(el)) { el = el.parentElement; continue; }
+      if (SKIP[el.tagName]) { el = el.parentElement; continue; }
+      var r = el.getBoundingClientRect();
+      if (r.width < MIN || r.height < MIN) { el = el.parentElement; continue; }
+      return el;
+    }
+    return null;
+  }
+
+  // ---- anchoring (from flow — content-derived, survives regeneration) --------------
+  function headingText(h) { return (h.innerText || h.textContent || "").replace(/\s+/g, " ").trim(); }
+  function lastPreceding(list, el) {
+    var best = null;
+    for (var i = 0; i < list.length; i++) {
+      if (el.compareDocumentPosition(list[i]) & Node.DOCUMENT_POSITION_PRECEDING) best = list[i];
+    }
+    return best;
+  }
+  function nearestHeading(el) {
+    if (el.matches && el.matches(HSEL)) return headingText(el);
+    if (el.querySelector) { var own = el.querySelector(HSEL); if (own) return headingText(own); }
+    var node = el.parentNode, scope = null;
+    while (node && node.nodeType === 1) {
+      if (node.querySelector && node.querySelector(HSEL)) { scope = node; break; }
+      node = node.parentNode;
+    }
+    if (scope) {
+      var within = scope.querySelectorAll(HSEL);
+      var chosen = lastPreceding(within, el) || within[0];
+      if (chosen) return headingText(chosen);
+    }
+    var doc = lastPreceding(document.querySelectorAll(HSEL), el);
+    return doc ? headingText(doc) : "(page)";
+  }
+  function shortText(el) {
+    var t = el.getAttribute && (el.getAttribute("aria-label") || el.getAttribute("alt"));
+    if (!t) t = (el.innerText || el.textContent || "");
+    t = (t || "").replace(/\s+/g, " ").trim();
+    return t.length > 60 ? t.slice(0, 57) + "…" : t;
+  }
+  function anchorFor(el) {
+    return {
+      pinId: (el.getAttribute && el.getAttribute("data-pin-id")) || null,
+      heading: nearestHeading(el),
+      tag: el.tagName.toLowerCase(),
+      role: (el.getAttribute && el.getAttribute("role")) || "",
+      text: shortText(el)
+    };
+  }
+  function resolve(a) {
+    if (!a) return null;
+    if (a.pinId) {
+      try { var byId = document.querySelector('[data-pin-id="' + cssesc(a.pinId) + '"]'); if (byId) return byId; } catch (e) {}
+    }
+    var nodes = document.querySelectorAll(a.tag || "*"), best = null, bestScore = 1;
+    for (var i = 0; i < nodes.length; i++) {
+      var c = nodes[i];
+      if (isChrome(c)) continue;
+      var s = 0;
+      if (((c.getAttribute && c.getAttribute("role")) || "") === a.role) s += 1;
+      if (nearestHeading(c) === a.heading) s += 2;
+      var ct = shortText(c);
+      if (a.text && ct === a.text) s += 3;
+      else if (a.text && ct && ct.indexOf(a.text.slice(0, 18)) === 0) s += 1;
+      if (s > bestScore) { bestScore = s; best = c; }
+    }
+    return best;
+  }
+  function elDesc(a) {
+    var d = a.tag || "element";
+    if (a.role) d += "[role=" + a.role + "]";
+    if (a.text) d += ' "' + a.text + '"';
+    return d;
+  }
+  function descriptor(a) { return (a.heading || "(page)") + " › " + elDesc(a); }
+
+  // ---- picker ---------------------------------------------------------------------
+  function enterPick() {
+    picking = true; upStack = []; current = null;
+    document.documentElement.classList.add("an-picking");
+    $("an-pin").setAttribute("aria-pressed", "true");
+    toast((snapPreview ? "Hover an element" : "Click an element — it still snaps") +
+      " · ↑ widens · ↓ narrows · ↵ commits · Esc cancels", 4200);
+  }
+  function exitPick() {
+    picking = false; current = null; upStack = [];
+    document.documentElement.classList.remove("an-picking");
+    $("an-pin").setAttribute("aria-pressed", "false");
+    $("an-hl").style.display = "none";
+  }
+  // `force` draws the outline even when live hover-outlining is switched off — used by
+  // ↑/↓ (you must see what you are adjusting) and by the post-commit flash.
+  function drawHL(el, force) {
+    var hl = $("an-hl");
+    if (!el || (!snapPreview && !force)) { hl.style.display = "none"; return; }
+    var r = el.getBoundingClientRect();
+    hl.style.display = "block";
+    hl.style.left = r.left + "px"; hl.style.top = r.top + "px";
+    hl.style.width = r.width + "px"; hl.style.height = r.height + "px";
+  }
+  function setTarget(el, force) { current = el; drawHL(el, force); }
+
+  // With outlining off, the snap is still happening — you just don't see it until you
+  // commit. Flash what was captured so the pick is never a mystery.
+  var flashT = null, fadeT = null;
+  function flashHL(el) {
+    if (snapPreview || !el) return;          // it was already on screen; nothing to reveal
+    var hl = $("an-hl");
+    if (flashT) clearTimeout(flashT);
+    if (fadeT) clearTimeout(fadeT);
+    hl.classList.remove("an-fade");
+    hl.classList.add("an-flash");
+    drawHL(el, true);
+    flashT = setTimeout(function () { hl.classList.add("an-fade"); }, 460);
+    fadeT = setTimeout(function () {
+      hl.style.display = "none";
+      hl.classList.remove("an-flash", "an-fade");
+    }, 700);
+  }
+
+  document.addEventListener("mousemove", function (e) {
+    if (!picking) return;
+    var el = pickTarget(document.elementFromPoint(e.clientX, e.clientY));
+    if (el && el !== current) { setTarget(el); upStack = []; }
+  }, true);
+
+  function commit(pt) {
+    if (!current) { exitPick(); return; }
+    var el = current, r = el.getBoundingClientRect();
+    var ox = r.width ? (pt.x - r.left) / r.width : DEF.x;
+    var oy = r.height ? (pt.y - r.top) / r.height : DEF.y;
+    var n = { id: uid(), anchor: anchorFor(el), off: { x: clamp01(ox), y: clamp01(oy) }, note: "", ts: new Date().toISOString() };
+    exitPick();
+    flashHL(el);                 // no-op when the outline was already visible
+    notes.push(n); save(); render();
+    openEditor(n.id);
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!picking) return;
+    if (isChrome(e.target)) return;
+    e.preventDefault(); e.stopPropagation();
+    commit({ x: e.clientX, y: e.clientY });
+  }, true);
+
+  // ---- render ---------------------------------------------------------------------
+  function render() {
+    var wrap = $("an-pins");
+    wrap.textContent = "";
+    notes.forEach(function (n, i) {
+      var el = resolve(n.anchor);
+      var pin = document.createElement("button");
+      pin.type = "button"; pin.className = "an-pin" + (el ? "" : " lost");
+      pin.textContent = String(i + 1);
+      pin.setAttribute("aria-label", "Comment " + (i + 1) + ": " + (n.note || "(empty)"));
+      pin.title = n.note || "(empty)";
+      if (el) {
+        var r = el.getBoundingClientRect();
+        pin.style.left = (window.scrollX + r.left + r.width * n.off.x) + "px";
+        pin.style.top = (window.scrollY + r.top + r.height * n.off.y) + "px";
+      } else {
+        pin.style.display = "none"; // unanchored: no place to draw it, still listed in the panel
+      }
+      pin.addEventListener("click", function (ev) { ev.stopPropagation(); openEditor(n.id); });
+      wrap.appendChild(pin);
+    });
+
+    $("an-chip").textContent = String(notes.length);
+    $("an-chip").classList.toggle("has", notes.length > 0);
+    $("an-ptitle").textContent = notes.length === 1 ? "1 comment" : notes.length + " comments";
+
+    var list = $("an-list");
+    list.textContent = "";
+    $("an-pfoot").style.display = notes.length ? "flex" : "none";  // nothing to batch on an empty list
+    if (!notes.length) {
+      var em = document.createElement("div");
+      em.id = "an-empty";
+      em.textContent = "No comments yet. Press Pin, then click anything on the page.";
+      list.appendChild(em);
+      return;
+    }
+    notes.forEach(function (n, i) {
+      var el = resolve(n.anchor);
+      var item = document.createElement("div");
+      item.className = "an-item" + (el ? "" : " lost");
+      item.tabIndex = 0;
+
+      var num = document.createElement("span");
+      num.className = "an-n"; num.textContent = String(i + 1);
+
+      var body = document.createElement("div");
+      body.className = "an-body";
+      var meta = document.createElement("div");
+      meta.className = "an-meta";
+      meta.textContent = el ? descriptor(n.anchor) : "unanchored · " + elDesc(n.anchor);
+      var text = document.createElement("div");
+      text.className = "an-text";
+      text.textContent = n.note || "(empty)";
+      body.appendChild(meta); body.appendChild(text);
+
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "an-del"; del.textContent = "×";
+      del.setAttribute("aria-label", "Delete comment " + (i + 1));
+      del.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        notes = notes.filter(function (x) { return x.id !== n.id; });
+        save(); render(); toast("Comment deleted.");
+      });
+
+      item.appendChild(num); item.appendChild(body); item.appendChild(del);
+      item.addEventListener("click", function () { scrollToNote(n); openEditor(n.id); });
+      item.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); scrollToNote(n); openEditor(n.id); }
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function scrollToNote(n) {
+    var el = resolve(n.anchor);
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  // ---- editor ---------------------------------------------------------------------
+  function openEditor(id) {
+    var n = notes.find(function (x) { return x.id === id; });
+    if (!n) return;
+    active = id;
+    var el = resolve(n.anchor);
+    $("an-meta").textContent = "#" + (notes.indexOf(n) + 1) + " · " + descriptor(n.anchor) +
+      (el ? "" : "  (element not found in this version)");
+    $("an-text").value = n.note || "";
+    var pop = $("an-pop");
+    pop.hidden = false;
+
+    var w = 320, h = pop.offsetHeight || 210, pad = 14, x, y;
+    if (el) {
+      var r = el.getBoundingClientRect();
+      x = r.left + r.width * n.off.x + 16;
+      y = r.top + r.height * n.off.y - 10;
+    } else { x = window.innerWidth - w - pad; y = 80; }
+    pop.style.left = Math.max(pad, Math.min(x, window.innerWidth - w - pad)) + "px";
+    pop.style.top = Math.max(pad, Math.min(y, window.innerHeight - h - pad)) + "px";
+    $("an-text").focus();
+  }
+  function closeEditor() { $("an-pop").hidden = true; active = null; }
+  function commitNote() {
+    var n = notes.find(function (x) { return x.id === active; });
+    if (n) {
+      n.note = $("an-text").value.trim();
+      if (!n.note) notes = notes.filter(function (x) { return x.id !== n.id; });
+    }
+    save(); render(); closeEditor();
+  }
+  function dropEmpty() {
+    var n = notes.find(function (x) { return x.id === active; });
+    if (n && !n.note) { notes = notes.filter(function (x) { return x.id !== n.id; }); save(); render(); }
+  }
+
+  $("an-save").addEventListener("click", commitNote);
+  $("an-cancel").addEventListener("click", function () { dropEmpty(); closeEditor(); });
+  $("an-del").addEventListener("click", function () {
+    notes = notes.filter(function (x) { return x.id !== active; });
+    save(); render(); closeEditor(); toast("Comment deleted.");
+  });
+  $("an-text").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitNote(); }       // ↵ finalizes
+    else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commitNote(); }
+  });
+
+  // ---- dock + panel ---------------------------------------------------------------
+  $("an-pin").addEventListener("click", function () { picking ? exitPick() : enterPick(); });
+  $("an-chip").addEventListener("click", function () {
+    var open = $("an-panel").classList.toggle("open");
+    $("an-chip").setAttribute("aria-expanded", open ? "true" : "false");
+    disarm();
+  });
+  $("an-close").addEventListener("click", function () {
+    $("an-panel").classList.remove("open");
+    $("an-chip").setAttribute("aria-expanded", "false");
+    disarm();
+  });
+  // SAFETY: static author-controlled markup, no user text — never interpolate a note here.
+  var EYE_OPEN = '<path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z"/><circle cx="8" cy="8" r="1.9"/>';
+  var EYE_SHUT = '<path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z"/><circle cx="8" cy="8" r="1.9"/><path d="M2.5 13.5 13.5 2.5"/>';
+  $("an-eye").addEventListener("click", function () {
+    var hidden = $("an-pins").classList.toggle("hidden");
+    this.setAttribute("aria-pressed", hidden ? "true" : "false");
+    var label = hidden ? "Show pins on the page" : "Hide pins on the page";
+    this.setAttribute("aria-label", label); this.title = label;
+    $("an-eye-svg").innerHTML = hidden ? EYE_SHUT : EYE_OPEN;
+    toast(hidden ? "Pins hidden — your comments are still saved." : "Pins shown.");
+  });
+
+  var SNAP_ON = '<rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke-dasharray="3 2"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/>';
+  var SNAP_OFF = '<rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke-dasharray="3 2"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/><path d="M2.5 13.5 13.5 2.5"/>';
+  $("an-snap").addEventListener("click", function () {
+    snapPreview = !snapPreview;
+    try { localStorage.setItem(PREF, snapPreview ? "1" : "0"); } catch (e) {}
+    this.setAttribute("aria-pressed", snapPreview ? "true" : "false");
+    var label = snapPreview ? "Outline elements while hovering" : "Outline only on ↑/↓ and after you click";
+    this.setAttribute("aria-label", label); this.title = label;
+    this.querySelector("svg").innerHTML = snapPreview ? SNAP_ON : SNAP_OFF;
+    if (!snapPreview) drawHL(null);
+    toast(snapPreview
+      ? "Outlining as you hover."
+      : "Outline off — it still snaps, and flashes what it caught when you click.");
+  });
+
+  // Clicking off an open editor closes it. Empty → discarded, exactly like Escape.
+  // With text → SAVED rather than dropped: a stray click should never cost you a
+  // comment you just dictated, and that risk outweighs strict Escape parity.
+  document.addEventListener("click", function (e) {
+    if ($("an-pop").hidden || picking) return;
+    if (isChrome(e.target)) return;              // dock, panel, pins, the editor itself
+    if ($("an-text").value.trim()) commitNote();
+    else { dropEmpty(); closeEditor(); }
+  }, false);
+
+  function disarm() {
+    armed = false;
+    var w = $("an-wipe"); w.textContent = "Delete all"; w.classList.remove("arm");
+    if (armTimer) { clearTimeout(armTimer); armTimer = null; }
+  }
+  $("an-wipe").addEventListener("click", function () {
+    if (!notes.length) { toast("Nothing to delete."); return; }
+    if (!armed) {                                   // two-step, no native confirm (file:// safe)
+      armed = true; this.textContent = "Delete all?"; this.classList.add("arm");
+      armTimer = setTimeout(disarm, 3500);
+      return;
+    }
+    var n = notes.length;
+    notes = []; save(); render(); disarm(); closeEditor();
+    toast("Deleted all " + n + " comment(s).");
+  });
+
+  // ---- export (from flow — unchanged format) --------------------------------------
+  function domOrder(a, b) {
+    if (a.el && b.el) {
+      var p = a.el.compareDocumentPosition(b.el);
+      if (p & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+      if (p & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+      return 0;
+    }
+    return a.el ? -1 : b.el ? 1 : 0;
+  }
+  $("an-copy").addEventListener("click", function () {
+    if (!notes.length) { toast("No comments yet."); return; }
+    var rows = notes.map(function (n) { return { n: n, num: notes.indexOf(n) + 1, el: resolve(n.anchor) }; });
+    rows.sort(domOrder);
+    var lines = [], cur = null, lost = false;
+    rows.forEach(function (r) {
+      var head = r.el ? (r.n.anchor.heading || "(page)") : "(unanchored — element not found in current report)";
+      if (head !== cur) { cur = head; lost = lost || !r.el; lines.push("## " + head); }
+      lines.push("#" + r.num + "\n   at " + elDesc(r.n.anchor) + "\n   note: " + (r.n.note || "(none)"));
+    });
+    var header = (document.title || "Visual review") + " — " + notes.length + " annotation(s)\n" +
+      "(grouped by section, in reading order; numbers match the on-page pins;\n" +
+      " each line names the section and the element the note is attached to" +
+      (lost ? ";\n an \"unanchored\" note's element was not found in the current report" : "") + ")\n\n";
+    copyText(header + lines.join("\n\n"), notes.length);
+  });
+
+  function copyText(text, count) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", "");
+    ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { ta.setSelectionRange(0, text.length); } catch (e) {}
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    ta.remove();
+    if (ok) { toast("Copied " + count + " comment(s) — paste them to me."); return; }
+    showCopyBox(text);
+  }
+  function showCopyBox(text) {
+    var old = $("an-copybox"); if (old) old.remove();
+    var box = document.createElement("div"); box.id = "an-copybox";
+    var sheet = document.createElement("div"); sheet.className = "an-sheet";
+    var h = document.createElement("h3"); h.textContent = "Copy your comments";
+    var p = document.createElement("p"); p.textContent = "The browser blocked the automatic copy. The text is selected — press ⌘C (or Ctrl+C), then paste it back.";
+    var ta = document.createElement("textarea"); ta.readOnly = true; ta.value = text;
+    var btn = document.createElement("button"); btn.type = "button"; btn.textContent = "Done";
+    btn.addEventListener("click", function () { box.remove(); });
+    sheet.appendChild(h); sheet.appendChild(p); sheet.appendChild(ta); sheet.appendChild(btn);
+    box.appendChild(sheet); document.body.appendChild(box);
+    ta.focus(); ta.select();
+    box.addEventListener("click", function (e) { if (e.target === box) box.remove(); });
+  }
+
+  // ---- keys -----------------------------------------------------------------------
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (!$("an-pop").hidden) { dropEmpty(); closeEditor(); return; }
+      if (picking) { exitPick(); return; }
+      var cb = $("an-copybox"); if (cb) { cb.remove(); return; }
+      if ($("an-panel").classList.contains("open")) {
+        $("an-panel").classList.remove("open");
+        $("an-chip").setAttribute("aria-expanded", "false");
+      }
+      return;
+    }
+    if (!picking) return;
+    if (e.key === "ArrowUp") {                       // widen to parent
+      e.preventDefault();
+      if (current && current.parentElement) {
+        var p = pickTarget(current.parentElement);
+        if (p) { upStack.push(current); setTarget(p, true); }   // force: you must see what you widened to
+      }
+    } else if (e.key === "ArrowDown") {              // narrow back down the path we came up
+      e.preventDefault();
+      if (upStack.length) setTarget(upStack.pop(), true);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (current) {
+        var r = current.getBoundingClientRect();
+        commit({ x: r.left + r.width * DEF.x, y: r.top + r.height * DEF.y });
+      }
+    }
+  }, true);
+
+  // ---- reflow ---------------------------------------------------------------------
+  var reflow = null;
+  function scheduleRender() {
+    if (reflow) return;
+    reflow = setTimeout(function () { reflow = null; render(); }, 120);
+  }
+  window.addEventListener("resize", scheduleRender);
+  if (window.ResizeObserver) { try { new ResizeObserver(scheduleRender).observe(document.body); } catch (e) {} }
+
+  // reflect a persisted "outline off" preference on load
+  if (!snapPreview) {
+    var sb = $("an-snap");
+    sb.setAttribute("aria-pressed", "false");
+    var l = "Outline only on ↑/↓ and after you click";
+    sb.setAttribute("aria-label", l); sb.title = l;
+    sb.querySelector("svg").innerHTML = SNAP_OFF;
+  }
+
+  render();
+})();
+</script>
