@@ -37,6 +37,15 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 For detailed technical context (Tailwind, theme system, typography, architecture, accessibility, visual reference), see `.claude/rules/technical-context.md` — auto-loaded when editing `src/` files.
 
+### Font-guesser game (`apps/fontguesser/`)
+
+The font-guessing game is a **self-contained sub-app** with its own `package.json`, toolchain (Vite + `oxlint`), and `node_modules`/`dist` (both gitignored). It is deliberately **decoupled** from the portfolio: it is not imported into the SPA, and it is excluded from the portfolio's `eslint`/`tsc`/`vitest` — so a game issue can never break the portfolio build or deploy.
+
+- **Source of truth**: `apps/fontguesser/` (edit here to fix game bugs).
+- **Deploy mechanism**: the built game is committed to `public/font-guesser/` and served verbatim by GitHub Pages at `benyamron.com/font-guesser/` (Pages serves the real file before the SPA fallback). The portfolio build copies `public/` verbatim and never processes it.
+- **Rebuild + re-vendor** after any change: `npm run build:fontguesser` (builds with `--base=/font-guesser/` and refreshes `public/font-guesser/`). The `--base` flag is required or the built HTML requests assets from the domain root and loads blank.
+- The home-page card for it lives in `src/data/projects.ts` with an **absolute** `href` (so `ProjectLink` treats it as external and the browser handles it natively) and **no** `caseStudySlug` (keeps it out of the sitemap and case-study routing).
+
 ### Dev server after implementation:
 
 After completing any feature implementation, bug fix, or code change, **always run `/link`** to start (or reconnect to) a dev server and send the user a test link. Do not wait to be asked. The `/link` command handles port assignment automatically to avoid conflicts across parallel worktrees.

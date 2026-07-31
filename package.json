@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "fetch-contributions": "tsx scripts/fetch-contributions.ts"
+    "fetch-contributions": "tsx scripts/fetch-contributions.ts",
+    "build:fontguesser": "cd apps/fontguesser && npm install && npx vite build --base=/font-guesser/ && rm -rf ../../public/font-guesser && cp -R dist ../../public/font-guesser"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.7",

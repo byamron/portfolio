@@ -6,6 +6,7 @@ export interface Project {
   projectId: string // maps to preview image: "uw" | "sony" | "cip" | "acorn"
   href: string
   isLink: boolean
+  external?: boolean // full page load, not an SPA route — for static sub-apps (e.g. /font-guesser/) and off-site links
   company?: string // e.g. "Mochi Health", "Personal project"
   year?: string // e.g. "2025", "2020"
   caseStudySlug?: string // maps to markdown filename in data/case-studies/
@@ -41,6 +42,18 @@ export const sections: Section[] = [
       { id: 'language-app', title: 'Voice-first language practice with personalized feedback', projectId: 'language-app', href: '/project/language-app', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'language-app', videoPreview: '/images/preview-language-app.mp4', summary: 'Most language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: a five-minute voice conversation with a Gemini-powered partner, and a feed of corrections built from things you actually said. No lessons, no streaks, no XP.' },
       { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'detect', href: '/project/manipulation-identifier', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'manipulation-identifier', videoPreview: '/images/preview-detect-manip.mp4', summary: 'I’m building a Chrome extension that uses LLMs to identify and explain manipulative language on the web — fear-mongering, false dichotomies, ad hominem attacks, and twelve others. It highlights and explains rather than blocking. The real challenge is keeping false positives low enough that the highlights stay trusted.' },
       { id: 'todo-priority', title: 'A todo list for focus and prioritization', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'Most todo apps give you a list and leave the rest to you. I built one that maintains itself\u2009\u2014\u2009every task gets ranked through pairwise comparisons, and your active list can only hold three at a time. Finish one, pull the next.', status: 'In progress' },
+      {
+        id: 'font-guesser',
+        title: 'A daily game for naming typefaces',
+        projectId: 'font-guesser',
+        href: '/font-guesser/',
+        isLink: true,
+        external: true,
+        company: 'Personal project',
+        year: '2026',
+        videoPreview: '/images/preview-font-guesser.mp4',
+        summary: 'For the typography nerds out there. You\u2019re shown a mystery Google Font, and you try to guess it. Learn to recognize fonts, discover some new ones, and read about their backstories.',
+      },
     ],
   },
   {

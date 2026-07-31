@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-07-31 — Add font-guesser game: home card, in-repo source, descender fix
+
+**Branch:** `add-font-guesser-card` (→ `next-update`).
+
+**Summary:** Added a home-page card for the font-guessing game, adopted the game's source into the portfolio repo, and fixed a glyph-clipping bug in the game.
+
+- **Home card** (`src/data/projects.ts`) — new entry in the "Building tools on the side" section, `status: 'Playable'`. Three deliberate details: an **absolute** `href` (`https://benyamron.com/font-guesser/`) so `ProjectLink`'s `isInternal` check treats it as external and the browser navigates natively (no component change needed); a **trailing slash** to avoid a Pages redirect hop; and **no `caseStudySlug`**, which keeps it out of case-study routing and the sitemap generator automatically. Copy uses the thin-space (`U+2009`) em-dash convention (guard test passes).
+- **Game vendored + served statically** — the built game is committed to `public/font-guesser/` (6 files, ~1.3 MB) and served verbatim by GitHub Pages before the SPA fallback, so it needs zero involvement from the React app. Built with `--base=/font-guesser/` (required, or the HTML requests assets from the domain root and loads blank).
+- **Game source adopted in-repo** at `apps/fontguesser/` (was a separate private repo). Kept **decoupled**: its own `package.json`/toolchain (`oxlint`), `node_modules`/`dist` gitignored, excluded from the portfolio's `eslint` (added `apps` to ignores; `tsconfig`/`vitest` already scope to `src`). So a game issue can never break the portfolio build or deploy. Rebuild + re-vendor via `npm run build:fontguesser`. Documented in `CLAUDE.md`.
+- **Descender-clipping fix** (`apps/fontguesser/src/components/Specimen.tsx`) — specimen blocks are `overflow: hidden` textareas that reserved anti-clip padding against a flat `SAFE_LEADING = 130` (1.3em) assumption. Script/display faces need far more (descenders past 1.8em), and blocks with leading ≥ 1.3 reserved zero — so their descenders were sheared. Replaced the flat guess with the face's **real measured extent** via a cached canvas `fontBoundingBox` probe (floored at the old value → no regression for text faces; falls back safely when metrics/font aren't ready). This is the fix the code's own comments aspired to.
+
+**Verification:** portfolio `vitest` 72/72; `vite build` clean (copies the game verbatim, matching hash); game `tsc` + `oxlint` clean; portfolio `eslint` no longer touches `apps/`. Pre-existing `no-irregular-whitespace` errors in comments (`case-study-content.ts`, `projects.ts:16`) are unchanged by this work.
+
+---
+
 ## 2026-07-23 — Case-study voice polish: em-dash convention + staff-review fixes
 
 **Branch:** `case-study-voice-polish` (→ `next-update`). Follows the voice rewrite (#191) and a four-lens `/flow:staff-review` of the `next-update → main` deploy (#192).
