@@ -6,6 +6,7 @@ export interface Project {
   projectId: string // maps to preview image: "uw" | "sony" | "cip" | "acorn"
   href: string
   isLink: boolean
+  external?: boolean // full page load, not an SPA route — for static sub-apps (e.g. /font-guesser/) and off-site links
   company?: string // e.g. "Mochi Health", "Personal project"
   year?: string // e.g. "2025", "2020"
   caseStudySlug?: string // maps to markdown filename in data/case-studies/
@@ -45,13 +46,12 @@ export const sections: Section[] = [
         id: 'font-guesser',
         title: 'A daily game for naming typefaces',
         projectId: 'font-guesser',
-        href: 'https://benyamron.com/font-guesser/',
+        href: '/font-guesser/',
         isLink: true,
+        external: true,
         company: 'Personal project',
         year: '2026',
-        status: 'Playable',
-        previewDescription: 'A specimen sheet renders in a mystery Google Font\u2009\u2014\u2009you name it. Every guess ends in a reveal: the designer, the history, what the face is for. Click to play.',
-        summary: 'A specimen sheet renders in a mystery Google Font\u2009\u2014\u2009you name it, from four options or from all 1,225. The reveal is the point: designer, provenance, usage numbers, and Google\u2019s own notes on the design. Daily puzzle plus endless practice.',
+        previewDescription: 'For the typography nerds out there. You\u2019re shown a mystery Google Font, and you try to guess it. Learn to recognize fonts, discover some new ones, and read about their backstories.',
       },
     ],
   },
