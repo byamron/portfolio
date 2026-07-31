@@ -126,14 +126,16 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
     )
   }
 
-  const isInternal = project.href.startsWith('/')
+  // Router links are same-origin SPA routes. `external` links (off-site URLs and
+  // static sub-apps like /font-guesser/) get a full page load via a plain <a>.
+  const isRouterLink = project.href.startsWith('/') && !project.external
 
   function handleClick(e: React.MouseEvent) {
     // Cmd/Ctrl+click: let browser open new tab natively
     if (e.metaKey || e.ctrlKey || e.button === 1) return
 
-    // Only intercept internal links — external hrefs handled by browser
-    if (!isInternal) return
+    // Only intercept router links — external hrefs handled by browser
+    if (!isRouterLink) return
 
     e.preventDefault()
 
@@ -252,7 +254,7 @@ export function ProjectLink({ project, twoLine, separator = ', ', statusGap = 10
     </>
   )
 
-  if (isInternal) {
+  if (isRouterLink) {
     return <Link to={project.href} {...linkProps}>{children}</Link>
   }
 
