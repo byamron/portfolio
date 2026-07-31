@@ -41,6 +41,18 @@ export const sections: Section[] = [
       { id: 'language-app', title: 'Voice-first language practice with personalized feedback', projectId: 'language-app', href: '/project/language-app', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'language-app', videoPreview: '/images/preview-language-app.mp4', summary: 'Most language apps teach you to tap and swipe\u2009\u2014\u2009not speak. I\u2019m building a native iOS app with two modes: a five-minute voice conversation with a Gemini-powered partner, and a feed of corrections built from things you actually said. No lessons, no streaks, no XP.' },
       { id: 'detect-manip', title: 'Detecting manipulative language on the web', projectId: 'detect', href: '/project/manipulation-identifier', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'manipulation-identifier', videoPreview: '/images/preview-detect-manip.mp4', summary: 'I’m building a Chrome extension that uses LLMs to identify and explain manipulative language on the web — fear-mongering, false dichotomies, ad hominem attacks, and twelve others. It highlights and explains rather than blocking. The real challenge is keeping false positives low enough that the highlights stay trusted.' },
       { id: 'todo-priority', title: 'A todo list for focus and prioritization', projectId: 'todo', href: '/project/trio-todo-list', isLink: true, company: 'Personal project', year: '2026', caseStudySlug: 'trio-todo-list', videoPreview: '/images/preview-todo-priority.mp4', summary: 'Most todo apps give you a list and leave the rest to you. I built one that maintains itself\u2009\u2014\u2009every task gets ranked through pairwise comparisons, and your active list can only hold three at a time. Finish one, pull the next.', status: 'In progress' },
+      {
+        id: 'font-guesser',
+        title: 'A daily game for naming typefaces',
+        projectId: 'font-guesser',
+        href: 'https://benyamron.com/font-guesser/',
+        isLink: true,
+        company: 'Personal project',
+        year: '2026',
+        status: 'Playable',
+        previewDescription: 'A specimen sheet renders in a mystery Google Font\u2009\u2014\u2009you name it. Every guess ends in a reveal: the designer, the history, what the face is for. Click to play.',
+        summary: 'A specimen sheet renders in a mystery Google Font\u2009\u2014\u2009you name it, from four options or from all 1,225. The reveal is the point: designer, provenance, usage numbers, and Google\u2019s own notes on the design. Daily puzzle plus endless practice.',
+      },
     ],
   },
   {

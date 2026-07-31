@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'reference'] },
+  // apps/* are self-contained sub-apps (e.g. the font-guesser game) with their
+  // own toolchains and lint configs; they must never enter the portfolio's lint.
+  { ignores: ['dist', 'reference', 'apps'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
