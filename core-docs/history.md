@@ -2,6 +2,21 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-08-01 — Font-guesser: fix specimen clipping + blank-screen hardening
+
+**Branch:** `fix-fontguesser-blank-clip` (→ `next-update`). Two production bugs reported after deploy: the specimen shearing glyphs on some faces, and the screen occasionally going blank after a few guesses.
+
+**Investigation:** read the whole game (App/Specimen/useFontLoader/about/fonts/specimens/Reveal/GuessInput/main), then drove the built game headlessly (puppeteer-core + Brave) across 100+ endless rounds, measuring per-block padding vs actual glyph ink, network-throttled cold loads, and console/render errors.
+
+- **Clipping — root cause (confirmed):** the descender reserve was **dead**. `Editable` measured the face extent only via `document.fonts.ready.then(sync)`, which — because a child effect runs before App's `useFontLoader` even requests the font — resolved *before* the round's face loaded, so it measured the fallback and never corrected. Every block sat at the flat `SAFE_LEADING = 130` (≈12px bottom padding for all faces). And `fontBoundingBox` (the prior fix's metric) under-reports actual ink, so deep faces clip even when it *is* measured.
+  - **Fix** (`Specimen.tsx`): re-measure tied to a real `fontReady` signal (`state === 'ready'`) passed from `useFontLoader`; replace the single "extent" with per-edge reserves computed from **both** the declared box (`fontBoundingBox*`) and actual ink (`actualBoundingBox*`) — padding only where ink overshoots the line box, top and bottom independently, with a safety margin for cross-size hinting non-linearity. Verified 0 clips across all faces at defaults (padding now adapts 0–16px vs a flat 12); holds even for script faces (Lobster Two, Caveat) at minimum leading.
+- **Blank — root cause + hardening:** `main.tsx` had **no error boundary**, so any render exception unmounted the tree to a permanent white screen. Found a concrete latent throw (`GuessInput` Enter → `commit(results[active])` can read `undefined.family` when `active` outruns a shrunk list). Also the prefetch drew an *independent* random font from the one `Next` actually showed, so faces loaded cold.
+  - **Fixes:** add `ErrorBoundary` (recoverable reload instead of white screen — the robust catch-all); guard the `GuessInput` Enter path; pre-decide + warm the *actual* next endless face (`App.tsx` `nextEndless` ref, consumed by `startEndless`/`switchMode`). Note: the exact blank could not be deterministically reproduced in automated default play, so the boundary is the load-bearing fix — whatever the trigger, it can no longer white-screen.
+
+**Verification:** game `tsc -b` + `oxlint` clean; rebuilt + re-vendored to `public/font-guesser/`; 35-round smoke on the built bundle with 0 blanks / 0 empty specimens / 0 JS errors; portfolio `tsc` + 72/72 `vitest` unaffected (game stays decoupled).
+
+---
+
 ## 2026-07-31 — Add font-guesser game: home card, in-repo source, descender fix
 
 **Branch:** `add-font-guesser-card` (→ `next-update`).
