@@ -5,59 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#241f19" />
-    <title>Page not found — Ben Yamron</title>
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Literata:wght@300&family=Onest:wght@400&display=swap" rel="stylesheet" />
+    <title>Redirecting…</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html,
       body {
+        margin: 0;
         background: #1a1612;
-        color: #c4b9a8;
-        font-family: 'Onest', sans-serif;
-        font-weight: 400;
-        min-height: 100dvh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 32px;
       }
-      .container {
-        text-align: center;
-        max-width: 420px;
-      }
-      h1 {
-        font-family: 'Literata', serif;
-        font-weight: 300;
-        font-size: 36px;
-        color: #ede6da;
-        margin-bottom: 16px;
-      }
-      p {
-        font-size: 18px;
-        line-height: 1.6;
-        margin-bottom: 32px;
-      }
-      a {
-        color: #ede6da;
-        text-decoration: none;
-        font-size: 18px;
-        padding: 12px 24px;
-        border: 1px solid rgba(196, 185, 168, 0.25);
-        border-radius: 12px;
-        transition: background 0.2s, border-color 0.2s;
-        display: inline-block;
-      }
-      a:hover { background: rgba(196, 185, 168, 0.08); border-color: rgba(196, 185, 168, 0.4); }
-      a:focus-visible { outline: 2px solid #ede6da; outline-offset: 2px; }
     </style>
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages — https://github.com/rafgraph/spa-github-pages
+      // GitHub Pages serves this file for any path it can't find (e.g. /project/flow,
+      // which has no physical file). We re-encode the requested path into a query string
+      // and redirect to the app root, which does exist. The companion snippet in
+      // index.html restores the real URL before React Router boots, so a cold visit to a
+      // deep link (shared link, refresh, search result) lands on the right page instead
+      // of a dead end. Genuinely-unknown paths fall through to the in-app NotFound route.
+      var pathSegmentsToKeep = 0; // custom domain served from the root
+      var l = window.location;
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      );
+    </script>
   </head>
-  <body>
-    <div class="container">
-      <h1>This page is gone</h1>
-      <p>It was probably part of an older version of my portfolio. The site has moved on — head to the homepage to see the current one.</p>
-      <a href="/">Take me there</a>
-    </div>
-  </body>
+  <body></body>
 </html>
