@@ -12,6 +12,7 @@ import { RightColumn } from '@/components/RightColumn'
 import { Layout } from '@/components/Layout'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
+import { NotFound } from '@/components/NotFound'
 const PlaygroundRoutes = lazy(() => import('@/components/PlaygroundRoutes').then(m => ({ default: m.PlaygroundRoutes })))
 const PlaygroundDemo = lazy(() => import('@/components/PlaygroundDemo').then(m => ({ default: m.PlaygroundDemo })))
 import { preloadPortraitImages, preloadPreviewImages } from '@/utils/preloadImages'
@@ -47,6 +48,9 @@ function AppContent() {
         <Route path="/project/forge" element={<Navigate to="/project/optimizing-my-workflow" replace />} />
         <Route path="/about" element={<Navigate to="/" replace />} />
         <Route path="/rivet" element={<Navigate to="/" replace />} />
+        {/* Catch-all: genuinely-unknown paths (deep-linkable routes are restored by the
+            404.html → index.html SPA redirect before this point). */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       {/* Persistent right column — never unmounts during route transitions */}
       {isWide && !isStandalone && <RightColumn />}
