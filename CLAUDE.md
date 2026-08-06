@@ -46,6 +46,15 @@ The font-guessing game is a **self-contained sub-app** with its own `package.jso
 - **Rebuild + re-vendor** after any change: `npm run build:fontguesser` (builds with `--base=/font-guesser/` and refreshes `public/font-guesser/`). The `--base` flag is required or the built HTML requests assets from the domain root and loads blank.
 - The home-page card for it lives in `src/data/projects.ts` with an **absolute** `href` (so `ProjectLink` treats it as external and the browser handles it natively) and **no** `caseStudySlug` (keeps it out of the sitemap and case-study routing).
 
+### Consensus prototype (`apps/consensus-prototype/`, unlisted)
+
+Same self-contained sub-app pattern as font-guesser (own toolchain, gitignored `node_modules`/`dist`, excluded from the portfolio's `eslint`/`tsc`/`vitest`), but **private and unlisted** — no home-page card, no sitemap entry, nothing links to it.
+
+- **Source of truth**: `apps/consensus-prototype/` (originally vendored from a separate take-home-challenge repo).
+- **Deploy mechanism**: built and committed to `public/consensus/`, served verbatim by GitHub Pages at `benyamron.com/consensus/`.
+- **Rebuild + re-vendor**: `npm run build:consensus` (builds with `--base=/consensus/`).
+- **Access control**: client-side-only password gate (`src/components/PasswordGate.tsx` in the sub-app, password `consensus`). This is obscurity, not real security — GitHub Pages has no server-side auth, and the password is readable in the built JS. Fine for gating an unreleased design concept; don't rely on it for anything sensitive.
+
 ### Dev server after implementation:
 
 After completing any feature implementation, bug fix, or code change, **always run `/link`** to start (or reconnect to) a dev server and send the user a test link. Do not wait to be asked. The `/link` command handles port assignment automatically to avoid conflicts across parallel worktrees.

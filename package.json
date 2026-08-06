@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "fetch-contributions": "tsx scripts/fetch-contributions.ts",
-    "build:fontguesser": "cd apps/fontguesser && npm install && npx vite build --base=/font-guesser/ && rm -rf ../../public/font-guesser && cp -R dist ../../public/font-guesser"
+    "build:fontguesser": "cd apps/fontguesser && npm install && npx vite build --base=/font-guesser/ && rm -rf ../../public/font-guesser && cp -R dist ../../public/font-guesser",
+    "build:consensus": "cd apps/consensus-prototype && npm install && npx vite build --base=/consensus/ && rm -rf ../../public/consensus && cp -R dist ../../public/consensus"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.7",
