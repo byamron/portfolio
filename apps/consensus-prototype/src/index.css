@@ -1,0 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@200..900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Reddit Mono", ui-monospace, monospace;
+
+  /* Consensus dark-theme palette — pulled from the Paper.design capture, see
+     problem-definition/ai-first/05-design-conventions.md §6 */
+  --color-surface-app: #18181b;
+  --color-surface-rail: #303033;
+  --color-surface-panel: #27272a;
+  --color-surface-chip: #52525c;
+  --color-surface-chip-secondary: #3f3f46;
+  --color-border: #52525c;
+  --color-border-dashed: #71717b;
+
+  --color-text-primary: #f4f4f5;
+  --color-text-secondary: #9f9fa9;
+
+  --color-accent: #068ef1;
+  --color-accent-secondary: #25a4ff;
+  --color-bubble: #0058a7;
+  --color-nav-active: #024b8a;
+  --color-positive: #3bcdaa;
+
+  --radius-chip: 8px;
+  --radius-control: 12px;
+  --radius-composer: 20px;
+  --radius-popover: 16px;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface-app);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* bespoke asymmetric bubble corner, not on the standard radius scale */
+.bubble-radius {
+  border-radius: 22px 22px 8px 22px;
+}
+
+/* the "elevated button" bevel reused on nav items, composer toolbar buttons, send button */
+.elevated {
+  border-top-width: 1px;
+  border-left-width: 1px;
+  border-right-width: 1px;
+  border-bottom-width: 2px;
+  border-color: var(--color-border);
+}
+
+/* accent variant: real captures show a slightly lower alpha on t/l/r vs. bottom */
+.elevated-accent {
+  border-top-width: 1px;
+  border-left-width: 1px;
+  border-right-width: 1px;
+  border-bottom-width: 2px;
+  border-top-color: rgba(255, 255, 255, 0.12);
+  border-left-color: rgba(255, 255, 255, 0.12);
+  border-right-color: rgba(255, 255, 255, 0.12);
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+
+/* uniform 1px dashed border (Deep-mode toggle) — not the elevated bevel */
+.elevated-dashed {
+  border: 1px dashed var(--color-border-dashed);
+}
+
+/* CDL popover elevation — subtle, not a heavy drop shadow */
+.shadow-popover {
+  box-shadow: 0px 6px 12px 0px rgba(53, 70, 85, 0.03);
+}
