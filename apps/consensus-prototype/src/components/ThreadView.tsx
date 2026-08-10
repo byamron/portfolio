@@ -298,7 +298,7 @@ export function ThreadView() {
           <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-4">
             <Composer
               placeholder="Ask a follow-up…"
-              onSubmit={(segments) => {
+              onSubmit={({ segments }) => {
                 const text = segments.map((s) => (typeof s === 'string' ? s : '')).join(' ').trim()
                 if (text) sendFollowUp(text)
               }}

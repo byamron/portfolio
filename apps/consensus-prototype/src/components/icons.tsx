@@ -139,6 +139,8 @@ const ICONS = {
     'M6.453 15h11.094',
     'M8.5 2h7',
   ],
+  /** lucide/download */
+  download: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M7 10l5 5 5-5', 'M12 15V3'],
   /** lucide/upload */
   upload: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12'],
   /** lucide/link */

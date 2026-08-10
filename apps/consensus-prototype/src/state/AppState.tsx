@@ -29,6 +29,7 @@ import {
   type Suggestion,
   type Thread,
 } from '../data/mock'
+import type { Submission } from '../components/Composer'
 
 export type View = 'home' | 'thread' | 'collection' | 'artifact' | 'library'
 export type ArtifactTab = 'chat' | 'items' | 'history'
@@ -150,12 +151,7 @@ interface AppStateShape {
   citeSupport: (threadId: string) => void
   newArtifact: (collectionId: string) => void
 
-  startCrossThreadThread: (
-    segments: MessageSegment[],
-    scopePaperIds: string[],
-    scopeArtifactIds?: string[],
-    inCollection?: boolean,
-  ) => void
+  startCrossThreadThread: (submission: Submission) => void
   startSuggestedThread: (suggestion: Suggestion) => void
   savePaperToCollection: (collectionId: string, paperId: string) => void
   dismissSurfacedPaper: (collectionId: string, paperId: string) => void
@@ -303,16 +299,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
    * pinned as chips. The two reference types never blur together.
    */
   const startCrossThreadThread = useCallback(
-    (
-      segments: MessageSegment[],
-      scopePaperIds: string[],
-      scopeArtifactIds: string[] = [],
-      inCollection = true,
-    ) => {
-      const referenced = segments
-        .filter((s): s is { threadRefId: string } => typeof s === 'object' && 'threadRefId' in s)
-        .map((s) => threads[s.threadRefId])
-        .filter((t): t is Thread => Boolean(t))
+    ({ segments, paperIds, threadIds, artifactIds, inCollection }: Submission) => {
+      // Named in the sentence or attached above it — either way the thread is
+      // read, so both feed the trace and the answer (D31).
+      const referencedIds = [
+        ...new Set([
+          ...segments.flatMap((s) =>
+            typeof s === 'object' && 'threadRefId' in s ? [s.threadRefId] : [],
+          ),
+          ...threadIds,
+        ]),
+      ]
+      const referenced = referencedIds.map((id) => threads[id]).filter((t): t is Thread => Boolean(t))
 
       // An inline mention is a reference like any other — naming something in
       // the sentence puts it in scope just as attaching it would (D31).
@@ -322,15 +320,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const inlineArtifacts = segments.flatMap((s) =>
         typeof s === 'object' && 'artifactRefId' in s ? [s.artifactRefId] : [],
       )
-      const allPapers = [...new Set([...scopePaperIds, ...inlinePapers])]
-      const allArtifacts = [...new Set([...scopeArtifactIds, ...inlineArtifacts])]
+      const allPapers = [...new Set([...paperIds, ...inlinePapers])]
+      const allArtifacts = [...new Set([...artifactIds, ...inlineArtifacts])]
 
       const id = makeId('thread')
       const title =
         segments
           .map((s) => (typeof s === 'string' ? s : ''))
           .join(' ')
-          .trim() || 'New cross-thread question'
+          .trim() ||
+        (referenced.length > 0
+          ? `About ${referenced.map((t) => t.title).join(' and ')}`
+          : 'New cross-thread question')
 
       const thread: Thread = {
         id,
@@ -648,7 +649,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         id,
         collectionId: thread.originCollectionId ?? selectedCollectionId,
         title: thread.title,
-        kind: 'Synthesis',
         updated: 'Edited just now',
         originThreadId: threadId,
         blocks: [
@@ -823,7 +823,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           id,
           collectionId,
           title: 'Untitled artifact',
-          kind: 'Draft',
           updated: 'Created just now',
           blocks: [
             { id: makeId('block'), kind: 'heading', content: ['1. Introduction'] },

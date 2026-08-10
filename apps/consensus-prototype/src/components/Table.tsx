@@ -57,7 +57,7 @@ function dropClass(order: number) {
 
 export function Row({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <tr onClick={onClick} className="cursor-pointer border-b border-line hover:bg-rail">
+    <tr onClick={onClick} className="group/row cursor-pointer border-b border-line hover:bg-rail">
       {children}
     </tr>
   )

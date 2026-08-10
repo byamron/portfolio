@@ -139,7 +139,6 @@ export interface Artifact {
   id: string
   collectionId: string
   title: string
-  kind: string
   updated: string
   blocks: ArtifactBlock[]
   log: ArtifactTurn[]
@@ -501,7 +500,6 @@ export const artifacts: Record<string, Artifact> = {
     id: 'synthesis-creatine',
     collectionId: 'my-health',
     title: 'Creatine & Cognition — Evidence Synthesis',
-    kind: 'Synthesis',
     updated: 'Edited 2h ago',
     originThreadId: 'creatine-aging',
     blocks: [
@@ -565,7 +563,6 @@ export const artifacts: Record<string, Artifact> = {
     id: 'outline-microplastics',
     collectionId: 'my-health',
     title: 'Microplastics review — Outline',
-    kind: 'Outline',
     updated: 'Edited yesterday',
     blocks: [
       { id: 'c1', kind: 'heading', content: ['1. Introduction'] },

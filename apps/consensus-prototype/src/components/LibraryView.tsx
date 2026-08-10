@@ -6,6 +6,7 @@ import { Composer } from './Composer'
 import { ThreadMenu } from './ThreadMenu'
 import { AddMenu } from './AddMenu'
 import { Cell, Empty, Row, Table } from './Table'
+import { PaperRowActions } from './PaperRowActions'
 
 /**
  * My Library — everything you saved, across every collection (D30).
@@ -96,7 +97,12 @@ export function LibraryView() {
                 const paper = papers[id]
                 return (
                   <Row key={id} onClick={() => openInPanel({ kind: 'paper', id })}>
-                    <Cell bold>{paper.title}</Cell>
+                    <Cell bold>
+                      <span className="relative flex items-center">
+                        <span className="min-w-0 truncate">{paper.title}</span>
+                        <PaperRowActions paperId={id} />
+                      </span>
+                    </Cell>
                     <Cell muted drop={0}>
                       <span className="inline-flex items-center gap-1.5">
                         <Icon name="search" size={16} className="text-muted" />
@@ -151,7 +157,7 @@ export function LibraryView() {
           <Composer
             placeholder="Ask these papers…"
             scopeLabel={`My Library · ${plural(libraryPaperIds.length, 'item')}`}
-            onSubmit={(segments) => {
+            onSubmit={({ segments }) => {
               const text = segments
                 .map((s) => (typeof s === 'string' ? s : ''))
                 .join(' ')

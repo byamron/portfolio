@@ -313,9 +313,6 @@ function ArtifactDetail({ artifactId }: { artifactId: string }) {
           {artifact.title}
         </h3>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Badge fill="var(--color-fill)" ink="var(--color-muted)">
-            {artifact.kind}
-          </Badge>
           <span className="label text-faint">
             {plural(citedInArtifact(artifact).length, 'source')} ·{' '}
             {plural(threadsInArtifact(artifact).length, 'thread')} · {artifact.updated}

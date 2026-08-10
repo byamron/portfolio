@@ -8,6 +8,15 @@ import { renderSegment } from './ThreadView'
 
 const MENTION = /(^|\s)@([^\s]*)$/
 
+/** What the composer hands over: prose with inline mentions, plus what is attached. */
+export interface Submission {
+  segments: MessageSegment[]
+  paperIds: string[]
+  threadIds: string[]
+  artifactIds: string[]
+  inCollection: boolean
+}
+
 /**
  * §1 — the reference composer. `@` opens a picker over the collection's threads
  * and items. A thread lands inline, as part of the sentence; an item attaches
@@ -23,12 +32,7 @@ export function Composer({
   scopeLabel?: string
   /** Home has no collection to scope to. */
   hideScope?: boolean
-  onSubmit: (
-    segments: MessageSegment[],
-    scopePaperIds: string[],
-    scopeArtifactIds: string[],
-    inCollection: boolean,
-  ) => void
+  onSubmit: (submission: Submission) => void
 }) {
   const {
     papers,
@@ -42,6 +46,7 @@ export function Composer({
   const [segments, setSegments] = useState<MessageSegment[]>([])
   const [scopePaperIds, setScopePaperIds] = useState<string[]>([])
   const [scopeArtifactIds, setScopeArtifactIds] = useState<string[]>([])
+  const [scopeThreadIds, setScopeThreadIds] = useState<string[]>([])
   const [draft, setDraft] = useState('')
   const [active, setActive] = useState(0)
   /** The + button hands the agent material rather than naming it in a sentence. */
@@ -57,13 +62,8 @@ export function Composer({
   useEffect(() => {
     if (!pendingReference) return
     if (pendingReference.kind === 'thread') {
-      setSegments((prev) =>
-        prev.some(
-          (s) =>
-            typeof s === 'object' && 'threadRefId' in s && s.threadRefId === pendingReference.id,
-        )
-          ? prev
-          : [...prev, { threadRefId: pendingReference.id }],
+      setScopeThreadIds((prev) =>
+        prev.includes(pendingReference.id) ? prev : [...prev, pendingReference.id],
       )
     } else if (pendingReference.kind === 'artifact') {
       setScopeArtifactIds((prev) =>
@@ -82,7 +82,11 @@ export function Composer({
   const match = draft.match(MENTION)
   const query = match ? match[2].toLowerCase() : null
   const hasContent =
-    draft.trim() || segments.length > 0 || scopePaperIds.length > 0 || scopeArtifactIds.length > 0
+    draft.trim() ||
+    segments.length > 0 ||
+    scopePaperIds.length > 0 ||
+    scopeArtifactIds.length > 0 ||
+    scopeThreadIds.length > 0
 
   const threadOptions = (collection?.threadIds ?? [])
     .map((id) => threads[id])
@@ -116,7 +120,7 @@ export function Composer({
 
   function pickThread(threadId: string) {
     if (pinning) {
-      setSegments((prev) => [...prev, { threadRefId: threadId }])
+      setScopeThreadIds((prev) => (prev.includes(threadId) ? prev : [...prev, threadId]))
       setPinning(false)
       inputRef.current?.focus()
       return
@@ -159,11 +163,25 @@ export function Composer({
 
   function submit() {
     const final = draft.trim() ? [...segments, draft] : segments
-    if (final.length === 0 && scopePaperIds.length === 0 && scopeArtifactIds.length === 0) return
-    onSubmit(final, scopePaperIds, scopeArtifactIds, inCollection)
+    if (
+      final.length === 0 &&
+      scopePaperIds.length === 0 &&
+      scopeArtifactIds.length === 0 &&
+      scopeThreadIds.length === 0
+    ) {
+      return
+    }
+    onSubmit({
+      segments: final,
+      paperIds: scopePaperIds,
+      threadIds: scopeThreadIds,
+      artifactIds: scopeArtifactIds,
+      inCollection,
+    })
     setSegments([])
     setScopePaperIds([])
     setScopeArtifactIds([])
+    setScopeThreadIds([])
     setInCollection(true)
     setDraft('')
   }
@@ -314,6 +332,14 @@ export function Composer({
               icon={<Icon name="bookmark" size={14} />}
               label={papers[id]?.title ?? id}
               onRemove={() => setScopePaperIds((prev) => prev.filter((p) => p !== id))}
+            />
+          ))}
+          {scopeThreadIds.map((id) => (
+            <ScopeChip
+              key={id}
+              icon={<Icon name="chat" size={14} />}
+              label={threads[id]?.title ?? id}
+              onRemove={() => setScopeThreadIds((prev) => prev.filter((t) => t !== id))}
             />
           ))}
           {scopeArtifactIds.map((id) => (

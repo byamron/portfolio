@@ -96,7 +96,7 @@ export function HomeView() {
             <Composer
               placeholder="Ask the research..."
               hideScope
-              onSubmit={(segments) => {
+              onSubmit={({ segments }) => {
                 const text = segments
                   .map((s) => (typeof s === 'string' ? s : ''))
                   .join(' ')

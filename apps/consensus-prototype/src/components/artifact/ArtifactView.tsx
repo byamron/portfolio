@@ -1,6 +1,5 @@
 import { useRef } from 'react'
 import { useAppState } from '../../state/AppState'
-import { Badge } from '../chips'
 import { Icon } from '../icons'
 import { useStub } from '../StubHint'
 import { ArtifactDoc } from './ArtifactDoc'
@@ -39,9 +38,6 @@ export function ArtifactView() {
               title={artifact.title}
               onCommit={(next) => renameArtifact(artifact.id, next)}
             />
-            <Badge fill="var(--color-fill)" ink="var(--color-muted)">
-              {artifact.kind}
-            </Badge>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">

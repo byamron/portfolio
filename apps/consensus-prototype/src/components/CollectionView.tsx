@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAppState, type CollectionTab } from '../state/AppState'
 import { citedInArtifact, plural, threadsInArtifact } from '../data/mock'
-import { Badge } from './chips'
 import { Icon, type IconName } from './icons'
 import { Composer } from './Composer'
 import { ProjectPanel } from './panel/ProjectPanel'
@@ -10,6 +9,7 @@ import { InstructionsBlock } from './InstructionsBlock'
 import { ThreadMenu } from './ThreadMenu'
 import { AddMenu } from './AddMenu'
 import { Cell, Empty, Row, Table } from './Table'
+import { PaperRowActions } from './PaperRowActions'
 
 const TABS: { key: CollectionTab; label: string; icon: IconName }[] = [
   { key: 'items', label: 'Items', icon: 'file' },
@@ -169,7 +169,12 @@ export function CollectionView() {
                 const paper = papers[id]
                 return (
                   <Row key={id} onClick={() => openInPanel({ kind: 'paper', id })}>
-                    <Cell bold>{paper.title}</Cell>
+                    <Cell bold>
+                      <span className="relative flex items-center">
+                        <span className="min-w-0 truncate">{paper.title}</span>
+                        <PaperRowActions paperId={id} />
+                      </span>
+                    </Cell>
                     <Cell muted drop={0}>
                       <span className="inline-flex items-center gap-1.5">
                         <Icon name="search" size={16} className="text-muted" />
@@ -218,7 +223,7 @@ export function CollectionView() {
           )}
 
           {collectionTab === 'artifacts' && visible.artifacts.length > 0 && (
-            <Table headers={['Title', 'Type', 'Built from', 'Updated']} drop={[2]}>
+            <Table headers={['Title', 'Built from', 'Updated']} drop={[1]}>
               {visible.artifacts.map((id) => {
                 const artifact = artifacts[id]
                 return (
@@ -228,11 +233,6 @@ export function CollectionView() {
                         <Icon name="fileText" size={16} className="text-muted" />
                         {artifact.title}
                       </span>
-                    </Cell>
-                    <Cell>
-                      <Badge fill="var(--color-fill)" ink="var(--color-muted)">
-                        {artifact.kind}
-                      </Badge>
                     </Cell>
                     <Cell muted drop={0}>
                       {plural(citedInArtifact(artifact).length, 'source')} ·{' '}
@@ -252,9 +252,7 @@ export function CollectionView() {
           <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-4">
             <Composer
               placeholder="Ask these papers…"
-              onSubmit={(segments, scopePaperIds, scopeArtifactIds, inCollection) =>
-                startCrossThreadThread(segments, scopePaperIds, scopeArtifactIds, inCollection)
-              }
+              onSubmit={startCrossThreadThread}
             />
           </div>
         </div>
