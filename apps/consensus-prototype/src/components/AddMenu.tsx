@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useAppState } from '../state/AppState'
 import { Icon } from './icons'
 import { useStub } from './StubHint'
+import { Sheet } from './Sheet'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /** Zotero's mark, approximated — the import it stands for is a stub anyway. */
 function ZoteroMark() {
@@ -23,6 +25,7 @@ function ZoteroMark() {
 export function AddMenu({ collectionId }: { collectionId?: string }) {
   const { newArtifact } = useAppState()
   const stub = useStub()
+  const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ right: 0, top: 0 })
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -35,6 +38,51 @@ export function AddMenu({ collectionId }: { collectionId?: string }) {
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
   }, [open])
+
+  const items = (
+    <>
+      <Item
+        icon={<Icon name="upload" size={18} className="text-muted" strokeWidth={1.7} />}
+        label="Upload"
+        detail="PDF, RIS, or BibTeX"
+        onClick={(event) => {
+          setOpen(false)
+          stub(event, 'Upload a PDF, RIS or BibTeX file')
+        }}
+      />
+      <Item
+        icon={<Icon name="link" size={18} className="text-muted" strokeWidth={1.7} />}
+        label="Paste DOIs"
+        onClick={(event) => {
+          setOpen(false)
+          stub(event, 'Paste a list of DOIs to import')
+        }}
+      />
+      <Item
+        icon={<ZoteroMark />}
+        label="Import from Zotero"
+        onClick={(event) => {
+          setOpen(false)
+          stub(event, 'Connect a Zotero library')
+        }}
+      />
+
+      {collectionId && (
+        <>
+          <div className="my-1 h-px bg-hairline" />
+          <Item
+            icon={<Icon name="fileText" size={18} className="text-muted" strokeWidth={1.7} />}
+            label="New artifact"
+            detail="A document you write here"
+            onClick={() => {
+              setOpen(false)
+              newArtifact(collectionId)
+            }}
+          />
+        </>
+      )}
+    </>
+  )
 
   return (
     <>
@@ -51,7 +99,13 @@ export function AddMenu({ collectionId }: { collectionId?: string }) {
         <Icon name="chevronDown" size={14} />
       </button>
 
-      {open && (
+      {open && isMobile && (
+        <Sheet title="Menu" onClose={() => setOpen(false)}>
+          <div className="px-2 pb-2">{items}</div>
+        </Sheet>
+      )}
+
+      {open && !isMobile && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
@@ -61,46 +115,7 @@ export function AddMenu({ collectionId }: { collectionId?: string }) {
             className="fixed z-50 w-[268px] overflow-hidden rounded-[14px] border border-line
               bg-panel p-1 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.24)]"
           >
-            <Item
-              icon={<Icon name="upload" size={18} className="text-muted" strokeWidth={1.7} />}
-              label="Upload"
-              detail="PDF, RIS, or BibTeX"
-              onClick={(event) => {
-                setOpen(false)
-                stub(event, 'Upload a PDF, RIS or BibTeX file')
-              }}
-            />
-            <Item
-              icon={<Icon name="link" size={18} className="text-muted" strokeWidth={1.7} />}
-              label="Paste DOIs"
-              onClick={(event) => {
-                setOpen(false)
-                stub(event, 'Paste a list of DOIs to import')
-              }}
-            />
-            <Item
-              icon={<ZoteroMark />}
-              label="Import from Zotero"
-              onClick={(event) => {
-                setOpen(false)
-                stub(event, 'Connect a Zotero library')
-              }}
-            />
-
-            {collectionId && (
-              <>
-                <div className="my-1 h-px bg-hairline" />
-                <Item
-                  icon={<Icon name="fileText" size={18} className="text-muted" strokeWidth={1.7} />}
-                  label="New artifact"
-                  detail="A document you write here"
-                  onClick={() => {
-                    setOpen(false)
-                    newArtifact(collectionId)
-                  }}
-                />
-              </>
-            )}
+            {items}
           </div>
         </>
       )}

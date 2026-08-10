@@ -1,6 +1,8 @@
 import { useLayoutEffect, useState } from 'react'
 import { useAppState } from '../state/AppState'
 import { CollectionPicker } from './CollectionPicker'
+import { Sheet } from './Sheet'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const WIDTH = 300
 const HEIGHT = 380
@@ -20,6 +22,7 @@ export function SaveToCollectionPopover() {
     libraryPaperIds,
     toggleLibraryForPaper,
   } = useAppState()
+  const isMobile = useIsMobile()
   const [position, setPosition] = useState({ left: 0, top: 0 })
 
   useLayoutEffect(() => {
@@ -44,6 +47,25 @@ export function SaveToCollectionPopover() {
 
   if (!savePopoverPaperId) return null
 
+  const picker = (
+    <CollectionPicker
+      isMember={(id) => collections[id]?.paperIds.includes(savePopoverPaperId) ?? false}
+      onToggle={(id) => toggleCollectionForPaper(id, savePopoverPaperId)}
+      inLibrary={libraryPaperIds.includes(savePopoverPaperId)}
+      onToggleLibrary={() => toggleLibraryForPaper(savePopoverPaperId)}
+      libraryCount={libraryPaperIds.length}
+      full={isMobile}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <Sheet title="Save to Collection" onClose={closeSavePopover}>
+        {picker}
+      </Sheet>
+    )
+  }
+
   return (
     <>
       <div className="fixed inset-0 z-50" onClick={closeSavePopover} />
@@ -52,13 +74,7 @@ export function SaveToCollectionPopover() {
         onClick={(event) => event.stopPropagation()}
         className="fixed z-50"
       >
-        <CollectionPicker
-          isMember={(id) => collections[id]?.paperIds.includes(savePopoverPaperId) ?? false}
-          onToggle={(id) => toggleCollectionForPaper(id, savePopoverPaperId)}
-          inLibrary={libraryPaperIds.includes(savePopoverPaperId)}
-          onToggleLibrary={() => toggleLibraryForPaper(savePopoverPaperId)}
-          libraryCount={libraryPaperIds.length}
-        />
+        {picker}
       </div>
     </>
   )

@@ -21,12 +21,15 @@ export function CollectionPicker({
   inLibrary,
   onToggleLibrary,
   libraryCount,
+  full = false,
 }: {
   isMember: (collectionId: string) => boolean
   onToggle: (collectionId: string) => void
   inLibrary: boolean
   onToggleLibrary: () => void
   libraryCount: number
+  /** Inside a sheet the card loses its own frame and takes the width it is given. */
+  full?: boolean
 }) {
   const { collections, createCollection } = useAppState()
   const [query, setQuery] = useState('')
@@ -37,7 +40,13 @@ export function CollectionPicker({
   )
 
   return (
-    <div className="flex w-[300px] flex-col rounded-[14px] border border-line bg-panel shadow-[0_12px_28px_-8px_rgba(0,0,0,0.18)]">
+    <div
+      className={
+        full
+          ? 'flex w-full flex-col'
+          : 'flex w-[300px] flex-col rounded-[14px] border border-line bg-panel shadow-[0_12px_28px_-8px_rgba(0,0,0,0.18)]'
+      }
+    >
       <button
         type="button"
         onClick={onToggleLibrary}
