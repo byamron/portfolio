@@ -1,78 +1,239 @@
-@import url("https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@200..900&display=swap");
-@import "tailwindcss";
+@import 'tailwindcss';
 
+/* Reddit Mono — self-hosted latin subsets (Google Fonts, SIL OFL 1.1). Used for
+   the small uppercase labels and numeric badges, as in the product. */
+@font-face {
+  font-family: 'Reddit Mono';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/fonts/reddit-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Reddit Mono';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/fonts/reddit-mono-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Tokens read off the Paper artboards — see mockup/README.md. The artboard
+   resolves `font-sans` to the platform UI face; Tailwind's longer default
+   stack measures differently on macOS, so it is pinned here too. */
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "Reddit Mono", ui-monospace, monospace;
+  --font-sans: system-ui, sans-serif;
+  --font-mono: 'Reddit Mono', ui-monospace, monospace;
 
-  /* Consensus dark-theme palette — pulled from the Paper.design capture, see
-     problem-definition/ai-first/05-design-conventions.md §6 */
-  --color-surface-app: #18181b;
-  --color-surface-rail: #303033;
-  --color-surface-panel: #27272a;
-  --color-surface-chip: #52525c;
-  --color-surface-chip-secondary: #3f3f46;
-  --color-border: #52525c;
-  --color-border-dashed: #71717b;
+  /* Two surfaces: the page, and anything raised off it. In light they are both
+     white and the difference is carried by borders; in dark the page drops away
+     and panels lift, because a dark UI cannot lean on shadow. */
+  --color-surface: #ffffff;
+  --color-panel: #ffffff;
+  /* Text on a filled accent — white in both themes. */
+  --color-on-accent: #ffffff;
+  /* Tooltips and floating hints invert against the page, so they need their own
+     pair rather than borrowing ink, which flips with the theme. */
+  --color-inverse: #18181b;
+  --color-on-inverse: #ffffff;
 
-  --color-text-primary: #f4f4f5;
-  --color-text-secondary: #9f9fa9;
-
+  --color-ink: #18181b;
+  --color-muted: #71717b;
+  --color-faint: #a1a1aa;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
+  --color-hairline: #f4f4f5;
+  --color-fill: #f4f4f5;
+  --color-rail: #fafafa;
   --color-accent: #068ef1;
-  --color-accent-secondary: #25a4ff;
-  --color-bubble: #0058a7;
-  --color-nav-active: #024b8a;
-  --color-positive: #3bcdaa;
+  --color-accent-deep: #0b72b5;
+  --color-accent-wash: #eff7ff;
+  --color-mint: #3bcdaa;
+  --color-mint-wash: #e9f9f4;
+  --color-mint-ink: #0f766e;
+  --color-amber: #8a6a00;
+  --color-amber-wash: #fdf3d0;
+  --color-red: #d4183d;
+  --color-red-wash: #fdf0f3;
+  --color-orange: #ff6900;
+  --color-orange-wash: #fff1e7;
 
-  --radius-chip: 8px;
   --radius-control: 12px;
-  --radius-composer: 20px;
-  --radius-popover: 16px;
+  --radius-chip: 8px;
 }
 
-body {
-  margin: 0;
-  background: var(--color-surface-app);
-  color: var(--color-text-primary);
-  font-family: var(--font-sans);
+/* Dark. Same token names, so every component follows without knowing. */
+@layer theme {
+  :root {
+    color-scheme: light dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-inverse: #f4f4f5;
+      --color-on-inverse: #131316;
+      --color-surface: #131316;
+      --color-panel: #1b1b1f;
+      --color-ink: #f4f4f5;
+      --color-muted: #a1a1aa;
+      --color-faint: #71717b;
+      --color-line: #2c2c31;
+      --color-line-strong: #3f3f46;
+      --color-hairline: #232327;
+      --color-fill: #26262b;
+      --color-rail: #1b1b1f;
+      --color-accent-deep: #6cc0f7;
+      --color-accent-wash: #16283a;
+      --color-mint-wash: #10302a;
+    --color-mint-ink: #5fd7b8;
+      --color-mint-ink: #5fd7b8;
+      --color-amber: #e0b429;
+      --color-amber-wash: #34290a;
+      --color-red: #f4677f;
+      --color-red-wash: #3a1620;
+      --color-orange-wash: #3a1f0d;
+    }
+  }
+
+  /* An explicit choice beats the system one, in either direction. */
+  :root[data-theme='light'] {
+    color-scheme: light;
+    --color-inverse: #18181b;
+    --color-on-inverse: #ffffff;
+    --color-surface: #ffffff;
+    --color-panel: #ffffff;
+    --color-ink: #18181b;
+    --color-muted: #71717b;
+    --color-faint: #a1a1aa;
+    --color-line: #e4e4e7;
+    --color-line-strong: #d4d4d8;
+    --color-hairline: #f4f4f5;
+    --color-fill: #f4f4f5;
+    --color-rail: #fafafa;
+    --color-accent-deep: #0b72b5;
+    --color-accent-wash: #eff7ff;
+    --color-mint-wash: #e9f9f4;
+    --color-mint-ink: #0f766e;
+  --color-mint-ink: #0f766e;
+    --color-amber: #8a6a00;
+    --color-amber-wash: #fdf3d0;
+    --color-red: #d4183d;
+    --color-red-wash: #fdf0f3;
+    --color-orange-wash: #fff1e7;
+  }
+
+  :root[data-theme='dark'] {
+    --color-inverse: #f4f4f5;
+    --color-on-inverse: #131316;
+    color-scheme: dark;
+    --color-surface: #131316;
+    --color-panel: #1b1b1f;
+    --color-ink: #f4f4f5;
+    --color-muted: #a1a1aa;
+    --color-faint: #71717b;
+    --color-line: #2c2c31;
+    --color-line-strong: #3f3f46;
+    --color-hairline: #232327;
+    --color-fill: #26262b;
+    --color-rail: #1b1b1f;
+    --color-accent-deep: #6cc0f7;
+    --color-accent-wash: #16283a;
+    --color-mint-wash: #10302a;
+    --color-mint-ink: #5fd7b8;
+    --color-amber: #e0b429;
+    --color-amber-wash: #34290a;
+    --color-red: #f4677f;
+    --color-red-wash: #3a1620;
+    --color-orange-wash: #3a1f0d;
+  }
 }
 
-#root {
-  min-height: 100svh;
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button {
+    cursor: pointer;
+  }
 }
 
-/* bespoke asymmetric bubble corner, not on the standard radius scale */
-.bubble-radius {
-  border-radius: 22px 22px 8px 22px;
+/* Position is set inline (the hint flips above or below its control), so the
+   entrance animates on its own element and touches only opacity and scale. */
+@keyframes stub-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
-/* the "elevated button" bevel reused on nav items, composer toolbar buttons, send button */
-.elevated {
-  border-top-width: 1px;
-  border-left-width: 1px;
-  border-right-width: 1px;
-  border-bottom-width: 2px;
-  border-color: var(--color-border);
-}
+@layer components {
+  /* The artboard's button: 1px border with a 2px bottom edge. */
+  .btn {
+    @apply inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-[12px]
+      border border-b-2 border-line bg-panel px-3 text-[15.04px] font-medium
+      leading-[23px] text-ink;
+  }
 
-/* accent variant: real captures show a slightly lower alpha on t/l/r vs. bottom */
-.elevated-accent {
-  border-top-width: 1px;
-  border-left-width: 1px;
-  border-right-width: 1px;
-  border-bottom-width: 2px;
-  border-top-color: rgba(255, 255, 255, 0.12);
-  border-left-color: rgba(255, 255, 255, 0.12);
-  border-right-color: rgba(255, 255, 255, 0.12);
-  border-bottom-color: rgba(255, 255, 255, 0.16);
-}
+  .btn:hover {
+    @apply bg-rail;
+  }
 
-/* uniform 1px dashed border (Deep-mode toggle) — not the elevated bevel */
-.elevated-dashed {
-  border: 1px dashed var(--color-border-dashed);
-}
+  .btn-sm {
+    @apply inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-[8px]
+      border border-b-2 border-line bg-panel px-2 text-[13px] font-medium
+      leading-[20px] text-ink;
+  }
 
-/* CDL popover elevation — subtle, not a heavy drop shadow */
-.shadow-popover {
-  box-shadow: 0px 6px 12px 0px rgba(53, 70, 85, 0.03);
+  .btn-sm:hover {
+    @apply bg-rail;
+  }
+
+  .btn-accent {
+    @apply inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-[12px]
+      border border-b-2 border-black/15 bg-accent px-3 text-[15.04px] font-medium
+      leading-[23px] text-on-accent;
+  }
+
+  /* 11px uppercase Reddit Mono — the artboard's label voice. */
+  .label {
+    @apply font-mono text-[11px] font-semibold uppercase leading-[17px];
+  }
+
+  /* Section headings in the side surfaces read like "Instructions" on the
+     collection page — same size, weight and case. The uppercase mono `.label`
+     stays for chips, counts and field names, which are not headings. */
+  .panel-heading {
+    @apply text-[15.04px] font-medium leading-[23px] text-ink;
+  }
+
+  .icon-btn {
+    @apply inline-flex size-7 shrink-0 items-center justify-center rounded-[8px]
+      text-muted;
+  }
+
+  .icon-btn:hover {
+    @apply bg-fill text-ink;
+  }
+
+  /* Scrollers hide their bars so revealing one never shifts the layout. */
+  .scroll-y {
+    @apply min-h-0 flex-1 overflow-y-auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .scroll-y::-webkit-scrollbar {
+    display: none;
+  }
 }
