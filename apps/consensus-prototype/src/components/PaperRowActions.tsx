@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useAppState } from '../state/AppState'
 import { Icon, type IconName } from './icons'
 import { useStub } from './StubHint'
@@ -10,20 +11,48 @@ import { useStub } from './StubHint'
  * is reserved for threads, where the actions are filing and deletion — rarer,
  * and worth the extra step.
  */
+const DELAY = 320
+
 export function PaperRowActions({ paperId }: { paperId: string }) {
   const { referenceInComposer, openSavePopover } = useAppState()
   const stub = useStub()
+  const anchorRef = useRef<HTMLSpanElement>(null)
+  const [open, setOpen] = useState(false)
+
+  /**
+   * Held back a beat. Passing a cursor over a table should not set off a bar
+   * under every row it crosses — the delay is what distinguishes travelling
+   * through a row from stopping on one. The bar is a descendant of the row, so
+   * moving onto it does not count as leaving.
+   */
+  useEffect(() => {
+    const row = anchorRef.current?.closest('tr')
+    if (!row) return
+    let timer = 0
+    const enter = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setOpen(true), DELAY)
+    }
+    const leave = () => {
+      window.clearTimeout(timer)
+      setOpen(false)
+    }
+    row.addEventListener('pointerenter', enter)
+    row.addEventListener('pointerleave', leave)
+    return () => {
+      window.clearTimeout(timer)
+      row.removeEventListener('pointerenter', enter)
+      row.removeEventListener('pointerleave', leave)
+    }
+  }, [])
 
   const stop = (event: React.MouseEvent) => event.stopPropagation()
 
   return (
-    <span
-      onClick={stop}
-      className="pointer-events-none absolute left-0 top-full z-20 hidden pt-1
-        group-hover/row:block group-focus-within/row:block"
-    >
-      <span
-        className="pointer-events-auto inline-flex items-center gap-1 rounded-full border
+    <span ref={anchorRef} onClick={stop} className="absolute left-0 top-full z-20 pt-1">
+      {open && (
+        <span
+          className="inline-flex items-center gap-1 rounded-full border
           border-line bg-panel p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.22)]"
       >
         <button
@@ -52,6 +81,7 @@ export function PaperRowActions({ paperId }: { paperId: string }) {
         <IconAction icon="link" label="Copy a link to this paper" />
         <IconAction icon="download" label="Download the PDF" />
       </span>
+      )}
     </span>
   )
 

@@ -68,15 +68,18 @@ export function Cell({
   bold,
   muted,
   drop,
+  overflow,
 }: {
   children: ReactNode
   bold?: boolean
   muted?: boolean
   drop?: number
+  /** Lets a hover popover escape the row; the cell's own child must truncate. */
+  overflow?: boolean
 }) {
   return (
     <td
-      className={`truncate px-4 py-3 ${dropClass(drop ?? -1)} ${
+      className={`px-4 py-3 ${overflow ? '' : 'truncate'} ${dropClass(drop ?? -1)} ${
         bold
           ? 'text-[15.04px] font-bold leading-[23px] text-ink'
           : muted

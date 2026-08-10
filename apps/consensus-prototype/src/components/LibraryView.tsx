@@ -97,8 +97,8 @@ export function LibraryView() {
                 const paper = papers[id]
                 return (
                   <Row key={id} onClick={() => openInPanel({ kind: 'paper', id })}>
-                    <Cell bold>
-                      <span className="relative flex items-center">
+                    <Cell bold overflow>
+                      <span className="relative flex min-w-0 items-center">
                         <span className="min-w-0 truncate">{paper.title}</span>
                         <PaperRowActions paperId={id} />
                       </span>
