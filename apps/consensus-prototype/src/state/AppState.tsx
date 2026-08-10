@@ -95,6 +95,8 @@ interface AppStateShape {
   selectedCollectionId: string
   collectionTab: CollectionTab
   panelOpen: boolean
+  railOpen: boolean
+  setRailOpen: (open: boolean) => void
   panelView: PanelView
   openObject: OpenObject | null
   /** Whether the open object's tab is the one in front. */
@@ -202,11 +204,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     Object.values(seedCollections).flatMap((c) => c.threadIds),
   )
   const [collectionTab, setCollectionTab] = useState<CollectionTab>('threads')
-  const [panelOpen, setPanelOpen] = useState(true)
+  // On a phone the panel and the rail are overlays, so neither starts open.
+  const mobileFirstLoad = window.matchMedia('(max-width: 767px)').matches
+  const [panelOpen, setPanelOpen] = useState(!mobileFirstLoad)
+  const [railOpen, setRailOpen] = useState(false)
   const [panelView, setPanelView] = useState<PanelView>('surfaced')
   const [openObject, setOpenObject] = useState<OpenObject | null>(null)
   const [objectFocused, setObjectFocused] = useState(false)
-  const [referencesOpen, setReferencesOpen] = useState(true)
+  // Full-screen on a phone, so it would cover the answer you just opened.
+  const [referencesOpen, setReferencesOpen] = useState(!mobileFirstLoad)
   const [detailPaperId, setDetailPaperId] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGeneratingArtifact, setIsGeneratingArtifact] = useState(false)
@@ -223,12 +229,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const goHome = useCallback(() => {
     setView('home')
     setActiveThreadId(null)
+    setRailOpen(false)
     setDetailPaperId(null)
   }, [])
 
   const openCollection = useCallback((collectionId?: string) => {
     setView('collection')
     setActiveThreadId(null)
+    setRailOpen(false)
     setDetailPaperId(null)
     if (collectionId) setSelectedCollectionId(collectionId)
   }, [])
@@ -236,14 +244,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const openLibrary = useCallback(() => {
     setView('library')
     setActiveThreadId(null)
+    setRailOpen(false)
     setDetailPaperId(null)
   }, [])
 
   const openThread = useCallback((threadId: string) => {
     setActiveThreadId(threadId)
+    setRailOpen(false)
     setDetailPaperId(null)
     setView('thread')
-    setReferencesOpen(true)
+    if (!mobileFirstLoad) setReferencesOpen(true)
     setFollowUpTurns(0)
   }, [])
 
@@ -280,7 +290,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setThreads((prev) => ({ ...prev, [id]: thread }))
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1100, () => ({ content: buildNewThreadAnswer() }))
     },
@@ -370,7 +380,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       })
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1400, () => buildCrossThreadAnswer(referenced))
     },
@@ -406,7 +416,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       })
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1400, () => buildCrossThreadAnswer(basedOn))
     },
@@ -415,6 +425,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const openArtifact = useCallback((artifactId: string) => {
     setActiveArtifactId(artifactId)
+    setRailOpen(false)
     setDetailPaperId(null)
     setArtifactTab('chat')
     setView('artifact')
@@ -749,7 +760,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       })
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1200, () => ({
         content: buildSupportAnswer(claim, found),
@@ -1037,6 +1048,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       selectedCollectionId,
       collectionTab,
       panelOpen,
+      railOpen,
+      setRailOpen,
       panelView,
       openObject,
       referencesOpen,
@@ -1132,6 +1145,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       selectedCollectionId,
       collectionTab,
       panelOpen,
+      railOpen,
       panelView,
       openObject,
       objectFocused,

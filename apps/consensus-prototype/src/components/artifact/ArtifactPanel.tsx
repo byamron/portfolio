@@ -4,6 +4,7 @@ import type { ArtifactTurn } from '../../data/mock'
 import { renderSegment } from '../ThreadView'
 import { Badge, ThreadChip } from '../chips'
 import { Icon } from '../icons'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { PanelEmpty } from '../panel/views'
 
 const TABS: { key: ArtifactTab; label: string; icon: 'chat' | 'file' | 'history' }[] = [
@@ -19,6 +20,7 @@ const TABS: { key: ArtifactTab; label: string; icon: 'chat' | 'file' | 'history'
  */
 export function ArtifactPanel({ artifactId }: { artifactId: string }) {
   const { artifactTab, setArtifactTab, detailPaperId } = useAppState()
+  const isMobile = useIsMobile()
   // A citation opens beside the document, and two panels would leave it 372px.
   const hidden = Boolean(detailPaperId)
 
@@ -26,13 +28,20 @@ export function ArtifactPanel({ artifactId }: { artifactId: string }) {
     <aside
       inert={hidden}
       aria-hidden={hidden}
-      className={`h-full shrink-0 overflow-hidden bg-panel transition-[width,max-width]
-        duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
-          hidden ? 'w-0 max-w-0' : 'w-[380px] border-l border-line'
-        }`}
+      className={
+        isMobile
+          ? `fixed inset-0 z-50 flex flex-col bg-panel transition-transform duration-300
+             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               hidden ? 'translate-x-full' : 'translate-x-0'
+             }`
+          : `h-full shrink-0 overflow-hidden bg-panel transition-[width,max-width]
+             duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               hidden ? 'w-0 max-w-0' : 'w-[380px] border-l border-line'
+             }`
+      }
       aria-label="Artifact panel"
     >
-      <div className="flex h-full w-[380px] flex-col">
+      <div className="flex h-full w-full flex-col md:w-[380px]">
       <header className="flex min-h-16 shrink-0 items-stretch gap-0.5 border-b border-line px-1">
         {TABS.map((tab) => (
           <button

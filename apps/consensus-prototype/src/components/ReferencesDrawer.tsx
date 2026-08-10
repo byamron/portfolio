@@ -2,6 +2,7 @@ import { plural, type Paper } from '../data/mock'
 import { useAppState } from '../state/AppState'
 import { Badge } from './chips'
 import { Icon } from './icons'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /** The thread's References drawer — the product's existing right-hand surface. */
 export function ReferencesDrawer({
@@ -14,17 +15,25 @@ export function ReferencesDrawer({
   onClose: () => void
 }) {
   const { openPaperDetail } = useAppState()
+  const isMobile = useIsMobile()
 
   return (
     <aside
       inert={!open}
       aria-hidden={!open}
-      className={`h-full shrink-0 overflow-hidden bg-panel transition-[width,max-width] duration-300
-        ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
-          open ? 'w-[420px] max-w-[46vw] border-l border-line' : 'w-0 max-w-0'
-        }`}
+      className={
+        isMobile
+          ? `fixed inset-0 z-50 flex flex-col bg-panel transition-transform duration-300
+             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               open ? 'translate-x-0' : 'translate-x-full'
+             }`
+          : `h-full shrink-0 overflow-hidden bg-panel transition-[width,max-width] duration-300
+             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               open ? 'w-[420px] max-w-[46vw] border-l border-line' : 'w-0 max-w-0'
+             }`
+      }
     >
-      <div className="flex h-full w-[420px] max-w-[46vw] flex-col">
+      <div className="flex h-full w-full flex-col md:w-[420px] md:max-w-[46vw]">
       <header className="flex min-h-16 shrink-0 items-center justify-between gap-2 border-b border-line px-4 pr-2">
         <span className="panel-heading">References</span>
         <div className="flex items-center gap-1">

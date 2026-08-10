@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppState } from '../state/AppState'
 import { plural } from '../data/mock'
+import { RailToggle } from './RailToggle'
 import { Icon } from './icons'
 import { Composer } from './Composer'
 import { ThreadMenu } from './ThreadMenu'
@@ -41,6 +42,7 @@ export function LibraryView() {
     <div className="flex min-w-0 flex-1">
       <div className="@container relative flex min-w-0 flex-1 flex-col">
       <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 px-4">
+        <RailToggle />
         <h1 className="truncate text-[22px] font-medium leading-[30px] text-ink">My Library</h1>
         {/* No collection here, so no authoring group — the library imports only. */}
         <AddMenu />

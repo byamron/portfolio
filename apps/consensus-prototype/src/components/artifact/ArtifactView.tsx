@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useAppState } from '../../state/AppState'
+import { RailToggle } from '../RailToggle'
 import { Icon } from '../icons'
 import { useStub } from '../StubHint'
 import { ArtifactDoc } from './ArtifactDoc'
@@ -25,6 +26,7 @@ export function ArtifactView() {
       <div className="@container relative flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
           <div className="flex min-w-0 items-center gap-2">
+            <RailToggle />
             <button
               type="button"
               onClick={() => openCollection(artifact.collectionId)}

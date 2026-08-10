@@ -8,6 +8,7 @@ import {
   type StepRow,
 } from '../data/mock'
 import { ArtifactChip, Badge, CitationChip, ScopeChip, ThreadChip } from './chips'
+import { RailToggle } from './RailToggle'
 import { Icon } from './icons'
 import { Composer } from './Composer'
 import { ReferencesDrawer } from './ReferencesDrawer'
@@ -217,6 +218,7 @@ export function ThreadView() {
     <div className="flex min-w-0 flex-1">
       <div className="@container relative flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
+          <RailToggle />
           <h1 className="truncate text-[16px] font-medium leading-[24px] text-ink">{thread.title}</h1>
           <div className="flex shrink-0 items-center gap-2">
             <button

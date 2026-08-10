@@ -1,6 +1,7 @@
 import { useAppState } from '../state/AppState'
 import { Composer } from './Composer'
 import { Icon, Logo, type IconName } from './icons'
+import { RailToggle } from './RailToggle'
 import { institutionLogos, publisherLogos } from './home/logos'
 
 /** The three starters under the composer. */
@@ -79,7 +80,10 @@ export function HomeView() {
   const { startNewThread } = useAppState()
 
   return (
-    <div className="@container scroll-y flex min-w-0 flex-1 flex-col">
+    <div className="@container scroll-y relative flex min-w-0 flex-1 flex-col">
+      <div className="absolute left-3 top-3 z-10">
+        <RailToggle />
+      </div>
       <div className="mx-auto flex w-full max-w-[768px] flex-col px-6 pb-24">
         {/* The hero fills the screen bar the next heading, which is left showing
             on purpose — it is what tells you the page continues. */}
@@ -153,9 +157,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="mt-14 flex flex-col gap-9 pt-9">
       {/* Rules flank the heading rather than sitting above it, as on the artboard. */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4 @[520px]:gap-6">
         <span className="h-px grow bg-hairline" />
-        <h2 className="m-0 shrink-0 text-center text-[18.08px] font-medium leading-[28px] text-ink">
+        <h2 className="m-0 min-w-0 text-balance text-center text-[18.08px] font-medium leading-[28px] text-ink">
           {title}
         </h2>
         <span className="h-px grow bg-hairline" />
