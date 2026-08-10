@@ -45,6 +45,8 @@ export function ProjectPanel() {
     setPanelView,
     setPanelOpen,
     openObject,
+    objectFocused,
+    focusObject,
     closeOpenObject,
     papers,
     threads,
@@ -150,7 +152,7 @@ export function ProjectPanel() {
         />
       </div>
 
-      <header className="flex min-h-12 shrink-0 items-stretch justify-between gap-2 border-b border-line pl-1 pr-2">
+      <header className="flex min-h-16 shrink-0 items-stretch justify-between gap-2 border-b border-line pl-1 pr-2">
         <div className="flex min-w-0 gap-0.5 overflow-x-auto [scrollbar-width:none]">
           {/* First, not last: what you just opened is what you are looking at. */}
           {openObject && objectName && (
@@ -158,8 +160,8 @@ export function ProjectPanel() {
               icon={OBJECT_ICON[openObject.kind]}
               label={objectName}
               title={objectName}
-              active
-              onClick={() => undefined}
+              active={objectFocused}
+              onClick={focusObject}
               onClose={closeOpenObject}
             />
           )}
@@ -168,15 +170,12 @@ export function ProjectPanel() {
               key={view.key}
               icon={view.icon}
               label={view.label}
-              active={!openObject && panelView === view.key}
-              onClick={() => {
-                closeOpenObject()
-                setPanelView(view.key)
-              }}
+              active={!objectFocused && panelView === view.key}
+              onClick={() => setPanelView(view.key)}
             />
           ))}
         </div>
-        <div className="flex shrink-0 items-center">
+        <div className="flex shrink-0 items-center self-center">
           <button
             type="button"
             className="icon-btn"
@@ -189,7 +188,7 @@ export function ProjectPanel() {
       </header>
 
       {/* The graph owns its own viewport; every other view scrolls. */}
-      {openObject ? (
+      {openObject && objectFocused ? (
         <div className="scroll-y">
           <ObjectDetail object={openObject} />
         </div>

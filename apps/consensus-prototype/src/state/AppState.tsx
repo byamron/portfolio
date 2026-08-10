@@ -96,6 +96,9 @@ interface AppStateShape {
   panelOpen: boolean
   panelView: PanelView
   openObject: OpenObject | null
+  /** Whether the open object's tab is the one in front. */
+  objectFocused: boolean
+  focusObject: () => void
   referencesOpen: boolean
   detailPaperId: string | null
   isGenerating: boolean
@@ -142,6 +145,7 @@ interface AppStateShape {
   editBlock: (artifactId: string, blockId: string, content: MessageSegment[]) => void
   citeInBlock: (artifactId: string, blockId: string, paperId: string) => void
   artifactFromThread: (threadId: string) => void
+  renameArtifact: (artifactId: string, title: string) => void
   findSupport: (artifactId: string, blockId: string, claim: string) => void
   citeSupport: (threadId: string) => void
   newArtifact: (collectionId: string) => void
@@ -150,6 +154,7 @@ interface AppStateShape {
     segments: MessageSegment[],
     scopePaperIds: string[],
     scopeArtifactIds?: string[],
+    inCollection?: boolean,
   ) => void
   startSuggestedThread: (suggestion: Suggestion) => void
   savePaperToCollection: (collectionId: string, paperId: string) => void
@@ -203,6 +208,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [panelOpen, setPanelOpen] = useState(true)
   const [panelView, setPanelView] = useState<PanelView>('surfaced')
   const [openObject, setOpenObject] = useState<OpenObject | null>(null)
+  const [objectFocused, setObjectFocused] = useState(false)
   const [referencesOpen, setReferencesOpen] = useState(true)
   const [detailPaperId, setDetailPaperId] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -297,7 +303,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
    * pinned as chips. The two reference types never blur together.
    */
   const startCrossThreadThread = useCallback(
-    (segments: MessageSegment[], scopePaperIds: string[], scopeArtifactIds: string[] = []) => {
+    (
+      segments: MessageSegment[],
+      scopePaperIds: string[],
+      scopeArtifactIds: string[] = [],
+      inCollection = true,
+    ) => {
       const referenced = segments
         .filter((s): s is { threadRefId: string } => typeof s === 'object' && 'threadRefId' in s)
         .map((s) => threads[s.threadRefId])
@@ -329,7 +340,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         sources: (allPapers.length > 0 ? allPapers : ['prokopidis2022', 'moriarty2023']).map(
           (paperId) => ({ paperId, query: title }),
         ),
-        originCollectionId: selectedCollectionId,
+        originCollectionId: inCollection ? selectedCollectionId : undefined,
         scopePaperIds: allPapers,
         scopeArtifactIds: allArtifacts,
       }
@@ -582,6 +593,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             : turn,
         ),
       }))
+    },
+    [patchArtifact],
+  )
+
+  const renameArtifact = useCallback(
+    (artifactId: string, title: string) => {
+      const next = title.trim()
+      if (!next) return
+      patchArtifact(artifactId, (artifact) => ({ ...artifact, title: next, updated: 'Edited just now' }))
     },
     [patchArtifact],
   )
@@ -971,6 +991,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const openInPanel = useCallback((object: OpenObject) => {
     setOpenObject(object)
+    setObjectFocused(true)
     setPanelOpen(true)
   }, [])
 
@@ -1017,9 +1038,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       startNewThread,
       sendFollowUp,
       setPanelOpen,
-      setPanelView,
       openInPanel,
-      closeOpenObject: () => setOpenObject(null),
+      closeOpenObject: () => {
+        setOpenObject(null)
+        setObjectFocused(false)
+      },
+      objectFocused,
+      focusObject: () => setObjectFocused(true),
+      // Switching views leaves the object open behind its tab; only its own ✕
+      // closes it.
+      setPanelView: (view: PanelView) => {
+        setObjectFocused(false)
+        setPanelView(view)
+      },
       toggleReferences: () => setReferencesOpen((v) => !v),
       openPaperDetail: setDetailPaperId,
       closePaperDetail: () => setDetailPaperId(null),
@@ -1043,6 +1074,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       editBlock,
       citeInBlock,
       artifactFromThread,
+      renameArtifact,
       findSupport,
       citeSupport,
       newArtifact,
@@ -1070,6 +1102,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       panelOpen,
       panelView,
       openObject,
+      objectFocused,
       referencesOpen,
       detailPaperId,
       isGenerating,
@@ -1097,6 +1130,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       editBlock,
       citeInBlock,
       artifactFromThread,
+      renameArtifact,
       findSupport,
       citeSupport,
       newArtifact,

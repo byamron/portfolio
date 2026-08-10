@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useAppState } from '../state/AppState'
 import type { MessageSegment } from '../data/mock'
-import { Badge, ScopeChip } from './chips'
+import { ScopeChip } from './chips'
 import { Icon } from './icons'
 import { useStub } from './StubHint'
 import { renderSegment } from './ThreadView'
@@ -27,6 +27,7 @@ export function Composer({
     segments: MessageSegment[],
     scopePaperIds: string[],
     scopeArtifactIds: string[],
+    inCollection: boolean,
   ) => void
 }) {
   const {
@@ -45,6 +46,8 @@ export function Composer({
   const [active, setActive] = useState(0)
   /** The + button hands the agent material rather than naming it in a sentence. */
   const [pinning, setPinning] = useState(false)
+  /** Cleared by removing the collection chip — the question is then unfiled. */
+  const [inCollection, setInCollection] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   const stub = useStub()
@@ -157,10 +160,11 @@ export function Composer({
   function submit() {
     const final = draft.trim() ? [...segments, draft] : segments
     if (final.length === 0 && scopePaperIds.length === 0 && scopeArtifactIds.length === 0) return
-    onSubmit(final, scopePaperIds, scopeArtifactIds)
+    onSubmit(final, scopePaperIds, scopeArtifactIds, inCollection)
     setSegments([])
     setScopePaperIds([])
     setScopeArtifactIds([])
+    setInCollection(true)
     setDraft('')
   }
 
@@ -285,12 +289,25 @@ export function Composer({
 
       <div className="flex flex-col gap-2 rounded-[20px] border border-line bg-panel/95 px-3 pb-2 pt-3 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] backdrop-blur-[8px]">
         <div className={`flex flex-wrap items-center gap-1.5 ${hideScope && scopePaperIds.length === 0 && scopeArtifactIds.length === 0 ? 'hidden' : ''}`}>
-          {!hideScope && (scopeLabel ?? collection) && (
-            <ScopeChip
-              icon={<Icon name="folder" size={14} />}
-              label={scopeLabel ?? collection.name}
-            />
-          )}
+          {!hideScope &&
+            (scopeLabel ?? collection) &&
+            (inCollection ? (
+              <ScopeChip
+                icon={<Icon name="folder" size={14} />}
+                label={scopeLabel ?? collection.name}
+                onRemove={scopeLabel ? undefined : () => setInCollection(false)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setInCollection(true)}
+                title={`Ask within ${collection.name} again`}
+                className="inline-flex h-7 items-center gap-1.5 rounded-[8px] border border-dashed
+                  border-line px-2 text-[12.96px] leading-[20px] text-faint hover:text-ink"
+              >
+                <Icon name="plus" size={13} /> {collection.name}
+              </button>
+            ))}
           {scopePaperIds.map((id) => (
             <ScopeChip
               key={id}
@@ -379,27 +396,6 @@ export function Composer({
         </div>
       </div>
 
-      {scopeArtifactIds.length > 0 && (
-        <div className="mt-2 flex items-center gap-2">
-          <Badge fill="var(--color-amber-wash)" ink="var(--color-amber)">
-            Edits artifact
-          </Badge>
-          <span className="text-[12.96px] leading-[20px] text-muted">
-            Changes land on the artifact for review, and are recorded in its log.
-          </span>
-        </div>
-      )}
-
-      {segments.some((s) => typeof s === 'object' && 'threadRefId' in s) && (
-        <div className="mt-2 flex items-center gap-2">
-          <Badge fill="var(--color-accent-wash)" ink="var(--color-accent-deep)">
-            Cross-thread
-          </Badge>
-          <span className="text-[12.96px] leading-[20px] text-muted">
-            This question will read the referenced threads.
-          </span>
-        </div>
-      )}
     </div>
   )
 }

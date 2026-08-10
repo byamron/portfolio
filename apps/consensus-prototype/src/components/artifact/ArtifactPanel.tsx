@@ -25,14 +25,14 @@ export function ArtifactPanel({ artifactId }: { artifactId: string }) {
       className="flex h-full w-[380px] shrink-0 flex-col overflow-hidden border-l border-line bg-panel"
       aria-label="Artifact panel"
     >
-      <header className="flex min-h-12 shrink-0 items-stretch gap-0.5 border-b border-line px-1">
+      <header className="flex min-h-16 shrink-0 items-stretch gap-0.5 border-b border-line px-1">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setArtifactTab(tab.key)}
             aria-current={artifactTab === tab.key}
-            className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-2 text-[13px] font-medium leading-5 ${
+            className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[13px] font-medium leading-5 ${
               artifactTab === tab.key
                 ? 'border-ink text-ink'
                 : 'border-transparent text-muted hover:text-ink'

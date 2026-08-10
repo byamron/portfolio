@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useAppState } from '../../state/AppState'
 import { Badge } from '../chips'
 import { Icon } from '../icons'
@@ -10,7 +11,8 @@ import { ArtifactPanel } from './ArtifactPanel'
  * in the main column, its other half in the panel (D27).
  */
 export function ArtifactView() {
-  const { artifacts, collections, activeArtifactId, openCollection, setArtifactTab } = useAppState()
+  const { artifacts, collections, activeArtifactId, openCollection, setArtifactTab, renameArtifact } =
+    useAppState()
   const stub = useStub()
 
   const artifact = activeArtifactId ? artifacts[activeArtifactId] : null
@@ -32,9 +34,11 @@ export function ArtifactView() {
             >
               <Icon name="arrowLeft" size={16} />
             </button>
-            <h1 className="truncate text-[16px] font-medium leading-[24px] text-ink">
-              {artifact.title}
-            </h1>
+            <EditableTitle
+              key={artifact.id}
+              title={artifact.title}
+              onCommit={(next) => renameArtifact(artifact.id, next)}
+            />
             <Badge fill="var(--color-fill)" ink="var(--color-muted)">
               {artifact.kind}
             </Badge>
@@ -79,5 +83,44 @@ export function ArtifactView() {
 
       <ArtifactPanel artifactId={artifact.id} />
     </div>
+  )
+}
+
+/**
+ * The title is the document's, so it is edited on the document — not in a
+ * dialog. Enter commits, Escape puts back what was there.
+ */
+function EditableTitle({ title, onCommit }: { title: string; onCommit: (next: string) => void }) {
+  const ref = useRef<HTMLHeadingElement>(null)
+
+  return (
+    <h1
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-label="Artifact title"
+      spellCheck={false}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          event.currentTarget.blur()
+        }
+        if (event.key === 'Escape') {
+          event.currentTarget.textContent = title
+          event.currentTarget.blur()
+        }
+      }}
+      onBlur={(event) => {
+        const next = event.currentTarget.textContent?.trim() ?? ''
+        if (next && next !== title) onCommit(next)
+        else event.currentTarget.textContent = title
+      }}
+      className="-mx-1.5 min-w-[4ch] max-w-full truncate rounded-[6px] px-1.5 text-[16px]
+        font-medium leading-[24px] text-ink outline-none hover:bg-fill focus:bg-rail
+        focus:text-clip"
+    >
+      {title}
+    </h1>
   )
 }

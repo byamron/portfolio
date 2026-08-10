@@ -25,7 +25,7 @@ export function ReferencesDrawer({
         }`}
     >
       <div className="flex h-full w-[420px] max-w-[46vw] flex-col">
-      <header className="flex min-h-12 shrink-0 items-center justify-between gap-2 border-b border-line px-4 pr-2">
+      <header className="flex min-h-16 shrink-0 items-center justify-between gap-2 border-b border-line px-4 pr-2">
         <span className="panel-heading">References</span>
         <div className="flex items-center gap-1">
           <span className="label text-faint">{papers.length}</span>

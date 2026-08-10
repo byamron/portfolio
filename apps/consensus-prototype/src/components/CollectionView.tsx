@@ -252,8 +252,8 @@ export function CollectionView() {
           <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-4">
             <Composer
               placeholder="Ask these papers…"
-              onSubmit={(segments, scopePaperIds, scopeArtifactIds) =>
-                startCrossThreadThread(segments, scopePaperIds, scopeArtifactIds)
+              onSubmit={(segments, scopePaperIds, scopeArtifactIds, inCollection) =>
+                startCrossThreadThread(segments, scopePaperIds, scopeArtifactIds, inCollection)
               }
             />
           </div>
