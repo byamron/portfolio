@@ -169,7 +169,9 @@ function PaperDetail({ paperId }: { paperId: string }) {
         )}
       </div>
 
-      <footer className="sticky bottom-0 flex items-center gap-2 border-t border-line bg-panel px-4 py-2.5">
+      {/* Wraps rather than clips: the panel is resizable and this row of six
+          controls already ran past its right edge at the narrower widths. */}
+      <footer className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-line bg-panel px-4 py-2.5">
         {/* Ask pins the paper as composer scope — the same place the @ picker
             would put it, so both entry points behave alike. */}
         <button
@@ -179,7 +181,12 @@ function PaperDetail({ paperId }: { paperId: string }) {
         >
           <Icon name="chat" size={15} /> Ask
         </button>
-        <button type="button" className="btn-sm" onClick={(event) => openSavePopover(paper.id, event.currentTarget)}>
+        {/* Same geometry as Ask beside it. */}
+        <button
+          type="button"
+          className="btn-sm h-8 rounded-[10px] px-3"
+          onClick={(event) => openSavePopover(paper.id, event.currentTarget)}
+        >
           <Icon name="bookmark" size={14} /> Save
         </button>
         <span className="flex items-center gap-0.5">
@@ -211,7 +218,7 @@ function PaperDetail({ paperId }: { paperId: string }) {
         {paper.hasPdf && (
           <button
             type="button"
-            className="btn-sm ml-auto"
+            className="btn-sm ml-auto h-8 rounded-[10px] px-3"
             onClick={(e) => stub(e, 'Open the full-text PDF')}
           >
             PDF <Icon name="external" size={13} />

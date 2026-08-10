@@ -65,7 +65,15 @@ export function ProjectPanel() {
           : artifacts[openObject.id]?.title) ?? objectLabel[openObject.kind]
 
   const isMobile = useIsMobile()
-  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  /**
+   * The width you asked for, and the width there is room for. Keeping them
+   * apart matters: a narrow window used to overwrite the chosen width, so the
+   * panel came back at the minimum on a wide screen long after the squeeze
+   * that caused it — narrow enough for the paper footer to wrap at its default.
+   */
+  const [preferredWidth, setPreferredWidth] = useState(DEFAULT_WIDTH)
+  const [available, setAvailable] = useState(ceiling)
+  const width = Math.min(preferredWidth, available)
   const [snapped, setSnapped] = useState(false)
   const [resizing, setResizing] = useState(false)
   const panelRef = useRef<HTMLElement>(null)
@@ -81,7 +89,7 @@ export function ProjectPanel() {
       const onDetent = Math.abs(next - DEFAULT_WIDTH) < DETENT
       if (onDetent) next = DEFAULT_WIDTH
       setSnapped(onDetent)
-      setWidth(Math.round(Math.min(ceiling(), Math.max(MIN_WIDTH, next))))
+      setPreferredWidth(Math.round(Math.min(ceiling(), Math.max(MIN_WIDTH, next))))
     }
     const up = () => {
       setResizing(false)
@@ -97,16 +105,20 @@ export function ProjectPanel() {
   // gives when the window narrows. Without this it would push the layout wider
   // than the viewport and strand the panel past the right edge.
   useEffect(() => {
-    const clamp = () => setWidth((w) => Math.min(w, ceiling()))
-    clamp()
-    window.addEventListener('resize', clamp)
-    return () => window.removeEventListener('resize', clamp)
+    const measure = () => setAvailable(ceiling())
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [])
 
+  // Dragging over text selects it otherwise, which is what leaves the panel
+  // highlighted blue when you let go.
   useEffect(() => {
     document.body.style.cursor = resizing ? 'col-resize' : ''
+    document.body.style.userSelect = resizing ? 'none' : ''
     return () => {
       document.body.style.cursor = ''
+      document.body.style.userSelect = ''
     }
   }, [resizing])
 
@@ -124,15 +136,25 @@ export function ProjectPanel() {
              ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
                panelOpen ? 'translate-x-0' : 'translate-x-full'
              }`
-          : `relative h-full shrink-0 overflow-hidden bg-panel transition-[width] duration-300
-             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
-               panelOpen ? 'border-l border-line' : ''
-             }`
+          : `relative h-full shrink-0 overflow-hidden bg-panel ${
+              // The easing belongs to opening and closing. Left on during a drag
+              // it animates towards each new width in turn, so the edge eases
+              // after the cursor instead of tracking it.
+              resizing
+                ? ''
+                : `transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+                   motion-reduce:transition-none`
+            } ${panelOpen ? 'border-l border-line' : ''}`
       }
       aria-label="Project panel"
     >
-      {/* Fixed-width so the contents slide in rather than reflowing as it opens. */}
-      <div style={isMobile ? undefined : { width }} className="flex h-full w-full flex-col">
+      {/* Pinned to the panel's width so the contents slide in rather than
+          reflowing as it opens — but not while dragging, where holding the old
+          width is what pushes them off the edge. Then they simply fill it. */}
+      <div
+        style={isMobile || resizing ? undefined : { width }}
+        className="flex h-full w-full flex-col"
+      >
       {!isMobile && (
       <div
         role="separator"
@@ -142,9 +164,9 @@ export function ProjectPanel() {
         onPointerDown={onPointerDown}
         onKeyDown={(event) => {
           const step = event.shiftKey ? 48 : 16
-          if (event.key === 'ArrowLeft') setWidth((w) => Math.min(ceiling(), w + step))
-          else if (event.key === 'ArrowRight') setWidth((w) => Math.max(MIN_WIDTH, w - step))
-          else if (event.key === 'Home') setWidth(DEFAULT_WIDTH)
+          if (event.key === 'ArrowLeft') setPreferredWidth((w) => Math.min(ceiling(), w + step))
+          else if (event.key === 'ArrowRight') setPreferredWidth((w) => Math.max(MIN_WIDTH, w - step))
+          else if (event.key === 'Home') setPreferredWidth(DEFAULT_WIDTH)
           else return
           event.preventDefault()
         }}

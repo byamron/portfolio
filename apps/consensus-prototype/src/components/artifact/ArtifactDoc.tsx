@@ -207,10 +207,13 @@ function Block({
       </div>
 
       <div className="mt-2.5 flex items-center gap-2">
-        <button type="button" className="btn-sm btn-accent" onClick={() => onResolve(true)}>
+        {/* `btn-accent` already overrode every `btn-sm` declaration, so Accept
+            was rendering full size while Reject stayed small. Both are the
+            larger size, stated rather than inherited by accident. */}
+        <button type="button" className="btn-accent" onClick={() => onResolve(true)}>
           <Icon name="check" size={14} /> Accept
         </button>
-        <button type="button" className="btn-sm text-muted" onClick={() => onResolve(false)}>
+        <button type="button" className="btn text-muted" onClick={() => onResolve(false)}>
           <Icon name="close" size={14} /> Reject
         </button>
       </div>
