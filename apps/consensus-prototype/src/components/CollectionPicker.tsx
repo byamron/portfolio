@@ -12,6 +12,9 @@ import { Icon } from './icons'
  * library and therefore out of every collection under it, which is what makes
  * the hierarchy true rather than decorative.
  */
+/** "No items yet" reads better than "0 items" in a list you are choosing from. */
+const count = (n: number) => (n === 0 ? 'No items yet' : plural(n, 'item'))
+
 export function CollectionPicker({
   isMember,
   onToggle,
@@ -43,15 +46,15 @@ export function CollectionPicker({
             ? 'Remove from your library, and from every collection in it'
             : 'Save to your library'
         }
-        className="flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-rail"
+        className="flex items-center gap-3 px-4 py-3 text-left hover:bg-rail"
       >
-        <Icon name="bookmark" size={18} className="shrink-0 text-muted" />
+        <Icon name="bookmark" size={19} filled className="shrink-0 text-ink" />
         <span className="min-w-0 grow">
-          <span className="block truncate text-[14px] font-medium leading-5 text-ink">
+          <span className="block truncate text-[15.04px] font-medium leading-[23px] text-ink">
             My Library
           </span>
-          <span className="block text-[12px] leading-[18px] text-muted">
-            {plural(libraryCount, 'item')}
+          <span className="block text-[12.96px] leading-[20px] text-muted">
+            {count(libraryCount)}
           </span>
         </span>
         <span
@@ -63,22 +66,24 @@ export function CollectionPicker({
         </span>
       </button>
 
-      <div className="border-t border-hairline px-3 pb-2 pt-2.5">
-        <div className="label pb-1.5 text-muted">Add to collection</div>
-        <div className="flex h-8 items-center gap-2 rounded-[8px] border border-line px-2">
-          <Icon name="search" size={14} className="text-faint" />
+      <div className="px-4 pb-2.5">
+        <div className="pb-2 text-[12.96px] font-medium leading-[20px] text-muted">
+          Add to Collection
+        </div>
+        <div className="flex h-9 items-center gap-2 rounded-[10px] border border-line px-2.5">
+          <Icon name="search" size={15} className="text-faint" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search your Library…"
-            className="min-w-0 grow bg-transparent text-[13px] text-ink placeholder:text-faint focus:outline-none"
+            className="min-w-0 grow bg-transparent text-[15px] text-ink placeholder:text-faint focus:outline-none"
           />
         </div>
       </div>
 
       <div className="max-h-56 overflow-y-auto pb-1">
         {matches.length === 0 && (
-          <p className="m-0 px-3 py-3 text-[12.96px] leading-[20px] text-muted">
+          <p className="m-0 px-4 py-3 text-[12.96px] leading-[20px] text-muted">
             {query ? `No collection matches “${query}”.` : 'No collections yet.'}
           </p>
         )}
@@ -89,17 +94,17 @@ export function CollectionPicker({
               key={collection.id}
               type="button"
               onClick={() => onToggle(collection.id)}
-              className={`flex w-full items-center gap-2.5 py-2 pr-3 text-left hover:bg-rail ${
-                collection.parentId ? 'pl-7' : 'pl-3'
+              className={`flex w-full items-center gap-3 py-3 pr-4 text-left hover:bg-rail ${
+                collection.parentId ? 'pl-9' : 'pl-4'
               }`}
             >
-              <Icon name="folder" size={18} className="shrink-0 text-muted" />
+              <Icon name="folder" size={19} className="shrink-0 text-ink" strokeWidth={1.7} />
               <span className="min-w-0 grow">
-                <span className="block truncate text-[14px] font-medium leading-5 text-ink">
+                <span className="block truncate text-[15.04px] font-medium leading-[23px] text-ink">
                   {collection.name}
                 </span>
-                <span className="block text-[12px] leading-[18px] text-muted">
-                  {plural(collection.paperIds.length, 'item')}
+                <span className="block text-[12.96px] leading-[20px] text-muted">
+                  {count(collection.paperIds.length)}
                 </span>
               </span>
               <span
@@ -114,7 +119,7 @@ export function CollectionPicker({
         })}
       </div>
 
-      <div className="border-t border-hairline p-2">
+      <div className="border-t border-hairline p-3">
         {naming ? (
           <form
             className="flex items-center gap-1.5"
@@ -143,9 +148,9 @@ export function CollectionPicker({
           <button
             type="button"
             onClick={() => setNaming(true)}
-            className="flex h-9 w-full items-center justify-center gap-2 rounded-[10px] border border-line text-[13px] font-medium text-ink hover:bg-rail"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-[10px] border border-line text-[15.04px] font-medium leading-[23px] text-ink hover:bg-rail"
           >
-            <Icon name="folderPlus" size={16} /> New Collection
+            <Icon name="folderPlus" size={17} strokeWidth={1.7} /> New Collection
           </button>
         )}
       </div>

@@ -227,8 +227,10 @@ export function Composer({
           className="absolute bottom-[calc(100%+8px)] left-0 z-20 max-h-72 w-[420px] max-w-full overflow-y-auto rounded-[14px] border border-line bg-panel shadow-[0_12px_28px_-8px_rgba(0,0,0,0.18)]">
           {pinning && (
             <div className="border-b border-hairline px-3 py-2">
-              <div className="label text-muted">Add as context</div>
-              <p className="m-0 mt-0.5 text-[12px] leading-[18px] text-faint">
+              <div className="text-[12.96px] font-medium leading-[20px] text-muted">
+                Add as Context
+              </div>
+              <p className="m-0 mt-0.5 text-[12.96px] leading-[20px] text-faint">
                 Attached above your question. Type @ instead to name something in the sentence.
               </p>
             </div>

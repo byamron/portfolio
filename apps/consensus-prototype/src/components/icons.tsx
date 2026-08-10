@@ -186,20 +186,23 @@ export function Icon({
   size = 16,
   className = '',
   strokeWidth = 2,
+  filled = false,
 }: {
   name: IconName
   size?: number
   className?: string
   strokeWidth?: number
+  /** Solid rather than outline — the product uses both for bookmarks. */
+  filled?: boolean
 }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
-      strokeWidth={strokeWidth}
+      strokeWidth={filled ? 0 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

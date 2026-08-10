@@ -14,7 +14,7 @@ import { useStub } from './StubHint'
 const DELAY = 320
 
 export function PaperRowActions({ paperId }: { paperId: string }) {
-  const { referenceInComposer, openSavePopover } = useAppState()
+  const { referenceInComposer, openSavePopover, savePopoverPaperId } = useAppState()
   const stub = useStub()
   const anchorRef = useRef<HTMLSpanElement>(null)
   const [open, setOpen] = useState(false)
@@ -46,11 +46,17 @@ export function PaperRowActions({ paperId }: { paperId: string }) {
     }
   }, [])
 
+  /**
+   * The picker's click-catcher covers the page, so the row reads it as the
+   * pointer leaving. The bar stays while its own dropdown is open — a menu
+   * should not outlive the control it came from.
+   */
+  const saving = savePopoverPaperId === paperId
   const stop = (event: React.MouseEvent) => event.stopPropagation()
 
   return (
     <span ref={anchorRef} onClick={stop} className="absolute left-0 top-full z-20 pt-1">
-      {open && (
+      {(open || saving) && (
         <span
           className="inline-flex items-center gap-1 rounded-full border
           border-line bg-panel p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.22)]"
