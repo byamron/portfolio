@@ -169,7 +169,9 @@ function PaperDetail({ paperId }: { paperId: string }) {
         )}
       </div>
 
-      <footer className="sticky bottom-0 flex items-center gap-2 border-t border-line bg-panel px-4 py-2.5">
+      {/* Wraps rather than clips: the panel is resizable and this row of six
+          controls already ran past its right edge at the narrower widths. */}
+      <footer className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-line bg-panel px-4 py-2.5">
         {/* Ask pins the paper as composer scope — the same place the @ picker
             would put it, so both entry points behave alike. */}
         <button
