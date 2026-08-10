@@ -51,6 +51,9 @@ export function Composer({
   const [active, setActive] = useState(0)
   /** The + button hands the agent material rather than naming it in a sentence. */
   const [pinning, setPinning] = useState(false)
+  /** Dismissed by clicking away — the typed text stays, the menu does not. */
+  const [dismissed, setDismissed] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
   /** Cleared by removing the collection chip — the question is then unfiled. */
   const [inCollection, setInCollection] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -103,11 +106,27 @@ export function Composer({
     ...paperOptions.map((p) => ({ kind: 'paper' as const, id: p.id })),
     ...artifactOptions.map((a) => ({ kind: 'artifact' as const, id: a.id })),
   ]
-  const open = (query !== null || pinning) && options.length > 0
+  const open = ((query !== null && !dismissed) || pinning) && options.length > 0
 
   // Keep the highlight in range as you type, and visible as you arrow past the
   // fold — a picker you can only use with the mouse is not a picker.
-  useEffect(() => setActive(0), [query])
+  useEffect(() => {
+    setActive(0)
+    setDismissed(false)
+  }, [query])
+
+  // Clicking anywhere outside the composer closes the picker. Pointerdown
+  // rather than click, so it dismisses on press like every other menu here.
+  useEffect(() => {
+    if (!open) return
+    const away = (event: PointerEvent) => {
+      if (rootRef.current?.contains(event.target as Node)) return
+      setPinning(false)
+      setDismissed(true)
+    }
+    window.addEventListener('pointerdown', away)
+    return () => window.removeEventListener('pointerdown', away)
+  }, [open])
   useEffect(() => {
     pickerRef.current
       ?.querySelector('[data-active="true"]')
@@ -218,7 +237,7 @@ export function Composer({
   }
 
   return (
-    <div className="relative">
+    <div ref={rootRef} className="relative">
       {open && (
         <div
           ref={pickerRef}
