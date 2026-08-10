@@ -65,7 +65,15 @@ export function ProjectPanel() {
           : artifacts[openObject.id]?.title) ?? objectLabel[openObject.kind]
 
   const isMobile = useIsMobile()
-  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  /**
+   * The width you asked for, and the width there is room for. Keeping them
+   * apart matters: a narrow window used to overwrite the chosen width, so the
+   * panel came back at the minimum on a wide screen long after the squeeze
+   * that caused it — narrow enough for the paper footer to wrap at its default.
+   */
+  const [preferredWidth, setPreferredWidth] = useState(DEFAULT_WIDTH)
+  const [available, setAvailable] = useState(ceiling)
+  const width = Math.min(preferredWidth, available)
   const [snapped, setSnapped] = useState(false)
   const [resizing, setResizing] = useState(false)
   const panelRef = useRef<HTMLElement>(null)
@@ -81,7 +89,7 @@ export function ProjectPanel() {
       const onDetent = Math.abs(next - DEFAULT_WIDTH) < DETENT
       if (onDetent) next = DEFAULT_WIDTH
       setSnapped(onDetent)
-      setWidth(Math.round(Math.min(ceiling(), Math.max(MIN_WIDTH, next))))
+      setPreferredWidth(Math.round(Math.min(ceiling(), Math.max(MIN_WIDTH, next))))
     }
     const up = () => {
       setResizing(false)
@@ -97,10 +105,10 @@ export function ProjectPanel() {
   // gives when the window narrows. Without this it would push the layout wider
   // than the viewport and strand the panel past the right edge.
   useEffect(() => {
-    const clamp = () => setWidth((w) => Math.min(w, ceiling()))
-    clamp()
-    window.addEventListener('resize', clamp)
-    return () => window.removeEventListener('resize', clamp)
+    const measure = () => setAvailable(ceiling())
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [])
 
   useEffect(() => {
@@ -142,9 +150,9 @@ export function ProjectPanel() {
         onPointerDown={onPointerDown}
         onKeyDown={(event) => {
           const step = event.shiftKey ? 48 : 16
-          if (event.key === 'ArrowLeft') setWidth((w) => Math.min(ceiling(), w + step))
-          else if (event.key === 'ArrowRight') setWidth((w) => Math.max(MIN_WIDTH, w - step))
-          else if (event.key === 'Home') setWidth(DEFAULT_WIDTH)
+          if (event.key === 'ArrowLeft') setPreferredWidth((w) => Math.min(ceiling(), w + step))
+          else if (event.key === 'ArrowRight') setPreferredWidth((w) => Math.max(MIN_WIDTH, w - step))
+          else if (event.key === 'Home') setPreferredWidth(DEFAULT_WIDTH)
           else return
           event.preventDefault()
         }}
