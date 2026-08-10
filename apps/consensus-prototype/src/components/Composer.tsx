@@ -42,6 +42,9 @@ export function Composer({
     selectedCollectionId,
     pendingReference,
     clearPendingReference,
+    view,
+    libraryThreadIds,
+    libraryPaperIds,
   } = useAppState()
   const [segments, setSegments] = useState<MessageSegment[]>([])
   const [scopePaperIds, setScopePaperIds] = useState<string[]>([])
@@ -82,6 +85,17 @@ export function Composer({
   }, [clearPendingReference, pendingReference])
 
   const collection = collections[selectedCollectionId]
+
+  /**
+   * What `@` can reach is whatever the surface you are on holds: a collection's
+   * contents inside a collection, the whole library inside My Library.
+   */
+  const inLibraryView = view === 'library'
+  const threadPool = inLibraryView ? libraryThreadIds : collection?.threadIds ?? []
+  const paperPool = inLibraryView ? libraryPaperIds : collection?.paperIds ?? []
+  const artifactPool = inLibraryView
+    ? Object.keys(artifacts)
+    : collection?.artifactIds ?? []
   const match = draft.match(MENTION)
   const query = match ? match[2].toLowerCase() : null
   const hasContent =
@@ -91,13 +105,13 @@ export function Composer({
     scopeArtifactIds.length > 0 ||
     scopeThreadIds.length > 0
 
-  const threadOptions = (collection?.threadIds ?? [])
+  const threadOptions = threadPool
     .map((id) => threads[id])
     .filter((t) => t && (!query || t.title.toLowerCase().includes(query)))
-  const paperOptions = (collection?.paperIds ?? [])
+  const paperOptions = paperPool
     .map((id) => papers[id])
     .filter((p) => p && (!query || p.title.toLowerCase().includes(query)))
-  const artifactOptions = (collection?.artifactIds ?? [])
+  const artifactOptions = artifactPool
     .map((id) => artifacts[id])
     .filter((a) => a && (!query || a.title.toLowerCase().includes(query)))
 
