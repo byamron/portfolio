@@ -223,21 +223,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const goHome = useCallback(() => {
     setView('home')
     setActiveThreadId(null)
+    setDetailPaperId(null)
   }, [])
 
   const openCollection = useCallback((collectionId?: string) => {
     setView('collection')
     setActiveThreadId(null)
+    setDetailPaperId(null)
     if (collectionId) setSelectedCollectionId(collectionId)
   }, [])
 
   const openLibrary = useCallback(() => {
     setView('library')
     setActiveThreadId(null)
+    setDetailPaperId(null)
   }, [])
 
   const openThread = useCallback((threadId: string) => {
     setActiveThreadId(threadId)
+    setDetailPaperId(null)
     setView('thread')
     setReferencesOpen(true)
     setFollowUpTurns(0)
@@ -411,6 +415,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const openArtifact = useCallback((artifactId: string) => {
     setActiveArtifactId(artifactId)
+    setDetailPaperId(null)
     setArtifactTab('chat')
     setView('artifact')
     const collectionId = artifactsRef.current[artifactId]?.collectionId
@@ -1067,7 +1072,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       // A citation opens the paper in whichever side surface the current view
       // already has: the collection's panel, or the thread/artifact's own.
       openPaperDetail: (paperId: string) => {
-        if (view === 'collection' || view === 'library') openInPanel({ kind: 'paper', id: paperId })
+        if (view === 'collection') openInPanel({ kind: 'paper', id: paperId })
         else setDetailPaperId(paperId)
       },
       closePaperDetail: () => setDetailPaperId(null),

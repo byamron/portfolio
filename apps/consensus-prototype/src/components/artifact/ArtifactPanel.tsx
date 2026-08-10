@@ -18,13 +18,21 @@ const TABS: { key: ArtifactTab; label: string; icon: 'chat' | 'file' | 'history'
  * sentence you are writing.
  */
 export function ArtifactPanel({ artifactId }: { artifactId: string }) {
-  const { artifactTab, setArtifactTab } = useAppState()
+  const { artifactTab, setArtifactTab, detailPaperId } = useAppState()
+  // A citation opens beside the document, and two panels would leave it 372px.
+  const hidden = Boolean(detailPaperId)
 
   return (
     <aside
-      className="flex h-full w-[380px] shrink-0 flex-col overflow-hidden border-l border-line bg-panel"
+      inert={hidden}
+      aria-hidden={hidden}
+      className={`h-full shrink-0 overflow-hidden bg-panel transition-[width,max-width]
+        duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+          hidden ? 'w-0 max-w-0' : 'w-[380px] border-l border-line'
+        }`}
       aria-label="Artifact panel"
     >
+      <div className="flex h-full w-[380px] flex-col">
       <header className="flex min-h-16 shrink-0 items-stretch gap-0.5 border-b border-line px-1">
         {TABS.map((tab) => (
           <button
@@ -47,6 +55,7 @@ export function ArtifactPanel({ artifactId }: { artifactId: string }) {
       {artifactTab === 'chat' && <ChatTab artifactId={artifactId} />}
       {artifactTab === 'history' && <HistoryTab artifactId={artifactId} />}
       {artifactTab === 'items' && <ItemsTab artifactId={artifactId} />}
+      </div>
     </aside>
   )
 }
