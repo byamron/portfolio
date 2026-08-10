@@ -161,13 +161,7 @@ export function LibraryView() {
           <Composer
             placeholder="Ask these papers…"
             scopeLabel={`My Library · ${plural(libraryPaperIds.length, 'item')}`}
-            onSubmit={({ segments }) => {
-              const text = segments
-                .map((s) => (typeof s === 'string' ? s : ''))
-                .join(' ')
-                .trim()
-              if (text) startNewThread(text)
-            }}
+            onSubmit={({ segments }) => startNewThread(segments)}
           />
         </div>
       </div>

@@ -116,8 +116,8 @@ interface AppStateShape {
   toggleLibraryForThread: (threadId: string) => void
   setCollectionTab: (tab: CollectionTab) => void
   openThread: (threadId: string) => void
-  startNewThread: (query: string) => void
-  sendFollowUp: (text: string) => void
+  startNewThread: (query: MessageSegment[] | string) => void
+  sendFollowUp: (message: MessageSegment[] | string) => void
 
   setPanelOpen: (open: boolean) => void
   setPanelView: (view: PanelView) => void
@@ -275,13 +275,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   )
 
   const startNewThread = useCallback(
-    (query: string) => {
+    (input: MessageSegment[] | string) => {
+      // Mentions are part of the message, not decoration on the way in: keep the
+      // segments and derive the title from the prose in them.
+      const segments = typeof input === 'string' ? [input] : input
+      const query = segmentsToText(segments)
+      if (!query && segments.length === 0) return
       const id = makeId('thread')
       const thread: Thread = {
         id,
         title: query.length > 60 ? `${query.slice(0, 57)}…` : query,
         updated: 'just now',
-        messages: [{ id: makeId('msg'), role: 'user', content: [query] }],
+        messages: [{ id: makeId('msg'), role: 'user', content: segments }],
         sources: [
           { paperId: 'tiller2019', query, quotedFor: 'periodising intake around training load' },
           { paperId: 'podlogar2022', query, quotedFor: 'higher oxidation during prolonged exercise' },
@@ -298,9 +303,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   )
 
   const sendFollowUp = useCallback(
-    (text: string) => {
+    (input: MessageSegment[] | string) => {
       if (!activeThreadId) return
-      const message: Message = { id: makeId('msg'), role: 'user', content: [text] }
+      const segments = typeof input === 'string' ? [input] : input
+      if (segments.length === 0) return
+      const message: Message = { id: makeId('msg'), role: 'user', content: segments }
       setThreads((prev) => {
         const thread = prev[activeThreadId]
         if (!thread) return prev
