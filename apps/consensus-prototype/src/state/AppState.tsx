@@ -125,7 +125,8 @@ interface AppStateShape {
   toggleReferences: () => void
   openPaperDetail: (paperId: string) => void
   closePaperDetail: () => void
-  openSavePopover: (paperId: string) => void
+  savePopoverAnchor: { left: number; top: number; bottom: number } | null
+  openSavePopover: (paperId: string, anchor?: HTMLElement | null) => void
   closeSavePopover: () => void
   toggleCollectionForPaper: (collectionId: string, paperId: string) => void
   toggleCollectionForThread: (collectionId: string, threadId: string) => void
@@ -210,6 +211,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGeneratingArtifact, setIsGeneratingArtifact] = useState(false)
   const [savePopoverPaperId, setSavePopoverPaperId] = useState<string | null>(null)
+  const [savePopoverAnchor, setSavePopoverAnchor] = useState<{
+    left: number
+    top: number
+    bottom: number
+  } | null>(null)
   const [followUpTurns, setFollowUpTurns] = useState(0)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [pendingReference, setPendingReference] = useState<PendingReference | null>(null)
@@ -1053,8 +1059,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       toggleReferences: () => setReferencesOpen((v) => !v),
       openPaperDetail: setDetailPaperId,
       closePaperDetail: () => setDetailPaperId(null),
-      openSavePopover: setSavePopoverPaperId,
-      closeSavePopover: () => setSavePopoverPaperId(null),
+      savePopoverAnchor,
+      // Anchored to whatever opened it, so the picker drops from the control
+      // rather than landing in the middle of the screen.
+      openSavePopover: (paperId: string, anchor?: HTMLElement | null) => {
+        const rect = anchor?.getBoundingClientRect()
+        setSavePopoverAnchor(rect ? { left: rect.left, top: rect.top, bottom: rect.bottom } : null)
+        setSavePopoverPaperId(paperId)
+      },
+      closeSavePopover: () => {
+        setSavePopoverPaperId(null)
+        setSavePopoverAnchor(null)
+      },
       toggleCollectionForPaper,
       toggleCollectionForThread,
       deleteThread,

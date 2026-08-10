@@ -66,7 +66,7 @@ export function PaperRowActions({ paperId }: { paperId: string }) {
 
         <button
           type="button"
-          onClick={() => openSavePopover(paperId)}
+          onClick={(event) => openSavePopover(paperId, event.currentTarget)}
           className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line px-3
             text-[14px] font-medium text-ink hover:bg-rail"
         >

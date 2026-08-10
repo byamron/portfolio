@@ -180,7 +180,7 @@ function PaperDetail({ paperId }: { paperId: string }) {
         >
           <Icon name="chat" size={15} /> Ask
         </button>
-        <button type="button" className="btn-sm" onClick={() => openSavePopover(paper.id)}>
+        <button type="button" className="btn-sm" onClick={(event) => openSavePopover(paper.id, event.currentTarget)}>
           <Icon name="bookmark" size={14} /> Save
         </button>
         <span className="flex items-center gap-0.5">
