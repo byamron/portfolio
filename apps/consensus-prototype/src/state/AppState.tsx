@@ -988,11 +988,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  /** Hand a thread or item to the composer and bring the collection forward. */
-  const referenceInComposer = useCallback((reference: PendingReference) => {
-    setPendingReference(reference)
-    setView('collection')
-  }, [])
+  /**
+   * Hand a thread or item to the composer. If where you are already has one,
+   * stay there — being thrown into a collection you were not in, and having its
+   * scope attached to your question, is worse than the trip saves.
+   */
+  const referenceInComposer = useCallback(
+    (reference: PendingReference) => {
+      setPendingReference(reference)
+      if (view === 'artifact') setView('collection')
+    },
+    [view],
+  )
 
   const openInPanel = useCallback((object: OpenObject) => {
     setOpenObject(object)
