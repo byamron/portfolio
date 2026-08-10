@@ -111,10 +111,14 @@ export function ProjectPanel() {
     return () => window.removeEventListener('resize', measure)
   }, [])
 
+  // Dragging over text selects it otherwise, which is what leaves the panel
+  // highlighted blue when you let go.
   useEffect(() => {
     document.body.style.cursor = resizing ? 'col-resize' : ''
+    document.body.style.userSelect = resizing ? 'none' : ''
     return () => {
       document.body.style.cursor = ''
+      document.body.style.userSelect = ''
     }
   }, [resizing])
 
@@ -132,15 +136,25 @@ export function ProjectPanel() {
              ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
                panelOpen ? 'translate-x-0' : 'translate-x-full'
              }`
-          : `relative h-full shrink-0 overflow-hidden bg-panel transition-[width] duration-300
-             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
-               panelOpen ? 'border-l border-line' : ''
-             }`
+          : `relative h-full shrink-0 overflow-hidden bg-panel ${
+              // The easing belongs to opening and closing. Left on during a drag
+              // it animates towards each new width in turn, so the edge eases
+              // after the cursor instead of tracking it.
+              resizing
+                ? ''
+                : `transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+                   motion-reduce:transition-none`
+            } ${panelOpen ? 'border-l border-line' : ''}`
       }
       aria-label="Project panel"
     >
-      {/* Fixed-width so the contents slide in rather than reflowing as it opens. */}
-      <div style={isMobile ? undefined : { width }} className="flex h-full w-full flex-col">
+      {/* Pinned to the panel's width so the contents slide in rather than
+          reflowing as it opens — but not while dragging, where holding the old
+          width is what pushes them off the edge. Then they simply fill it. */}
+      <div
+        style={isMobile || resizing ? undefined : { width }}
+        className="flex h-full w-full flex-col"
+      >
       {!isMobile && (
       <div
         role="separator"
