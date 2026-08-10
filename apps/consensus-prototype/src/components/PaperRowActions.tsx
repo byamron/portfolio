@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppState } from '../state/AppState'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { Icon, type IconName } from './icons'
 import { useStub } from './StubHint'
 
@@ -16,6 +17,7 @@ const DELAY = 320
 export function PaperRowActions({ paperId }: { paperId: string }) {
   const { referenceInComposer, openSavePopover, savePopoverPaperId } = useAppState()
   const stub = useStub()
+  const isMobile = useIsMobile()
   const anchorRef = useRef<HTMLSpanElement>(null)
   const [open, setOpen] = useState(false)
 
@@ -26,6 +28,7 @@ export function PaperRowActions({ paperId }: { paperId: string }) {
    * moving onto it does not count as leaving.
    */
   useEffect(() => {
+    if (isMobile) return
     const row = anchorRef.current?.closest('tr')
     if (!row) return
     let timer = 0
@@ -44,7 +47,7 @@ export function PaperRowActions({ paperId }: { paperId: string }) {
       row.removeEventListener('pointerenter', enter)
       row.removeEventListener('pointerleave', leave)
     }
-  }, [])
+  }, [isMobile])
 
   /**
    * The picker's click-catcher covers the page, so the row reads it as the
@@ -53,6 +56,8 @@ export function PaperRowActions({ paperId }: { paperId: string }) {
    */
   const saving = savePopoverPaperId === paperId
   const stop = (event: React.MouseEvent) => event.stopPropagation()
+
+  if (isMobile) return null
 
   return (
     <span ref={anchorRef} onClick={stop} className="absolute left-0 top-full z-20 pt-1">

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useAppState } from '../state/AppState'
 import { plural } from '../data/mock'
+import { RailToggle } from './RailToggle'
 import { Icon } from './icons'
 import { Composer } from './Composer'
 import { ThreadMenu } from './ThreadMenu'
 import { AddMenu } from './AddMenu'
 import { Cell, Empty, Row, Table } from './Table'
+import { PaperDetailPanel } from './PaperDetailPanel'
 import { PaperRowActions } from './PaperRowActions'
 
 /**
@@ -20,7 +22,7 @@ export function LibraryView() {
     threads,
     libraryPaperIds,
     libraryThreadIds,
-    openInPanel,
+    openPaperDetail,
     openThread,
     startNewThread,
   } = useAppState()
@@ -37,8 +39,10 @@ export function LibraryView() {
   ]
 
   return (
-    <div className="@container relative flex min-w-0 flex-1 flex-col">
+    <div className="flex min-w-0 flex-1">
+      <div className="@container relative flex min-w-0 flex-1 flex-col">
       <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 px-4">
+        <RailToggle />
         <h1 className="truncate text-[22px] font-medium leading-[30px] text-ink">My Library</h1>
         {/* No collection here, so no authoring group — the library imports only. */}
         <AddMenu />
@@ -96,7 +100,7 @@ export function LibraryView() {
               {items.map((id) => {
                 const paper = papers[id]
                 return (
-                  <Row key={id} onClick={() => openInPanel({ kind: 'paper', id })}>
+                  <Row key={id} onClick={() => openPaperDetail(id)}>
                     <Cell bold overflow>
                       <span className="relative flex min-w-0 items-center">
                         <span className="min-w-0 truncate">{paper.title}</span>
@@ -157,16 +161,13 @@ export function LibraryView() {
           <Composer
             placeholder="Ask these papers…"
             scopeLabel={`My Library · ${plural(libraryPaperIds.length, 'item')}`}
-            onSubmit={({ segments }) => {
-              const text = segments
-                .map((s) => (typeof s === 'string' ? s : ''))
-                .join(' ')
-                .trim()
-              if (text) startNewThread(text)
-            }}
+            onSubmit={({ segments }) => startNewThread(segments)}
           />
         </div>
       </div>
+      </div>
+
+      <PaperDetailPanel />
     </div>
   )
 }

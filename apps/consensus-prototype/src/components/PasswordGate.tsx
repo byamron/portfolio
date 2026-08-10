@@ -35,14 +35,9 @@ export function PasswordGate({ children }: { children: ReactNode }) {
           <span className="text-[19px] font-medium leading-[28px] text-ink">Consensus</span>
         </div>
 
-        <div>
-          <p className="m-0 text-[15.04px] font-medium leading-[23px] text-ink">
-            This prototype is private
-          </p>
-          <p className="m-0 mt-0.5 text-[12.96px] leading-[20px] text-muted">
-            A design concept, not the product. Enter the password to take a look.
-          </p>
-        </div>
+        <p className="m-0 text-[15.04px] font-medium leading-[23px] text-ink">
+          This prototype is private
+        </p>
 
         <div>
           {/* eslint-disable-next-line jsx-a11y/no-autofocus */}

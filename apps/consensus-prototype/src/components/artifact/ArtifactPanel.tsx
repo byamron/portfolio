@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAppState, type ArtifactTab } from '../../state/AppState'
 import type { ArtifactTurn } from '../../data/mock'
+import { Composer } from '../Composer'
 import { renderSegment } from '../ThreadView'
 import { Badge, ThreadChip } from '../chips'
 import { Icon } from '../icons'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { PanelEmpty } from '../panel/views'
 
 const TABS: { key: ArtifactTab; label: string; icon: 'chat' | 'file' | 'history' }[] = [
@@ -18,35 +20,68 @@ const TABS: { key: ArtifactTab; label: string; icon: 'chat' | 'file' | 'history'
  * sentence you are writing.
  */
 export function ArtifactPanel({ artifactId }: { artifactId: string }) {
-  const { artifactTab, setArtifactTab } = useAppState()
+  const { artifactTab, setArtifactTab, detailPaperId, panelOpen, setPanelOpen } = useAppState()
+  const isMobile = useIsMobile()
+  // A citation opens beside the document, and two panels would leave it 372px.
+  // On a phone the panel covers the document rather than sitting beside it, so
+  // it is something you open and close; on a desktop it is simply the other
+  // half of the view and is always there.
+  const hidden = Boolean(detailPaperId) || (isMobile && !panelOpen)
 
   return (
     <aside
-      className="flex h-full w-[380px] shrink-0 flex-col overflow-hidden border-l border-line bg-panel"
+      inert={hidden}
+      aria-hidden={hidden}
+      className={
+        isMobile
+          ? `fixed inset-0 z-50 flex flex-col bg-panel transition-transform duration-300
+             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               hidden ? 'translate-x-full' : 'translate-x-0'
+             }`
+          : `h-full shrink-0 overflow-hidden bg-panel transition-[width,max-width]
+             duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               hidden ? 'w-0 max-w-0' : 'w-[380px] border-l border-line'
+             }`
+      }
       aria-label="Artifact panel"
     >
-      <header className="flex min-h-16 shrink-0 items-stretch gap-0.5 border-b border-line px-1">
-        {TABS.map((tab) => (
+      <div className="flex h-full w-full flex-col md:w-[380px]">
+      <header className="flex min-h-16 shrink-0 items-stretch justify-between gap-0.5 border-b border-line px-1">
+        <div className="flex min-w-0 gap-0.5 overflow-x-auto [scrollbar-width:none]">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setArtifactTab(tab.key)}
+              aria-current={artifactTab === tab.key}
+              className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[13px] font-medium leading-5 ${
+                artifactTab === tab.key
+                  ? 'border-ink text-ink'
+                  : 'border-transparent text-muted hover:text-ink'
+              }`}
+            >
+              <Icon name={tab.icon} size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Only a way out where the panel is covering something. */}
+        {isMobile && (
           <button
-            key={tab.key}
             type="button"
-            onClick={() => setArtifactTab(tab.key)}
-            aria-current={artifactTab === tab.key}
-            className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[13px] font-medium leading-5 ${
-              artifactTab === tab.key
-                ? 'border-ink text-ink'
-                : 'border-transparent text-muted hover:text-ink'
-            }`}
+            className="icon-btn shrink-0 self-center"
+            aria-label="Close panel"
+            onClick={() => setPanelOpen(false)}
           >
-            <Icon name={tab.icon} size={16} />
-            {tab.label}
+            <Icon name="close" size={15} />
           </button>
-        ))}
+        )}
       </header>
 
       {artifactTab === 'chat' && <ChatTab artifactId={artifactId} />}
       {artifactTab === 'history' && <HistoryTab artifactId={artifactId} />}
       {artifactTab === 'items' && <ItemsTab artifactId={artifactId} />}
+      </div>
     </aside>
   )
 }
@@ -58,7 +93,6 @@ export function ArtifactPanel({ artifactId }: { artifactId: string }) {
 function ChatTab({ artifactId }: { artifactId: string }) {
   const { artifacts, askArtifact, isGeneratingArtifact } = useAppState()
   const artifact = artifacts[artifactId]
-  const [draft, setDraft] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -66,13 +100,6 @@ function ChatTab({ artifactId }: { artifactId: string }) {
   }, [artifact?.log.length, isGeneratingArtifact])
 
   if (!artifact) return null
-
-  function send() {
-    const text = draft.trim()
-    if (!text) return
-    askArtifact(artifactId, text)
-    setDraft('')
-  }
 
   return (
     <>
@@ -96,30 +123,19 @@ function ChatTab({ artifactId }: { artifactId: string }) {
         <div ref={endRef} />
       </div>
 
+      {/*
+        The same composer as everywhere else. Asking for a section is the moment
+        you are most likely to name the paper it should rest on, so `@` has to
+        reach the collection from in here too — it would be strange for the one
+        surface built around citing sources to be the one that cannot.
+        The collection chip is redundant: the artifact is already in it.
+      */}
       <div className="shrink-0 border-t border-line p-2.5">
-        <div className="flex items-end gap-2 rounded-[14px] border border-line bg-panel px-3 py-2">
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                send()
-              }
-            }}
-            placeholder="Ask for a change…"
-            className="min-w-0 grow bg-transparent text-[15px] leading-6 text-ink placeholder:text-faint focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={send}
-            disabled={!draft.trim()}
-            aria-label="Send"
-            className="btn-accent size-8 shrink-0 px-0 disabled:opacity-50"
-          >
-            <Icon name="arrowUp" size={16} />
-          </button>
-        </div>
+        <Composer
+          hideScope
+          placeholder="Ask for a change…"
+          onSubmit={({ segments }) => askArtifact(artifactId, segments)}
+        />
       </div>
     </>
   )

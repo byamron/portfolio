@@ -4,6 +4,7 @@ import { Icon, type IconName } from '../icons'
 import { SuggestedView, SurfacedView } from './views'
 import { CitationGraphView } from './CitationGraphView'
 import { ObjectDetail, objectLabel } from './details'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 /** The tab an opened object gets — its own icon, and its own name. */
 const OBJECT_ICON: Record<'paper' | 'thread' | 'artifact', IconName> = {
@@ -63,6 +64,7 @@ export function ProjectPanel() {
           ? threads[openObject.id]?.title
           : artifacts[openObject.id]?.title) ?? objectLabel[openObject.kind]
 
+  const isMobile = useIsMobile()
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const [snapped, setSnapped] = useState(false)
   const [resizing, setResizing] = useState(false)
@@ -113,17 +115,25 @@ export function ProjectPanel() {
   return (
     <aside
       ref={panelRef}
-      style={{ width: panelOpen ? width : 0 }}
+      style={isMobile ? undefined : { width: panelOpen ? width : 0 }}
       inert={!panelOpen}
       aria-hidden={!panelOpen}
-      className={`relative h-full shrink-0 overflow-hidden bg-panel transition-[width] duration-300
-        ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
-          panelOpen ? 'border-l border-line' : ''
-        }`}
+      className={
+        isMobile
+          ? `fixed inset-0 z-50 flex flex-col bg-panel transition-transform duration-300
+             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               panelOpen ? 'translate-x-0' : 'translate-x-full'
+             }`
+          : `relative h-full shrink-0 overflow-hidden bg-panel transition-[width] duration-300
+             ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+               panelOpen ? 'border-l border-line' : ''
+             }`
+      }
       aria-label="Project panel"
     >
       {/* Fixed-width so the contents slide in rather than reflowing as it opens. */}
-      <div style={{ width }} className="flex h-full flex-col">
+      <div style={isMobile ? undefined : { width }} className="flex h-full w-full flex-col">
+      {!isMobile && (
       <div
         role="separator"
         aria-orientation="vertical"
@@ -151,6 +161,7 @@ export function ProjectPanel() {
           }`}
         />
       </div>
+      )}
 
       <header className="flex min-h-16 shrink-0 items-stretch justify-between gap-2 border-b border-line pl-1 pr-2">
         <div className="flex min-w-0 gap-0.5 overflow-x-auto [scrollbar-width:none]">
@@ -179,6 +190,7 @@ export function ProjectPanel() {
           <button
             type="button"
             className="icon-btn"
+            aria-label="Close panel"
             title="Close panel"
             onClick={() => setPanelOpen(false)}
           >

@@ -3,6 +3,8 @@ import { useAppState } from '../state/AppState'
 import { Icon } from './icons'
 import { CollectionPicker } from './CollectionPicker'
 import { ConfirmDialog } from './ConfirmDialog'
+import { Sheet } from './Sheet'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /**
  * The per-thread menu, in the rail and on a row in the Threads tab.
@@ -25,6 +27,7 @@ export function ThreadMenu({ threadId }: { threadId: string }) {
     libraryPaperIds,
     toggleLibraryForThread,
   } = useAppState()
+  const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -76,7 +79,34 @@ export function ThreadMenu({ threadId }: { threadId: string }) {
         <Icon name="more" size={15} />
       </button>
 
-      {open && (
+      {open && isMobile && (
+        <Sheet title="Thread" onClose={() => setOpen(false)}>
+          <div className="px-2 pb-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                setConfirming(true)
+              }}
+              className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left text-[15.04px] font-medium leading-[23px] text-red hover:bg-red-wash"
+            >
+              <Icon name="trash" size={18} /> Delete
+            </button>
+          </div>
+          <div className="border-t border-hairline">
+            <CollectionPicker
+              isMember={(id) => member.includes(id)}
+              onToggle={(id) => toggleCollectionForThread(id, threadId)}
+              inLibrary={libraryThreadIds.includes(threadId)}
+              onToggleLibrary={() => toggleLibraryForThread(threadId)}
+              libraryCount={libraryPaperIds.length}
+              full
+            />
+          </div>
+        </Sheet>
+      )}
+
+      {open && !isMobile && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           {/* Two panels, as the product does it: the actions, and the collection

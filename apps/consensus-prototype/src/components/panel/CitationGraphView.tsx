@@ -13,6 +13,7 @@ import {
   type GraphNode,
 } from '../../data/graph'
 import { Icon } from '../icons'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { PanelEmpty } from './views'
 
 const MIN_ZOOM = 0.25
@@ -64,7 +65,10 @@ export function CitationGraphView() {
   const [selected, setSelected] = useState<string | null>(null)
   const [dense, setDense] = useState(false)
   const [isolated, setIsolated] = useState<string | null>(null)
-  const [legendOpen, setLegendOpen] = useState(true)
+  const isMobile = useIsMobile()
+  // On a phone the legend would take a third of the canvas, so it starts as a
+  // pill — the product's own treatment.
+  const [legendOpen, setLegendOpen] = useState(!isMobile)
   const [panning, setPanning] = useState(false)
 
   const visibleNodes = useMemo(
@@ -482,11 +486,38 @@ export function CitationGraphView() {
           )
         })}
 
+        {!legendOpen && (
+          <button
+            type="button"
+            onClick={() => setLegendOpen(true)}
+            className="absolute right-2 top-2 flex items-center gap-2 rounded-full border
+              border-line bg-panel py-1.5 pl-2.5 pr-3 shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+          >
+            {clusters.map((cluster) => (
+              <span
+                key={cluster.id}
+                className="size-3 shrink-0 rounded-[3px]"
+                style={{ background: cluster.ink }}
+              />
+            ))}
+            <span className="text-[13px] font-medium leading-5 text-ink">Legend</span>
+          </button>
+        )}
+
         {legendOpen && (
           <div
             className="absolute right-2 top-2 flex max-w-[74%] flex-col rounded-[12px] border
               border-line bg-panel p-1 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
           >
+            <button
+              type="button"
+              onClick={() => setLegendOpen(false)}
+              aria-label="Hide legend"
+              className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center
+                rounded-full border border-line bg-panel text-muted hover:text-ink"
+            >
+              <Icon name="close" size={12} />
+            </button>
             {presentClusters.map((cluster) => (
               <button
                 key={cluster.id}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAppState, type CollectionTab } from '../state/AppState'
 import { citedInArtifact, plural, threadsInArtifact } from '../data/mock'
+import { RailToggle } from './RailToggle'
 import { Icon, type IconName } from './icons'
 import { Composer } from './Composer'
 import { ProjectPanel } from './panel/ProjectPanel'
@@ -57,6 +58,7 @@ export function CollectionView() {
     <div className="flex min-w-0 flex-1">
       <div className="@container relative flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 px-4">
+          <RailToggle />
           <h1 className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[22px] font-medium leading-[30px] text-ink @max-[430px]:text-[18px]">
             <span className="hidden shrink-0 @[520px]:inline">My Library</span>
             <span className="hidden shrink-0 text-faint @[520px]:inline">/</span>

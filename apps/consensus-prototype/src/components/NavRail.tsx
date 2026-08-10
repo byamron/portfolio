@@ -4,6 +4,7 @@ import { Icon, Logo } from './icons'
 import { useStub } from './StubHint'
 import { ThreadMenu } from './ThreadMenu'
 import { AccountMenu } from './AccountMenu'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /**
  * My Library is a structurally distinct shell in the product — the rail swaps
@@ -21,7 +22,10 @@ export function NavRail() {
     threads,
     recentThreadIds,
     activeThreadId,
+    railOpen,
+    setRailOpen,
   } = useAppState()
+  const isMobile = useIsMobile()
   const stub = useStub()
   const inLibrary = view === 'collection' || view === 'library' || view === 'artifact'
   /** A collection row lights up only when you are actually inside one. */
@@ -30,8 +34,8 @@ export function NavRail() {
   const childrenOf = (parentId: string) =>
     Object.values(collections).filter((c) => c.parentId === parentId)
 
-  return (
-    <nav className="flex w-52 shrink-0 flex-col border-r border-line bg-rail">
+  const body = (
+    <>
       <div className="flex min-h-16 items-center justify-between px-4 pr-2">
         <button type="button" onClick={goHome} aria-label="Consensus home" title="Home">
           <Logo size={24} />
@@ -39,8 +43,8 @@ export function NavRail() {
         <button
           type="button"
           className="icon-btn size-9"
-          aria-label="Toggle sidebar"
-          onClick={(e) => stub(e, 'Collapse the navigation rail')}
+          aria-label="Close navigation"
+          onClick={() => setRailOpen(false)}
         >
           <Icon name="panel" size={20} strokeWidth={1.5} />
         </button>
@@ -117,8 +121,33 @@ export function NavRail() {
           Upgrade
         </button>
       </div>
-    </nav>
+    </>
   )
+
+  // On a phone the rail is an overlay over the content; on a desktop it is a
+  // column beside it. Same contents, two layouts.
+  if (isMobile) {
+    return (
+      <>
+        {railOpen && (
+          <div className="fixed inset-0 z-40 bg-ink/20" onClick={() => setRailOpen(false)} />
+        )}
+        <nav
+          inert={!railOpen}
+          aria-hidden={!railOpen}
+          className={`fixed inset-y-0 left-0 z-50 flex w-[280px] max-w-[85vw] flex-col
+            border-r border-line bg-rail transition-transform duration-300
+            ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+              railOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+        >
+          {body}
+        </nav>
+      </>
+    )
+  }
+
+  return <nav className="flex w-52 shrink-0 flex-col border-r border-line bg-rail">{body}</nav>
 }
 
 function RailButton({

@@ -33,7 +33,6 @@ function PaperDetail({ paperId }: { paperId: string }) {
   return (
     <article className="flex min-h-full flex-col">
       <header className="flex items-center gap-2 px-4 pt-3">
-        <Icon name="arrowLeft" size={16} className="text-muted" />
         <span className="text-[15.04px] font-medium leading-[23px] text-ink">Paper</span>
       </header>
 

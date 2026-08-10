@@ -95,6 +95,8 @@ interface AppStateShape {
   selectedCollectionId: string
   collectionTab: CollectionTab
   panelOpen: boolean
+  railOpen: boolean
+  setRailOpen: (open: boolean) => void
   panelView: PanelView
   openObject: OpenObject | null
   /** Whether the open object's tab is the one in front. */
@@ -114,8 +116,8 @@ interface AppStateShape {
   toggleLibraryForThread: (threadId: string) => void
   setCollectionTab: (tab: CollectionTab) => void
   openThread: (threadId: string) => void
-  startNewThread: (query: string) => void
-  sendFollowUp: (text: string) => void
+  startNewThread: (query: MessageSegment[] | string) => void
+  sendFollowUp: (message: MessageSegment[] | string) => void
 
   setPanelOpen: (open: boolean) => void
   setPanelView: (view: PanelView) => void
@@ -141,7 +143,11 @@ interface AppStateShape {
   openArtifact: (artifactId: string) => void
   setFocusedBlock: (blockId: string | null) => void
   setArtifactTab: (tab: ArtifactTab) => void
-  askArtifact: (artifactId: string, text: string, fromThreadId?: string) => void
+  askArtifact: (
+    artifactId: string,
+    message: MessageSegment[] | string,
+    fromThreadId?: string,
+  ) => void
   resolveProposal: (artifactId: string, blockId: string, accept: boolean) => void
   undoChange: (artifactId: string, turnId: string) => void
   editBlock: (artifactId: string, blockId: string, content: MessageSegment[]) => void
@@ -202,11 +208,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     Object.values(seedCollections).flatMap((c) => c.threadIds),
   )
   const [collectionTab, setCollectionTab] = useState<CollectionTab>('threads')
-  const [panelOpen, setPanelOpen] = useState(true)
+  // On a phone the panel and the rail are overlays, so neither starts open.
+  const mobileFirstLoad = window.matchMedia('(max-width: 767px)').matches
+  const [panelOpen, setPanelOpen] = useState(!mobileFirstLoad)
+  const [railOpen, setRailOpen] = useState(false)
   const [panelView, setPanelView] = useState<PanelView>('surfaced')
   const [openObject, setOpenObject] = useState<OpenObject | null>(null)
   const [objectFocused, setObjectFocused] = useState(false)
-  const [referencesOpen, setReferencesOpen] = useState(true)
+  // Full-screen on a phone, so it would cover the answer you just opened.
+  const [referencesOpen, setReferencesOpen] = useState(!mobileFirstLoad)
   const [detailPaperId, setDetailPaperId] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGeneratingArtifact, setIsGeneratingArtifact] = useState(false)
@@ -223,23 +233,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const goHome = useCallback(() => {
     setView('home')
     setActiveThreadId(null)
+    setRailOpen(false)
+    setDetailPaperId(null)
   }, [])
 
   const openCollection = useCallback((collectionId?: string) => {
     setView('collection')
     setActiveThreadId(null)
+    setRailOpen(false)
+    setDetailPaperId(null)
     if (collectionId) setSelectedCollectionId(collectionId)
   }, [])
 
   const openLibrary = useCallback(() => {
     setView('library')
     setActiveThreadId(null)
+    setRailOpen(false)
+    setDetailPaperId(null)
   }, [])
 
   const openThread = useCallback((threadId: string) => {
     setActiveThreadId(threadId)
+    setRailOpen(false)
+    setDetailPaperId(null)
     setView('thread')
-    setReferencesOpen(true)
+    if (!mobileFirstLoad) setReferencesOpen(true)
     setFollowUpTurns(0)
   }, [])
 
@@ -261,13 +279,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   )
 
   const startNewThread = useCallback(
-    (query: string) => {
+    (input: MessageSegment[] | string) => {
+      // Mentions are part of the message, not decoration on the way in: keep the
+      // segments and derive the title from the prose in them.
+      const segments = typeof input === 'string' ? [input] : input
+      const query = segmentsToText(segments)
+      if (!query && segments.length === 0) return
       const id = makeId('thread')
       const thread: Thread = {
         id,
         title: query.length > 60 ? `${query.slice(0, 57)}…` : query,
         updated: 'just now',
-        messages: [{ id: makeId('msg'), role: 'user', content: [query] }],
+        messages: [{ id: makeId('msg'), role: 'user', content: segments }],
         sources: [
           { paperId: 'tiller2019', query, quotedFor: 'periodising intake around training load' },
           { paperId: 'podlogar2022', query, quotedFor: 'higher oxidation during prolonged exercise' },
@@ -276,7 +299,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setThreads((prev) => ({ ...prev, [id]: thread }))
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1100, () => ({ content: buildNewThreadAnswer() }))
     },
@@ -284,9 +307,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   )
 
   const sendFollowUp = useCallback(
-    (text: string) => {
+    (input: MessageSegment[] | string) => {
       if (!activeThreadId) return
-      const message: Message = { id: makeId('msg'), role: 'user', content: [text] }
+      const segments = typeof input === 'string' ? [input] : input
+      if (segments.length === 0) return
+      const message: Message = { id: makeId('msg'), role: 'user', content: segments }
       setThreads((prev) => {
         const thread = prev[activeThreadId]
         if (!thread) return prev
@@ -366,7 +391,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       })
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1400, () => buildCrossThreadAnswer(referenced))
     },
@@ -402,7 +427,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       })
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1400, () => buildCrossThreadAnswer(basedOn))
     },
@@ -411,8 +436,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const openArtifact = useCallback((artifactId: string) => {
     setActiveArtifactId(artifactId)
+    setRailOpen(false)
+    setDetailPaperId(null)
     setArtifactTab('chat')
     setView('artifact')
+    // Opening a document should land you on the document. On a phone the panel
+    // covers it, so it starts closed the way every other panel does there.
+    if (mobileFirstLoad) setPanelOpen(false)
     const collectionId = artifactsRef.current[artifactId]?.collectionId
     if (collectionId) setSelectedCollectionId(collectionId)
   }, [])
@@ -436,11 +466,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
    * when the request arrived from another thread (D24).
    */
   const askArtifact = useCallback(
-    (artifactId: string, text: string, fromThreadId?: string) => {
+    (artifactId: string, message: MessageSegment[] | string, fromThreadId?: string) => {
+      const segments = typeof message === 'string' ? [message] : message
+      // Mentions stay in the turn as written; the prose in them is what the
+      // section matching below reads.
+      const text = segmentsToText(segments)
+      if (segments.length === 0) return
+
       const askId = makeId('turn')
       patchArtifact(artifactId, (artifact) => ({
         ...artifact,
-        log: [...artifact.log, { id: askId, role: 'user', content: [text], fromThreadId }],
+        log: [...artifact.log, { id: askId, role: 'user', content: segments, fromThreadId }],
       }))
 
       setIsGeneratingArtifact(true)
@@ -744,7 +780,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       })
       setActiveThreadId(id)
       setView('thread')
-      setReferencesOpen(true)
+      if (!mobileFirstLoad) setReferencesOpen(true)
       setFollowUpTurns(0)
       answerAfter(id, 1200, () => ({
         content: buildSupportAnswer(claim, found),
@@ -1032,6 +1068,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       selectedCollectionId,
       collectionTab,
       panelOpen,
+      railOpen,
+      setRailOpen,
       panelView,
       openObject,
       referencesOpen,
@@ -1064,7 +1102,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setPanelView(view)
       },
       toggleReferences: () => setReferencesOpen((v) => !v),
-      openPaperDetail: setDetailPaperId,
+      // A citation opens the paper in whichever side surface the current view
+      // already has: the collection's panel, or the thread/artifact's own.
+      openPaperDetail: (paperId: string) => {
+        if (view === 'collection') openInPanel({ kind: 'paper', id: paperId })
+        else setDetailPaperId(paperId)
+      },
       closePaperDetail: () => setDetailPaperId(null),
       savePopoverAnchor,
       // Anchored to whatever opened it, so the picker drops from the control
@@ -1122,6 +1165,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       selectedCollectionId,
       collectionTab,
       panelOpen,
+      railOpen,
       panelView,
       openObject,
       objectFocused,

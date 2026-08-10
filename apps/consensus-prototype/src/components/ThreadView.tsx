@@ -8,9 +8,11 @@ import {
   type StepRow,
 } from '../data/mock'
 import { ArtifactChip, Badge, CitationChip, ScopeChip, ThreadChip } from './chips'
+import { RailToggle } from './RailToggle'
 import { Icon } from './icons'
 import { Composer } from './Composer'
 import { ReferencesDrawer } from './ReferencesDrawer'
+import { PaperDetailPanel } from './PaperDetailPanel'
 import { useStub } from './StubHint'
 
 export function renderSegment(segment: MessageSegment, key: number) {
@@ -199,6 +201,7 @@ export function ThreadView() {
     activeThreadId,
     isGenerating,
     referencesOpen,
+    detailPaperId,
     toggleReferences,
     sendFollowUp,
     openCollection,
@@ -215,6 +218,7 @@ export function ThreadView() {
     <div className="flex min-w-0 flex-1">
       <div className="@container relative flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
+          <RailToggle />
           <h1 className="truncate text-[16px] font-medium leading-[24px] text-ink">{thread.title}</h1>
           <div className="flex shrink-0 items-center gap-2">
             <button
@@ -298,17 +302,19 @@ export function ThreadView() {
           <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-4">
             <Composer
               placeholder="Ask a follow-up…"
-              onSubmit={({ segments }) => {
-                const text = segments.map((s) => (typeof s === 'string' ? s : '')).join(' ').trim()
-                if (text) sendFollowUp(text)
-              }}
+              onSubmit={({ segments }) => sendFollowUp(segments)}
             />
           </div>
         </div>
       </div>
 
+      {/* One side surface at a time: a paper takes the references slot rather
+          than stacking beside it and squeezing the answer. The drawer comes
+          back when the paper closes. */}
+      <PaperDetailPanel />
+
       <ReferencesDrawer
-        open={referencesOpen}
+        open={referencesOpen && !detailPaperId}
         papers={paperIdsOf(thread).map((id) => papers[id]).filter(Boolean)}
         onClose={toggleReferences}
       />
