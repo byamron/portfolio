@@ -1,166 +1,165 @@
+import type { ReactNode } from 'react'
 import { useAppState } from '../state/AppState'
-import { recentThreadTitles } from '../data/mockData'
-import { PlusIcon, HomeIcon, BookmarkIcon, HistoryIcon, ChatIcon, SearchIcon, GraphIcon, FolderIcon } from './icons'
+import { Icon, Logo } from './icons'
+import { useStub } from './StubHint'
+import { ThreadMenu } from './ThreadMenu'
+import { AccountMenu } from './AccountMenu'
 
-function Logo() {
+/**
+ * My Library is a structurally distinct shell in the product — the rail swaps
+ * to a reduced Back Home / My Library / Collections tree. Both shapes live here.
+ */
+export function NavRail() {
+  const {
+    view,
+    collections,
+    selectedCollectionId,
+    goHome,
+    openCollection,
+    openLibrary,
+    openThread,
+    threads,
+    recentThreadIds,
+    activeThreadId,
+  } = useAppState()
+  const stub = useStub()
+  const inLibrary = view === 'collection' || view === 'library' || view === 'artifact'
+  /** A collection row lights up only when you are actually inside one. */
+  const inCollection = view === 'collection' || view === 'artifact'
+  const roots = Object.values(collections).filter((c) => c.parentId === null)
+  const childrenOf = (parentId: string) =>
+    Object.values(collections).filter((c) => c.parentId === parentId)
+
   return (
-    <div className="flex h-16 shrink-0 items-center px-2">
-      <div className="flex size-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
-        C
+    <nav className="flex w-52 shrink-0 flex-col border-r border-line bg-rail">
+      <div className="flex min-h-16 items-center justify-between px-4 pr-2">
+        <button type="button" onClick={goHome} aria-label="Consensus home" title="Home">
+          <Logo size={24} />
+        </button>
+        <button
+          type="button"
+          className="icon-btn size-9"
+          aria-label="Toggle sidebar"
+          onClick={(e) => stub(e, 'Collapse the navigation rail')}
+        >
+          <Icon name="panel" size={20} strokeWidth={1.5} />
+        </button>
       </div>
-    </div>
+
+      <div className="scroll-y px-2 pb-2">
+        {inLibrary ? (
+          <>
+            <RailButton icon="arrowLeft" label="Back Home" onClick={goHome} />
+            {/* A collection is inside the library, so selecting one selects its
+                parent too. The library on its own selects only itself. */}
+            <RailButton
+              icon="bookmark"
+              label="My Library"
+              active={inLibrary}
+              onClick={openLibrary}
+            />
+            <div className="label px-2 pb-1 pt-4 text-muted">Collections</div>
+            {roots.map((collection) => (
+              <div key={collection.id}>
+                <RailButton
+                  icon="folder"
+                  label={collection.name}
+                  active={inCollection && collection.id === selectedCollectionId}
+                  onClick={() => openCollection(collection.id)}
+                />
+                {/* Collections nest — the product goes at least two deep. */}
+                {childrenOf(collection.id).map((child) => (
+                  <RailButton
+                    key={child.id}
+                    icon="folder"
+                    label={child.name}
+                    indent
+                    active={inCollection && child.id === selectedCollectionId}
+                    onClick={() => openCollection(child.id)}
+                  />
+                ))}
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <RailButton icon="plus" label="New Thread" onClick={goHome} />
+            <RailButton icon="home" label="Home" active={view === 'home'} onClick={goHome} />
+            <RailButton icon="bookmark" label="My Library" onClick={openLibrary} />
+            <RailButton icon="history" label="History" onClick={goHome} />
+            <div className="label px-2 pb-1 pt-4 text-muted">Recents</div>
+            {recentThreadIds.length === 0 && (
+              <p className="m-0 px-2 py-1 text-[12.96px] leading-[20px] text-faint">
+                No threads yet. Ask a question to start one.
+              </p>
+            )}
+            {recentThreadIds.slice(0, 8).map((id) => (
+              <RailButton
+                key={id}
+                icon="chat"
+                label={threads[id].title}
+                active={id === activeThreadId}
+                onClick={() => openThread(id)}
+                menu={<ThreadMenu threadId={id} />}
+              />
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-line px-2 py-3">
+        <AccountMenu />
+        <button
+          type="button"
+          className="btn mt-2 w-full"
+          onClick={(e) => stub(e, 'Upgrade to Consensus Pro')}
+        >
+          Upgrade
+        </button>
+      </div>
+    </nav>
   )
 }
 
-function NavItem({
-  label,
+function RailButton({
   icon,
+  label,
   active,
-  badge,
+  indent,
   onClick,
+  menu,
 }: {
+  icon: Parameters<typeof Icon>[0]['name']
   label: string
-  icon: React.ReactNode
   active?: boolean
-  badge?: boolean
-  onClick?: () => void
+  indent?: boolean
+  onClick: () => void
+  /** Row actions, revealed on hover so the rail stays quiet at rest. */
+  menu?: ReactNode
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-9 w-full items-center gap-2 rounded-xl pl-1 pr-2 text-left text-[15.04px] font-medium leading-[22.56px] text-text-primary ${
-        active ? 'bg-surface-chip-secondary' : 'hover:bg-surface-panel'
+    <div
+      className={`group relative flex h-9 w-full items-center rounded-[12px] ${
+        active ? 'bg-line/70' : 'hover:bg-fill'
       }`}
     >
-      {badge ? (
-        <span className="elevated-accent flex size-7 shrink-0 items-center justify-center rounded-xl bg-nav-active text-text-primary">
-          {icon}
+      <button
+        type="button"
+        onClick={onClick}
+        className={`flex h-9 min-w-0 grow items-center gap-2 rounded-[12px] px-2 text-left text-[15.04px] font-medium leading-[23px] text-ink ${
+          indent ? 'pl-6' : ''
+        }`}
+      >
+        <span className="flex size-7 shrink-0 items-center justify-center text-muted">
+          <Icon name={icon} size={16} />
         </span>
-      ) : (
-        <span className="flex size-7 shrink-0 items-center justify-center text-text-primary">{icon}</span>
-      )}
-      {label}
-    </button>
-  )
-}
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mt-4 px-4 pb-1 text-[12.96px] font-medium leading-[19.52px] text-text-secondary">{children}</div>
-  )
-}
-
-function Footer() {
-  return (
-    <div className="mt-auto flex flex-col gap-2 border-t border-border/60 p-3 pt-3 text-[13px] text-text-secondary">
-      <a className="hover:text-text-primary" href="#learn">
-        Learn ↗
-      </a>
-      <a className="hover:text-text-primary" href="#contact">
-        Contact ↗
-      </a>
-      <div className="mt-1 flex items-center gap-2">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-chip text-xs text-text-primary">
-          B
-        </span>
-        <span className="truncate">ben.yamron@iclo…</span>
-      </div>
-      <span>3 / 15 Pro messages left</span>
-      <button type="button" className="elevated rounded-control bg-surface-panel px-2 py-1.5 text-text-primary">
-        Upgrade
+        <span className="truncate">{label}</span>
       </button>
+      {menu && (
+        <span className="mr-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          {menu}
+        </span>
+      )}
     </div>
-  )
-}
-
-export function NavRail() {
-  const { view, goHome, goLibrary, openThread, collections, selectedCollectionId, selectCollection } = useAppState()
-
-  if (view === 'library') {
-    const topLevel = Object.values(collections).filter((c) => !c.parentId)
-
-    return (
-      <aside className="flex h-full w-52 shrink-0 flex-col bg-surface-rail">
-        <Logo />
-        <div className="flex flex-col px-2">
-          <button
-            type="button"
-            onClick={goHome}
-            className="flex h-9 items-center gap-2 rounded-xl pl-1 pr-2 text-left text-[15.04px] text-text-secondary hover:bg-surface-panel hover:text-text-primary"
-          >
-            ← Back Home
-          </button>
-          <NavItem label="My Library" icon={<BookmarkIcon />} active />
-        </div>
-
-        <SectionHeader>Collections</SectionHeader>
-        <div className="flex flex-col px-2">
-          {topLevel.map((collection) => (
-            <div key={collection.id}>
-              <NavItem
-                label={collection.name}
-                icon={<FolderIcon />}
-                active={selectedCollectionId === collection.id}
-                onClick={() => selectCollection(collection.id)}
-              />
-              {Object.values(collections)
-                .filter((c) => c.parentId === collection.id)
-                .map((child) => (
-                  <div key={child.id} className="relative pl-4">
-                    <span className="absolute left-1 top-1 h-6 w-px bg-border" aria-hidden />
-                    <NavItem
-                      label={child.name}
-                      icon={<FolderIcon />}
-                      active={selectedCollectionId === child.id}
-                      onClick={() => selectCollection(child.id)}
-                    />
-                  </div>
-                ))}
-            </div>
-          ))}
-        </div>
-
-        <Footer />
-      </aside>
-    )
-  }
-
-  return (
-    <aside className="flex h-full w-52 shrink-0 flex-col bg-surface-rail">
-      <Logo />
-      <div className="flex flex-col px-2">
-        <NavItem label="New Thread" icon={<PlusIcon size={20} className="text-white" />} badge onClick={goHome} />
-        <NavItem label="Home" icon={<HomeIcon />} active={view === 'home'} onClick={goHome} />
-        <NavItem label="My Library" icon={<BookmarkIcon />} onClick={() => goLibrary()} />
-        <NavItem label="History" icon={<HistoryIcon />} />
-      </div>
-
-      <SectionHeader>Recents</SectionHeader>
-      <div className="flex flex-col px-2">
-        {recentThreadTitles.map((title) => (
-          <button
-            key={title}
-            type="button"
-            onClick={() => (title.startsWith('Creatine Effects') ? openThread('creatine-effects') : undefined)}
-            className="flex h-8 items-center gap-2 truncate rounded-xl px-1 text-left text-[12.96px] leading-[19.52px] text-text-secondary hover:bg-surface-panel hover:text-text-primary"
-          >
-            <ChatIcon size={14} className="shrink-0" /> <span className="truncate">{title}</span>
-          </button>
-        ))}
-      </div>
-
-      <SectionHeader>Tools</SectionHeader>
-      <div className="flex flex-col px-2 text-text-secondary">
-        <div className="flex h-8 items-center gap-2 px-1 text-[12.96px] leading-[19.52px]">
-          <SearchIcon size={14} /> Paper search
-        </div>
-        <div className="flex h-8 items-center gap-2 px-1 text-[12.96px] leading-[19.52px]">
-          <GraphIcon size={14} /> Citation Graph
-        </div>
-      </div>
-
-      <Footer />
-    </aside>
   )
 }

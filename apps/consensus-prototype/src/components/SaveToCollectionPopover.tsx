@@ -1,104 +1,65 @@
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { useAppState } from '../state/AppState'
-import { Checkbox } from './Checkbox'
-import { FolderIcon, PlusIcon } from './icons'
+import { CollectionPicker } from './CollectionPicker'
 
+const WIDTH = 300
+const HEIGHT = 380
+
+/**
+ * Saving a paper uses the same collection picker as saving a thread, dropped
+ * from whatever control opened it. A centred modal would be a bigger
+ * interruption than the decision warrants — this is a checkbox, not a commitment.
+ */
 export function SaveToCollectionPopover() {
-  const { savePopoverPaperId, closeSavePopover, collections, toggleCollectionForPaper, createCollection, papers } =
-    useAppState()
-  const [query, setQuery] = useState('')
-  const [newName, setNewName] = useState('')
-  const [creating, setCreating] = useState(false)
+  const {
+    savePopoverPaperId,
+    savePopoverAnchor,
+    closeSavePopover,
+    collections,
+    toggleCollectionForPaper,
+    libraryPaperIds,
+    toggleLibraryForPaper,
+  } = useAppState()
+  const [position, setPosition] = useState({ left: 0, top: 0 })
+
+  useLayoutEffect(() => {
+    if (!savePopoverPaperId) return
+    const anchor = savePopoverAnchor
+    if (anchor) {
+      const below = anchor.bottom + 6
+      setPosition({
+        left: Math.min(Math.max(12, anchor.left), window.innerWidth - WIDTH - 12),
+        top: below + HEIGHT > window.innerHeight ? Math.max(12, anchor.top - HEIGHT - 6) : below,
+      })
+    } else {
+      setPosition({
+        left: (window.innerWidth - WIDTH) / 2,
+        top: (window.innerHeight - HEIGHT) / 2,
+      })
+    }
+    const close = (event: KeyboardEvent) => event.key === 'Escape' && closeSavePopover()
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [closeSavePopover, savePopoverAnchor, savePopoverPaperId])
 
   if (!savePopoverPaperId) return null
-  const paper = papers[savePopoverPaperId]
-  if (!paper) return null
-
-  const allCollections = Object.values(collections).filter((c) =>
-    c.name.toLowerCase().includes(query.toLowerCase()),
-  )
-
-  function submitNewCollection() {
-    const trimmed = newName.trim()
-    if (!trimmed) return
-    createCollection(trimmed, null)
-    setNewName('')
-    setCreating(false)
-  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end" onClick={closeSavePopover}>
+    <>
+      <div className="fixed inset-0 z-50" onClick={closeSavePopover} />
       <div
-        className="shadow-popover mt-16 mr-8 w-[340px] rounded-popover border border-border/60 bg-surface-panel p-3"
-        onClick={(e) => e.stopPropagation()}
+        style={{ left: position.left, top: position.top }}
+        onClick={(event) => event.stopPropagation()}
+        className="fixed z-50"
       >
-        <div className="mb-2 line-clamp-2 text-[13px] font-medium text-text-primary">{paper.title}</div>
-
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search your Library..."
-          className="mb-2 w-full rounded-control border border-border/60 bg-surface-app px-2.5 py-1.5 text-[13px] text-text-primary placeholder:text-text-secondary focus:outline-none"
+        <CollectionPicker
+          isMember={(id) => collections[id]?.paperIds.includes(savePopoverPaperId) ?? false}
+          onToggle={(id) => toggleCollectionForPaper(id, savePopoverPaperId)}
+          inLibrary={libraryPaperIds.includes(savePopoverPaperId)}
+          onToggleLibrary={() => toggleLibraryForPaper(savePopoverPaperId)}
+          libraryCount={libraryPaperIds.length}
         />
-
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
-          Add to collection
-        </div>
-
-        <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
-          {allCollections.map((collection) => {
-            const checked = collection.paperIds.includes(savePopoverPaperId)
-            return (
-              <div
-                key={collection.id}
-                className="flex cursor-pointer items-center justify-between gap-2 rounded-control px-1.5 py-1.5 hover:bg-surface-chip-secondary"
-                onClick={() => toggleCollectionForPaper(collection.id, savePopoverPaperId)}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <FolderIcon size={16} className="shrink-0 text-text-secondary" />
-                  <span className="truncate text-[13px] text-text-primary">
-                    {collection.parentId ? `↳ ${collection.name}` : collection.name}
-                  </span>
-                  <span className="shrink-0 text-[12px] text-text-secondary">{collection.paperIds.length} items</span>
-                </span>
-                <Checkbox
-                  checked={checked}
-                  onChange={() => toggleCollectionForPaper(collection.id, savePopoverPaperId)}
-                  ariaLabel={`Save to ${collection.name}`}
-                />
-              </div>
-            )
-          })}
-        </div>
-
-        {creating ? (
-          <div className="mt-2 flex gap-1.5">
-            <input
-              autoFocus
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && submitNewCollection()}
-              placeholder="Collection name"
-              className="flex-1 rounded-control border border-border/60 bg-surface-app px-2.5 py-1.5 text-[13px] text-text-primary placeholder:text-text-secondary focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={submitNewCollection}
-              className="rounded-control bg-accent px-2.5 text-[13px] font-medium text-text-primary"
-            >
-              Add
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-control border border-dashed border-border-dashed py-1.5 text-[13px] font-medium text-text-secondary hover:text-text-primary"
-          >
-            <PlusIcon size={14} /> New Collection
-          </button>
-        )}
       </div>
-    </div>
+    </>
   )
 }

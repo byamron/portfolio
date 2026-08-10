@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { Icon, Logo } from './icons'
 
 // Client-side only — this is a public static build, so this keeps casual visitors
 // and search engines out, not a real access control. Don't put anything sensitive here.
@@ -12,8 +13,8 @@ export function PasswordGate({ children }: { children: ReactNode }) {
 
   if (unlocked) return <>{children}</>
 
-  function submit(e: FormEvent) {
-    e.preventDefault()
+  function submit(event: FormEvent) {
+    event.preventDefault()
     if (input === PASSWORD) {
       sessionStorage.setItem(STORAGE_KEY, 'true')
       setUnlocked(true)
@@ -23,26 +24,51 @@ export function PasswordGate({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-surface-app text-text-primary">
+    <div className="flex h-dvh w-full items-center justify-center bg-white px-6">
       <form
         onSubmit={submit}
-        className="flex w-72 flex-col gap-3 rounded-composer border border-border bg-surface-panel p-6"
+        className="flex w-full max-w-[340px] flex-col gap-4 rounded-[16px] border border-line
+          bg-white p-6 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.16)]"
       >
-        <p className="text-[15px] font-medium">This prototype is private.</p>
-        <input
-          type="password"
-          autoFocus
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value)
-            setError(false)
-          }}
-          placeholder="Password"
-          className="rounded-control border border-border bg-surface-app px-3 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none"
-        />
-        {error && <p className="text-[13px] text-[#ff6b6b]">Incorrect password.</p>}
-        <button type="submit" className="rounded-control bg-accent px-3 py-2 text-[14px] font-medium text-white">
-          Enter
+        <div className="flex items-center gap-2.5">
+          <Logo size={24} />
+          <span className="text-[19px] font-medium leading-[28px] text-ink">Consensus</span>
+        </div>
+
+        <div>
+          <p className="m-0 text-[15.04px] font-medium leading-[23px] text-ink">
+            This prototype is private
+          </p>
+          <p className="m-0 mt-0.5 text-[12.96px] leading-[20px] text-muted">
+            A design concept, not the product. Enter the password to take a look.
+          </p>
+        </div>
+
+        <div>
+          {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+          <input
+            type="password"
+            autoFocus
+            value={input}
+            onChange={(event) => {
+              setInput(event.target.value)
+              setError(false)
+            }}
+            placeholder="Password"
+            aria-label="Password"
+            aria-invalid={error}
+            className={`h-10 w-full rounded-[12px] border bg-white px-3 text-[15px] text-ink
+              placeholder:text-faint focus:outline-none ${
+                error ? 'border-red' : 'border-line focus:border-accent'
+              }`}
+          />
+          {error && (
+            <p className="m-0 mt-1.5 text-[12.96px] leading-[20px] text-red">Incorrect password.</p>
+          )}
+        </div>
+
+        <button type="submit" className="btn-accent h-10 w-full justify-center">
+          Enter <Icon name="arrowRight" size={16} />
         </button>
       </form>
     </div>
