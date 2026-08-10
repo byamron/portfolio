@@ -43,6 +43,7 @@ export function Composer({
     pendingReference,
     clearPendingReference,
     view,
+    activeArtifactId,
     libraryThreadIds,
     libraryPaperIds,
   } = useAppState()
@@ -87,15 +88,23 @@ export function Composer({
   const collection = collections[selectedCollectionId]
 
   /**
+   * What the question is filed under. A caller can name it — My Library does —
+   * but either way it is the same chip and drops the same way: removing it
+   * leaves the question unfiled.
+   */
+  const scopeName = scopeLabel ?? collection?.name
+  const attachments = [...scopePaperIds, ...scopeThreadIds, ...scopeArtifactIds]
+
+  /**
    * What `@` can reach is whatever the surface you are on holds: a collection's
    * contents inside a collection, the whole library inside My Library.
    */
   const inLibraryView = view === 'library'
   const threadPool = inLibraryView ? libraryThreadIds : collection?.threadIds ?? []
   const paperPool = inLibraryView ? libraryPaperIds : collection?.paperIds ?? []
-  const artifactPool = inLibraryView
-    ? Object.keys(artifacts)
-    : collection?.artifactIds ?? []
+  const artifactPool = (inLibraryView ? Object.keys(artifacts) : collection?.artifactIds ?? [])
+    // The document you are inside is not something to reference from inside it.
+    .filter((id) => id !== activeArtifactId)
   const match = draft.match(MENTION)
   const query = match ? match[2].toLowerCase() : null
   const hasContent =
@@ -341,24 +350,28 @@ export function Composer({
       )}
 
       <div className="flex flex-col gap-2 rounded-[20px] border border-line bg-panel/95 px-3 pb-2 pt-3 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] backdrop-blur-[8px]">
-        <div className={`flex flex-wrap items-center gap-1.5 ${hideScope && scopePaperIds.length === 0 && scopeArtifactIds.length === 0 ? 'hidden' : ''}`}>
+        <div
+          className={`flex flex-wrap items-center gap-1.5 ${
+            hideScope && attachments.length === 0 ? 'hidden' : ''
+          }`}
+        >
           {!hideScope &&
-            (scopeLabel ?? collection) &&
+            scopeName &&
             (inCollection ? (
               <ScopeChip
                 icon={<Icon name="folder" size={14} />}
-                label={scopeLabel ?? collection.name}
-                onRemove={scopeLabel ? undefined : () => setInCollection(false)}
+                label={scopeName}
+                onRemove={() => setInCollection(false)}
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setInCollection(true)}
-                title={`Ask within ${collection.name} again`}
+                title={`Ask within ${scopeName} again`}
                 className="inline-flex h-7 items-center gap-1.5 rounded-[8px] border border-dashed
                   border-line px-2 text-[12.96px] leading-[20px] text-faint hover:text-ink"
               >
-                <Icon name="plus" size={13} /> {collection.name}
+                <Icon name="plus" size={13} /> {scopeName}
               </button>
             ))}
           {scopePaperIds.map((id) => (

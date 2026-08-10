@@ -143,7 +143,11 @@ interface AppStateShape {
   openArtifact: (artifactId: string) => void
   setFocusedBlock: (blockId: string | null) => void
   setArtifactTab: (tab: ArtifactTab) => void
-  askArtifact: (artifactId: string, text: string, fromThreadId?: string) => void
+  askArtifact: (
+    artifactId: string,
+    message: MessageSegment[] | string,
+    fromThreadId?: string,
+  ) => void
   resolveProposal: (artifactId: string, blockId: string, accept: boolean) => void
   undoChange: (artifactId: string, turnId: string) => void
   editBlock: (artifactId: string, blockId: string, content: MessageSegment[]) => void
@@ -459,11 +463,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
    * when the request arrived from another thread (D24).
    */
   const askArtifact = useCallback(
-    (artifactId: string, text: string, fromThreadId?: string) => {
+    (artifactId: string, message: MessageSegment[] | string, fromThreadId?: string) => {
+      const segments = typeof message === 'string' ? [message] : message
+      // Mentions stay in the turn as written; the prose in them is what the
+      // section matching below reads.
+      const text = segmentsToText(segments)
+      if (segments.length === 0) return
+
       const askId = makeId('turn')
       patchArtifact(artifactId, (artifact) => ({
         ...artifact,
-        log: [...artifact.log, { id: askId, role: 'user', content: [text], fromThreadId }],
+        log: [...artifact.log, { id: askId, role: 'user', content: segments, fromThreadId }],
       }))
 
       setIsGeneratingArtifact(true)

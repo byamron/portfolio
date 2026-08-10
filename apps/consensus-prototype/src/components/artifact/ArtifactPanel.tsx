@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAppState, type ArtifactTab } from '../../state/AppState'
 import type { ArtifactTurn } from '../../data/mock'
+import { Composer } from '../Composer'
 import { renderSegment } from '../ThreadView'
 import { Badge, ThreadChip } from '../chips'
 import { Icon } from '../icons'
@@ -76,7 +77,6 @@ export function ArtifactPanel({ artifactId }: { artifactId: string }) {
 function ChatTab({ artifactId }: { artifactId: string }) {
   const { artifacts, askArtifact, isGeneratingArtifact } = useAppState()
   const artifact = artifacts[artifactId]
-  const [draft, setDraft] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -84,13 +84,6 @@ function ChatTab({ artifactId }: { artifactId: string }) {
   }, [artifact?.log.length, isGeneratingArtifact])
 
   if (!artifact) return null
-
-  function send() {
-    const text = draft.trim()
-    if (!text) return
-    askArtifact(artifactId, text)
-    setDraft('')
-  }
 
   return (
     <>
@@ -114,30 +107,19 @@ function ChatTab({ artifactId }: { artifactId: string }) {
         <div ref={endRef} />
       </div>
 
+      {/*
+        The same composer as everywhere else. Asking for a section is the moment
+        you are most likely to name the paper it should rest on, so `@` has to
+        reach the collection from in here too — it would be strange for the one
+        surface built around citing sources to be the one that cannot.
+        The collection chip is redundant: the artifact is already in it.
+      */}
       <div className="shrink-0 border-t border-line p-2.5">
-        <div className="flex items-end gap-2 rounded-[14px] border border-line bg-panel px-3 py-2">
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                send()
-              }
-            }}
-            placeholder="Ask for a change…"
-            className="min-w-0 grow bg-transparent text-[15px] leading-6 text-ink placeholder:text-faint focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={send}
-            disabled={!draft.trim()}
-            aria-label="Send"
-            className="btn-accent size-8 shrink-0 px-0 disabled:opacity-50"
-          >
-            <Icon name="arrowUp" size={16} />
-          </button>
-        </div>
+        <Composer
+          hideScope
+          placeholder="Ask for a change…"
+          onSubmit={({ segments }) => askArtifact(artifactId, segments)}
+        />
       </div>
     </>
   )
