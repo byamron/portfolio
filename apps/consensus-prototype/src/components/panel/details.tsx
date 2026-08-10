@@ -179,7 +179,12 @@ function PaperDetail({ paperId }: { paperId: string }) {
         >
           <Icon name="chat" size={15} /> Ask
         </button>
-        <button type="button" className="btn-sm" onClick={(event) => openSavePopover(paper.id, event.currentTarget)}>
+        {/* Same geometry as Ask beside it. */}
+        <button
+          type="button"
+          className="btn-sm h-8 rounded-[10px] px-3"
+          onClick={(event) => openSavePopover(paper.id, event.currentTarget)}
+        >
           <Icon name="bookmark" size={14} /> Save
         </button>
         <span className="flex items-center gap-0.5">
@@ -211,7 +216,7 @@ function PaperDetail({ paperId }: { paperId: string }) {
         {paper.hasPdf && (
           <button
             type="button"
-            className="btn-sm ml-auto"
+            className="btn-sm ml-auto h-8 rounded-[10px] px-3"
             onClick={(e) => stub(e, 'Open the full-text PDF')}
           >
             PDF <Icon name="external" size={13} />

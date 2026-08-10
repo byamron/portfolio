@@ -83,10 +83,10 @@ export function InstructionsModal({
             ⌘↵ to save · Esc to cancel
           </span>
           <div className="flex items-center gap-2">
-            <button type="button" className="btn-sm" onClick={onClose}>
+            <button type="button" className="btn" onClick={onClose}>
               Cancel
             </button>
-            <button type="button" className="btn-sm btn-accent" onClick={commit}>
+            <button type="button" className="btn-accent" onClick={commit}>
               <Icon name="check" size={14} /> Save
             </button>
           </div>
