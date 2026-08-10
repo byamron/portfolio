@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useAppState, type Theme } from '../state/AppState'
 import { Icon, type IconName } from './icons'
 import { useStub } from './StubHint'
@@ -30,7 +30,7 @@ export function AccountMenu() {
   const [position, setPosition] = useState({ left: 0, bottom: 0 })
   const triggerRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
     const rect = triggerRef.current?.getBoundingClientRect()
     if (rect) {

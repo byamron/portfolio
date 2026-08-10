@@ -237,7 +237,7 @@ export function Composer({
           )}
           {threadOptions.length > 0 && (
             <div className="border-b border-hairline py-1">
-              <div className="label px-3 py-1.5 text-faint">Threads</div>
+              <div className="px-3 py-1.5 text-[12.96px] font-medium leading-[20px] text-muted">Threads</div>
               {threadOptions.map((thread, i) => (
                 <button
                   key={thread.id}
@@ -259,7 +259,7 @@ export function Composer({
           )}
           {artifactOptions.length > 0 && (
             <div className="border-b border-hairline py-1">
-              <div className="label px-3 py-1.5 text-faint">Artifacts</div>
+              <div className="px-3 py-1.5 text-[12.96px] font-medium leading-[20px] text-muted">Artifacts</div>
               {artifactOptions.map((artifact, i) => {
                 const index = threadOptions.length + paperOptions.length + i
                 return (
@@ -284,7 +284,7 @@ export function Composer({
           )}
           {paperOptions.length > 0 && (
             <div className="py-1">
-              <div className="label px-3 py-1.5 text-faint">Items</div>
+              <div className="px-3 py-1.5 text-[12.96px] font-medium leading-[20px] text-muted">Items</div>
               {paperOptions.map((paper, i) => (
                 <button
                   key={paper.id}

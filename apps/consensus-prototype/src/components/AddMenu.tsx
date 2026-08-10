@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useAppState } from '../state/AppState'
 import { Icon } from './icons'
 import { useStub } from './StubHint'
@@ -27,7 +27,7 @@ export function AddMenu({ collectionId }: { collectionId?: string }) {
   const [position, setPosition] = useState({ right: 0, top: 0 })
   const triggerRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
     const rect = triggerRef.current?.getBoundingClientRect()
     if (rect) setPosition({ right: window.innerWidth - rect.right, top: rect.bottom + 6 })

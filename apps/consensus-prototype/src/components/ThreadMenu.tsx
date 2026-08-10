@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useAppState } from '../state/AppState'
 import { Icon } from './icons'
 import { CollectionPicker } from './CollectionPicker'
@@ -34,7 +34,7 @@ export function ThreadMenu({ threadId }: { threadId: string }) {
   // The actions panel sits against the control that opened it; the picker takes
   // whichever side has room, so neither ends up across the screen from the row
   // you clicked.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
     const place = () => {
       const rect = triggerRef.current?.getBoundingClientRect()

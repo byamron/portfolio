@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { useAppState } from '../state/AppState'
 import { CollectionPicker } from './CollectionPicker'
 
@@ -22,7 +22,7 @@ export function SaveToCollectionPopover() {
   } = useAppState()
   const [position, setPosition] = useState({ left: 0, top: 0 })
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!savePopoverPaperId) return
     const anchor = savePopoverAnchor
     if (anchor) {
