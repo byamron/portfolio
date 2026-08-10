@@ -20,10 +20,13 @@ const TABS: { key: ArtifactTab; label: string; icon: 'chat' | 'file' | 'history'
  * sentence you are writing.
  */
 export function ArtifactPanel({ artifactId }: { artifactId: string }) {
-  const { artifactTab, setArtifactTab, detailPaperId } = useAppState()
+  const { artifactTab, setArtifactTab, detailPaperId, panelOpen, setPanelOpen } = useAppState()
   const isMobile = useIsMobile()
   // A citation opens beside the document, and two panels would leave it 372px.
-  const hidden = Boolean(detailPaperId)
+  // On a phone the panel covers the document rather than sitting beside it, so
+  // it is something you open and close; on a desktop it is simply the other
+  // half of the view and is always there.
+  const hidden = Boolean(detailPaperId) || (isMobile && !panelOpen)
 
   return (
     <aside
@@ -43,23 +46,36 @@ export function ArtifactPanel({ artifactId }: { artifactId: string }) {
       aria-label="Artifact panel"
     >
       <div className="flex h-full w-full flex-col md:w-[380px]">
-      <header className="flex min-h-16 shrink-0 items-stretch gap-0.5 border-b border-line px-1">
-        {TABS.map((tab) => (
+      <header className="flex min-h-16 shrink-0 items-stretch justify-between gap-0.5 border-b border-line px-1">
+        <div className="flex min-w-0 gap-0.5 overflow-x-auto [scrollbar-width:none]">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setArtifactTab(tab.key)}
+              aria-current={artifactTab === tab.key}
+              className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[13px] font-medium leading-5 ${
+                artifactTab === tab.key
+                  ? 'border-ink text-ink'
+                  : 'border-transparent text-muted hover:text-ink'
+              }`}
+            >
+              <Icon name={tab.icon} size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Only a way out where the panel is covering something. */}
+        {isMobile && (
           <button
-            key={tab.key}
             type="button"
-            onClick={() => setArtifactTab(tab.key)}
-            aria-current={artifactTab === tab.key}
-            className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[13px] font-medium leading-5 ${
-              artifactTab === tab.key
-                ? 'border-ink text-ink'
-                : 'border-transparent text-muted hover:text-ink'
-            }`}
+            className="icon-btn shrink-0 self-center"
+            aria-label="Close panel"
+            onClick={() => setPanelOpen(false)}
           >
-            <Icon name={tab.icon} size={16} />
-            {tab.label}
+            <Icon name="close" size={15} />
           </button>
-        ))}
+        )}
       </header>
 
       {artifactTab === 'chat' && <ChatTab artifactId={artifactId} />}

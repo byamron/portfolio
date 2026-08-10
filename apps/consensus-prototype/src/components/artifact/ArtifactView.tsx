@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useAppState } from '../../state/AppState'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { RailToggle } from '../RailToggle'
 import { Icon } from '../icons'
 import { useStub } from '../StubHint'
@@ -12,9 +13,18 @@ import { PaperDetailPanel } from '../PaperDetailPanel'
  * in the main column, its other half in the panel (D27).
  */
 export function ArtifactView() {
-  const { artifacts, collections, activeArtifactId, openCollection, setArtifactTab, renameArtifact } =
-    useAppState()
+  const {
+    artifacts,
+    collections,
+    activeArtifactId,
+    openCollection,
+    setArtifactTab,
+    renameArtifact,
+    panelOpen,
+    setPanelOpen,
+  } = useAppState()
   const stub = useStub()
+  const isMobile = useIsMobile()
 
   const artifact = activeArtifactId ? artifacts[activeArtifactId] : null
   if (!artifact) return null
@@ -47,7 +57,10 @@ export function ArtifactView() {
             {/* The one fact worth stating, and a door rather than a label. */}
             <button
               type="button"
-              onClick={() => setArtifactTab('history')}
+              onClick={() => {
+                setArtifactTab('history')
+                setPanelOpen(true)
+              }}
               title="See what changed, and undo it"
               className="hidden items-center gap-1.5 text-[12.96px] leading-[20px] text-muted hover:text-ink @[600px]:inline-flex"
             >
@@ -72,6 +85,20 @@ export function ArtifactView() {
               <Icon name="share" size={14} />
               <span className="hidden @[520px]:inline">Share</span>
             </button>
+            {/* On a desktop the panel is always beside the document; there is
+                nothing to toggle. On a phone it covers it, so it needs a door. */}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setPanelOpen(!panelOpen)}
+                aria-pressed={panelOpen}
+                aria-label="Chat, history and items"
+                title="Chat, history and items"
+                className={`icon-btn size-9 rounded-[12px] ${panelOpen ? 'bg-fill text-ink' : ''}`}
+              >
+                <Icon name="panel" size={20} strokeWidth={1.5} />
+              </button>
+            )}
           </div>
         </header>
 

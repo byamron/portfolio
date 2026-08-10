@@ -440,6 +440,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setDetailPaperId(null)
     setArtifactTab('chat')
     setView('artifact')
+    // Opening a document should land you on the document. On a phone the panel
+    // covers it, so it starts closed the way every other panel does there.
+    if (mobileFirstLoad) setPanelOpen(false)
     const collectionId = artifactsRef.current[artifactId]?.collectionId
     if (collectionId) setSelectedCollectionId(collectionId)
   }, [])

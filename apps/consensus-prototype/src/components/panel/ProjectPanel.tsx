@@ -190,6 +190,7 @@ export function ProjectPanel() {
           <button
             type="button"
             className="icon-btn"
+            aria-label="Close panel"
             title="Close panel"
             onClick={() => setPanelOpen(false)}
           >
