@@ -198,7 +198,7 @@ function Feature({
             <span className="min-w-0 grow truncate text-[15px] leading-[150%] text-ink">
               {example}
             </span>
-            <Icon name="lines" size={15} className="shrink-0 text-faint" strokeWidth={1.6} />
+            <Icon name="arrowRight" size={15} className="shrink-0 text-faint" strokeWidth={1.6} />
           </button>
         ))}
       </div>

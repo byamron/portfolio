@@ -131,8 +131,6 @@ const ICONS = {
     'M8 15a6 6 0 0 0 12 0v-3',
     { c: [20, 10, 2] },
   ],
-  /** lucide/align-left — the trailing glyph on an example query. */
-  lines: ['M15 12H3', 'M17 18H3', 'M21 6H3'],
   /** lucide/circle-check */
   yesNo: [{ c: [12, 12, 10] }, 'm9 12 2 2 4-4'],
   /** lucide/flask-conical — Deep. */
