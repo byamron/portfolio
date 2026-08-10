@@ -1064,7 +1064,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setPanelView(view)
       },
       toggleReferences: () => setReferencesOpen((v) => !v),
-      openPaperDetail: setDetailPaperId,
+      // A citation opens the paper in whichever side surface the current view
+      // already has: the collection's panel, or the thread/artifact's own.
+      openPaperDetail: (paperId: string) => {
+        if (view === 'collection' || view === 'library') openInPanel({ kind: 'paper', id: paperId })
+        else setDetailPaperId(paperId)
+      },
       closePaperDetail: () => setDetailPaperId(null),
       savePopoverAnchor,
       // Anchored to whatever opened it, so the picker drops from the control

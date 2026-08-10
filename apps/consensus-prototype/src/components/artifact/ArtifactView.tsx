@@ -4,6 +4,7 @@ import { Icon } from '../icons'
 import { useStub } from '../StubHint'
 import { ArtifactDoc } from './ArtifactDoc'
 import { ArtifactPanel } from './ArtifactPanel'
+import { PaperDetailPanel } from '../PaperDetailPanel'
 
 /**
  * The artifact, full width — the same geometry as every other view: the object
@@ -77,6 +78,7 @@ export function ArtifactView() {
         </div>
       </div>
 
+      <PaperDetailPanel />
       <ArtifactPanel artifactId={artifact.id} />
     </div>
   )

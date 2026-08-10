@@ -5,7 +5,6 @@ import { ThreadView } from './components/ThreadView'
 import { CollectionView } from './components/CollectionView'
 import { LibraryView } from './components/LibraryView'
 import { ArtifactView } from './components/artifact/ArtifactView'
-import { PaperDetailModal } from './components/PaperDetailModal'
 import { StubHintProvider } from './components/StubHint'
 import { PasswordGate } from './components/PasswordGate'
 import { SaveToCollectionPopover } from './components/SaveToCollectionPopover'
@@ -20,7 +19,6 @@ function Shell() {
       {view === 'collection' && <CollectionView />}
       {view === 'library' && <LibraryView />}
       {view === 'artifact' && <ArtifactView />}
-      <PaperDetailModal />
       <SaveToCollectionPopover />
     </div>
   )

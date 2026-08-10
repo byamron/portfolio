@@ -11,6 +11,7 @@ import { ArtifactChip, Badge, CitationChip, ScopeChip, ThreadChip } from './chip
 import { Icon } from './icons'
 import { Composer } from './Composer'
 import { ReferencesDrawer } from './ReferencesDrawer'
+import { PaperDetailPanel } from './PaperDetailPanel'
 import { useStub } from './StubHint'
 
 export function renderSegment(segment: MessageSegment, key: number) {
@@ -199,6 +200,7 @@ export function ThreadView() {
     activeThreadId,
     isGenerating,
     referencesOpen,
+    detailPaperId,
     toggleReferences,
     sendFollowUp,
     openCollection,
@@ -307,8 +309,13 @@ export function ThreadView() {
         </div>
       </div>
 
+      {/* One side surface at a time: a paper takes the references slot rather
+          than stacking beside it and squeezing the answer. The drawer comes
+          back when the paper closes. */}
+      <PaperDetailPanel />
+
       <ReferencesDrawer
-        open={referencesOpen}
+        open={referencesOpen && !detailPaperId}
         papers={paperIdsOf(thread).map((id) => papers[id]).filter(Boolean)}
         onClose={toggleReferences}
       />
