@@ -2,24 +2,14 @@ import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { usePreview } from './PreviewContext'
-import { protoBySlug, type ProtoMedia } from './data'
-
-function HeroMedia({ media, label }: { media: ProtoMedia; label: string }) {
-  const fill = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' } as const
-  if (media.type === 'video') {
-    return <video src={media.src} style={fill} autoPlay muted loop playsInline />
-  }
-  if (media.type === 'image') {
-    return <img src={media.src} alt={label} style={fill} />
-  }
-  return <div style={{ ...fill, background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }} />
-}
+import { protoBySlug } from './data'
+import { ProtoMediaFill } from './ProtoMedia'
 
 export function ProtoCaseStudy() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const reducedMotion = useReducedMotion()
-  const { registerHero, heroVisible, beginReturn, state } = usePreview()
+  const { registerHero, heroVisible } = usePreview()
   const heroRef = useRef<HTMLDivElement>(null)
 
   const entry = slug ? protoBySlug.get(slug) : undefined
@@ -67,10 +57,7 @@ export function ProtoCaseStudy() {
           <button
             type="button"
             aria-label="Back to home"
-            onClick={() => {
-              if (state.phase === 'docked') beginReturn()
-              navigate('/new')
-            }}
+            onClick={() => navigate('/new')}
             style={{
               width: 40,
               height: 40,
@@ -104,7 +91,7 @@ export function ProtoCaseStudy() {
             boxShadow: '0 12px 40px rgba(0, 0, 0, 0.10)',
           }}
         >
-          <HeroMedia media={entry.media} label={entry.label} />
+          <ProtoMediaFill media={entry.media} label={entry.label} />
         </div>
 
         <motion.div {...textMotion} style={{ width: '100%', maxWidth: 528 }}>

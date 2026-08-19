@@ -8,13 +8,15 @@ import type { ProtoEntry } from './data'
  *   hidden → hover        (pointer/focus enters an inline link)
  *   hover  → morph        (link clicked; layer flies to the hero rect)
  *   morph  → docked       (layer reaches the hero; in-page hero takes over)
- *   docked → return       (back pressed; layer flies back to the source link)
- *   return → hidden       (layer settles above the link and fades)
+ *   docked → hidden       (back pressed; case study crossfades out — no reverse morph)
  */
-export type LayerPhase = 'hidden' | 'hover' | 'morph' | 'docked' | 'return'
+export type LayerPhase = 'hidden' | 'hover' | 'morph' | 'docked'
 
 /** How the mini preview positions itself horizontally relative to the link. */
 export type PlacementMode = 'static' | 'seed' | 'follow'
+
+/** How the mini preview enters: fade in place, or grow subtly out of the link. */
+export type EntranceMode = 'appear' | 'grow'
 
 interface PreviewState {
   phase: LayerPhase
@@ -27,6 +29,8 @@ interface PreviewContextValue {
   state: PreviewState
   placement: PlacementMode
   setPlacement: (p: PlacementMode) => void
+  entrance: EntranceMode
+  setEntrance: (e: EntranceMode) => void
   /** Bumped whenever a link or hero element (re)registers, so the layer re-measures. */
   measureVersion: number
 
@@ -37,9 +41,7 @@ interface PreviewContextValue {
   morphTo: (entry: ProtoEntry) => void
   /** Layer reached the hero rect. */
   dock: () => void
-  /** Begin the reverse morph (only meaningful from `docked`). */
-  beginReturn: () => void
-  /** Return animation finished (or was abandoned). */
+  /** Reset to hidden (used on back navigation and after fades). */
   settle: () => void
 
   registerLink: (id: string, el: HTMLElement | null) => void
@@ -58,6 +60,7 @@ const LEAVE_DELAY_MS = 120
 export function PreviewProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PreviewState>({ phase: 'hidden', entry: null, pointerX: null })
   const [placement, setPlacement] = useState<PlacementMode>('seed')
+  const [entrance, setEntrance] = useState<EntranceMode>('grow')
   const [measureVersion, setMeasureVersion] = useState(0)
 
   const linkEls = useRef(new Map<string, HTMLElement>())
@@ -70,7 +73,7 @@ export function PreviewProvider({ children }: { children: ReactNode }) {
 
   const hoverLink = useCallback((entry: ProtoEntry, pointerX: number | null) => {
     cancelLeave()
-    setState(s => (s.phase === 'morph' || s.phase === 'return' ? s : { phase: 'hover', entry, pointerX }))
+    setState(s => (s.phase === 'morph' ? s : { phase: 'hover', entry, pointerX }))
   }, [])
 
   const movePointer = useCallback((pointerX: number) => {
@@ -93,10 +96,6 @@ export function PreviewProvider({ children }: { children: ReactNode }) {
     setState(s => (s.phase === 'morph' ? { ...s, phase: 'docked' } : s))
   }, [])
 
-  const beginReturn = useCallback(() => {
-    setState(s => (s.phase === 'docked' ? { ...s, phase: 'return' } : { phase: 'hidden', entry: null, pointerX: null }))
-  }, [])
-
   const settle = useCallback(() => {
     setState({ phase: 'hidden', entry: null, pointerX: null })
   }, [])
@@ -112,13 +111,13 @@ export function PreviewProvider({ children }: { children: ReactNode }) {
     setMeasureVersion(v => v + 1)
   }, [])
 
-  const heroVisible = state.phase === 'hidden' || state.phase === 'docked' || state.phase === 'hover'
+  const heroVisible = state.phase !== 'morph'
 
   const value = useMemo<PreviewContextValue>(() => ({
-    state, placement, setPlacement, measureVersion,
-    hoverLink, movePointer, leaveLink, morphTo, dock, beginReturn, settle,
+    state, placement, setPlacement, entrance, setEntrance, measureVersion,
+    hoverLink, movePointer, leaveLink, morphTo, dock, settle,
     registerLink, registerHero, linkEls, heroEl, heroVisible,
-  }), [state, placement, measureVersion, hoverLink, movePointer, leaveLink, morphTo, dock, beginReturn, settle, registerLink, registerHero, heroVisible])
+  }), [state, placement, entrance, measureVersion, hoverLink, movePointer, leaveLink, morphTo, dock, settle, registerLink, registerHero, heroVisible])
 
   return <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>
 }
