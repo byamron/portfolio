@@ -16,6 +16,14 @@ Decision log and completed work, in reverse chronological order.
 
 **Open questions for Ben:** placement knob preference, spring feel, hero radius (16 vs mock's 0), video element restart at handoff, replace-vs-coexist with current home, touch behavior.
 
+**Round 2 (same day) — feel + scope, from Ben's review:**
+- **Entrances are now always local to the link.** The single persistent layer used to spring from wherever it last sat (previous link, or the docked hero after back-nav), so a hover could "fly in from the top of the screen." Now a new presentation snaps to the link and either fades in place (`appear`) or scales up out of it (`grow`, default); moving link→link dips out and re-enters locally. Dev knob gained an `entrance` row alongside `placement`.
+- **Case-study exit no longer reverse-morphs.** Shrinking the hero back to the mini preview just to vanish read as an abrupt disappearance. Back now crossfades: hero fades out, home fades in (still choreographed via the route `AnimatePresence` + anchored bg, not a nav). State machine dropped the `return` phase (`hidden→hover→morph→docked→hidden`).
+- **Thumbnail moved inline-leading the name** (absolute + `text-indent` on the h1 first line) and now doubles as the toggle into a **customization panel** — accent swatches + intensity strip + appearance modes, matching Paper `HH-0`, wired to the real `ThemeContext` (switching accent live-changes `--bg`, which is a nice demo of the anchored-background idea). It's an in-page crossfade (prose↔panel), not a route — the sidebar-controls equivalent. Cursor row from HH-0 omitted (the proto has no custom-cursor system; a dead row would mislead).
+- **External links get an inline ↗** and open natively (no morph); case studies keep the morph. Implemented as an inline SVG, not the `↗` glyph — Literata/Onest don't include U+2197, so it rendered blank. Underline scoped to a label `<span>` so it doesn't run under the arrow. Set: Consensus (→consensus.app), Mochi Health, Arcade, GitHub, X.
+- **Added UW-IT, Sony, and Center for an Informed Public** case studies (real assets: `/prototypes/uw-preview.mp4`, `/prototypes/sony-preview.mp4`, CIP's `preview-cip.json` Lottie), linked from the education paragraph. New shared `ProtoMedia` component renders video/image/lottie/blank for both the preview layer and hero.
+- **Sandbox caveat:** headless Chrome here wedges on video decode and the CDP eval harness got flaky under load, so round-2 motion (morph timing, grow vs appear, back crossfade) is verified structurally + by static screenshots (home arrows, panel, CIP Lottie hero) but wants a real-browser eyeball for feel.
+
 ---
 
 ## 2026-07-31 — Add font-guesser game: home card, in-repo source, descender fix
