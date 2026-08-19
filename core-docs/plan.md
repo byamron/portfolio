@@ -624,6 +624,21 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## V2 home exploration — prose home + morphing preview transitions (active, 2026-08-19)
+
+Ben is prototyping a radically simplified home page, designed in Paper (`https://app.paper.design/file/01M01HV1S56YYN78DMKCGKTB59/1-0`, frames `F1-0` home / `AV-0` case study). The Paper mock is **inspiration**, the real implementation takes precedence — the prototype lives inside the site's theme-token system, fonts, and data conventions rather than transplanting the mock's hardcoded values.
+
+**Concept:** the home is a single centered prose column (528px) whose links are inline in the text, not a card list. Hovering an inline link shows a mini preview frame **anchored to the link element** (appearing near the pointer; cursor influence is a tunable placement knob: `static` / `seed` / `follow`). Clicking is a real route navigation choreographed as a transition: the background is anchored (token-driven, no flash), the mini preview is the shared element that morphs into the case study's 800×500 hero rect, and text crossfades around it. The back button runs the inverse morph. The hover preview is the *continuity anchor* that makes navigation read as transition rather than loading.
+
+**Status:** working prototype at `/new` and `/new/:slug` (branch `simplified-home-prototype`), self-contained in `src/proto/` (excluded from the standalone-route chrome — no sidebar/cursor/right column). State machine `hidden → hover → morph → docked → return` in `PreviewContext`; morphing layer uses framer-motion motion values with spring (340/30). Verified end-to-end via CDP: hover placement, morph, pixel-exact hero handoff, reverse morph.
+
+- [x] Prototype routes, data mapping to real preview assets, morph state machine
+- [ ] Ben's visual/feel review (placement knob choice, spring tuning, radii 8→16, video handoff restart)
+- [ ] Decide relationship to existing home (replace vs. coexist), mobile/touch treatment, and whether previews preload
+- [ ] If adopted: fold into design-language.md (new pattern: link-anchored preview + shared-element navigation), strip the dev placement knob before merge
+
+---
+
 ## Reference
 
 The original Framer components have been removed. All visual and interaction specifications are now fully documented in:
