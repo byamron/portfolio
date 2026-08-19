@@ -40,14 +40,14 @@ export const protoEntries: ProtoEntry[] = [
   {
     id: 'distill',
     label: 'Distill',
-    media: { type: 'blank' },
-    body: 'Distill. ' + PLACEHOLDER_BODY,
+    media: { type: 'video', src: '/images/preview-health-tracker.mp4' },
+    body: 'Distill — a health tracker. ' + PLACEHOLDER_BODY,
   },
   {
     id: 'trio',
     label: 'Trio',
-    media: { type: 'blank' },
-    body: 'Trio. ' + PLACEHOLDER_BODY,
+    media: { type: 'video', src: '/images/preview-todo-priority.mp4' },
+    body: 'Trio — a todo list that keeps tasks perfectly prioritized. ' + PLACEHOLDER_BODY,
   },
   {
     id: 'ripe',
@@ -58,8 +58,8 @@ export const protoEntries: ProtoEntry[] = [
   {
     id: 'havana',
     label: 'Havana',
-    media: { type: 'blank' },
-    body: 'Havana. ' + PLACEHOLDER_BODY,
+    media: { type: 'video', src: '/images/preview-language-app.mp4' },
+    body: 'Havana — a language learning app. ' + PLACEHOLDER_BODY,
   },
   {
     id: 'arcade',
