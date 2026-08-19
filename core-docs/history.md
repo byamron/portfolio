@@ -2,6 +2,22 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-08-19 — V2 home prototype: prose home + link-anchored preview morphing into case study
+
+**Branch:** `simplified-home-prototype`. New routes `/new` and `/new/:slug`, self-contained in `src/proto/` — the current home is untouched.
+
+**Summary:** First working prototype of the new simplified home direction, designed in Paper (file `01M01HV1S56YYN78DMKCGKTB59`; read via Paper Desktop's local MCP, driven over `RunLocalCommand` + curl JSON-RPC — `get_jsx` with inline styles was the highest-signal extraction, screenshots mostly weren't worth the transfer cost). Per Ben: the mock is inspiration; the real implementation takes precedence.
+
+- **Home** (`ProtoHome`): single centered 528px prose column — 36×36 photo with warm glow, Literata 300 30px title, Onest 300 body. Links are **inline in the prose** (Consensus, Mochi Health, Flow, …, Arcade/GitHub/X), not a card list. Copy from the Paper mock (Consensus is the new current role).
+- **Hover preview** (`PreviewContext` + `PreviewLayer`): a single persistent 288×180 frame (8:5, matching the hero) **anchored to the link element** — decided against cursor-following (option A) with Ben: the link is the structural anchor (keyboard focus works, deterministic morph origin); cursor influence is a tunable placement knob (`static`/`seed`/`follow`, dev panel — strip before merge). 120ms leave-delay; content crossfades between links.
+- **Navigation-as-transition:** click = real route change choreographed as one motion. Background is token-anchored (no flash), the mini preview is the shared element morphing (spring 340/30) into the case study's 800×500 hero rect, text crossfades around it (280ms exit / 350ms enter). Back button runs the inverse morph to the source link. State machine: `hidden → hover → morph → docked → return`. Reduced motion: no flight, opacity-only.
+- **Reconciliation decisions:** theme tokens (`--bg`, `--text-dark`) instead of the mock's hardcoded `#E9E1DA`; real preview assets (`preview-flow.mp4`, `preview-mochi-health.mp4`, GitHub/X images); hero radius 16 (site's kinship radius) instead of the mock's square corners; safe-centering via `margin-block: auto` (not `justify-content: center`, which clips overflow). Added Onest 300 to the Google Fonts URL (mock weight; only 400+ were loaded — feedback.md 2026-03-25).
+- **Verification:** `tsc -b` clean, `vite build` clean (after `git submodule update --init` — feedback.md 2026-07-22), 72 tests pass. Interaction verified via Chrome DevTools Protocol: hover placement above link, morph mid-flight, **pixel-exact** layer→hero handoff (both settle at the same rect), reverse morph and settle. Caveat: video-media previews wedge *headless* Chrome's renderer (codec issue in the sandbox); check video hover in a real browser.
+
+**Open questions for Ben:** placement knob preference, spring feel, hero radius (16 vs mock's 0), video element restart at handoff, replace-vs-coexist with current home, touch behavior.
+
+---
+
 ## 2026-07-31 — Add font-guesser game: home card, in-repo source, descender fix
 
 **Branch:** `add-font-guesser-card` (→ `next-update`).
