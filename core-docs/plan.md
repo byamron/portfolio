@@ -633,9 +633,11 @@ Ben is prototyping a radically simplified home page, designed in Paper (`https:/
 **Status:** working prototype at `/new` and `/new/:slug` (branch `simplified-home-prototype`), self-contained in `src/proto/` (excluded from the standalone-route chrome — no sidebar/cursor/right column). State machine `hidden → hover → morph → docked → return` in `PreviewContext`; morphing layer uses framer-motion motion values with spring (340/30). Verified end-to-end via CDP: hover placement, morph, pixel-exact hero handoff, reverse morph.
 
 - [x] Prototype routes, data mapping to real preview assets, morph state machine
-- [ ] Ben's visual/feel review (placement knob choice, spring tuning, radii 8→16, video handoff restart)
-- [ ] Decide relationship to existing home (replace vs. coexist), mobile/touch treatment, and whether previews preload
-- [ ] If adopted: fold into design-language.md (new pattern: link-anchored preview + shared-element navigation), strip the dev placement knob before merge
+- [x] Round 2: local hover entrances (appear/grow, no fly-in); exit crossfade instead of reverse-morph; inline-leading thumbnail that toggles a ThemeContext-wired customization panel (crossfade, not nav); inline ↗ on external links; UW/Sony/CIP case studies; shared ProtoMedia (video/image/lottie)
+- [ ] Ben's in-browser feel review: entrance mode (appear vs grow), spring tuning, hero radius (16 vs mock's 0), video restart at handoff, panel transition feel
+- [ ] Decide relationship to existing home (replace vs. coexist), mobile/touch treatment, whether previews preload
+- [ ] Open sub-questions: should external links show a hover preview at all (currently yes); does the customization panel want the cursor-mode row (omitted — proto has no cursor system); real case-study body copy + heroVisual per study
+- [ ] If adopted: fold into design-language.md (new patterns: link-anchored preview + shared-element navigation + thumbnail-to-panel transition), strip the dev knobs (entrance/placement) before merge
 
 ---
 
