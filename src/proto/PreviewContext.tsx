@@ -5,52 +5,32 @@ import type { ProtoEntry } from './data'
  * State machine for the link-anchored hover preview and its morph into the
  * case-study hero.
  *
- *   hidden → hover        (pointer/focus enters an inline link)
- *   hover  → morph        (link clicked; layer flies to the hero rect)
- *   morph  → docked       (layer reaches the hero; in-page hero takes over)
- *   docked → hidden       (back pressed; case study crossfades out — no reverse morph)
+ *   hidden → hover   (pointer/focus enters an inline link)
+ *   hover  → morph   (link clicked; layer flies to the hero rect)
+ *   morph  → hidden  (layer reaches the hero and fades out over the in-page hero)
  */
-export type LayerPhase = 'hidden' | 'hover' | 'morph' | 'docked'
-
-/** How the mini preview positions itself horizontally relative to the link. */
-export type PlacementMode = 'static' | 'seed' | 'follow'
-
-/** How the mini preview enters: fade in place, or grow subtly out of the link. */
-export type EntranceMode = 'appear' | 'grow'
+export type LayerPhase = 'hidden' | 'hover' | 'morph'
 
 interface PreviewState {
   phase: LayerPhase
   entry: ProtoEntry | null
-  /** Pointer x captured on enter (seed) or continuously (follow). Null for keyboard focus. */
-  pointerX: number | null
 }
 
 interface PreviewContextValue {
   state: PreviewState
-  placement: PlacementMode
-  setPlacement: (p: PlacementMode) => void
-  entrance: EntranceMode
-  setEntrance: (e: EntranceMode) => void
-  /** Bumped whenever a link or hero element (re)registers, so the layer re-measures. */
-  measureVersion: number
 
-  hoverLink: (entry: ProtoEntry, pointerX: number | null) => void
-  movePointer: (pointerX: number) => void
+  hoverLink: (entry: ProtoEntry) => void
   leaveLink: () => void
   /** Begin the click morph. Caller navigates immediately after. */
   morphTo: (entry: ProtoEntry) => void
-  /** Layer reached the hero rect. */
-  dock: () => void
-  /** Reset to hidden (used on back navigation and after fades). */
+  /** Reset to hidden (morph finished, or back navigation). */
   settle: () => void
 
   registerLink: (id: string, el: HTMLElement | null) => void
-  registerHero: (el: HTMLElement | null) => void
   linkEls: React.RefObject<Map<string, HTMLElement>>
-  heroEl: React.RefObject<HTMLElement | null>
-
-  /** Whether the case-study page should show its own hero media. */
-  heroVisible: boolean
+  /** The case-study hero element, once mounted — the morph's flight target. */
+  heroEl: HTMLElement | null
+  registerHero: (el: HTMLElement | null) => void
 }
 
 const PreviewContext = createContext<PreviewContextValue | null>(null)
@@ -58,66 +38,45 @@ const PreviewContext = createContext<PreviewContextValue | null>(null)
 const LEAVE_DELAY_MS = 120
 
 export function PreviewProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PreviewState>({ phase: 'hidden', entry: null, pointerX: null })
-  const [placement, setPlacement] = useState<PlacementMode>('seed')
-  const [entrance, setEntrance] = useState<EntranceMode>('grow')
-  const [measureVersion, setMeasureVersion] = useState(0)
+  const [state, setState] = useState<PreviewState>({ phase: 'hidden', entry: null })
+  const [heroEl, setHeroEl] = useState<HTMLElement | null>(null)
 
   const linkEls = useRef(new Map<string, HTMLElement>())
-  const heroEl = useRef<HTMLElement | null>(null)
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cancelLeave = () => {
     if (leaveTimer.current) { clearTimeout(leaveTimer.current); leaveTimer.current = null }
   }
 
-  const hoverLink = useCallback((entry: ProtoEntry, pointerX: number | null) => {
+  const hoverLink = useCallback((entry: ProtoEntry) => {
     cancelLeave()
-    setState(s => (s.phase === 'morph' ? s : { phase: 'hover', entry, pointerX }))
-  }, [])
-
-  const movePointer = useCallback((pointerX: number) => {
-    setState(s => (s.phase === 'hover' ? { ...s, pointerX } : s))
+    setState(s => (s.phase === 'morph' ? s : { phase: 'hover', entry }))
   }, [])
 
   const leaveLink = useCallback(() => {
     cancelLeave()
     leaveTimer.current = setTimeout(() => {
-      setState(s => (s.phase === 'hover' ? { phase: 'hidden', entry: null, pointerX: null } : s))
+      setState(s => (s.phase === 'hover' ? { phase: 'hidden', entry: null } : s))
     }, LEAVE_DELAY_MS)
   }, [])
 
   const morphTo = useCallback((entry: ProtoEntry) => {
     cancelLeave()
-    setState(s => ({ phase: 'morph', entry, pointerX: s.pointerX }))
-  }, [])
-
-  const dock = useCallback(() => {
-    setState(s => (s.phase === 'morph' ? { ...s, phase: 'docked' } : s))
+    setState({ phase: 'morph', entry })
   }, [])
 
   const settle = useCallback(() => {
-    setState({ phase: 'hidden', entry: null, pointerX: null })
+    setState({ phase: 'hidden', entry: null })
   }, [])
 
   const registerLink = useCallback((id: string, el: HTMLElement | null) => {
     if (el) linkEls.current.set(id, el)
     else linkEls.current.delete(id)
-    setMeasureVersion(v => v + 1)
   }, [])
-
-  const registerHero = useCallback((el: HTMLElement | null) => {
-    heroEl.current = el
-    setMeasureVersion(v => v + 1)
-  }, [])
-
-  const heroVisible = state.phase !== 'morph'
 
   const value = useMemo<PreviewContextValue>(() => ({
-    state, placement, setPlacement, entrance, setEntrance, measureVersion,
-    hoverLink, movePointer, leaveLink, morphTo, dock, settle,
-    registerLink, registerHero, linkEls, heroEl, heroVisible,
-  }), [state, placement, entrance, measureVersion, hoverLink, movePointer, leaveLink, morphTo, dock, settle, registerLink, registerHero, heroVisible])
+    state, hoverLink, leaveLink, morphTo, settle, registerLink, linkEls, heroEl, registerHero: setHeroEl,
+  }), [state, heroEl, hoverLink, leaveLink, morphTo, settle, registerLink])
 
   return <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>
 }
