@@ -2,6 +2,18 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-08-19 — A running dev server can serve a silently-empty `<div id="root">` after new deps are added mid-session
+
+**What happened:** After running `npm install` for new packages (dialkit, agentation, plus a new `@phosphor-icons/react` import) into an already-running `vite` dev server, the page started rendering a completely empty `<div id="root"></div>` — no error overlay, no console output, `vite build` and `tsc -b` both clean. Spent a long stretch chasing this as a React runtime bug (suspected infinite render loop, chased and fixed a real-but-unrelated DialKit config-memoization issue along the way) before finding the actual cause.
+
+**What went wrong:** Vite's dependency pre-bundle cache (`node_modules/.vite`) goes stale when new dependencies are added while the dev server is already running. The server *does* detect this and re-optimizes, but the re-optimization's forced reload can race the page's initial module load, leaving React never mounted — silently, with nothing in the console to flag it.
+
+**Lesson learned:** After `npm install`-ing new dependencies into a session with a dev server already running, don't just trust HMR to pick it up — restart with a forced clean re-optimization: `rm -rf node_modules/.vite && npm run dev -- --force` (or just delete `.vite` and let any next `vite` invocation rebuild). If a page renders blank right after adding deps and build/typecheck are clean, suspect this before suspecting your new code.
+
+**How to verify safely in a sandbox without a real browser:** `google-chrome --headless=new --dump-dom <url>` was reliable throughout a session where `--screenshot` was flaky (~50% blank captures even on pages that worked). Check for `<div id="root"></div>` (empty = not mounted) vs. real content — this diagnosed the bug in one command where screenshot attempts gave false negatives.
+
+---
+
 ## 2026-07-22 — The deploy gate is `vite build`, not `npm run build`; check submodule init before calling a build broken
 
 **What happened:** During release review, `npm run build` failed on a missing `ui-playground/.../SlideUnlock` import, which I flagged for several turns as a possible release blocker. Two things resolved it: (1) `ui-playground` is a **git submodule** not initialized in the Conductor worktree (so its files were absent locally); (2) the deploy workflow runs **`npx vite build`** (`.github/workflows/deploy.yml`), not `npm run build` — so `tsc -b` never runs in CI, and the submodule's TypeScript errors never gate the deploy (5 recent deploys all succeeded).

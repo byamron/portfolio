@@ -3,6 +3,10 @@ import type { ProtoMedia } from './data'
 
 const Lottie = lazy(() => import('lottie-react'))
 
+// Lottie JSON is fetched once per src and shared across mounts (the preview
+// layer and the hero both render the same animation).
+const lottieCache = new Map<string, Promise<object>>()
+
 const fill = {
   position: 'absolute',
   inset: 0,
@@ -11,17 +15,35 @@ const fill = {
   objectFit: 'cover',
 } as const
 
+const blankFill = { ...fill, background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' } as const
+
+function VideoFill({ src }: { src: string }) {
+  const [ready, setReady] = useState(false)
+  return (
+    <video
+      src={src}
+      style={{ ...fill, opacity: ready ? 1 : 0, transition: 'opacity 200ms ease' }}
+      onLoadedData={() => setReady(true)}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+    />
+  )
+}
+
 function LottieFill({ src }: { src: string }) {
   const [data, setData] = useState<object | null>(null)
   useEffect(() => {
     let cancelled = false
-    fetch(src)
-      .then(r => r.json())
+    if (!lottieCache.has(src)) lottieCache.set(src, fetch(src).then(r => r.json()))
+    lottieCache.get(src)!
       .then(d => { if (!cancelled) setData(d) })
       .catch(() => { if (!cancelled) setData(null) })
     return () => { cancelled = true }
   }, [src])
-  if (!data) return <div style={{ ...fill, background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }} />
+  if (!data) return <div style={blankFill} />
   return (
     <Suspense fallback={null}>
       <div style={{ ...fill, display: 'grid', placeItems: 'center', background: 'var(--bg)' }}>
@@ -33,14 +55,8 @@ function LottieFill({ src }: { src: string }) {
 
 /** Renders a ProtoMedia into an absolutely-filled parent. Shared by the preview layer and case-study hero. */
 export function ProtoMediaFill({ media, label }: { media: ProtoMedia; label: string }) {
-  if (media.type === 'video') {
-    return <video src={media.src} style={fill} autoPlay muted loop playsInline preload="metadata" />
-  }
-  if (media.type === 'image') {
-    return <img src={media.src} alt={label} style={fill} />
-  }
-  if (media.type === 'lottie') {
-    return <LottieFill src={media.src} />
-  }
-  return <div style={{ ...fill, background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }} />
+  if (media.type === 'video') return <VideoFill src={media.src} />
+  if (media.type === 'image') return <img src={media.src} alt={label} style={fill} />
+  if (media.type === 'lottie') return <LottieFill src={media.src} />
+  return <div style={blankFill} />
 }

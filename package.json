@@ -16,8 +16,11 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.7",
     "@rive-app/react-canvas": "^4.27.2",
+    "agentation": "^3.0.2",
+    "dialkit": "^1.4.3",
     "framer-motion": "^11.18.0",
     "lottie-react": "^2.4.1",
+    "motion": "^13.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.13.0"
