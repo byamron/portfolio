@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { ProtoLink } from './ProtoLink'
@@ -9,6 +9,11 @@ import { EASE, usePageDials, useTypeDials } from './tuning'
 const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+// The site's one intentional overshoot (design-language.md § Imagery — "Spring
+// press"), reserved for direct user-initiated press actions. Reused here for
+// the settings-panel controls per the push-further review.
+const SPRING_PRESS = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
 
 const bodyStyle: React.CSSProperties = {
   fontFamily: '"Onest", system-ui, sans-serif',
@@ -35,6 +40,7 @@ const backButtonStyle: React.CSSProperties = {
 }
 
 const THUMB_GAP = 10
+const BACK_BUTTON_OFFSET = 56 // back button height (40) + gap (16), floated above the anchor
 
 export function ProtoHome() {
   const reducedMotion = useReducedMotion()
@@ -42,22 +48,37 @@ export function ProtoHome() {
   const { headingSize, headingLineHeight, bodySize, thumb } = useTypeDials()
   const page = usePageDials()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [thumbHovered, setThumbHovered] = useState(false)
+  const thumbRef = useRef<HTMLButtonElement>(null)
+
+  const closeSettings = () => {
+    setSettingsOpen(false)
+    thumbRef.current?.focus()
+  }
 
   useEffect(() => {
     if (!settingsOpen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSettingsOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeSettings() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsOpen])
 
   const fade = { duration: reducedMotion ? 0 : 0.24, ease: EASE }
 
-  // Same atmospheric glow formula as the sidebar's intensity trigger dot
-  // (SidebarThemeControls.tsx) — the thumbnail's aura now tracks the same
-  // background-intensity slider instead of a fixed warm-gold glow.
+  // Same atmospheric two-channel formula as the sidebar's intensity trigger dot
+  // (SidebarThemeControls.tsx: opacity lerp(0.45,1,t) + glow lerp(0,14,t)).
+  // Applying the opacity channel to the photo itself would fade Ben's face in
+  // and out while dragging the slider, so it's redirected to the border's
+  // alpha instead — same two-channel read (glow intensity + frame presence),
+  // without dimming the image.
+  const glowT = lerp(0.45, 1.0, bgIntensity)
   const glow = bgIntensity > 0.01
     ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round(lerp(0, 0.5, bgIntensity) * 100)}%, transparent)`
     : 'none'
+  const hoverGlow = thumbHovered
+    ? `0 0 ${(lerp(0, 14, bgIntensity) + 6).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round((lerp(0, 0.5, bgIntensity) + 0.12) * 100)}%, transparent)`
+    : glow
 
   return (
     <motion.main
@@ -77,34 +98,22 @@ export function ProtoHome() {
     >
       <div style={{ maxWidth: 528, width: '100%', marginBlock: 'auto' }}>
         {/*
-          Back button — same element/position/style as the case-study back
-          button, appearing ABOVE the header (never overlaid on the thumbnail).
-          It's the dedicated close affordance; the thumbnail itself stays a
-          plain, undimmed photo at all times and remains clickable to toggle.
+          Thumbnail + back button + prose + panel all anchor to this single box.
+          Its height is driven only by the prose (panel is absolute), so opening
+          the panel never changes this box's height — and therefore never moves
+          the thumbnail, which stays screen-fixed the way round 3 established.
         */}
-        <AnimatePresence>
-          {settingsOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
-              transition={fade}
-              style={{ marginBottom: 24 }}
-            >
-              <button type="button" aria-label="Back to home" onClick={() => setSettingsOpen(false)} style={backButtonStyle}>
-                ←
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Thumbnail + prose + panel all anchor to this box, independent of the back button above. */}
         <div style={{ position: 'relative' }}>
           <button
+            ref={thumbRef}
             type="button"
             aria-label={settingsOpen ? 'Close customization' : 'Customize appearance'}
             aria-expanded={settingsOpen}
-            onClick={() => setSettingsOpen(o => !o)}
+            onClick={() => (settingsOpen ? closeSettings() : setSettingsOpen(true))}
+            onMouseEnter={() => setThumbHovered(true)}
+            onMouseLeave={() => setThumbHovered(false)}
+            onFocus={() => setThumbHovered(true)}
+            onBlur={() => setThumbHovered(false)}
             style={{
               position: 'absolute',
               top: 2,
@@ -112,13 +121,14 @@ export function ProtoHome() {
               width: thumb,
               height: thumb,
               padding: 0,
-              border: '1px solid color-mix(in srgb, var(--swatch) 25%, transparent)',
+              border: `1px solid color-mix(in srgb, var(--swatch) ${Math.round(glowT * 25)}%, transparent)`,
               borderRadius: 4,
               overflow: 'hidden',
               cursor: 'pointer',
               background: 'transparent',
-              boxShadow: glow,
-              transition: 'box-shadow 300ms ease-in-out, border-color 300ms ease-in-out',
+              boxShadow: hoverGlow,
+              transform: thumbHovered && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
+              transition: 'box-shadow 300ms ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out',
               zIndex: 2,
             }}
           >
@@ -128,6 +138,28 @@ export function ProtoHome() {
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           </button>
+
+          {/*
+            Back button — visually ABOVE the thumbnail (negative-offset absolute,
+            never in normal flow, so it can't push the anchor down) and AFTER the
+            thumbnail in DOM order, so Tab from the thumbnail reaches it before
+            the panel controls below.
+          */}
+          <AnimatePresence>
+            {settingsOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
+                transition={fade}
+                style={{ position: 'absolute', top: -BACK_BUTTON_OFFSET, left: 0 }}
+              >
+                <button type="button" aria-label="Back to home" onClick={closeSettings} style={backButtonStyle}>
+                  ←
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <motion.div
             animate={{
@@ -176,7 +208,7 @@ export function ProtoHome() {
                 transition={fade}
                 style={{ position: 'absolute', top: thumb + 2 + 28, left: 0, right: 0 }}
               >
-                <ProtoSettingsPanel />
+                <ProtoSettingsPanel springPress={SPRING_PRESS} />
               </motion.div>
             )}
           </AnimatePresence>
