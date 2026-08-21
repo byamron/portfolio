@@ -18,12 +18,14 @@ const fill = {
 const blankFill = { ...fill, background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' } as const
 
 function VideoFill({ src }: { src: string }) {
-  const [ready, setReady] = useState(false)
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+  if (state === 'error') return <div style={blankFill} />
   return (
     <video
       src={src}
-      style={{ ...fill, opacity: ready ? 1 : 0, transition: 'opacity 200ms ease' }}
-      onLoadedData={() => setReady(true)}
+      style={{ ...fill, opacity: state === 'ready' ? 1 : 0, transition: 'opacity 200ms ease' }}
+      onLoadedData={() => setState('ready')}
+      onError={() => setState('error')}
       autoPlay
       muted
       loop
@@ -40,7 +42,7 @@ function LottieFill({ src }: { src: string }) {
     if (!lottieCache.has(src)) lottieCache.set(src, fetch(src).then(r => r.json()))
     lottieCache.get(src)!
       .then(d => { if (!cancelled) setData(d) })
-      .catch(() => { if (!cancelled) setData(null) })
+      .catch(err => { console.warn('[proto] failed to load lottie', src, err); if (!cancelled) setData(null) })
     return () => { cancelled = true }
   }, [src])
   if (!data) return <div style={blankFill} />

@@ -4,9 +4,15 @@ import { usePreview } from './PreviewContext'
 import type { ProtoEntry } from './data'
 
 /**
- * An inline prose link. Entries with an `href` open another site (inline ↗,
- * native navigation); the rest are case studies whose hover preview morphs
- * into the hero on click. Underline styling lives in proto.css.
+ * An inline prose link, in three flavors:
+ *  - genuine external site (`href` starting with http): inline ↗, opens in a
+ *    new tab, native navigation.
+ *  - internal route (`href` present but not http, e.g. /playground): client-
+ *    side navigate to that route directly. No morph (it isn't a case study),
+ *    no arrow (it never left the site).
+ *  - case study (no `href`): anchors the hover preview and morphs into the
+ *    hero on click.
+ * Underline styling lives in proto.css.
  */
 export function ProtoLink({ entry }: { entry: ProtoEntry }) {
   const { hoverLink, leaveLink, morphTo, registerLink } = usePreview()
@@ -18,8 +24,8 @@ export function ProtoLink({ entry }: { entry: ProtoEntry }) {
     return () => registerLink(entry.id, null)
   }, [entry.id, registerLink])
 
-  const isExternal = entry.href != null
-  const newTab = entry.href?.startsWith('http')
+  const isHttpExternal = entry.href?.startsWith('http') ?? false
+  const isInternalRoute = entry.href != null && !isHttpExternal
 
   return (
     <a
@@ -27,22 +33,23 @@ export function ProtoLink({ entry }: { entry: ProtoEntry }) {
       data-proto-link
       href={entry.href ?? `/new/${entry.id}`}
       style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap' }}
-      target={newTab ? '_blank' : undefined}
-      rel={newTab ? 'noopener noreferrer' : undefined}
+      target={isHttpExternal ? '_blank' : undefined}
+      rel={isHttpExternal ? 'noopener noreferrer' : undefined}
       onMouseEnter={() => hoverLink(entry)}
       onMouseLeave={leaveLink}
       onFocus={() => hoverLink(entry)}
       onBlur={leaveLink}
       onClick={e => {
-        if (isExternal) return // native navigation
+        if (isHttpExternal) return // native navigation, new tab
         e.preventDefault()
+        if (isInternalRoute) { navigate(entry.href!); return }
         morphTo(entry)
         navigate(`/new/${entry.id}`)
       }}
     >
       <span>
         {entry.label}
-        {isExternal && (
+        {isHttpExternal && (
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
