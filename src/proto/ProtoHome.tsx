@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { X } from '@phosphor-icons/react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
@@ -9,11 +8,37 @@ import { EASE, usePageDials, useTypeDials } from './tuning'
 
 const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+const bodyStyle: React.CSSProperties = {
+  fontFamily: '"Onest", system-ui, sans-serif',
+  fontSize: 'var(--text-size-body)',
+  fontWeight: 300,
+  lineHeight: 1.35,
+  color: 'var(--text-dark)',
+  margin: 0,
+}
+
+// Matches the case-study back button exactly (ProtoCaseStudy.tsx).
+const backButtonStyle: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  display: 'grid',
+  placeItems: 'center',
+  background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))',
+  color: 'var(--text-dark)',
+  border: 'none',
+  borderRadius: 8,
+  cursor: 'pointer',
+  fontSize: 18,
+  fontFamily: '"Onest", system-ui, sans-serif',
+}
+
 const THUMB_GAP = 10
 
 export function ProtoHome() {
   const reducedMotion = useReducedMotion()
-  const { accentColor } = useTheme()
+  const { accentColor, bgIntensity } = useTheme()
   const { headingSize, headingLineHeight, bodySize, thumb } = useTypeDials()
   const page = usePageDials()
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -26,6 +51,13 @@ export function ProtoHome() {
   }, [settingsOpen])
 
   const fade = { duration: reducedMotion ? 0 : 0.24, ease: EASE }
+
+  // Same atmospheric glow formula as the sidebar's intensity trigger dot
+  // (SidebarThemeControls.tsx) — the thumbnail's aura now tracks the same
+  // background-intensity slider instead of a fixed warm-gold glow.
+  const glow = bgIntensity > 0.01
+    ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round(lerp(0, 0.5, bgIntensity) * 100)}%, transparent)`
+    : 'none'
 
   return (
     <motion.main
@@ -43,123 +75,112 @@ export function ProtoHome() {
         padding: '80px 24px',
       }}
     >
-      <div style={{ position: 'relative', maxWidth: 528, width: '100%', marginBlock: 'auto' }}>
+      <div style={{ maxWidth: 528, width: '100%', marginBlock: 'auto' }}>
         {/*
-          The thumbnail leads the first line of the name and never moves — it is
-          the shared anchor between the prose and the customization panel. The
-          prose stays mounted (opacity 0) while the panel is open so the column
-          keeps its height and nothing re-centers.
+          Back button — same element/position/style as the case-study back
+          button, appearing ABOVE the header (never overlaid on the thumbnail).
+          It's the dedicated close affordance; the thumbnail itself stays a
+          plain, undimmed photo at all times and remains clickable to toggle.
         */}
-        <button
-          type="button"
-          aria-label={settingsOpen ? 'Close customization' : 'Customize appearance'}
-          aria-expanded={settingsOpen}
-          onClick={() => setSettingsOpen(o => !o)}
-          style={{
-            position: 'absolute',
-            top: 2,
-            left: 0,
-            width: thumb,
-            height: thumb,
-            padding: 0,
-            border: '1px solid #D9BB9540',
-            borderRadius: 4,
-            overflow: 'hidden',
-            cursor: 'pointer',
-            background: 'transparent',
-            boxShadow: '#CCA066CC 0px 0px 12px',
-            zIndex: 2,
-          }}
-        >
-          <img
-            src={`/images/portrait-${accentColor}.jpeg`}
-            alt="Ben Yamron"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              filter: settingsOpen ? 'brightness(0.45)' : 'none',
-              transition: 'filter 200ms ease',
-            }}
-          />
-          <AnimatePresence>
-            {settingsOpen && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={fade}
-                style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#fff' }}
-              >
-                <X size={Math.max(14, thumb * 0.4)} weight="bold" />
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
-
-        <motion.div
-          animate={{
-            opacity: settingsOpen ? 0 : 1,
-            transitionEnd: { visibility: settingsOpen ? 'hidden' : 'visible' },
-          }}
-          transition={fade}
-          style={{ display: 'flex', flexDirection: 'column', gap: 40 }}
-        >
-          <h1
-            style={{
-              fontFamily: '"Literata", Georgia, serif',
-              fontSize: headingSize,
-              fontWeight: 300,
-              lineHeight: headingLineHeight,
-              color: 'var(--text-dark)',
-              margin: 0,
-              // First line clears the absolute thumbnail so the name reads inline after it.
-              textIndent: thumb + THUMB_GAP,
-            }}
-          >
-            Ben Yamron is a product designer. Currently designing AI for scientific research at {L('consensus')}.
-          </h1>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 22,
-              fontFamily: '"Onest", system-ui, sans-serif',
-              fontSize: bodySize,
-              fontWeight: 300,
-              lineHeight: 1.35,
-              color: 'var(--text-dark)',
-            }}
-          >
-            <p style={{ margin: 0 }}>
-              Previously designed patient experiences and internal tools at {L('mochi-health')}.
-            </p>
-            <p style={{ margin: 0 }}>
-              On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
-              bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and {L('x')}.
-            </p>
-            <p style={{ margin: 0 }}>
-              I studied Human Centered Design at the University of Washington. Worked with {L('uw')}, {L('sony')},
-              and the {L('cip')}. I learned how to think at Middlebury College.
-            </p>
-          </div>
-        </motion.div>
-
         <AnimatePresence>
           {settingsOpen && (
             <motion.div
-              initial={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
+              exit={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
               transition={fade}
-              style={{ position: 'absolute', top: thumb + 2 + 28, left: 0, right: 0 }}
+              style={{ marginBottom: 24 }}
             >
-              <ProtoSettingsPanel />
+              <button type="button" aria-label="Back to home" onClick={() => setSettingsOpen(false)} style={backButtonStyle}>
+                ←
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Thumbnail + prose + panel all anchor to this box, independent of the back button above. */}
+        <div style={{ position: 'relative' }}>
+          <button
+            type="button"
+            aria-label={settingsOpen ? 'Close customization' : 'Customize appearance'}
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen(o => !o)}
+            style={{
+              position: 'absolute',
+              top: 2,
+              left: 0,
+              width: thumb,
+              height: thumb,
+              padding: 0,
+              border: '1px solid color-mix(in srgb, var(--swatch) 25%, transparent)',
+              borderRadius: 4,
+              overflow: 'hidden',
+              cursor: 'pointer',
+              background: 'transparent',
+              boxShadow: glow,
+              transition: 'box-shadow 300ms ease-in-out, border-color 300ms ease-in-out',
+              zIndex: 2,
+            }}
+          >
+            <img
+              src={`/images/portrait-square-${accentColor}.jpg`}
+              alt="Ben Yamron"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </button>
+
+          <motion.div
+            animate={{
+              opacity: settingsOpen ? 0 : 1,
+              transitionEnd: { visibility: settingsOpen ? 'hidden' : 'visible' },
+            }}
+            transition={fade}
+            style={{ display: 'flex', flexDirection: 'column', gap: 40 }}
+          >
+            <h1
+              style={{
+                fontFamily: '"Literata", Georgia, serif',
+                fontSize: headingSize,
+                fontWeight: 300,
+                lineHeight: headingLineHeight,
+                color: 'var(--text-dark)',
+                margin: 0,
+                // First line clears the absolute thumbnail so the name reads inline after it.
+                textIndent: thumb + THUMB_GAP,
+              }}
+            >
+              Ben Yamron is a product designer, currently designing AI for scientific research at {L('consensus')}
+            </h1>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 22, ...bodyStyle, fontSize: bodySize }}>
+              <p style={{ margin: 0 }}>
+                Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at {L('mochi-health')}.
+              </p>
+              <p style={{ margin: 0 }}>
+                On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
+                bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and {L('x')}.
+              </p>
+              <p style={{ margin: 0 }}>
+                I studied Human Centered Design at the University of Washington. I worked with {L('uw')}, {L('sony')},
+                and the {L('cip')}. I learned how to think at Middlebury College.
+              </p>
+            </div>
+          </motion.div>
+
+          <AnimatePresence>
+            {settingsOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
+                transition={fade}
+                style={{ position: 'absolute', top: thumb + 2 + 28, left: 0, right: 0 }}
+              >
+                <ProtoSettingsPanel />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </motion.main>
   )
