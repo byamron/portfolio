@@ -30,6 +30,8 @@ export const protoEntries: ProtoEntry[] = [
   { id: 'x', label: 'X', href: 'https://x.com/benyamron', media: { type: 'image', src: '/images/preview-x.png' }, aspect: 1.602 },
 
   // — Case studies (morph transition) —
+  { id: 'mochi-subscriptions', label: 'patient experiences', media: { type: 'video', src: '/images/preview-mochi-subs.mp4' }, aspect: 0.748, blurb: 'Mochi Health — rebuilding billing so charges only trigger on shipment.' },
+  { id: 'mochi-ai-tooling', label: 'internal tools', media: { type: 'video', src: '/images/preview-mochi-tooling.mp4' }, aspect: 1.333, blurb: 'Mochi Health — AI tools that know how the product works.' },
   { id: 'flow', label: 'Flow', media: { type: 'video', src: '/images/preview-flow.mp4' }, aspect: 1.333, blurb: 'Flow — designing trust into agentic coding.' },
   { id: 'distill', label: 'Distill', media: { type: 'video', src: '/images/preview-health-tracker.mp4' }, aspect: 0.75, blurb: 'Distill — a health tracker that leads with insight, not dashboards.' },
   { id: 'trio', label: 'Trio', media: { type: 'video', src: '/images/preview-todo-priority.mp4' }, aspect: 0.75, blurb: 'Trio — a todo list for focus and prioritization.' },
