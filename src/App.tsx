@@ -10,6 +10,7 @@ import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
 import { RightColumn } from '@/components/RightColumn'
 import { Layout } from '@/components/Layout'
+import { ContributionStrip } from '@/components/ContributionStrip'
 import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
 import { NotFound } from '@/components/NotFound'
@@ -36,7 +37,7 @@ function AppContent() {
         </>
       )}
       <Routes>
-        <Route path="/" element={<Layout />} />
+        <Route path="/" element={<><Layout /><ContributionStrip /></>} />
         <Route path="/project/:slug" element={<CaseStudyPage />} />
         <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
         <Route path="/playground/*" element={<Suspense fallback={null}><PlaygroundRoutes /></Suspense>} />

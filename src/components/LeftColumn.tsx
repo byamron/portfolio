@@ -7,7 +7,6 @@ import { HeroTitle } from '@/components/HeroTitle'
 import { ProjectLink } from '@/components/ProjectLink'
 import { AboutSection } from '@/components/AboutSection'
 import { SignatureAnimation } from '@/components/SignatureAnimation'
-import { ContributionHeatmap } from '@/components/ContributionHeatmap'
 import { sections } from '@/data/projects'
 import { useTypography } from '@/contexts/TypographyContext'
 
@@ -120,11 +119,6 @@ export function LeftColumn({ fullWidth }: LeftColumnProps) {
                 {section.context.map((text, j) => (
                   <p key={j} style={{ ...narrativeStyle, marginBottom: 12 }}>{text}</p>
                 ))}
-                {i === 1 && (
-                  <div style={{ marginBottom: 12 }}>
-                    <ContributionHeatmap displayMode="collapsed" vizGap={16} sparkPos="right" collapseTransition="drawer" />
-                  </div>
-                )}
                 {section.projects.map(proj => (
                   <ProjectLink key={proj.id} project={proj} twoLine statusGap={8} subtitleSize="var(--text-size-caption)" nonLinkUnderline="dotted" titleSubGap={6} />
                 ))}

@@ -2,6 +2,18 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-08-20 — A bare "Continue" after a session-limit cutoff needs the transcript checked, not guessed
+
+**What happened:** This session started work on the contribution-strip feature inside a git worktree (`.claude/worktrees/contribution-strip-prototype`), got partway through (utils module done, component started), and hit the session token/time limit. On resumption, the shell's cwd had reset to the main portfolio checkout instead of the worktree, and a plain "Continue" was answered by picking up a *different*, unrelated in-progress thread (a DialKit tuning-panel prototype on `simplified-home-prototype`) purely because it was the largest/most-recent transcript file visible from that cwd — several turns were spent debugging that unrelated thread's dev-server link before Ben corrected the mistake.
+
+**Root cause:** Claude Code keys transcript files by working directory, so one logical session can be split across multiple `.jsonl` files under different `~/.claude/projects/<cwd>/` folders if the cwd changes mid-session (e.g. via `EnterWorktree`/`ExitWorktree`). Resuming from a fresh cwd only surfaces the transcript for *that* cwd — the worktree-scoped transcript with the actual task history is invisible unless you go looking for it.
+
+**Lesson learned:** On a bare "Continue" (or any resumption after a cutoff) with no other context, don't assume the most recent/largest transcript in the current project folder is the right one. Check `~/.claude/projects/` for sibling folders keyed by paths under the current repo (worktrees, nested checkouts) — the session ID is the same across split files, so `grep -l <session-id>` across `~/.claude/projects/*/` finds every fragment. Read the *last* substantive messages of each candidate before picking which thread to resume.
+
+**How to apply:** Treat cwd-based transcript splitting as a standing risk whenever `EnterWorktree`/`ExitWorktree` is used mid-session. When genuinely unsure which thread "Continue" refers to, say so and ask rather than silently picking the largest file.
+
+---
+
 ## 2026-07-22 — The deploy gate is `vite build`, not `npm run build`; check submodule init before calling a build broken
 
 **What happened:** During release review, `npm run build` failed on a missing `ui-playground/.../SlideUnlock` import, which I flagged for several turns as a possible release blocker. Two things resolved it: (1) `ui-playground` is a **git submodule** not initialized in the Conductor worktree (so its files were absent locally); (2) the deploy workflow runs **`npx vite build`** (`.github/workflows/deploy.yml`), not `npm run build` — so `tsc -b` never runs in CI, and the submodule's TypeScript errors never gate the deploy (5 recent deploys all succeeded).

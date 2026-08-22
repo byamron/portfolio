@@ -2,6 +2,25 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-08-20 — Contribution strip: replace the GitHub-grid heatmap with a scrollable timeline
+
+**Branch:** `worktree-contribution-strip-prototype`, in a git worktree at `.claude/worktrees/contribution-strip-prototype` (isolated from the main checkout on purpose — see `core-docs/contribution-strip-spec.md` for the full design rationale and reference prototype).
+
+**Summary:** Replaced `ContributionHeatmap.tsx`'s 7×52 grid (the single most recognizable — and most "pasted-in GitHub screenshot"-reading — widget on the page) with a full-bleed, single-row scrollable strip: same squares, same colour scale, unrolled into a chronological line with today pinned to the right edge. Implemented per a pre-settled spec (design finalized in a reference HTML prototype, all values final going in).
+
+- **`src/utils/contributions.ts`** (new) — `contribFill`/`formatDate`/`getTooltipText` moved here verbatim from the old component; added `buildContributionDays()`, a calendar-year-to-date flat array (replacing the old Jan-1-aligned grid-with-padding model), with gap-filling so today is always the last entry even when the daily fetch lags.
+- **`src/components/ContributionStrip.tsx`** (new) — title row (count chip · GitHub link · jump-to-today arrow) + full-bleed scroller (SVG rects, hidden native scrollbar) + a persistent tooltip. The hover selection is the site's glass pill, ported from `setupControlPill()` in `SidebarThemeControls.tsx` (rAF loop writing `transform` directly to a ref'd DOM node — deliberately not React state or Framer Motion, to avoid a 60fps re-render). Tooltip uses the same travel physics, sliding and resizing rather than re-rendering. Keyboard model: focus → today, ←/→ ±1 day, ↑/↓ ±1 week, Esc clears; a live region announces the focused day. Jump-to-today does a hand-rolled ease-out-quint scroll tween (not `scrollTo({behavior:'smooth'})`) so the curve matches the site's other "flick" motion.
+- **Placement** — moved out of `LeftColumn`'s two-column content (where the old heatmap lived, `displayMode="collapsed"`) to page level: `App.tsx` renders `<ContributionStrip />` as a sibling of `<Layout />` on the `/` route only, since the strip is full-bleed and doesn't belong inside the constrained column.
+- **`CustomCursor.tsx`** — the heatmap cursor-snap logic hard-coded a 7-row grid (`CELL_STEP=12`, `data-week`/`data-day` lookup) that has no equivalent in a single-row strip. Rewrote the gap-fallback branch to the strip's real geometry (`EDGE=16`, `STEP=18`) and a `data-index` lookup — this would have silently broken cursor snapping if left as-is (flagged explicitly in the spec).
+- **Deleted `ContributionHeatmap.tsx`** (~964 lines) — the 8 `displayMode` variants, the weekly sparkline, and the drawer/scatter/crossfade collapse transitions all go with it; the strip needed none of it.
+- **Scrollbar hiding** — `scrollbar-width: none` alone doesn't hide the scrollbar in Chrome/Safari; added a `.contribution-strip-scroll::-webkit-scrollbar { display: none }` rule to `globals.css` (same pattern as the existing `.sidebar-scroll` rule) since the jump arrow is the intended scroll affordance, not a visible scrollbar.
+
+**Verification:** `tsc -b` clean, `vitest` 72/72 (the ported `contribFill`/`formatDate`/`getTooltipText` tests pass unchanged against the new import path — confirms the port is behaviorally identical), `vite build` clean (after `git submodule update --init` for `ui-playground` — feedback.md 2026-07-22). Headless-Chrome DOM check confirms real data renders (`aria-label="Daily GitHub contributions in 2026: 3064 total across 233 days..."`, 233 day rects + today ring). Per the spec's own verification note, the motion itself (pill travel, tooltip slide, scroll tween) is a direct port of shipping physics but wants a human eye — `requestAnimationFrame` doesn't fire in headless Chrome, so it's unverified by observation.
+
+**Not yet done:** a session interruption mid-implementation (session-limit cutoff, then a continuation that briefly picked up the wrong thread — see feedback.md) meant this landed across two sittings. Still open: Ben's live-browser review of the motion feel, and a decision on whether the reference prototype files (`public/prototypes/contribution-strip*.html`) ship or get removed before merge.
+
+---
+
 ## 2026-07-31 — Add font-guesser game: home card, in-repo source, descender fix
 
 **Branch:** `add-font-guesser-card` (→ `next-update`).

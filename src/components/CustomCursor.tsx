@@ -369,28 +369,24 @@ export function CustomCursor() {
           if (target?.hasAttribute('data-date')) {
             cellRect = (target as Element).getBoundingClientRect()
           } else {
-            // In gap — find nearest cell via SVG coordinate math
+            // In the scroller's hit-padding — find the nearest cell via SVG coordinate math
             const svg = (target as Element)?.closest?.('svg')
               ?? document.querySelector('[data-glass-break] svg')
             if (svg) {
               const ctm = (svg as SVGSVGElement).getScreenCTM()
               if (ctm) {
                 const svgX = (e.clientX - ctm.e) / ctm.a
-                const svgY = (e.clientY - ctm.f) / ctm.d
-                // Constants match ContributionHeatmap: CELL_STEP=12, CELL_SIZE=10 (labels now in HTML, grid starts at y=0)
-                if (svgY >= 0) {
-                  const w = Math.max(0, Math.round((svgX - 5) / 12))
-                  const d = Math.max(0, Math.min(6, Math.round((svgY - 5) / 12)))
-                  const nearestRect = svg.querySelector(`rect[data-week="${w}"][data-day="${d}"]`)
-                  if (nearestRect) {
-                    cellRect = nearestRect.getBoundingClientRect()
-                  } else {
-                    // Past grid bounds — clear snap so cursor reverts to default
-                    heatmapSnapRef.current = null
-                    if (reducedMotion.current) circleRef.current.style.transition = 'none'
-                    circleRef.current.style.transform = 'scale(1)'
-                    circleRef.current.style.borderRadius = '50%'
-                  }
+                // Constants match ContributionStrip: EDGE=16, STEP=18 (single row, index by x only)
+                const i = Math.max(0, Math.round((svgX - 16) / 18))
+                const nearestRect = svg.querySelector(`rect[data-index="${i}"]`)
+                if (nearestRect) {
+                  cellRect = nearestRect.getBoundingClientRect()
+                } else {
+                  // Past the row bounds — clear snap so cursor reverts to default
+                  heatmapSnapRef.current = null
+                  if (reducedMotion.current) circleRef.current.style.transition = 'none'
+                  circleRef.current.style.transform = 'scale(1)'
+                  circleRef.current.style.borderRadius = '50%'
                 }
               }
             }

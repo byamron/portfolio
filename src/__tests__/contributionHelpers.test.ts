@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contribFill, formatDate, getTooltipText } from '@/components/ContributionHeatmap'
+import { contribFill, formatDate, getTooltipText } from '@/utils/contributions'
 
 describe('contribFill', () => {
   it('returns an hsla() string', () => {
