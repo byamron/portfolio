@@ -40,6 +40,17 @@ export function useTypeDials() {
   return { ...t, thumb: Math.round(t.headingSize * t.headingLineHeight) }
 }
 
+/** Settings panel: portrait-swatch size, border ring, control scale. */
+export function useSettingsDials() {
+  const config = useStableConfig({
+    swatchSize: [56, 36, 100, 2],
+    borderWidth: [3, 1, 8, 0.5],
+    controlSize: [48, 36, 64, 2],
+    iconSize: [24, 18, 36, 2],
+  } satisfies DialConfig)
+  return useDialKit('Settings panel', config, { id: 'proto-settings' })
+}
+
 /** Hover preview: size + entrance/exit feel + the click morph. */
 export function usePreviewDials() {
   const config = useStableConfig({
