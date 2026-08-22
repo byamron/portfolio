@@ -15,14 +15,18 @@ const PILL_PAD = 2
 const PILL_RADIUS = RADIUS + PILL_PAD
 const TIP_OFFSET = 8
 
-const ACCENT_HUES: Record<string, number> = {
-  table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90,
-}
-
 const JUMP_EASE = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 
 function easeOutQuint(t: number): number {
   return 1 - Math.pow(1 - t, 5)
+}
+
+// Reads the live --accent-hue custom property rather than a hardcoded table —
+// matches useGlassHighlight/SidebarThemeControls/FlockX/CustomCursor/CursorCompanion,
+// so a retuned hue in theme.css can't silently drift out of sync here.
+function readAccentHue(): number {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--accent-hue').trim()
+  return parseFloat(raw) || 34
 }
 
 interface Layout {
@@ -31,13 +35,23 @@ interface Layout {
 }
 
 export function ContributionStrip() {
-  const { accentColor, bgIntensity, resolvedAppearance } = useTheme()
+  const { bgIntensity, resolvedAppearance } = useTheme()
   const { setHoveringLink } = useHover()
   const prefersReducedMotion = !!useReducedMotion()
-  const hue = ACCENT_HUES[accentColor] ?? 34
+  const [hue, setHue] = useState(readAccentHue)
   const isDark = resolvedAppearance === 'dark'
 
-  const { days, total, max, year } = useMemo(() => buildContributionDays(), [])
+  // ThemeContext sets data-accent then dispatches 'theme-changed' — listening for
+  // the event (rather than re-reading on an accentColor prop change) guarantees
+  // the DOM attribute is already updated by the time we read it, regardless of
+  // React effect ordering between this component and ThemeProvider.
+  useEffect(() => {
+    const onThemeChanged = () => setHue(readAccentHue())
+    document.addEventListener('theme-changed', onThemeChanged)
+    return () => document.removeEventListener('theme-changed', onThemeChanged)
+  }, [])
+
+  const { days, total, max, year, today } = useMemo(() => buildContributionDays(), [])
   const n = days.length
 
   const stripRef = useRef<HTMLDivElement>(null)
@@ -217,7 +231,7 @@ export function ContributionStrip() {
     const mark = layout.marks[i]
     if (!tipEl || !scroller || !strip || !day || mark === undefined) return
 
-    const text = getTooltipText(day.date, day.contributionCount)
+    const text = getTooltipText(day.date, day.contributionCount, today)
     tipEl.textContent = text
     tipEl.style.width = 'auto'
     const w = tipEl.offsetWidth
@@ -244,7 +258,7 @@ export function ContributionStrip() {
       if (tipRaf.current === null) tipRaf.current = requestAnimationFrame(tipLoop)
     }
     if (liveRef.current) liveRef.current.textContent = text
-  }, [days, layout, prefersReducedMotion, applyTip, tipLoop])
+  }, [days, layout, today, prefersReducedMotion, applyTip, tipLoop])
 
   const hideTooltip = useCallback(() => {
     if (tipRaf.current !== null) { cancelAnimationFrame(tipRaf.current); tipRaf.current = null }
@@ -371,7 +385,7 @@ export function ContributionStrip() {
   return (
     <section
       ref={stripRef}
-      style={{ marginTop: 64, paddingBottom: GAP === undefined ? 0 : 16 - HIT_PAD, position: 'relative' }}
+      style={{ marginTop: 64, paddingBottom: 16 - HIT_PAD, position: 'relative' }}
     >
       <div
         style={{

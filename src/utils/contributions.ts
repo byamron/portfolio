@@ -50,9 +50,17 @@ export function formatDate(dateStr: string): string {
   return `${month} ${day}${suffix}`
 }
 
-export function getTooltipText(date: string, count: number): string {
-  const now = new Date()
-  const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
+/**
+ * `today` defaults to a fresh read, but callers holding a frozen value (e.g.
+ * `buildContributionDays()`'s `today`, computed once at mount) should pass it
+ * explicitly — otherwise a session left open across a midnight boundary can
+ * have the last square's date silently stop matching a re-computed "today".
+ */
+export function getTooltipText(date: string, count: number, today?: string): string {
+  if (today === undefined) {
+    const now = new Date()
+    today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
+  }
   if (date === today) return `Today, ${formatDate(date)} — contributions in progress`
   if (date > today) return 'No contributions (yet)'
   return `${count} contribution${count !== 1 ? 's' : ''} on ${formatDate(date)}`
