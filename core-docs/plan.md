@@ -624,6 +624,18 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## Contribution strip needs re-applying once the new home layout lands (follow-up)
+
+Landed 2026-08-20 on `worktree-contribution-strip-prototype` (not yet merged here — see `core-docs/history.md` and `core-docs/contribution-strip-spec.md` on that branch): the GitHub-grid heatmap was replaced with a full-bleed scrollable strip, wired in at page level as a sibling of `Layout` on the `/` route.
+
+**In parallel**, a separate workstream (`simplified-home-prototype`, prototyped under `/new`) is redesigning the home page itself — a single centered prose column replacing the current two-column `Layout`/`LeftColumn`/`RightColumn` structure. That work is not yet the live home page. It's now pushed to `origin/simplified-home-prototype` (as of 2026-08-22, HEAD `b92fde1`) — fetch/branch from there directly rather than assuming it's sandbox-local; it may have moved further since.
+
+- [ ] When the new home layout is ready to become the live `/` route, re-apply the contribution strip to it: the current wiring (`ContributionStrip` as a page-level sibling of `Layout`, full-bleed edge-to-edge) assumes the two-column layout's document flow and won't carry over automatically to the prose-column layout.
+- [ ] Re-check placement/spacing against the new layout's rhythm (the strip's `marginTop: 64` and 40px title-row margin were tuned against the current `Layout`'s spacing scale, not the prototype's).
+- [ ] The strip's implementation (`ContributionStrip.tsx`, `contributions.ts`) is layout-agnostic otherwise — no data or interaction changes expected, just the mount point and surrounding spacing.
+
+---
+
 ## Reference
 
 The original Framer components have been removed. All visual and interaction specifications are now fully documented in:
