@@ -10,11 +10,6 @@ const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
-// The site's one intentional overshoot (design-language.md § Imagery — "Spring
-// press"), reserved for direct user-initiated press actions. Reused here for
-// the settings-panel controls per the push-further review.
-const SPRING_PRESS = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-
 const bodyStyle: React.CSSProperties = {
   fontFamily: '"Onest", system-ui, sans-serif',
   fontSize: 'var(--text-size-body)',
@@ -208,7 +203,7 @@ export function ProtoHome() {
                 transition={fade}
                 style={{ position: 'absolute', top: thumb + 2 + 28, left: 0, right: 0 }}
               >
-                <ProtoSettingsPanel springPress={SPRING_PRESS} />
+                <ProtoSettingsPanel />
               </motion.div>
             )}
           </AnimatePresence>

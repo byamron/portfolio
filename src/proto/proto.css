@@ -1,3 +1,6 @@
+/* Hide DialKit's preset/version dropdown — adds UI noise during prototyping. */
+.dialkit-preset-row { display: none !important; }
+
 /* Inline prose links: underline on the label span only (never under the ↗). */
 [data-proto-link] span {
   text-decoration: underline;
