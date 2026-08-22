@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useTheme } from '@/contexts/ThemeContext'
+import { useTheme, type AccentColor } from '@/contexts/ThemeContext'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
@@ -35,7 +35,7 @@ const backButtonStyle: React.CSSProperties = {
 }
 
 const THUMB_GAP = 10
-const BACK_BUTTON_OFFSET = 56 // back button height (40) + gap (16), floated above the anchor
+const BACK_BUTTON_OFFSET = 56
 
 export function ProtoHome() {
   const reducedMotion = useReducedMotion()
@@ -46,8 +46,22 @@ export function ProtoHome() {
   const [thumbHovered, setThumbHovered] = useState(false)
   const thumbRef = useRef<HTMLButtonElement>(null)
 
+  // Proposal 8: preview accent on hover — temporarily show a different portrait
+  const [previewAccent, setPreviewAccent] = useState<AccentColor | null>(null)
+  // Proposal 6: glow pulse on intensity slider release
+  const [glowPulse, setGlowPulse] = useState(false)
+  useEffect(() => {
+    const handler = () => {
+      setGlowPulse(true)
+      setTimeout(() => setGlowPulse(false), 500)
+    }
+    window.addEventListener('proto-glow-pulse', handler)
+    return () => window.removeEventListener('proto-glow-pulse', handler)
+  }, [])
+
   const closeSettings = () => {
     setSettingsOpen(false)
+    setPreviewAccent(null)
     thumbRef.current?.focus()
   }
 
@@ -59,21 +73,19 @@ export function ProtoHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsOpen])
 
+  const handleHoverAccent = useCallback((accent: AccentColor | null) => {
+    setPreviewAccent(accent)
+  }, [])
+
   const fade = { duration: reducedMotion ? 0 : 0.24, ease: EASE }
 
-  // Same atmospheric two-channel formula as the sidebar's intensity trigger dot
-  // (SidebarThemeControls.tsx: opacity lerp(0.45,1,t) + glow lerp(0,14,t)).
-  // Applying the opacity channel to the photo itself would fade Ben's face in
-  // and out while dragging the slider, so it's redirected to the border's
-  // alpha instead — same two-channel read (glow intensity + frame presence),
-  // without dimming the image.
   const glowT = lerp(0.45, 1.0, bgIntensity)
-  const glow = bgIntensity > 0.01
-    ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round(lerp(0, 0.5, bgIntensity) * 100)}%, transparent)`
+  const pulseBoost = glowPulse ? 10 : 0
+  const baseSpread = lerp(0, 14, bgIntensity) + pulseBoost
+  const baseAlpha = lerp(0, 0.5, bgIntensity) + (glowPulse ? 0.15 : 0)
+  const glow = bgIntensity > 0.01 || glowPulse
+    ? `0 0 ${(thumbHovered ? baseSpread + 6 : baseSpread).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round((thumbHovered ? baseAlpha + 0.12 : baseAlpha) * 100)}%, transparent)`
     : 'none'
-  const hoverGlow = thumbHovered
-    ? `0 0 ${(lerp(0, 14, bgIntensity) + 6).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round((lerp(0, 0.5, bgIntensity) + 0.12) * 100)}%, transparent)`
-    : glow
 
   return (
     <motion.main
@@ -92,12 +104,6 @@ export function ProtoHome() {
       }}
     >
       <div style={{ maxWidth: 528, width: '100%', marginBlock: 'auto' }}>
-        {/*
-          Thumbnail + back button + prose + panel all anchor to this single box.
-          Its height is driven only by the prose (panel is absolute), so opening
-          the panel never changes this box's height — and therefore never moves
-          the thumbnail, which stays screen-fixed the way round 3 established.
-        */}
         <div style={{ position: 'relative' }}>
           <button
             ref={thumbRef}
@@ -121,25 +127,38 @@ export function ProtoHome() {
               overflow: 'hidden',
               cursor: 'pointer',
               background: 'transparent',
-              boxShadow: hoverGlow,
+              boxShadow: glow,
               transform: thumbHovered && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
-              transition: 'box-shadow 300ms ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out',
+              transition: `box-shadow ${glowPulse ? '500ms' : '300ms'} ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out`,
               zIndex: 2,
             }}
           >
-            <img
-              src={`/images/portrait-square-${accentColor}.jpg`}
-              alt="Ben Yamron"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+            {/* Proposal 8: cross-fade between the active portrait and the hovered-preview portrait */}
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+              <img
+                src={`/images/portrait-square-${accentColor}.jpg`}
+                alt="Ben Yamron"
+                style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                  opacity: previewAccent && previewAccent !== accentColor ? 0 : 1,
+                  transition: 'opacity 300ms ease-in-out',
+                }}
+              />
+              {previewAccent && previewAccent !== accentColor && (
+                <img
+                  src={`/images/portrait-square-${previewAccent}.jpg`}
+                  alt={`Preview: ${previewAccent}`}
+                  style={{
+                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                    opacity: 1,
+                    transition: 'opacity 300ms ease-in-out',
+                  }}
+                />
+              )}
+            </div>
           </button>
 
-          {/*
-            Back button — visually ABOVE the thumbnail (negative-offset absolute,
-            never in normal flow, so it can't push the anchor down) and AFTER the
-            thumbnail in DOM order, so Tab from the thumbnail reaches it before
-            the panel controls below.
-          */}
+          {/* Back button — after thumbnail in DOM for tab order, positioned above it visually */}
           <AnimatePresence>
             {settingsOpen && (
               <motion.div
@@ -172,7 +191,6 @@ export function ProtoHome() {
                 lineHeight: headingLineHeight,
                 color: 'var(--text-dark)',
                 margin: 0,
-                // First line clears the absolute thumbnail so the name reads inline after it.
                 textIndent: thumb + THUMB_GAP,
               }}
             >
@@ -203,7 +221,7 @@ export function ProtoHome() {
                 transition={fade}
                 style={{ position: 'absolute', top: thumb + 2 + 28, left: 0, right: 0 }}
               >
-                <ProtoSettingsPanel />
+                <ProtoSettingsPanel onHoverAccent={handleHoverAccent} />
               </motion.div>
             )}
           </AnimatePresence>

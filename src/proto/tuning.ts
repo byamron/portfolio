@@ -40,13 +40,21 @@ export function useTypeDials() {
   return { ...t, thumb: Math.round(t.headingSize * t.headingLineHeight) }
 }
 
-/** Settings panel: portrait-swatch size, border ring, control scale. */
+/** Settings panel: portrait-swatch size, border ring, control scale, experiments. */
 export function useSettingsDials() {
   const config = useStableConfig({
     swatchSize: [56, 36, 100, 2],
     borderWidth: [3, 1, 8, 0.5],
     controlSize: [48, 36, 64, 2],
     iconSize: [24, 18, 36, 2],
+    // Proposal 6: thumbnail glow pulse on intensity slider release
+    glowPulse: true,
+    // Proposal 7: spring-press with varying weight per control size
+    springPress: true,
+    pressDepthLarge: [0.96, 0.88, 1, 0.005],
+    pressDepthSmall: [0.92, 0.85, 1, 0.005],
+    // Proposal 8: portrait cross-fade on accent swatch hover
+    previewOnHover: true,
   } satisfies DialConfig)
   return useDialKit('Settings panel', config, { id: 'proto-settings' })
 }
