@@ -8,22 +8,6 @@ import { useSettingsDials } from './tuning'
 
 const SPRING_PRESS = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
 
-// Accent hues for the continuous slider — matches the site's actual accent definitions.
-const ACCENT_HUES: Record<AccentColor, number> = { table: 34, portrait: 43, sky: 204, pizza: 15, vineyard: 90 }
-const ACCENTS_ORDERED: AccentColor[] = ['pizza', 'table', 'portrait', 'vineyard', 'sky']
-const ACCENT_HUES_SORTED = ACCENTS_ORDERED.map(a => ACCENT_HUES[a])
-
-function nearestAccent(hue: number): AccentColor {
-  let best: AccentColor = ACCENTS_ORDERED[0]!
-  let bestDist = 360
-  for (const a of ACCENTS_ORDERED) {
-    const h = ACCENT_HUES[a]
-    const d = Math.min(Math.abs(hue - h), 360 - Math.abs(hue - h))
-    if (d < bestDist) { bestDist = d; best = a }
-  }
-  return best
-}
-
 function ControlButton({
   active, label, onClick, size, pressStyle, pressHandlers, children,
   onMouseEnter, onMouseLeave,
@@ -100,91 +84,6 @@ function MomentumThumb({ value, onChange, enabled }: { value: number; onChange: 
   )
 }
 
-/** Proposal 9c: continuous hue strip with detent markers at each accent's hue. */
-function ContinuousHueStrip({ activeAccent, onSelect, onHover, size }: {
-  activeAccent: AccentColor; onSelect: (a: AccentColor) => void
-  onHover: (a: AccentColor | null) => void; size: number
-}) {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [dragging, setDragging] = useState(false)
-  const activeHue = ACCENT_HUES[activeAccent]
-
-  const hueFromPointer = (clientX: number): number => {
-    if (!trackRef.current) return activeHue
-    const r = trackRef.current.getBoundingClientRect()
-    const t = Math.max(0, Math.min(1, (clientX - r.left) / r.width))
-    return t * 360
-  }
-
-  const selectFromHue = (hue: number) => {
-    onSelect(nearestAccent(hue))
-  }
-
-  // Position of the active accent on the 0–360 strip
-  const thumbT = activeHue / 360
-
-  // Build the hue gradient with stops at each accent
-  const gradient = `linear-gradient(to right, ${ACCENT_HUES_SORTED.map(h => `hsl(${h}, 50%, 55%) ${(h / 360) * 100}%`).join(', ')})`
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div
-        ref={trackRef}
-        role="slider"
-        aria-label="Accent hue"
-        aria-valuemin={0} aria-valuemax={360}
-        aria-valuenow={activeHue}
-        tabIndex={0}
-        onPointerDown={e => {
-          e.currentTarget.setPointerCapture(e.pointerId)
-          setDragging(true)
-          const nearest = nearestAccent(hueFromPointer(e.clientX))
-          onHover(nearest)
-        }}
-        onPointerMove={e => {
-          if (!e.buttons) return
-          const nearest = nearestAccent(hueFromPointer(e.clientX))
-          onHover(nearest)
-        }}
-        onPointerUp={e => {
-          setDragging(false)
-          selectFromHue(hueFromPointer(e.clientX))
-          onHover(null)
-        }}
-        onKeyDown={e => {
-          const idx = ACCENTS_ORDERED.indexOf(activeAccent)
-          if (e.key === 'ArrowRight' && idx < ACCENTS_ORDERED.length - 1) onSelect(ACCENTS_ORDERED[idx + 1]!)
-          if (e.key === 'ArrowLeft' && idx > 0) onSelect(ACCENTS_ORDERED[idx - 1]!)
-        }}
-        style={{
-          position: 'relative', height: size * 0.4, borderRadius: size * 0.08,
-          background: gradient, cursor: 'grab', touchAction: 'none', userSelect: 'none',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Detent markers at each accent position */}
-        {ACCENTS_ORDERED.map(a => (
-          <div key={a} style={{
-            position: 'absolute', top: 0, bottom: 0, left: `${(ACCENT_HUES[a] / 360) * 100}%`,
-            width: 2, background: 'rgba(255,255,255,0.4)', transform: 'translateX(-1px)',
-          }} />
-        ))}
-        {/* Thumb */}
-        <div style={{
-          position: 'absolute', top: '50%', left: `${thumbT * 100}%`,
-          width: size * 0.35, height: size * 0.35,
-          borderRadius: '50%',
-          background: `var(--swatch)`,
-          border: '2px solid rgba(255,255,255,0.7)',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-          transform: `translate(-50%, -50%) scale(${dragging ? 1.15 : 1})`,
-          transition: dragging ? 'none' : 'left 300ms ease-out, transform 200ms ease',
-        }} />
-      </div>
-    </div>
-  )
-}
-
 const APPEARANCE: { mode: AppearanceMode; label: string; Icon: typeof Monitor }[] = [
   { mode: 'system', label: 'System theme', Icon: Monitor },
   { mode: 'light', label: 'Light theme', Icon: Sun },
@@ -205,7 +104,6 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
   const cursorGroupRef = useRef<HTMLDivElement>(null)
   const nullRef = useRef<HTMLDivElement>(null)
   const useGlass = (dials as Record<string, unknown>).glassPill as boolean
-  const continuousHue = (dials as Record<string, unknown>).continuousHue as boolean
 
   const glassCfg = (radius: number, k: number, c: number) => ({
     cardSelector: '[data-settings-card]', borderRadius: radius, clearDelay: 120,
@@ -238,35 +136,24 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Row 1: accent selection + intensity strip */}
+      {/* Row 1: accent swatches + intensity strip */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-        {continuousHue ? (
-          <div style={{ flex: 1 }}>
-            <ContinuousHueStrip
-              activeAccent={accentColor}
-              onSelect={setAccentColor}
-              onHover={a => onHoverAccent?.(a)}
+        <div ref={accentGroupRef} style={{ display: 'flex', gap: 6, position: 'relative' }}>
+          {VALID_ACCENTS.map((accent: AccentColor) => (
+            <ControlButton
+              key={accent} active={accent === accentColor}
+              label={`${accent} accent`}
+              onClick={() => setAccentColor(accent)}
               size={dials.controlSize}
-            />
-          </div>
-        ) : (
-          <div ref={accentGroupRef} style={{ display: 'flex', gap: 6, position: 'relative' }}>
-            {VALID_ACCENTS.map((accent: AccentColor) => (
-              <ControlButton
-                key={accent} active={accent === accentColor}
-                label={`${accent} accent`}
-                onClick={() => setAccentColor(accent)}
-                size={dials.controlSize}
-                pressStyle={mkPressStyle(`accent-${accent}`)}
-                pressHandlers={mkPressHandlers(`accent-${accent}`)}
-                onMouseEnter={dials.previewOnHover ? () => onHoverAccent?.(accent) : undefined}
-                onMouseLeave={dials.previewOnHover ? () => onHoverAccent?.(null) : undefined}
-              >
-                <div style={{ width: swatchInner, height: swatchInner, borderRadius: dials.controlSize * 0.14, background: `var(--swatch-${accent})` }} />
-              </ControlButton>
-            ))}
-          </div>
-        )}
+              pressStyle={mkPressStyle(`accent-${accent}`)}
+              pressHandlers={mkPressHandlers(`accent-${accent}`)}
+              onMouseEnter={dials.previewOnHover ? () => onHoverAccent?.(accent) : undefined}
+              onMouseLeave={dials.previewOnHover ? () => onHoverAccent?.(null) : undefined}
+            >
+              <div style={{ width: swatchInner, height: swatchInner, borderRadius: dials.controlSize * 0.14, background: `var(--swatch-${accent})` }} />
+            </ControlButton>
+          ))}
+        </div>
 
         <MomentumThumb value={bgIntensity} onChange={setBgIntensity} enabled={dials.momentumThumb} />
       </div>

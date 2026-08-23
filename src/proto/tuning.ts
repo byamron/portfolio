@@ -52,8 +52,6 @@ export function useSettingsDials() {
     iconSpringC: [30, 15, 50, 1],
     leanOnHover: true,
     edgePull: true,
-    // Proposal 9c: continuous hue slider with portrait detents (off by default)
-    continuousHue: false,
   } satisfies DialConfig)
   return useDialKit('Settings panel', config, { id: 'proto-settings' })
 }
