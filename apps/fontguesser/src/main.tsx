@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
 import './index.css'
 import App from './App.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')!).render(
       is the right split here.
     */}
     <MotionConfig reducedMotion="user">
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </MotionConfig>
   </StrictMode>,
 )

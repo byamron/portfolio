@@ -85,64 +85,87 @@ const BLOCKS: BlockSpec[] = [
 ]
 
 /**
- * The fallback ascender-to-descender extent, in hundredths of an em.
+ * A face's vertical metrics, in ems (so they scale to any size). We keep both
+ * the face's *declared* box (`fontBoundingBox*`, the room the line box reserves)
+ * and its *actual* ink reach (`actualBoundingBox*`, how far real glyphs draw):
+ * clipping happens precisely when the ink overshoots the declared box by more
+ * than the line's leading gives back.
  *
- * Roughly 1.3em covers a typical text face, but it badly under-covers script
- * and display faces, whose descenders can reach past 1.8em — those are exactly
- * the ones that were clipping. So this is only the value we use before the real
- * metrics are available, or when the platform can't report them; otherwise we
- * measure the actual face (see `faceExtent`).
+ * `fontBoundingBox` alone — what the previous fix measured — is not enough: many
+ * faces, especially script and display, draw descenders well past their own
+ * declared descent, so a reserve based on the declared box still shears them.
  */
-const SAFE_LEADING = 130
+type FaceMetrics = { fAsc: number; fDesc: number; aAsc: number; aDesc: number }
 
-// Measured extent per family, in hundredths of an em, cached so the canvas
-// probe runs once per face rather than once per render.
-const extentCache = new Map<string, number>()
+// Before the real face is loaded, reserve generously rather than measuring a
+// system fallback — an over-reserve is invisible slack, an under-reserve clips.
+const FALLBACK_METRICS: FaceMetrics = { fAsc: 0.95, fDesc: 0.35, aAsc: 1.0, aDesc: 0.45 }
+
+// Measured metrics per family, cached so the canvas probe runs once per face.
+const metricsCache = new Map<string, FaceMetrics>()
 let probeCanvas: HTMLCanvasElement | null = null
 
 /**
- * The face's own ascender-to-descender extent as a leading (hundredths of em),
- * measured from its declared font metrics. A line box tighter than this lets
- * glyphs spill outside the content box, where `overflow: hidden` shears them.
+ * The face's declared box and actual ink reach, in ems, measured off canvas.
+ * Returns the fallback *without* caching until the face is genuinely loaded, so
+ * a later call (once `state` is ready) measures the real thing.
  */
-function faceExtent(family: string): number {
-  const cached = extentCache.get(family)
-  if (cached !== undefined) return cached
+function faceMetrics(family: string): FaceMetrics {
+  const cached = metricsCache.get(family)
+  if (cached) return cached
 
-  // Before the real face is loaded the canvas falls back to a system font and
-  // reports the wrong extent. Return the flat assumption *without* caching, so a
-  // later call (after `document.fonts.ready`) measures the real thing.
   if (typeof document === 'undefined' || !document.fonts?.check(`100px "${family}"`)) {
-    return SAFE_LEADING
+    return FALLBACK_METRICS
   }
 
-  let extent = SAFE_LEADING
   try {
     probeCanvas ??= document.createElement('canvas')
     const ctx = probeCanvas.getContext('2d')
-    if (ctx) {
-      // Probe at 100px so the returned pixel metrics read directly as hundredths
-      // of an em. `fontBoundingBox*` is the face's own declared extent — the
-      // string only satisfies the API — so it's independent of the specimen text.
-      ctx.font = `400 100px "${family}", serif`
-      const { fontBoundingBoxAscent: asc, fontBoundingBoxDescent: desc } = ctx.measureText('Hg')
-      if (typeof asc === 'number' && typeof desc === 'number' && asc + desc > 0) {
-        // Never reserve *less* than the flat assumption, and cap absurd values so
-        // one broken metric can't inflate the sheet without bound.
-        extent = Math.min(300, Math.max(SAFE_LEADING, Math.round(asc + desc)))
-      }
+    if (!ctx) return FALLBACK_METRICS
+    // Probe at 100px so pixel metrics read directly as ems (÷100). The `serif`
+    // fallback and the probe strings only satisfy the API; the box metrics are
+    // the face's own, independent of the specimen text.
+    ctx.font = `400 100px "${family}", serif`
+    const deep = ctx.measureText('gjpqyçÇµ') // deep descenders
+    const tall = ctx.measureText('HÂÊÎÔÀÉbdfhklß') // caps, tallest accents (circumflex), ascenders
+    const fAsc = deep.fontBoundingBoxAscent
+    const fDesc = deep.fontBoundingBoxDescent
+    // Platforms that don't report the box metrics (older engines) keep the
+    // generous fallback rather than a wrong measurement.
+    if (typeof fAsc !== 'number' || typeof fDesc !== 'number' || fAsc + fDesc <= 0) {
+      return FALLBACK_METRICS
     }
+    const m: FaceMetrics = {
+      fAsc: fAsc / 100,
+      fDesc: fDesc / 100,
+      aAsc: (typeof tall.actualBoundingBoxAscent === 'number' ? tall.actualBoundingBoxAscent : fAsc) / 100,
+      aDesc: (typeof deep.actualBoundingBoxDescent === 'number' ? deep.actualBoundingBoxDescent : fDesc) / 100,
+    }
+    metricsCache.set(family, m)
+    return m
   } catch {
-    // Keep the fallback — a missing canvas or metric must never break the sheet.
+    return FALLBACK_METRICS
   }
-
-  extentCache.set(family, extent)
-  return extent
 }
 
-/** The padding a line needs when its box is tighter than the face's extent. */
-function overshoot(leading: number, size: number, safe: number) {
-  return Math.max(0, (safe - leading) / 100) * size
+/**
+ * The padding a block needs so `overflow: hidden` never shears the first line's
+ * ascenders or the last line's descenders, for a given size and leading.
+ *
+ * A line box reserves `fDesc` below the baseline plus half of any extra leading;
+ * ink reaches `aDesc`. Whatever the ink has beyond what the box gives back is
+ * the overshoot the padding must cover (same reasoning, mirrored, on top). When
+ * the leading already clears the ink this is zero, so well-set faces pay nothing.
+ */
+function edgePads(m: FaceMetrics, size: number, leading: number) {
+  const half = (leading / 100 - m.fAsc - m.fDesc) / 2 // half the leading slack, in ems (may be negative)
+  // Metrics are probed at 100px and scaled, but glyph ink is non-linear across
+  // sizes (hinting), so the scaled value slightly under-predicts the rendered
+  // reach. This margin absorbs that; it only ever adds padding where the leading
+  // is already tight (e.g. the display line), so body text pays nothing.
+  const SAFETY = 0.08
+  const reserve = (ink: number, box: number) => Math.min(0.6, Math.max(0, ink - box - half + SAFETY)) * size
+  return { top: reserve(m.aAsc, m.fAsc), bottom: reserve(m.aDesc, m.fDesc) }
 }
 
 /**
@@ -251,6 +274,7 @@ export function Specimen({
                 first
                 compact={compact}
                 metricsKey={font.family}
+                fontReady={ready}
                 isActive={!compact && active === 'heading'}
                 onFocus={() => setActive('heading')}
                 onChange={(text) => patch('heading', { text })}
@@ -286,6 +310,7 @@ export function Specimen({
                   style={blocks[block.key]}
                   first={false}
                   metricsKey={font.family}
+                  fontReady={ready}
                   isActive={active === block.key}
                   onFocus={() => setActive(block.key)}
                   onChange={(text) => patch(block.key, { text })}
@@ -404,6 +429,7 @@ function Editable({
   first,
   compact,
   metricsKey,
+  fontReady,
   isActive,
   onFocus,
   onChange,
@@ -414,6 +440,8 @@ function Editable({
   compact?: boolean
   /** Changes when the face changes, so the auto-grow re-measures its metrics. */
   metricsKey: string
+  /** True once the face's regular weight is loaded — the cue to re-measure ink. */
+  fontReady: boolean
   /** The block the control rail is currently acting on. */
   isActive: boolean
   onFocus: () => void
@@ -422,9 +450,10 @@ function Editable({
   const ref = useRef<HTMLTextAreaElement>(null)
   const size = style.size
 
-  // The loaded face's real ascender-to-descender extent, so the padding below
-  // reserves the right room for descenders instead of a flat 1.3em guess.
-  const [safeLeading, setSafeLeading] = useState(() => faceExtent(metricsKey))
+  // The loaded face's real box + ink metrics, so the padding reserves exactly
+  // the room descenders and ascenders actually need instead of a flat guess.
+  const [metrics, setMetrics] = useState<FaceMetrics>(() => faceMetrics(metricsKey))
+  const pads = edgePads(metrics, size, style.leading)
 
   const fit = useCallback(() => {
     const el = ref.current
@@ -446,27 +475,28 @@ function Editable({
     style.leading,
     style.tracking,
     style.weight,
-    safeLeading,
+    metrics,
   ])
 
-  // Belt and braces for faces that finish loading outside the round's own
-  // lifecycle — a cached swap, or a stylesheet that lands late.
+  // Re-measure the face's ink whenever it becomes ready. `fontReady` is the
+  // reliable cue: the previous code leaned on `document.fonts.ready`, which — in
+  // a child that renders before the parent kicks off the font request — resolves
+  // *before* the round's face is loaded, so it measured a fallback and never
+  // corrected, leaving descenders to clip. `document.fonts.ready` stays as a
+  // backstop for cached swaps that are already ready on mount.
   useEffect(() => {
     let cancelled = false
     const sync = () => {
       if (cancelled) return
-      // Measure the real face now that it may be present, then re-fit so the
-      // auto-grow accounts for the padding the new extent reserves.
-      setSafeLeading(faceExtent(metricsKey))
+      setMetrics(faceMetrics(metricsKey))
       fit()
     }
-    // A cached face may already be loaded; otherwise wait for the load to land.
     sync()
     document.fonts?.ready.then(sync)
     return () => {
       cancelled = true
     }
-  }, [fit, metricsKey])
+  }, [fit, metricsKey, fontReady])
 
   /*
     Re-fit whenever the element's *width* changes — window resizes, and the cold
@@ -520,15 +550,14 @@ function Editable({
         fontWeight: style.weight,
         letterSpacing: `${style.tracking / 1000}em`,
         lineHeight: style.leading / 100,
-        // A line box tighter than the face's own ascender-to-descender extent
-        // lets glyphs spill outside the content box, where `overflow: hidden`
-        // shears them — the descender of a g on the last line simply vanishes.
-        // Reserve the shortfall (measured extent minus this leading) as padding,
-        // weighted downward since descenders overshoot further than ascenders.
-        // Padding is inside scrollHeight, so the auto-grow accounts for it. When
-        // the leading already clears the face's extent this is zero.
-        paddingTop: `${overshoot(style.leading, size, safeLeading) * 0.35}px`,
-        paddingBottom: `${overshoot(style.leading, size, safeLeading) * 0.65}px`,
+        // A line box tighter than the face's own ink reach lets glyphs spill
+        // outside the content box, where `overflow: hidden` shears them — the
+        // descender of a g on the last line simply vanishes. Reserve exactly the
+        // overshoot the ink has beyond the line box, top and bottom independently
+        // (see `edgePads`). Padding is inside scrollHeight, so the auto-grow
+        // accounts for it. When the leading already clears the ink this is zero.
+        paddingTop: `${pads.top}px`,
+        paddingBottom: `${pads.bottom}px`,
       }}
     />
   )

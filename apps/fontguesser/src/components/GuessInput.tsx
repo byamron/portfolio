@@ -73,7 +73,11 @@ export function GuessInput({ onGuess, disabled, used }: Props) {
       setActive((i) => (i - 1 + results.length) % results.length)
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      commit(results[active])
+      // `active` is reset to 0 by an effect after `results` changes; between a
+      // query edit and that effect it can point past the shortened list, so a
+      // committed Enter in that window would read `undefined.family` and crash.
+      const choice = results[active]
+      if (choice) commit(choice)
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setQuery('')

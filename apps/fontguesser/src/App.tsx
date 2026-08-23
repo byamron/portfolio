@@ -141,6 +141,9 @@ export default function App() {
 
   const today = useMemo(() => todayKey(), [])
   const seen = useRef(new Set<string>())
+  // The next endless face, decided when the current round ends so we can warm
+  // exactly it (not an independent random draw the player never sees).
+  const nextEndless = useRef<FontEntry | null>(null)
 
   const [font, setFont] = useState<FontEntry>(() => dailyFont(today))
   const { state: loadState, weightsReady } = useFontLoader(font)
@@ -207,16 +210,22 @@ export default function App() {
     }
   }, [store])
 
-  // Warm the next font's stylesheet while the reveal is being read.
+  // Decide the next endless face while the reveal is being read, and warm
+  // exactly it. The previous version prefetched a *separate* random draw, so the
+  // warmed stylesheet was almost never the face that Next actually showed —
+  // every round then loaded cold, and the round change sat blank on the load.
   useEffect(() => {
     if (status === 'playing') return
-    prefetchFont(randomFont(depthFor(depth), seen.current).family)
+    const nf = randomFont(depthFor(depth), seen.current)
+    nextEndless.current = nf
+    prefetchFont(nf.family)
   }, [status, depth])
 
   const startEndless = useCallback(
     (limit: number) => {
       changeRound(() => {
-        const next = randomFont(limit, seen.current)
+        const next = nextEndless.current ?? randomFont(limit, seen.current)
+        nextEndless.current = null
         seen.current.add(next.family)
         setFont(next)
         setGuesses([])
@@ -244,7 +253,8 @@ export default function App() {
           store.dailyDone === today ? (store.dailySolved ? 'solved' : 'failed') : 'playing',
         )
       } else {
-        const nf = randomFont(depthFor(depth), seen.current)
+        const nf = nextEndless.current ?? randomFont(depthFor(depth), seen.current)
+        nextEndless.current = null
         seen.current.add(nf.family)
         setFont(nf)
         setStatus('playing')
