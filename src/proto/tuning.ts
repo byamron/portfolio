@@ -47,6 +47,7 @@ export function useSettingsDials() {
     borderWidth: [3, 1, 8, 0.5],
     controlSize: [48, 36, 64, 2],
     iconSize: [24, 18, 36, 2],
+    portraitSize: [72, 48, 140, 4],
     // Experiments (toggleable)
     glassPill: true,
     glowPulse: true,

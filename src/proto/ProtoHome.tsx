@@ -4,7 +4,7 @@ import { useTheme, type AccentColor } from '@/contexts/ThemeContext'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
-import { EASE, usePageDials, useTypeDials } from './tuning'
+import { EASE, usePageDials, useSettingsDials, useTypeDials } from './tuning'
 
 const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
@@ -19,19 +19,19 @@ const bodyStyle: React.CSSProperties = {
   margin: 0,
 }
 
-// Matches the case-study back button exactly (ProtoCaseStudy.tsx).
 const backButtonStyle: React.CSSProperties = {
   width: 40,
   height: 40,
   display: 'grid',
   placeItems: 'center',
-  background: 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))',
+  background: 'transparent',
   color: 'var(--text-dark)',
   border: 'none',
   borderRadius: 8,
   cursor: 'pointer',
   fontSize: 18,
   fontFamily: '"Onest", system-ui, sans-serif',
+  opacity: 0.5,
 }
 
 const THUMB_GAP = 10
@@ -42,6 +42,7 @@ export function ProtoHome() {
   const { accentColor, bgIntensity } = useTheme()
   const { headingSize, headingLineHeight, bodySize, thumb } = useTypeDials()
   const page = usePageDials()
+  const settings = useSettingsDials()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [thumbHovered, setThumbHovered] = useState(false)
   const thumbRef = useRef<HTMLButtonElement>(null)
@@ -119,17 +120,17 @@ export function ProtoHome() {
               position: 'absolute',
               top: 2,
               left: 0,
-              width: thumb,
-              height: thumb,
+              width: settingsOpen ? settings.portraitSize : thumb,
+              height: settingsOpen ? settings.portraitSize : thumb,
               padding: 0,
               border: `1px solid color-mix(in srgb, var(--swatch) ${Math.round(glowT * 25)}%, transparent)`,
-              borderRadius: 4,
+              borderRadius: settingsOpen ? 8 : 4,
               overflow: 'hidden',
               cursor: 'pointer',
               background: 'transparent',
               boxShadow: glow,
-              transform: thumbHovered && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
-              transition: `box-shadow ${glowPulse ? '500ms' : '300ms'} ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out`,
+              transform: thumbHovered && !settingsOpen && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
+              transition: `width 300ms ease-in-out, height 300ms ease-in-out, border-radius 300ms ease-in-out, box-shadow ${glowPulse ? '500ms' : '300ms'} ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out`,
               zIndex: 2,
             }}
           >
@@ -219,7 +220,7 @@ export function ProtoHome() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
                 transition={fade}
-                style={{ position: 'absolute', top: thumb + 2 + 28, left: 0, right: 0 }}
+                style={{ position: 'absolute', top: settings.portraitSize + 2 + 20, left: 0, right: 0 }}
               >
                 <ProtoSettingsPanel onHoverAccent={handleHoverAccent} />
               </motion.div>
