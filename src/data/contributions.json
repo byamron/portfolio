@@ -1,45 +1,6 @@
 {
-  "totalContributions": 3075,
+  "totalContributions": 3088,
   "weeks": [
-    {
-      "contributionDays": [
-        {
-          "date": "2025-08-17",
-          "contributionCount": 0,
-          "level": 0
-        },
-        {
-          "date": "2025-08-18",
-          "contributionCount": 0,
-          "level": 0
-        },
-        {
-          "date": "2025-08-19",
-          "contributionCount": 0,
-          "level": 0
-        },
-        {
-          "date": "2025-08-20",
-          "contributionCount": 0,
-          "level": 0
-        },
-        {
-          "date": "2025-08-21",
-          "contributionCount": 0,
-          "level": 0
-        },
-        {
-          "date": "2025-08-22",
-          "contributionCount": 0,
-          "level": 0
-        },
-        {
-          "date": "2025-08-23",
-          "contributionCount": 0,
-          "level": 0
-        }
-      ]
-    },
     {
       "contributionDays": [
         {
@@ -2009,7 +1970,7 @@
         },
         {
           "date": "2026-08-12",
-          "contributionCount": 25,
+          "contributionCount": 31,
           "level": 2
         },
         {
@@ -2038,7 +1999,7 @@
         },
         {
           "date": "2026-08-17",
-          "contributionCount": 11,
+          "contributionCount": 14,
           "level": 1
         },
         {
@@ -2063,11 +2024,20 @@
         },
         {
           "date": "2026-08-22",
+          "contributionCount": 4,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "contributionDays": [
+        {
+          "date": "2026-08-23",
           "contributionCount": 0,
           "level": 0
         }
       ]
     }
   ],
-  "fetchedAt": "2026-08-22T14:17:18.566Z"
+  "fetchedAt": "2026-08-23T14:19:33.339Z"
 }
