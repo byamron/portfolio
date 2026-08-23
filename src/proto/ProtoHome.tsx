@@ -32,6 +32,7 @@ const backButtonStyle: React.CSSProperties = {
   fontSize: 18,
   fontFamily: '"Onest", system-ui, sans-serif',
   opacity: 0.5,
+  transition: 'opacity 160ms ease, background 160ms ease',
 }
 
 const THUMB_GAP = 10
@@ -151,7 +152,16 @@ export function ProtoHome() {
                 transition={fade}
                 style={{ position: 'absolute', top: -BACK_BUTTON_OFFSET, left: 0 }}
               >
-                <button type="button" aria-label="Back to home" onClick={closeSettings} style={backButtonStyle}>
+                <button
+                  type="button"
+                  aria-label="Back to home"
+                  onClick={closeSettings}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.background = 'transparent' }}
+                  onFocus={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }}
+                  onBlur={e => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.background = 'transparent' }}
+                  style={backButtonStyle}
+                >
                   ←
                 </button>
               </motion.div>
