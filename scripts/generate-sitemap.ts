@@ -19,6 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const staticRoutes = [
   '/',
   '/havana/privacy',
+  '/trio/privacy',
 ]
 
 // Derive project routes from the source of truth
