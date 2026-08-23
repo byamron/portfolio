@@ -48,6 +48,7 @@ export function useSettingsDials() {
     controlSize: [48, 36, 64, 2],
     iconSize: [24, 18, 36, 2],
     // Experiments (toggleable)
+    glassPill: true,
     glowPulse: true,
     springPress: true,
     pressDepthLarge: [0.96, 0.88, 1, 0.005],
