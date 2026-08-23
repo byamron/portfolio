@@ -7,23 +7,11 @@ import type { AnimationOptions } from 'framer-motion'
 
 export const EASE = [0.25, 0.46, 0.45, 0.94] as const
 
-// DialKit depends on its own nested copy of `motion` (a separate framer-motion
-// install from the app's top-level one — `npm ls motion` shows both), so its
-// TransitionConfig type is nominally distinct from the app's `AnimationOptions`
-// even though the runtime shape is what `animate()` expects. Cast at this one
-// boundary rather than fighting the cross-package type identity mismatch.
-// DialKit's `type: 'easing'` also needs renaming to Motion's `type: 'tween'`.
 function toMotionTransition(config: { type: 'spring' | 'easing'; [key: string]: unknown }): AnimationOptions {
   if (config.type === 'easing') return { ...config, type: 'tween' } as AnimationOptions
   return config as AnimationOptions
 }
 
-// DialKit's config argument must be a stable reference across renders — a
-// fresh object literal every render (the README's own inline-literal example)
-// defeats its change-detection and can loop. `useRef` pins it to the first
-// render; `satisfies` keeps the tuple/literal shape `useDialKit` needs for
-// inference (a plain generic passthrough would widen `[30, 20, 44, 1]` to
-// `number[]`, losing the slider-vs-value distinction).
 function useStableConfig<T extends DialConfig>(config: T): T {
   const ref = useRef(config)
   return ref.current
@@ -40,42 +28,32 @@ export function useTypeDials() {
   return { ...t, thumb: Math.round(t.headingSize * t.headingLineHeight) }
 }
 
-/** Settings panel: portrait-swatch size, border ring, control scale, experiments. */
+/** Settings panel layout + experiments. */
 export function useSettingsDials() {
   const config = useStableConfig({
-    swatchSize: [56, 36, 100, 2],
-    borderWidth: [3, 1, 8, 0.5],
-    controlSize: [48, 36, 64, 2],
-    iconSize: [24, 18, 36, 2],
-    portraitSize: [72, 48, 140, 4],
-    // Experiments (toggleable)
+    // Control sizes — bigger defaults for tactile feel
+    controlSize: [56, 36, 80, 2],
+    portraitSize: [88, 48, 160, 4],
+    // Glass pill hover (toggleable to compare with/without)
     glassPill: true,
-    glowPulse: true,
+    // Spring press on click
     springPress: true,
-    pressDepthLarge: [0.96, 0.88, 1, 0.005],
-    pressDepthSmall: [0.92, 0.85, 1, 0.005],
+    pressDepth: [0.93, 0.85, 1, 0.005],
+    // Portrait preview on accent hover
     previewOnHover: true,
-    // Proposal 9c: continuous hue slider with portrait detents
-    continuousHue: false,
-    // Physics tuning
+    // Glow pulse on intensity release
+    glowPulse: true,
+    // Momentum-based intensity thumb
+    momentumThumb: true,
+    // Glass pill physics
     swatchSpringK: [220, 100, 500, 10],
     swatchSpringC: [22, 10, 40, 1],
     iconSpringK: [500, 200, 800, 10],
     iconSpringC: [30, 15, 50, 1],
-    // Proposal 2: directional lean on hover
     leanOnHover: true,
-    // Proposal 3: edge pull between controls
     edgePull: true,
-    // Proposal 4: selected swatch stays depressed
-    depthOnSelect: true,
-    selectDepth: [0.97, 0.92, 1, 0.005],
-    // Proposal 5: momentum-based intensity thumb
-    momentumThumb: true,
-    // Proposal 6b: border loading ring on accent switch
-    borderRing: true,
-    // Proposal 7: cursor-as-light-source on portrait swatches
-    cursorLight: true,
-    cursorLightIntensity: [0.12, 0, 0.4, 0.01],
+    // Proposal 9c: continuous hue slider with portrait detents (off by default)
+    continuousHue: false,
   } satisfies DialConfig)
   return useDialKit('Settings panel', config, { id: 'proto-settings' })
 }
@@ -83,7 +61,6 @@ export function useSettingsDials() {
 /** Hover preview: size + entrance/exit feel + the click morph. */
 export function usePreviewDials() {
   const config = useStableConfig({
-    // Geometric-mean edge length; area = size² regardless of aspect ratio.
     size: [228, 120, 400, 4],
     rise: [8, 0, 24, 1],
     scaleFrom: [0.96, 0.85, 1, 0.005],
