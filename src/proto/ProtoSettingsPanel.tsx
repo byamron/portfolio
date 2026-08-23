@@ -148,7 +148,7 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
     { mode: 'figpal', label: 'Figpal cursor' },
   ]
 
-  const iconPx = dials.controlSize * 0.45
+  const iconPx = dials.controlSize * 0.5
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -172,8 +172,8 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
               }}
             >
               <div style={{
-                width: dials.controlSize * 0.6, height: dials.controlSize * 0.6,
-                borderRadius: dials.controlSize * 0.12,
+                width: dials.controlSize - 6, height: dials.controlSize - 6,
+                borderRadius: dials.controlSize * 0.14,
                 background: `var(--swatch-${accent})`,
               }} />
             </ControlButton>

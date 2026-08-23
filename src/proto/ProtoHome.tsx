@@ -130,33 +130,15 @@ export function ProtoHome() {
               background: 'transparent',
               boxShadow: glow,
               transform: thumbHovered && !settingsOpen && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
-              transition: `width 300ms ease-in-out, height 300ms ease-in-out, border-radius 300ms ease-in-out, box-shadow ${glowPulse ? '500ms' : '300ms'} ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out`,
+              transition: 'width 300ms ease-in-out, height 300ms ease-in-out, border-radius 300ms ease-in-out, border-color 300ms ease-in-out, transform 200ms ease-out',
               zIndex: 2,
             }}
           >
-            {/* Proposal 8: cross-fade between the active portrait and the hovered-preview portrait */}
-            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <img
-                src={`/images/portrait-square-${accentColor}.jpg`}
-                alt="Ben Yamron"
-                style={{
-                  position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                  opacity: previewAccent && previewAccent !== accentColor ? 0 : 1,
-                  transition: 'opacity 300ms ease-in-out',
-                }}
-              />
-              {previewAccent && previewAccent !== accentColor && (
-                <img
-                  src={`/images/portrait-square-${previewAccent}.jpg`}
-                  alt={`Preview: ${previewAccent}`}
-                  style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                    opacity: 1,
-                    transition: 'opacity 300ms ease-in-out',
-                  }}
-                />
-              )}
-            </div>
+            <img
+              src={`/images/portrait-square-${previewAccent ?? accentColor}.jpg`}
+              alt="Ben Yamron"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
           </button>
 
           {/* Back button — after thumbnail in DOM for tab order, positioned above it visually */}
