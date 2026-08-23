@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion'
 import { Monitor, Moon, NavigationArrow, Sun } from '@phosphor-icons/react'
 import { useTheme, VALID_ACCENTS, type AccentColor, type AppearanceMode } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
@@ -22,29 +23,138 @@ function Divider() {
   return <div style={{ height: 1, background: 'var(--text-dark)', opacity: 0.10, marginBlock: 8 }} />
 }
 
-/**
- * Settings panel — accent (portrait thumbnails with swatch-colored border rings),
- * intensity strip, appearance modes, cursor modes. Glass-pill hover from main.
- *
- * Three DialKit-toggleable experiments:
- *  6. glowPulse — thumbnail glow pulses on intensity slider release
- *  7. springPress — controls scale down on press, spring back on release (varying depth)
- *  8. previewOnHover — hovering a non-active accent previews its portrait in the header thumbnail
- */
+/** Proposal 5: momentum-based drag thumb for the intensity strip. */
+function MomentumThumb({ value, onChange, enabled }: { value: number; onChange: (v: number) => void; enabled: boolean }) {
+  const x = useMotionValue(0)
+  const springX = useSpring(x, { stiffness: 300, damping: 28 })
+  const trackRef = useRef<HTMLDivElement>(null)
+  const trackW = useRef(72)
+  const reducedMotion = useReducedMotion()
+
+  useEffect(() => {
+    if (trackRef.current) trackW.current = trackRef.current.offsetWidth
+    x.set(value * trackW.current)
+  }, [value, x])
+
+  const displayX = enabled && !reducedMotion ? springX : x
+  const left = useTransform(displayX, v => `${v - 5.5}px`)
+
+  return (
+    <div
+      ref={trackRef}
+      role="slider"
+      aria-label="Background intensity"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(value * 100)}
+      aria-valuetext={`${Math.round(value * 100)}%`}
+      tabIndex={0}
+      onPointerDown={e => {
+        e.currentTarget.setPointerCapture(e.pointerId)
+        if (trackRef.current) trackW.current = trackRef.current.offsetWidth
+        const r = e.currentTarget.getBoundingClientRect()
+        const t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))
+        onChange(t)
+      }}
+      onPointerMove={e => {
+        if (!e.buttons) return
+        const r = e.currentTarget.getBoundingClientRect()
+        onChange(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)))
+      }}
+      onPointerUp={() => {
+        window.dispatchEvent(new CustomEvent('proto-glow-pulse'))
+      }}
+      onKeyDown={e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') onChange(Math.min(1, value + 0.05))
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') onChange(Math.max(0, value - 0.05))
+      }}
+      style={{ position: 'relative', width: 72, height: 11, cursor: 'grab', touchAction: 'none', userSelect: 'none' }}
+    >
+      <div
+        style={{
+          position: 'absolute', top: 1.5, left: 0, width: 72, height: 8, borderRadius: 4,
+          background: 'linear-gradient(to right, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))',
+        }}
+      />
+      <motion.div
+        style={{
+          position: 'absolute', top: 0, left, width: 11, height: 11,
+          borderRadius: '50%', background: 'var(--swatch)',
+          border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+        }}
+      />
+    </div>
+  )
+}
+
+/** Proposal 7: cursor-as-light-source radial gradient on portrait swatches. */
+function CursorLightOverlay({ enabled, intensity }: { enabled: boolean; intensity: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ x: 50, y: 50 })
+
+  const onMove = useCallback((e: React.PointerEvent) => {
+    if (!enabled || !ref.current) return
+    const r = ref.current.getBoundingClientRect()
+    setPos({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 })
+  }, [enabled])
+
+  if (!enabled) return null
+  return (
+    <div
+      ref={ref}
+      onPointerMove={onMove}
+      style={{
+        position: 'absolute', inset: 0, borderRadius: 'inherit', pointerEvents: 'auto',
+        background: `radial-gradient(circle at ${pos.x}% ${pos.y}%, rgba(255,255,255,${intensity}) 0%, transparent 55%)`,
+        mixBlendMode: 'overlay',
+      }}
+    />
+  )
+}
+
 export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent: AccentColor | null) => void }) {
   const { accentColor, setAccentColor, appearanceMode, setAppearanceMode, bgIntensity, setBgIntensity } = useTheme()
   const { cursorMode, setCursorMode } = useCursor()
   const dials = useSettingsDials()
-  const stripRect = useRef<DOMRect | null>(null)
+  const reducedMotion = useReducedMotion()
 
+  // Glass pill per control group — with per-group spring constants from dials
   const accentGroupRef = useRef<HTMLDivElement>(null)
   const modeGroupRef = useRef<HTMLDivElement>(null)
   const cursorGroupRef = useRef<HTMLDivElement>(null)
-  useGlassHighlight(accentGroupRef, { cardSelector: '[data-settings-card]', borderRadius: dials.swatchSize * 0.12, clearDelay: 120 })
-  useGlassHighlight(modeGroupRef, { cardSelector: '[data-settings-card]', borderRadius: 12, clearDelay: 120 })
-  useGlassHighlight(cursorGroupRef, { cardSelector: '[data-settings-card]', borderRadius: 12, clearDelay: 120 })
+  useGlassHighlight(accentGroupRef, {
+    cardSelector: '[data-settings-card]',
+    borderRadius: dials.swatchSize * 0.12,
+    clearDelay: 120,
+    springStiffness: dials.swatchSpringK,
+    springDamping: dials.swatchSpringC,
+    pillMaxLean: dials.leanOnHover ? 1.0 : 0,
+    pillMaxTilt: dials.leanOnHover ? 1.0 : 0,
+    pullStrength: dials.edgePull ? 0.20 : 0,
+  })
+  useGlassHighlight(modeGroupRef, {
+    cardSelector: '[data-settings-card]',
+    borderRadius: 12,
+    clearDelay: 120,
+    springStiffness: dials.iconSpringK,
+    springDamping: dials.iconSpringC,
+    pillMaxLean: dials.leanOnHover ? 1.0 : 0,
+    pillMaxTilt: dials.leanOnHover ? 1.0 : 0,
+    pullStrength: dials.edgePull ? 0.20 : 0,
+  })
+  useGlassHighlight(cursorGroupRef, {
+    cardSelector: '[data-settings-card]',
+    borderRadius: 12,
+    clearDelay: 120,
+    springStiffness: dials.iconSpringK,
+    springDamping: dials.iconSpringC,
+    pillMaxLean: dials.leanOnHover ? 1.0 : 0,
+    pillMaxTilt: dials.leanOnHover ? 1.0 : 0,
+    pullStrength: dials.edgePull ? 0.20 : 0,
+  })
 
-  // Proposal 7: spring-press state per control
+  // Spring-press state
   const [pressedId, setPressedId] = useState<string | null>(null)
   const pressStyle = useCallback((id: string, isLarge: boolean) => {
     if (!dials.springPress) return {}
@@ -61,11 +171,13 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
     onPointerLeave: () => setPressedId(null),
   }) : ({})
 
-  const setFromPointer = (clientX: number) => {
-    const r = stripRect.current
-    if (!r) return
-    setBgIntensity(Math.max(0, Math.min(1, (clientX - r.left) / r.width)))
-  }
+  // Proposal 6b: border loading ring on accent switch
+  const [ringAccent, setRingAccent] = useState<string | null>(null)
+  useEffect(() => {
+    if (!ringAccent) return
+    const t = setTimeout(() => setRingAccent(null), 520)
+    return () => clearTimeout(t)
+  }, [ringAccent])
 
   const outerSize = dials.swatchSize + dials.borderWidth * 2
 
@@ -75,6 +187,7 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
       <div ref={accentGroupRef} style={{ display: 'flex', gap: 14, position: 'relative' }}>
         {VALID_ACCENTS.map((accent: AccentColor) => {
           const selected = accent === accentColor
+          const showRing = dials.borderRing && ringAccent === accent
           return (
             <button
               key={accent}
@@ -83,7 +196,10 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
               type="button"
               aria-label={`${accent} accent`}
               aria-pressed={selected}
-              onClick={() => setAccentColor(accent)}
+              onClick={() => {
+                setAccentColor(accent)
+                if (dials.borderRing) setRingAccent(accent)
+              }}
               onMouseEnter={dials.previewOnHover ? () => onHoverAccent?.(accent) : undefined}
               onMouseLeave={dials.previewOnHover ? () => onHoverAccent?.(null) : undefined}
               {...pressHandlers(`accent-${accent}`)}
@@ -94,7 +210,10 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
                 borderRadius: dials.swatchSize * 0.14,
                 border: 'none',
                 cursor: 'pointer',
-                background: `var(--swatch-${accent})`,
+                // Proposal 6b: conic-gradient border fill on click
+                background: showRing && !reducedMotion
+                  ? `conic-gradient(from 0deg, var(--swatch-${accent}) var(--ring-progress, 0%), transparent var(--ring-progress, 0%))`
+                  : `var(--swatch-${accent})`,
                 outline: selected
                   ? `2px solid color-mix(in srgb, var(--swatch-${accent}) 60%, transparent)`
                   : 'none',
@@ -102,65 +221,30 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
                 position: 'relative',
                 zIndex: 1,
                 flexShrink: 0,
-                ...pressStyle(`accent-${accent}`, true),
+                // Proposal 4: selected swatch stays slightly depressed
+                ...(dials.depthOnSelect && selected && !pressedId?.startsWith('accent-')
+                  ? { transform: `scale(${dials.selectDepth})`, boxShadow: `inset 0 1px 3px rgba(0,0,0,0.15)`, transition: SPRING_PRESS }
+                  : pressStyle(`accent-${accent}`, true)),
               }}
             >
-              <img
-                src={`/images/portrait-square-${accent}.jpg`}
-                alt={accent}
-                style={{
-                  width: dials.swatchSize,
-                  height: dials.swatchSize,
-                  objectFit: 'cover',
-                  borderRadius: dials.swatchSize * 0.10,
-                  display: 'block',
-                }}
-              />
+              <div style={{ position: 'relative', width: dials.swatchSize, height: dials.swatchSize, borderRadius: dials.swatchSize * 0.10, overflow: 'hidden' }}>
+                <img
+                  src={`/images/portrait-square-${accent}.jpg`}
+                  alt={accent}
+                  style={{
+                    width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                  }}
+                />
+                {/* Proposal 7: cursor-as-light-source on the portrait */}
+                <CursorLightOverlay enabled={dials.cursorLight} intensity={dials.cursorLightIntensity} />
+              </div>
             </button>
           )
         })}
       </div>
 
-      {/* Intensity strip */}
-      <div
-        role="slider"
-        aria-label="Background intensity"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(bgIntensity * 100)}
-        aria-valuetext={`${Math.round(bgIntensity * 100)}%`}
-        tabIndex={0}
-        onPointerDown={e => {
-          e.currentTarget.setPointerCapture(e.pointerId)
-          stripRect.current = e.currentTarget.getBoundingClientRect()
-          setFromPointer(e.clientX)
-        }}
-        onPointerMove={e => { if (e.buttons) setFromPointer(e.clientX) }}
-        onPointerUp={() => {
-          // Proposal 6: dispatch a custom event so ProtoHome can pulse the thumbnail glow
-          if (dials.glowPulse) window.dispatchEvent(new CustomEvent('proto-glow-pulse'))
-        }}
-        onKeyDown={e => {
-          if (e.key === 'ArrowRight' || e.key === 'ArrowUp') setBgIntensity(Math.min(1, bgIntensity + 0.05))
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') setBgIntensity(Math.max(0, bgIntensity - 0.05))
-        }}
-        style={{ position: 'relative', width: 72, height: 11, cursor: 'grab', touchAction: 'none', userSelect: 'none' }}
-      >
-        <div
-          style={{
-            position: 'absolute', top: 1.5, left: 0, width: 72, height: 8, borderRadius: 4,
-            background: 'linear-gradient(to right, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', top: 0, left: `calc(${bgIntensity * 100}% - 5.5px)`, width: 11, height: 11,
-            borderRadius: '50%', background: 'var(--swatch)',
-            border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
-          }}
-        />
-      </div>
+      {/* Intensity strip — proposal 5: momentum thumb when enabled */}
+      <MomentumThumb value={bgIntensity} onChange={setBgIntensity} enabled={dials.momentumThumb} />
 
       <Divider />
 

@@ -47,14 +47,33 @@ export function useSettingsDials() {
     borderWidth: [3, 1, 8, 0.5],
     controlSize: [48, 36, 64, 2],
     iconSize: [24, 18, 36, 2],
-    // Proposal 6: thumbnail glow pulse on intensity slider release
+    // Experiments (toggleable)
     glowPulse: true,
-    // Proposal 7: spring-press with varying weight per control size
     springPress: true,
     pressDepthLarge: [0.96, 0.88, 1, 0.005],
     pressDepthSmall: [0.92, 0.85, 1, 0.005],
-    // Proposal 8: portrait cross-fade on accent swatch hover
     previewOnHover: true,
+    // Proposal 9c: continuous hue slider with portrait detents
+    continuousHue: false,
+    // Physics tuning
+    swatchSpringK: [220, 100, 500, 10],
+    swatchSpringC: [22, 10, 40, 1],
+    iconSpringK: [500, 200, 800, 10],
+    iconSpringC: [30, 15, 50, 1],
+    // Proposal 2: directional lean on hover
+    leanOnHover: true,
+    // Proposal 3: edge pull between controls
+    edgePull: true,
+    // Proposal 4: selected swatch stays depressed
+    depthOnSelect: true,
+    selectDepth: [0.97, 0.92, 1, 0.005],
+    // Proposal 5: momentum-based intensity thumb
+    momentumThumb: true,
+    // Proposal 6b: border loading ring on accent switch
+    borderRing: true,
+    // Proposal 7: cursor-as-light-source on portrait swatches
+    cursorLight: true,
+    cursorLightIntensity: [0.12, 0, 0.4, 0.01],
   } satisfies DialConfig)
   return useDialKit('Settings panel', config, { id: 'proto-settings' })
 }
