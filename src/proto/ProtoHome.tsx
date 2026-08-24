@@ -93,7 +93,7 @@ export function ProtoHome() {
         padding: '80px 24px',
       }}
     >
-      <div style={{ maxWidth: 528, width: '100%', marginBlock: 'auto' }}>
+      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', marginBlock: 'auto' }}>
         <div style={{ position: 'relative' }}>
           {/* Back button — absolutely positioned above */}
           <AnimatePresence>
