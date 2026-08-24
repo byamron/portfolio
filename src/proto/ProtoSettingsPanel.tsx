@@ -146,8 +146,8 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
               size={layout.controlSize}
               pressStyle={mkPressStyle(`accent-${accent}`)}
               pressHandlers={mkPressHandlers(`accent-${accent}`)}
-              onMouseEnter={exp['Preview accent on hover'] ? () => onHoverAccent?.(accent) : undefined}
-              onMouseLeave={exp['Preview accent on hover'] ? () => onHoverAccent?.(null) : undefined}
+              onMouseEnter={undefined}
+              onMouseLeave={undefined}
             >
               <div style={{ width: swatchInner, height: swatchInner, borderRadius: layout.controlSize * 0.14, background: `var(--swatch-${accent})` }} />
             </ControlButton>
