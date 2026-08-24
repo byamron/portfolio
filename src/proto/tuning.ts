@@ -18,9 +18,9 @@ function useStableConfig<T extends DialConfig>(config: T): T {
 /** Layout & type — the core visual knobs. */
 export function useLayoutDials() {
   const config = useStableConfig({
-    'Heading px': [30, 20, 48, 1],
+    'Heading px': [36, 20, 48, 1],
     'Heading line-height': [1.2, 1, 1.6, 0.05],
-    'Body px': [18, 13, 28, 1],
+    'Body px': [22, 13, 28, 1],
     'Portrait height px': [88, 48, 200, 4],
     'Control size px': [56, 36, 80, 2],
     'Thumb→heading gap px': [16, 4, 40, 2],
