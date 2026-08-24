@@ -4,7 +4,7 @@ import { Monitor, Moon, NavigationArrow, Sun } from '@phosphor-icons/react'
 import { useTheme, VALID_ACCENTS, type AccentColor, type AppearanceMode } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
-import { useSettingsDials } from './tuning'
+import { useLayoutDials, useExperimentDials } from './tuning'
 
 const SPRING_PRESS = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)'
 
@@ -97,46 +97,45 @@ const CURSORS: { mode: CursorMode; label: string }[] = [
 export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent: AccentColor | null) => void }) {
   const { accentColor, setAccentColor, appearanceMode, setAppearanceMode, bgIntensity, setBgIntensity } = useTheme()
   const { cursorMode, setCursorMode } = useCursor()
-  const dials = useSettingsDials()
+  const layout = useLayoutDials()
+  const exp = useExperimentDials()
 
   const accentGroupRef = useRef<HTMLDivElement>(null)
   const modeGroupRef = useRef<HTMLDivElement>(null)
   const cursorGroupRef = useRef<HTMLDivElement>(null)
   const nullRef = useRef<HTMLDivElement>(null)
-  const useGlass = (dials as Record<string, unknown>).glassPill as boolean
 
-  const glassCfg = (radius: number, k: number, c: number) => ({
+  const glassCfg = (radius: number) => ({
     cardSelector: '[data-settings-card]', borderRadius: radius, clearDelay: 120,
-    springStiffness: k, springDamping: c,
-    pillMaxLean: dials.leanOnHover ? 1.0 : 0, pillMaxTilt: dials.leanOnHover ? 1.0 : 0,
-    pullStrength: dials.edgePull ? 0.20 : 0,
+    pillMaxLean: exp['Lean + tilt on hover'] ? 1.0 : 0,
+    pillMaxTilt: exp['Lean + tilt on hover'] ? 1.0 : 0,
+    pullStrength: exp['Edge pull between items'] ? 0.20 : 0,
   })
 
-  useGlassHighlight(useGlass ? accentGroupRef : nullRef, glassCfg(dials.controlSize * 0.18, dials.swatchSpringK, dials.swatchSpringC))
-  useGlassHighlight(useGlass ? modeGroupRef : nullRef, glassCfg(dials.controlSize * 0.18, dials.iconSpringK, dials.iconSpringC))
-  useGlassHighlight(useGlass ? cursorGroupRef : nullRef, glassCfg(dials.controlSize * 0.18, dials.iconSpringK, dials.iconSpringC))
+  useGlassHighlight(exp['Glass pill hover'] ? accentGroupRef : nullRef, glassCfg(layout.controlSize * 0.18))
+  useGlassHighlight(exp['Glass pill hover'] ? modeGroupRef : nullRef, glassCfg(layout.controlSize * 0.18))
+  useGlassHighlight(exp['Glass pill hover'] ? cursorGroupRef : nullRef, glassCfg(layout.controlSize * 0.18))
 
   const [pressedId, setPressedId] = useState<string | null>(null)
   const mkPressStyle = useCallback((id: string): React.CSSProperties => {
-    if (!dials.springPress) return {}
+    if (!exp['Spring press on click']) return {}
     return {
-      transform: pressedId === id ? `scale(${dials.pressDepth})` : 'scale(1)',
+      transform: pressedId === id ? `scale(${exp['Press depth']})` : 'scale(1)',
       transition: pressedId === id ? 'transform 80ms ease-out' : SPRING_PRESS,
     }
-  }, [pressedId, dials.springPress, dials.pressDepth])
+  }, [pressedId, exp])
 
-  const mkPressHandlers = (id: string) => dials.springPress ? ({
+  const mkPressHandlers = (id: string) => exp['Spring press on click'] ? ({
     onPointerDown: () => setPressedId(id),
     onPointerUp: () => setPressedId(null),
     onPointerLeave: () => setPressedId(null),
   }) : ({})
 
-  const iconPx = dials.controlSize * 0.5
-  const swatchInner = dials.controlSize - 6
+  const iconPx = layout.controlSize * 0.5
+  const swatchInner = layout.controlSize - 6
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Row 1: accent swatches + intensity strip */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         <div ref={accentGroupRef} style={{ display: 'flex', gap: 6, position: 'relative' }}>
           {VALID_ACCENTS.map((accent: AccentColor) => (
@@ -144,29 +143,27 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
               key={accent} active={accent === accentColor}
               label={`${accent} accent`}
               onClick={() => setAccentColor(accent)}
-              size={dials.controlSize}
+              size={layout.controlSize}
               pressStyle={mkPressStyle(`accent-${accent}`)}
               pressHandlers={mkPressHandlers(`accent-${accent}`)}
-              onMouseEnter={dials.previewOnHover ? () => onHoverAccent?.(accent) : undefined}
-              onMouseLeave={dials.previewOnHover ? () => onHoverAccent?.(null) : undefined}
+              onMouseEnter={exp['Preview accent on hover'] ? () => onHoverAccent?.(accent) : undefined}
+              onMouseLeave={exp['Preview accent on hover'] ? () => onHoverAccent?.(null) : undefined}
             >
-              <div style={{ width: swatchInner, height: swatchInner, borderRadius: dials.controlSize * 0.14, background: `var(--swatch-${accent})` }} />
+              <div style={{ width: swatchInner, height: swatchInner, borderRadius: layout.controlSize * 0.14, background: `var(--swatch-${accent})` }} />
             </ControlButton>
           ))}
         </div>
-
-        <MomentumThumb value={bgIntensity} onChange={setBgIntensity} enabled={dials.momentumThumb} />
+        <MomentumThumb value={bgIntensity} onChange={setBgIntensity} enabled={exp['Momentum slider thumb']} />
       </div>
 
       <Divider />
 
-      {/* Row 2: appearance modes */}
       <div ref={modeGroupRef} style={{ display: 'flex', gap: 6, position: 'relative' }}>
         {APPEARANCE.map(({ mode, label, Icon }) => (
           <ControlButton
             key={mode} active={appearanceMode === mode}
             label={label} onClick={() => setAppearanceMode(mode)}
-            size={dials.controlSize}
+            size={layout.controlSize}
             pressStyle={mkPressStyle(`mode-${mode}`)}
             pressHandlers={mkPressHandlers(`mode-${mode}`)}
           >
@@ -177,13 +174,12 @@ export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent:
 
       <Divider />
 
-      {/* Row 3: cursor modes */}
       <div ref={cursorGroupRef} style={{ display: 'flex', gap: 6, position: 'relative' }}>
         {CURSORS.map(({ mode, label }) => (
           <ControlButton
             key={mode} active={cursorMode === mode}
             label={label} onClick={() => setCursorMode(mode)}
-            size={dials.controlSize}
+            size={layout.controlSize}
             pressStyle={mkPressStyle(`cursor-${mode}`)}
             pressHandlers={mkPressHandlers(`cursor-${mode}`)}
           >

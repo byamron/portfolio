@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { usePreview } from './PreviewContext'
 import { protoBySlug } from './data'
 import { ProtoMediaFill } from './ProtoMedia'
-import { EASE, usePageDials, useTypeDials } from './tuning'
+import { EASE, usePageDials, useLayoutDials } from './tuning'
 
 const PLACEHOLDER_BODY =
   'Case study coming soon. This page is a prototype of the new navigation model: the hover preview you clicked morphed into the frame above, the background never changed, and the text crossfaded around it.'
@@ -13,7 +13,7 @@ export function ProtoCaseStudy() {
   const navigate = useNavigate()
   const reducedMotion = useReducedMotion()
   const { state, registerHero } = usePreview()
-  const { bodySize } = useTypeDials()
+  const { bodySize } = useLayoutDials()
   const page = usePageDials()
 
   const entry = slug ? protoBySlug.get(slug) : undefined

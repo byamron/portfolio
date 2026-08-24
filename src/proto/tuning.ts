@@ -1,6 +1,4 @@
-// DEV TOOLING — DialKit tuning dials for the /new prototype. Strip before merge
-// (this file, the <DialRoot /> in ProtoRoutes, and the dialkit dependency),
-// baking the final values back into the components.
+// DEV TOOLING — DialKit tuning dials for the /new prototype. Strip before merge.
 import { useRef } from 'react'
 import { useDialKit, type DialConfig } from 'dialkit'
 import type { AnimationOptions } from 'framer-motion'
@@ -17,70 +15,76 @@ function useStableConfig<T extends DialConfig>(config: T): T {
   return ref.current
 }
 
-/** Type scale. The thumbnail is always a square matching the heading's line height. */
-export function useTypeDials() {
+/** Layout & type — the core visual knobs. */
+export function useLayoutDials() {
   const config = useStableConfig({
-    headingSize: [30, 20, 44, 1],
-    headingLineHeight: [1.2, 1, 1.6, 0.05],
-    bodySize: [18, 14, 26, 1],
+    'Heading px': [30, 20, 48, 1],
+    'Heading line-height': [1.2, 1, 1.6, 0.05],
+    'Body px': [18, 13, 28, 1],
+    'Portrait height px': [88, 48, 200, 4],
+    'Control size px': [56, 36, 80, 2],
+    'Thumb→heading gap px': [16, 4, 40, 2],
   } satisfies DialConfig)
-  const t = useDialKit('Type', config, { id: 'proto-type' })
-  return { ...t, thumb: Math.round(t.headingSize * t.headingLineHeight) }
+  const d = useDialKit('Layout', config, { id: 'proto-layout' })
+  return {
+    headingSize: d['Heading px'],
+    headingLineHeight: d['Heading line-height'],
+    bodySize: d['Body px'],
+    portraitHeight: d['Portrait height px'],
+    controlSize: d['Control size px'],
+    thumbGap: d['Thumb→heading gap px'],
+  }
 }
 
-/** Settings panel layout + experiments. */
-export function useSettingsDials() {
+/** Interaction experiments — toggleable. */
+export function useExperimentDials() {
   const config = useStableConfig({
-    // Control sizes — bigger defaults for tactile feel
-    controlSize: [56, 36, 80, 2],
-    portraitSize: [88, 48, 160, 4],
-    // Glass pill hover (toggleable to compare with/without)
-    glassPill: true,
-    // Spring press on click
-    springPress: true,
-    pressDepth: [0.93, 0.85, 1, 0.005],
-    // Portrait preview on accent hover
-    previewOnHover: true,
-    // Glow pulse on intensity release
-    glowPulse: true,
-    // Momentum-based intensity thumb
-    momentumThumb: true,
-    // Glass pill physics
-    swatchSpringK: [220, 100, 500, 10],
-    swatchSpringC: [22, 10, 40, 1],
-    iconSpringK: [500, 200, 800, 10],
-    iconSpringC: [30, 15, 50, 1],
-    leanOnHover: true,
-    edgePull: true,
+    'Glass pill hover': true,
+    'Spring press on click': true,
+    'Press depth': [0.93, 0.85, 1, 0.005],
+    'Preview accent on hover': true,
+    'Glow pulse on release': true,
+    'Momentum slider thumb': true,
+    'Lean + tilt on hover': true,
+    'Edge pull between items': true,
   } satisfies DialConfig)
-  return useDialKit('Settings panel', config, { id: 'proto-settings' })
+  return useDialKit('Experiments', config, { id: 'proto-experiments' })
 }
 
 /** Hover preview: size + entrance/exit feel + the click morph. */
 export function usePreviewDials() {
   const config = useStableConfig({
-    size: [228, 120, 400, 4],
-    rise: [8, 0, 24, 1],
-    scaleFrom: [0.96, 0.85, 1, 0.005],
-    enter: { type: 'easing', duration: 0.2, ease: [...EASE] },
-    morph: { type: 'spring', stiffness: 340, damping: 30 },
-    fadeOut: [0.16, 0.05, 0.5, 0.01],
+    'Preview size px': [228, 120, 400, 4],
+    'Rise px': [8, 0, 24, 1],
+    'Scale from': [0.96, 0.85, 1, 0.005],
+    'Enter easing': { type: 'easing', duration: 0.2, ease: [...EASE] },
+    'Morph spring': { type: 'spring', stiffness: 340, damping: 30 },
+    'Fade out sec': [0.16, 0.05, 0.5, 0.01],
   } satisfies DialConfig)
   const d = useDialKit('Hover preview', config, { id: 'proto-preview' })
   return {
-    ...d,
-    enter: toMotionTransition(d.enter as { type: 'spring' | 'easing'; [key: string]: unknown }),
-    morph: toMotionTransition(d.morph as { type: 'spring' | 'easing'; [key: string]: unknown }),
+    size: d['Preview size px'],
+    rise: d['Rise px'],
+    scaleFrom: d['Scale from'],
+    enter: toMotionTransition(d['Enter easing'] as { type: 'spring' | 'easing'; [key: string]: unknown }),
+    morph: toMotionTransition(d['Morph spring'] as { type: 'spring' | 'easing'; [key: string]: unknown }),
+    fadeOut: d['Fade out sec'],
   }
 }
 
 /** Page-level transitions (home ↔ case study). */
 export function usePageDials() {
   const config = useStableConfig({
-    enterDuration: [0.35, 0.1, 0.8, 0.01],
-    enterRise: [10, 0, 30, 1],
-    exitDuration: [0.22, 0.08, 0.6, 0.01],
-    heroShrink: [0.96, 0.85, 1, 0.005],
+    'Enter duration sec': [0.35, 0.1, 0.8, 0.01],
+    'Enter rise px': [10, 0, 30, 1],
+    'Exit duration sec': [0.22, 0.08, 0.6, 0.01],
+    'Hero shrink on exit': [0.96, 0.85, 1, 0.005],
   } satisfies DialConfig)
-  return useDialKit('Page transitions', config, { id: 'proto-page' })
+  const d = useDialKit('Page transitions', config, { id: 'proto-page' })
+  return {
+    enterDuration: d['Enter duration sec'],
+    enterRise: d['Enter rise px'],
+    exitDuration: d['Exit duration sec'],
+    heroShrink: d['Hero shrink on exit'],
+  }
 }
