@@ -81,6 +81,7 @@ export function ProtoHome() {
         position: 'absolute',
         inset: 0,
         overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -205,7 +206,7 @@ export function ProtoHome() {
           sits at the natural bottom of the page. When the content is short
           (fits in one screen), the flex layout pushes it to the viewport bottom.
           When content overflows, it stacks below normally. */}
-      <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: 48, paddingBottom: 24, flexShrink: 0 }}>
+      <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: 48, paddingBottom: layout.bottomMargin, flexShrink: 0 }}>
         <ContributionStrip />
       </div>
     </motion.main>

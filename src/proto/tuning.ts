@@ -24,7 +24,8 @@ export function useLayoutDials() {
     'Portrait height px': [88, 48, 200, 4],
     'Control size px': [56, 36, 80, 2],
     'Thumb→heading gap px': [16, 4, 40, 2],
-    'Content max-width px': [528, 320, 800, 8],
+    'Content max-width px': [600, 320, 800, 8],
+    'Bottom margin px': [24, 0, 80, 4],
   } satisfies DialConfig)
   const d = useDialKit('Layout', config, { id: 'proto-layout' })
   return {
@@ -35,6 +36,7 @@ export function useLayoutDials() {
     controlSize: d['Control size px'],
     thumbGap: d['Thumb→heading gap px'],
     contentMaxWidth: d['Content max-width px'],
+    bottomMargin: d['Bottom margin px'],
   }
 }
 
