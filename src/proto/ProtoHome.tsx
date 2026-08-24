@@ -84,10 +84,11 @@ export function ProtoHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '80px 24px',
+        padding: '80px 24px 0',
+        minHeight: '100%',
       }}
     >
-      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', marginBlock: 'auto' }}>
+      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div style={{ position: 'relative' }}>
           {/* Back button — absolutely positioned above */}
           <AnimatePresence>
@@ -198,10 +199,14 @@ export function ProtoHome() {
           </AnimatePresence>
         </div>
 
-        {/* Contribution strip — always visible, below both prose and settings panel */}
-        <div style={{ marginTop: 48 }}>
-          <ContributionStrip />
-        </div>
+      </div>
+
+      {/* Contribution strip — full-bleed (breaks out of the content max-width),
+          sits at the natural bottom of the page. When the content is short
+          (fits in one screen), the flex layout pushes it to the viewport bottom.
+          When content overflows, it stacks below normally. */}
+      <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: 48, paddingBottom: 24, flexShrink: 0 }}>
+        <ContributionStrip />
       </div>
     </motion.main>
   )
