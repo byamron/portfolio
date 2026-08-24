@@ -94,7 +94,7 @@ const CURSORS: { mode: CursorMode; label: string }[] = [
   { mode: 'figpal', label: 'Figpal cursor' },
 ]
 
-export function ProtoSettingsPanel({ onHoverAccent }: { onHoverAccent?: (accent: AccentColor | null) => void }) {
+export function ProtoSettingsPanel() {
   const { accentColor, setAccentColor, appearanceMode, setAppearanceMode, bgIntensity, setBgIntensity } = useTheme()
   const { cursorMode, setCursorMode } = useCursor()
   const layout = useLayoutDials()

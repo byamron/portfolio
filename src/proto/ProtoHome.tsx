@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useTheme, type AccentColor } from '@/contexts/ThemeContext'
+import { useTheme } from '@/contexts/ThemeContext'
+import { ContributionStrip } from '@/components/ContributionStrip'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
@@ -36,8 +37,6 @@ export function ProtoHome() {
   const [thumbHovered, setThumbHovered] = useState(false)
   const thumbRef = useRef<HTMLButtonElement>(null)
 
-  const [previewAccent, setPreviewAccent] = useState<AccentColor | null>(null)
-
   const [glowPulse, setGlowPulse] = useState(false)
   useEffect(() => {
     if (!experiments['Glow pulse on release']) return
@@ -48,7 +47,6 @@ export function ProtoHome() {
 
   const closeSettings = () => {
     setSettingsOpen(false)
-    setPreviewAccent(null)
     thumbRef.current?.focus()
   }
 
@@ -59,10 +57,6 @@ export function ProtoHome() {
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsOpen])
-
-  const handleHoverAccent = useCallback((accent: AccentColor | null) => {
-    setPreviewAccent(accent)
-  }, [])
 
   const fade = { duration: reducedMotion ? 0 : 0.24, ease: EASE }
 
@@ -145,7 +139,7 @@ export function ProtoHome() {
             }}
           >
             <img
-              src={`/images/portrait-thumb-${previewAccent ?? accentColor}.jpg`}
+              src={`/images/portrait-thumb-${accentColor}.jpg`}
               alt="Ben Yamron"
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
@@ -198,10 +192,15 @@ export function ProtoHome() {
                 transition={fade}
                 style={{ position: 'absolute', top: layout.portraitHeight + layout.thumbGap + 20, left: 0, right: 0 }}
               >
-                <ProtoSettingsPanel onHoverAccent={handleHoverAccent} />
+                <ProtoSettingsPanel />
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Contribution strip — always visible, below both prose and settings panel */}
+        <div style={{ marginTop: 48 }}>
+          <ContributionStrip />
         </div>
       </div>
     </motion.main>
