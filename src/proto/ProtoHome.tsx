@@ -85,11 +85,11 @@ export function ProtoHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '80px 24px 0',
+        padding: '80px 0 0',
         minHeight: '100%',
       }}
     >
-      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px' }}>
         <div style={{ position: 'relative' }}>
           {/* Back button — absolutely positioned above */}
           <AnimatePresence>
@@ -154,7 +154,7 @@ export function ProtoHome() {
               transitionEnd: { visibility: settingsOpen ? 'hidden' : 'visible' },
             }}
             transition={fade}
-            style={{ display: 'flex', flexDirection: 'column', gap: layout.thumbGap }}
+            style={{ display: 'flex', flexDirection: 'column' }}
           >
             <h1
               style={{
@@ -169,7 +169,7 @@ export function ProtoHome() {
               Ben Yamron is a product designer, currently designing AI for scientific research at {L('consensus')}
             </h1>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 22, fontFamily: '"Onest", system-ui, sans-serif', fontSize: layout.bodySize, fontWeight: 300, lineHeight: 1.35, color: 'var(--text-dark)' }}>
+            <div style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: 22, fontFamily: '"Onest", system-ui, sans-serif', fontSize: layout.bodySize, fontWeight: 300, lineHeight: 1.35, color: 'var(--text-dark)' }}>
               <p style={{ margin: 0 }}>
                 Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at {L('mochi-health')}.
               </p>
@@ -206,7 +206,7 @@ export function ProtoHome() {
           sits at the natural bottom of the page. When the content is short
           (fits in one screen), the flex layout pushes it to the viewport bottom.
           When content overflows, it stacks below normally. */}
-      <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: 48, paddingBottom: layout.bottomMargin, flexShrink: 0 }}>
+      <div style={{ alignSelf: 'stretch', marginTop: 48, paddingBottom: layout.bottomMargin, flexShrink: 0 }}>
         <ContributionStrip />
       </div>
     </motion.main>
