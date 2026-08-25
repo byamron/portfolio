@@ -41,8 +41,9 @@ export function ProtoHome() {
 
   // Glass pill hover on inline prose links
   const proseRef = useRef<HTMLDivElement>(null)
+  // Match both ProtoLink anchors and FlockX's anchor (which uses data-contact-card).
   const glassApi = useGlassHighlight(proseRef, {
-    cardSelector: '[data-proto-link]',
+    cardSelector: '[data-proto-link], [data-contact-card]',
     borderRadius: 8,
     clearDelay: 200,
   })
