@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { ContributionStrip } from '@/components/ContributionStrip'
+import { FlockX } from '@/components/FlockX'
+import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
@@ -36,6 +38,14 @@ export function ProtoHome() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [thumbHovered, setThumbHovered] = useState(false)
   const thumbRef = useRef<HTMLButtonElement>(null)
+
+  // Glass pill hover on inline prose links
+  const proseRef = useRef<HTMLDivElement>(null)
+  const glassApi = useGlassHighlight(proseRef, {
+    cardSelector: '[data-proto-link]',
+    borderRadius: 8,
+    clearDelay: 200,
+  })
 
   const [glowPulse, setGlowPulse] = useState(false)
   useEffect(() => {
@@ -169,13 +179,14 @@ export function ProtoHome() {
               Ben Yamron is a product designer, currently designing AI for scientific research at {L('consensus')}
             </h1>
 
-            <div style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: 22, fontFamily: '"Onest", system-ui, sans-serif', fontSize: layout.bodySize, fontWeight: 300, lineHeight: 1.35, color: 'var(--text-dark)' }}>
+            <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: 22, fontFamily: '"Onest", system-ui, sans-serif', fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
                 Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at {L('mochi-health')}.
               </p>
               <p style={{ margin: 0 }}>
                 On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
-                bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and {L('x')}.
+                bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and{' '}
+                <FlockX href="https://x.com/benyamron" glassApi={glassApi} style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap' }}><span data-proto-link>X</span></FlockX>.
               </p>
               <p style={{ margin: 0 }}>
                 I studied Human Centered Design at the University of Washington. I worked with {L('uw')}, {L('sony')},

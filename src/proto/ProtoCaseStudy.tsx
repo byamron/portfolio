@@ -13,7 +13,7 @@ export function ProtoCaseStudy() {
   const navigate = useNavigate()
   const reducedMotion = useReducedMotion()
   const { state, registerHero } = usePreview()
-  const { bodySize } = useLayoutDials()
+  const layout = useLayoutDials()
   const page = usePageDials()
 
   const entry = slug ? protoBySlug.get(slug) : undefined
@@ -100,9 +100,9 @@ export function ProtoCaseStudy() {
           <p
             style={{
               fontFamily: '"Onest", system-ui, sans-serif',
-              fontSize: bodySize + 2,
+              fontSize: layout.bodySize + 2,
               fontWeight: 300,
-              lineHeight: 1.35,
+              lineHeight: layout.bodyLineHeight,
               color: 'var(--text-dark)',
               margin: 0,
             }}
