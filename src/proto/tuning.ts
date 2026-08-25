@@ -62,7 +62,7 @@ export function useExperimentDials() {
 /** Hover preview: size + entrance/exit feel + the click morph. */
 export function usePreviewDials() {
   const config = useStableConfig({
-    'Preview size px': [228, 120, 400, 4],
+    'Preview size px': [320, 120, 500, 4],
     'Rise px': [8, 0, 24, 1],
     'Scale from': [0.96, 0.85, 1, 0.005],
     'Enter easing': { type: 'easing', duration: 0.2, ease: [...EASE] },
