@@ -186,7 +186,13 @@ export function ProtoHome() {
               <p style={{ margin: 0 }}>
                 On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
                 bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and{' '}
-                <FlockX href="https://x.com/benyamron" glassApi={glassApi} style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap' }}><span data-proto-link>X</span></FlockX>.
+                <FlockX
+                  href="https://x.com/benyamron"
+                  glassApi={glassApi}
+                  style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
+                >
+                  <span data-proto-link>X<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', width: '0.6em', height: '0.6em', marginLeft: '0.14em', verticalAlign: '0.06em', opacity: 0.7 }}><line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" /></svg></span>
+                </FlockX>.
               </p>
               <p style={{ margin: 0 }}>
                 I studied Human Centered Design at the University of Washington. I worked with {L('uw')}, {L('sony')},
