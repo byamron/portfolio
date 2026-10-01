@@ -3,8 +3,21 @@ import { useLayoutDials } from './tuning'
 
 const RADIUS_RATIO = 0.22
 
-export function InlineIcon({ src, alt, href }: { src: string; alt: string; href?: string }) {
-  const { inlineIconSize: size } = useLayoutDials()
+/**
+ * An app-icon-sized element that sits inline within text. Size is computed
+ * as fontSize × lineHeight × iconScale, so it scales proportionally to
+ * whichever text context it's placed in (heading or body).
+ *
+ * Pass `context="heading"` or `context="body"` to pick which text metrics
+ * drive the size.
+ */
+export function InlineIcon({ src, alt, href, context = 'heading' }: {
+  src: string; alt: string; href?: string; context?: 'heading' | 'body'
+}) {
+  const layout = useLayoutDials()
+  const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
+  const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
+  const size = Math.round(fontSize * lineHeight * layout.iconScale)
 
   const img = (
     <img
@@ -39,9 +52,12 @@ export function InlineIcon({ src, alt, href }: { src: string; alt: string; href?
   return img
 }
 
-export function InlinePortrait() {
+export function InlinePortrait({ context = 'heading' }: { context?: 'heading' | 'body' }) {
   const { accentColor } = useTheme()
-  const { inlineIconSize: size } = useLayoutDials()
+  const layout = useLayoutDials()
+  const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
+  const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
+  const size = Math.round(fontSize * lineHeight * layout.iconScale)
 
   return (
     <img

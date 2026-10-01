@@ -31,7 +31,7 @@ export function useLayoutDials() {
     'Content max-width px': [800, 320, 1000, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
-    'Inline icon size px': [36, 20, 60, 2],
+    'Icon scale (× line height)': [0.9, 0.5, 1.5, 0.05],
   } satisfies DialConfig)
   const d = useDialKit('Layout', config, { id: 'proto-layout' })
   return {
@@ -48,7 +48,7 @@ export function useLayoutDials() {
     contentMaxWidth: d['Content max-width px'],
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
-    inlineIconSize: d['Inline icon size px'],
+    iconScale: d['Icon scale (× line height)'],
   }
 }
 
