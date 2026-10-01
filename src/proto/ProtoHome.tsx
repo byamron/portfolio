@@ -197,15 +197,13 @@ export function ProtoHome() {
               }}
             >
               <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
-              <InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}
-              {L('consensus')}
+              <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>
             </h1>
 
             <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
                 Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at{' '}
-                <InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}
-                {L('mochi-health')}.
+                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
                 On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
@@ -220,12 +218,9 @@ export function ProtoHome() {
               </p>
               <p style={{ margin: 0 }}>
                 I studied Human Centered Design at the{' '}
-                <InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}
-                University of Washington, where I worked with {L('uw')},{' '}
-                <InlineIcon src="/images/logo-sony.svg" alt="Sony" context="body" />{' '}
-                {L('sony')}, and the {L('cip')}. I learned how to think at{' '}
-                <InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}
-                Middlebury College.
+                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, where I worked with {L('uw')},{' '}
+                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-sony.svg" alt="Sony" context="body" />{' '}{L('sony')}</span>, and the {L('cip')}. I learned how to think at{' '}
+                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
               </p>
             </div>
           </motion.div>
