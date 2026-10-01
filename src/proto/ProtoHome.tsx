@@ -110,11 +110,16 @@ export function ProtoHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '80px 0 0',
-        minHeight: '100%',
       }}
     >
-      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px' }}>
+      {/* Contribution strip — top position */}
+      {layout.contribOnTop && (
+        <div style={{ alignSelf: 'stretch', flexShrink: 0, paddingTop: 16 }}>
+          <ContributionStrip />
+        </div>
+      )}
+
+      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 24px' }}>
         <div style={{ position: 'relative' }}>
           {/* Back button — absolutely positioned above */}
           <AnimatePresence>
@@ -238,13 +243,12 @@ export function ProtoHome() {
 
       </div>
 
-      {/* Contribution strip — full-bleed (breaks out of the content max-width),
-          sits at the natural bottom of the page. When the content is short
-          (fits in one screen), the flex layout pushes it to the viewport bottom.
-          When content overflows, it stacks below normally. */}
-      <div style={{ alignSelf: 'stretch', marginTop: 48, paddingBottom: layout.bottomMargin, flexShrink: 0 }}>
-        <ContributionStrip />
-      </div>
+      {/* Contribution strip — bottom position */}
+      {!layout.contribOnTop && (
+        <div style={{ alignSelf: 'stretch', marginTop: 48, paddingBottom: layout.bottomMargin, flexShrink: 0 }}>
+          <ContributionStrip />
+        </div>
+      )}
     </motion.main>
   )
 }

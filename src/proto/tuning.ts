@@ -20,7 +20,7 @@ export function useLayoutDials() {
   const config = useStableConfig({
     'Heading px': [40, 20, 60, 1],
     'Heading line-height': [1.2, 1, 1.6, 0.05],
-    'Body px': [24, 13, 36, 1],
+    'Body px': [24, 13, 40, 1],
     'Body line-height': [1.35, 1, 2, 0.05],
     'Portrait height px': [160, 48, 280, 4],
     'Control size px': [56, 36, 80, 2],
@@ -28,6 +28,8 @@ export function useLayoutDials() {
     'Heading→body gap px': [32, 12, 64, 2],
     'Content max-width px': [800, 320, 1000, 8],
     'Bottom margin px': [0, 0, 80, 4],
+    'Contrib strip on top': true,
+    'Inline icon size px': [36, 20, 60, 2],
   } satisfies DialConfig)
   const d = useDialKit('Layout', config, { id: 'proto-layout' })
   return {
@@ -41,6 +43,8 @@ export function useLayoutDials() {
     headingBodyGap: d['Heading→body gap px'],
     contentMaxWidth: d['Content max-width px'],
     bottomMargin: d['Bottom margin px'],
+    contribOnTop: d['Contrib strip on top'],
+    inlineIconSize: d['Inline icon size px'],
   }
 }
 
