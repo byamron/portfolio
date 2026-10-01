@@ -28,8 +28,7 @@ export function InlineIcon({ src, alt, href, context = 'heading' }: {
         objectFit: 'cover',
         borderRadius: size * RADIUS_RATIO,
         display: 'inline-block',
-        verticalAlign: 'baseline',
-        transform: 'translateY(0.14em)',
+        verticalAlign: 'middle',
       }}
     />
   )
@@ -41,7 +40,7 @@ export function InlineIcon({ src, alt, href, context = 'heading' }: {
         href={href}
         target={isExternal ? '_blank' : undefined}
         rel={isExternal ? 'noopener noreferrer' : undefined}
-        style={{ display: 'inline-block', lineHeight: 0, verticalAlign: 'baseline' }}
+        style={{ display: 'inline-block', lineHeight: 0, verticalAlign: 'middle' }}
       >
         {img}
       </a>
@@ -67,8 +66,7 @@ export function InlinePortrait({ context = 'heading' }: { context?: 'heading' | 
         objectFit: 'cover',
         borderRadius: size * RADIUS_RATIO,
         display: 'inline-block',
-        verticalAlign: 'baseline',
-        transform: 'translateY(0.14em)',
+        verticalAlign: 'middle',
       }}
     />
   )
