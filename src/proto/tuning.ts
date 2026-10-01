@@ -26,12 +26,13 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Contrib strip on top': true, 'Icon scale (× text size)': 0.9,
   },
   'Uniform': {
-    'Heading font': 'Literata', 'Heading px': 36, 'Heading line-height': 1.3,
-    'Body font': 'Literata', 'Body px': 36, 'Body line-height': 1.3,
+    'Heading font': 'Literata', 'Heading px': 40, 'Heading line-height': 1.3,
+    'Body font': 'Literata', 'Body px': 40, 'Body line-height': 1.3,
     'Show portrait': false, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
     'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
     'Contrib strip on top': true, 'Icon scale (× text size)': 0.75,
+    'Icon alignment': 'baseline', 'Content top padding px': 120,
   },
 }
 
@@ -56,7 +57,7 @@ export function useLayoutDials() {
     'Contrib strip on top': true,
     'Icon scale (× text size)': [0.9, 0.5, 1.5, 0.05],
     'Icon alignment': { type: 'select', options: ['middle', 'baseline', 'text-bottom', 'text-top'], default: 'middle' },
-    'Content top padding px': [48, 0, 120, 4],
+    'Content top padding px': [48, 0, 800, 4],
   } satisfies DialConfig)
 
   const { values: d, setValue } = useDialKitController('Layout', config, { id: 'proto-layout' })
