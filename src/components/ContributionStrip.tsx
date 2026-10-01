@@ -205,8 +205,11 @@ export function ContributionStrip({ labelPosition = 'top' }: { labelPosition?: '
     const el = tipRef.current
     if (!el) return
     el.style.width = `${tipState.current.w.toFixed(2)}px`
-    el.style.transform = `translate(${tipState.current.x.toFixed(2)}px, ${tipY.current}px) translateY(-100%)`
-  }, [])
+    el.style.transform = labelPosition === 'bottom'
+      ? `translate(${tipState.current.x.toFixed(2)}px, ${tipY.current}px)`
+      : `translate(${tipState.current.x.toFixed(2)}px, ${tipY.current}px) translateY(-100%)`
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [labelPosition])
 
   const tipLoop = useCallback((t: number) => {
     tipRaf.current = null
@@ -236,7 +239,9 @@ export function ContributionStrip({ labelPosition = 'top' }: { labelPosition?: '
     tipEl.style.width = 'auto'
     const w = tipEl.offsetWidth
 
-    tipY.current = scroller.offsetTop - TIP_OFFSET
+    tipY.current = labelPosition === 'bottom'
+      ? scroller.offsetTop + scroller.offsetHeight + TIP_OFFSET
+      : scroller.offsetTop - TIP_OFFSET
     const cx = mark + CELL / 2 - scroller.scrollLeft
     const x = Math.min(Math.max(cx - w / 2, 0), Math.max(0, strip.clientWidth - w))
 

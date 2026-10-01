@@ -18,8 +18,10 @@ function useStableConfig<T extends DialConfig>(config: T): T {
 /** Layout & type — the core visual knobs. */
 export function useLayoutDials() {
   const config = useStableConfig({
+    'Heading font': { type: 'select', options: ['Literata', 'Onest', 'IBM Plex Mono', 'Georgia', 'system-ui'], default: 'Literata' },
     'Heading px': [40, 20, 60, 1],
     'Heading line-height': [1.2, 1, 1.6, 0.05],
+    'Body font': { type: 'select', options: ['Onest', 'Literata', 'IBM Plex Mono', 'system-ui'], default: 'Onest' },
     'Body px': [24, 13, 40, 1],
     'Body line-height': [1.35, 1, 2, 0.05],
     'Portrait height px': [160, 48, 280, 4],
@@ -33,8 +35,10 @@ export function useLayoutDials() {
   } satisfies DialConfig)
   const d = useDialKit('Layout', config, { id: 'proto-layout' })
   return {
+    headingFont: d['Heading font'] as string,
     headingSize: d['Heading px'],
     headingLineHeight: d['Heading line-height'],
+    bodyFont: d['Body font'] as string,
     bodySize: d['Body px'],
     bodyLineHeight: d['Body line-height'],
     portraitHeight: d['Portrait height px'],

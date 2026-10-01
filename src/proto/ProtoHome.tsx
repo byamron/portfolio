@@ -188,7 +188,7 @@ export function ProtoHome() {
           >
             <h1
               style={{
-                fontFamily: '"Literata", Georgia, serif',
+                fontFamily: `"${layout.headingFont}", Georgia, serif`,
                 fontSize: layout.headingSize,
                 fontWeight: 300,
                 lineHeight: layout.headingLineHeight,
@@ -201,7 +201,7 @@ export function ProtoHome() {
               {L('consensus')}
             </h1>
 
-            <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: 22, fontFamily: '"Onest", system-ui, sans-serif', fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
+            <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: 22, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
                 Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at{' '}
                 <InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" />{' '}

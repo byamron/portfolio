@@ -68,7 +68,7 @@ export function ProtoCaseStudy() {
               borderRadius: 8,
               cursor: 'pointer',
               fontSize: 18,
-              fontFamily: '"Onest", system-ui, sans-serif',
+              fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`,
             }}
           >
             ←
@@ -99,7 +99,7 @@ export function ProtoCaseStudy() {
         <motion.div {...textMotion} style={{ width: '100%', maxWidth: 528 }}>
           <p
             style={{
-              fontFamily: '"Onest", system-ui, sans-serif',
+              fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`,
               fontSize: layout.bodySize,
               fontWeight: 300,
               lineHeight: layout.bodyLineHeight,
