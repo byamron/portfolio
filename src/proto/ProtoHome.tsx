@@ -209,7 +209,7 @@ export function ProtoHome() {
                 </span>.
               </p>
               <p style={{ margin: 0 }}>
-                I studied Human Centered Design at the University of Washington. I worked with {L('uw')}, {L('sony')},
+                I studied Human Centered Design at the University of Washington, where I worked with {L('uw')}, {L('sony')},
                 and the {L('cip')}. I learned how to think at Middlebury College.
               </p>
             </div>

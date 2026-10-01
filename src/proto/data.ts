@@ -37,7 +37,7 @@ export const protoEntries: ProtoEntry[] = [
   { id: 'trio', label: 'Trio', media: { type: 'video', src: '/images/preview-todo-priority.mp4' }, aspect: 0.75, blurb: 'Trio — a todo list for focus and prioritization.' },
   { id: 'ripe', label: 'Ripe', media: { type: 'blank' }, aspect: 1.6, blurb: 'Ripe.' },
   { id: 'havana', label: 'Havana', media: { type: 'video', src: '/images/preview-language-app.mp4' }, aspect: 0.75, blurb: 'Havana — voice-first language practice with personalized feedback.' },
-  { id: 'uw', label: 'UW-IT', media: { type: 'video', src: '/prototypes/uw-preview.mp4' }, aspect: 1.333, blurb: 'University of Washington IT — kickstarting an early-stage design system.' },
+  { id: 'uw', label: 'UW Information Technology', media: { type: 'video', src: '/prototypes/uw-preview.mp4' }, aspect: 1.333, blurb: 'University of Washington IT — kickstarting an early-stage design system.' },
   { id: 'sony', label: 'Sony', media: { type: 'video', src: '/prototypes/sony-preview.mp4' }, aspect: 1.778, blurb: 'Sony — Screenless TV: designing for shared reality.' },
   { id: 'cip', label: 'Center for an Informed Public', media: { type: 'lottie', src: '/images/preview-cip.json' }, aspect: 0.733, blurb: 'UW Center for an Informed Public — framing election misinformation.' },
 ]
