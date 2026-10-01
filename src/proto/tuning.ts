@@ -22,7 +22,7 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Body font': 'Onest', 'Body px': 24, 'Body line-height': 1.35,
     'Show portrait': true, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 32,
-    'Paragraph gap px': 22, 'Content max-width px': 800, 'Bottom margin px': 0,
+    'Paragraph gap px': 22, 'Content max-width px': 920, 'Bottom margin px': 0,
     'Contrib strip on top': true, 'Icon scale (× text size)': 0.9,
   },
   'Uniform': {
@@ -30,7 +30,7 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Body font': 'Literata', 'Body px': 36, 'Body line-height': 1.3,
     'Show portrait': false, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
-    'Paragraph gap px': 40, 'Content max-width px': 800, 'Bottom margin px': 0,
+    'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
     'Contrib strip on top': true, 'Icon scale (× text size)': 0.75,
   },
 }
@@ -51,7 +51,7 @@ export function useLayoutDials() {
     'Thumb→heading gap px': [24, 4, 48, 2],
     'Heading→body gap px': [32, 12, 64, 2],
     'Paragraph gap px': [22, 8, 48, 2],
-    'Content max-width px': [800, 320, 1000, 8],
+    'Content max-width px': [920, 320, 1200, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
     'Icon scale (× text size)': [0.9, 0.5, 1.5, 0.05],

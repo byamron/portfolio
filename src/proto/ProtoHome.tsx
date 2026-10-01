@@ -217,7 +217,7 @@ export function ProtoHome() {
                 </span>.
               </p>
               <p style={{ margin: 0 }}>
-                I studied Human Centered Design at the{' '}
+                I studied Human-Centered Design at the{' '}
                 <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, where I worked with {L('uw')},{' '}
                 <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-sony.svg" alt="Sony" context="body" />{' '}{L('sony')}</span>, and the {L('cip')}. I learned how to think at{' '}
                 <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
