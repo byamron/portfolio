@@ -55,6 +55,8 @@ export function useLayoutDials() {
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
     'Icon scale (× text size)': [0.9, 0.5, 1.5, 0.05],
+    'Icon alignment': { type: 'select', options: ['middle', 'baseline', 'text-bottom', 'text-top'], default: 'middle' },
+    'Content top padding px': [48, 0, 120, 4],
   } satisfies DialConfig)
 
   const { values: d, setValue } = useDialKitController('Layout', config, { id: 'proto-layout' })
@@ -89,6 +91,8 @@ export function useLayoutDials() {
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
     iconScale: d['Icon scale (× text size)'],
+    iconAlign: d['Icon alignment'] as string,
+    contentTopPadding: d['Content top padding px'],
   }
 }
 
