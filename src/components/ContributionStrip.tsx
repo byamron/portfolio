@@ -34,7 +34,7 @@ interface Layout {
   svgWidth: number
 }
 
-export function ContributionStrip() {
+export function ContributionStrip({ labelPosition = 'top' }: { labelPosition?: 'top' | 'bottom' } = {}) {
   const { bgIntensity, resolvedAppearance } = useTheme()
   const { setHoveringLink } = useHover()
   const prefersReducedMotion = !!useReducedMotion()
@@ -385,13 +385,22 @@ export function ContributionStrip() {
   return (
     <section
       ref={stripRef}
-      style={{ marginTop: 64, paddingBottom: 16 - HIT_PAD, position: 'relative' }}
+      style={{
+        marginTop: labelPosition === 'top' ? 64 : 0,
+        paddingBottom: 16 - HIT_PAD,
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
       <div
         style={{
           display: 'flex', justifyContent: 'flex-start', alignItems: 'center',
           fontFamily: "'Onest', sans-serif", fontSize: 'var(--text-size-small)', lineHeight: 1.3,
-          color: 'var(--text-grey)', paddingLeft: 40, marginBottom: 16 - HIT_PAD,
+          color: 'var(--text-grey)', paddingLeft: 40,
+          order: labelPosition === 'bottom' ? 2 : 0,
+          marginBottom: labelPosition === 'top' ? 16 - HIT_PAD : 0,
+          marginTop: labelPosition === 'bottom' ? 16 - HIT_PAD : 0,
         }}
       >
         <span>

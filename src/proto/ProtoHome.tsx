@@ -114,8 +114,8 @@ export function ProtoHome() {
     >
       {/* Contribution strip — top position */}
       {layout.contribOnTop && (
-        <div style={{ alignSelf: 'stretch', flexShrink: 0, paddingTop: 16 }}>
-          <ContributionStrip />
+        <div style={{ alignSelf: 'stretch', flexShrink: 0 }}>
+          <ContributionStrip labelPosition="bottom" />
         </div>
       )}
 
