@@ -16,8 +16,7 @@ export function InlineIcon({ src, alt, href, context = 'heading' }: {
 }) {
   const layout = useLayoutDials()
   const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
-  const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
-  const size = Math.round(fontSize * lineHeight * layout.iconScale)
+  const size = Math.round(fontSize * layout.iconScale)
 
   const img = (
     <img
@@ -56,8 +55,7 @@ export function InlinePortrait({ context = 'heading' }: { context?: 'heading' | 
   const { accentColor } = useTheme()
   const layout = useLayoutDials()
   const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
-  const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
-  const size = Math.round(fontSize * lineHeight * layout.iconScale)
+  const size = Math.round(fontSize * layout.iconScale)
 
   return (
     <img

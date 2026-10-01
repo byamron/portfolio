@@ -1,6 +1,6 @@
 // DEV TOOLING — DialKit tuning dials for the /new prototype. Strip before merge.
 import { useRef } from 'react'
-import { useDialKit, type DialConfig } from 'dialkit'
+import { useDialKit, useDialKitController, type DialConfig } from 'dialkit'
 import type { AnimationOptions } from 'framer-motion'
 
 export const EASE = [0.25, 0.46, 0.45, 0.94] as const
@@ -15,9 +15,30 @@ function useStableConfig<T extends DialConfig>(config: T): T {
   return ref.current
 }
 
-/** Layout & type — the core visual knobs. */
+// Two named presets — switchable via the 'Preset' select at the top of the Layout group.
+const PRESETS: Record<string, Record<string, number | boolean | string>> = {
+  'Default': {
+    'Heading font': 'Literata', 'Heading px': 40, 'Heading line-height': 1.2,
+    'Body font': 'Onest', 'Body px': 24, 'Body line-height': 1.35,
+    'Show portrait': true, 'Portrait height px': 160,
+    'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 32,
+    'Paragraph gap px': 22, 'Content max-width px': 800, 'Bottom margin px': 0,
+    'Contrib strip on top': true, 'Icon scale (× text size)': 0.9,
+  },
+  'Uniform': {
+    'Heading font': 'Literata', 'Heading px': 36, 'Heading line-height': 1.3,
+    'Body font': 'Literata', 'Body px': 36, 'Body line-height': 1.3,
+    'Show portrait': false, 'Portrait height px': 160,
+    'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
+    'Paragraph gap px': 40, 'Content max-width px': 800, 'Bottom margin px': 0,
+    'Contrib strip on top': true, 'Icon scale (× text size)': 0.75,
+  },
+}
+
+/** Layout & type — the core visual knobs with switchable presets. */
 export function useLayoutDials() {
   const config = useStableConfig({
+    'Preset': { type: 'select', options: Object.keys(PRESETS), default: 'Default' },
     'Heading font': { type: 'select', options: ['Literata', 'Onest', 'IBM Plex Mono', 'Georgia', 'system-ui'], default: 'Literata' },
     'Heading px': [40, 20, 60, 1],
     'Heading line-height': [1.2, 1, 1.6, 0.05],
@@ -33,9 +54,24 @@ export function useLayoutDials() {
     'Content max-width px': [800, 320, 1000, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
-    'Icon scale (× line height)': [0.9, 0.5, 1.5, 0.05],
+    'Icon scale (× text size)': [0.9, 0.5, 1.5, 0.05],
   } satisfies DialConfig)
-  const d = useDialKit('Layout', config, { id: 'proto-layout' })
+
+  const { values: d, setValue } = useDialKitController('Layout', config, { id: 'proto-layout' })
+  const selectedPreset = d['Preset'] as string
+
+  // Apply preset values when the select changes
+  const lastPreset = useRef(selectedPreset)
+  if (selectedPreset !== lastPreset.current) {
+    lastPreset.current = selectedPreset
+    const preset = PRESETS[selectedPreset]
+    if (preset) {
+      for (const [key, val] of Object.entries(preset)) {
+        setValue(key, val as never)
+      }
+    }
+  }
+
   return {
     headingFont: d['Heading font'] as string,
     showPortrait: d['Show portrait'] as boolean,
@@ -52,7 +88,7 @@ export function useLayoutDials() {
     contentMaxWidth: d['Content max-width px'],
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
-    iconScale: d['Icon scale (× line height)'],
+    iconScale: d['Icon scale (× text size)'],
   }
 }
 
