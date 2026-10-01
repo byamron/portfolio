@@ -39,13 +39,26 @@ export function ProtoHome() {
   const [thumbHovered, setThumbHovered] = useState(false)
   const thumbRef = useRef<HTMLButtonElement>(null)
 
-  // Glass pill hover on inline prose links
+  // Glass pill hover on inline prose links (excluding the X link, which has its own)
   const proseRef = useRef<HTMLDivElement>(null)
-  // Match both ProtoLink anchors and FlockX's anchor (which uses data-contact-card).
-  const glassApi = useGlassHighlight(proseRef, {
-    cardSelector: '[data-proto-link], [data-contact-card]',
+  useGlassHighlight(proseRef, {
+    cardSelector: '[data-proto-link]',
     borderRadius: 8,
     clearDelay: 200,
+  })
+
+  // FlockX gets its own isolated glass pill instance — exactly like production's
+  // AboutSection contactRef pattern. Sharing a pill with the prose container
+  // causes the shatter cracks to misalign and the pill lifecycle to conflict.
+  const xLinkContainerRef = useRef<HTMLSpanElement>(null)
+  const xGlassApi = useGlassHighlight(xLinkContainerRef, {
+    cardSelector: '[data-contact-card]',
+    borderRadius: 8,
+    clearDelay: 300,
+    pillMaxLean: 0.5,
+    pillMaxTilt: 0.5,
+    cardMaxLean: 0,
+    pullStrength: 0,
   })
 
   const [glowPulse, setGlowPulse] = useState(false)
@@ -187,13 +200,13 @@ export function ProtoHome() {
               <p style={{ margin: 0 }}>
                 On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
                 bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and{' '}
-                <FlockX
-                  href="https://x.com/benyamron"
-                  glassApi={glassApi}
-                  style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
-                >
-                  <span data-proto-link>X<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', width: '0.6em', height: '0.6em', marginLeft: '0.14em', verticalAlign: '0.06em', opacity: 0.7 }}><line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" /></svg></span>
-                </FlockX>.
+                <span ref={xLinkContainerRef} style={{ position: 'relative', display: 'inline' }}>
+                  <FlockX
+                    href="https://x.com/benyamron"
+                    glassApi={xGlassApi}
+                    style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
+                  >X</FlockX>
+                </span>.
               </p>
               <p style={{ margin: 0 }}>
                 I studied Human Centered Design at the University of Washington. I worked with {L('uw')}, {L('sony')},

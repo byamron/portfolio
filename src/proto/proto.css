@@ -1,11 +1,11 @@
 /* Hide DialKit's preset/version dropdown — adds UI noise during prototyping. */
 .dialkit-preset-manager { display: none !important; }
 
-/* Inline prose links: underline on the label span.
-   Covers both <a data-proto-link><span>…</span></a> (ProtoLink)
-   and <a><span data-proto-link>…</span></a> (FlockX). */
+/* Inline prose links: underline treatment.
+   ProtoLink: <a data-proto-link><span>…</span></a> — underline on the span.
+   FlockX: <a data-contact-card>X</a> — underline on the anchor itself. */
 [data-proto-link] span,
-span[data-proto-link] {
+[data-contact-card] {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--text-dark) 25%, transparent);
   text-underline-offset: 3px;
@@ -15,7 +15,7 @@ span[data-proto-link] {
 
 [data-proto-link]:hover span,
 [data-proto-link]:focus-visible span,
-a:hover span[data-proto-link],
-a:focus-visible span[data-proto-link] {
+[data-contact-card]:hover,
+[data-contact-card]:focus-visible {
   text-decoration-color: color-mix(in srgb, var(--text-dark) 55%, transparent);
 }
