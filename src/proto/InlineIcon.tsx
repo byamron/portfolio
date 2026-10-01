@@ -4,34 +4,36 @@ import { useLayoutDials } from './tuning'
 const RADIUS_RATIO = 0.22
 
 /**
- * An app-icon-sized element that sits inline within text. Size is computed
- * as fontSize × lineHeight × iconScale, so it scales proportionally to
- * whichever text context it's placed in (heading or body).
- *
- * Pass `context="heading"` or `context="body"` to pick which text metrics
- * drive the size.
+ * An app-icon-sized element that sits inline within text. Size equals
+ * fontSize × lineHeight — the largest square that fits inside the line
+ * box without affecting line spacing. True-centered vertically via a
+ * calculated translateY rather than CSS vertical-align: middle (which
+ * aligns to the x-height midpoint, not the line-box center).
  */
+function useIconMetrics(context: 'heading' | 'body') {
+  const layout = useLayoutDials()
+  const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
+  const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
+  const size = Math.round(fontSize * lineHeight)
+  const align = layout.iconAlign as string
+  return { size, align, layout }
+}
+
 export function InlineIcon({ src, alt, href, context = 'heading' }: {
   src: string; alt: string; href?: string; context?: 'heading' | 'body'
 }) {
-  const layout = useLayoutDials()
-  const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
-  const size = Math.round(fontSize * layout.iconScale)
+  const { size, align } = useIconMetrics(context)
 
-  const img = (
-    <img
-      src={src}
-      alt={alt}
-      style={{
-        width: size,
-        height: size,
-        objectFit: 'cover',
-        borderRadius: size * RADIUS_RATIO,
-        display: 'inline-block',
-        verticalAlign: layout.iconAlign as 'middle' | 'baseline' | 'text-bottom' | 'text-top',
-      }}
-    />
-  )
+  const imgStyle: React.CSSProperties = {
+    width: size,
+    height: size,
+    objectFit: 'cover',
+    borderRadius: size * RADIUS_RATIO,
+    display: 'inline-block',
+    verticalAlign: align,
+  }
+
+  const img = <img src={src} alt={alt} style={imgStyle} />
 
   if (href) {
     const isExternal = href.startsWith('http')
@@ -40,7 +42,7 @@ export function InlineIcon({ src, alt, href, context = 'heading' }: {
         href={href}
         target={isExternal ? '_blank' : undefined}
         rel={isExternal ? 'noopener noreferrer' : undefined}
-        style={{ display: 'inline-block', lineHeight: 0, verticalAlign: layout.iconAlign as string }}
+        style={{ display: 'inline-block', lineHeight: 0, verticalAlign: align }}
       >
         {img}
       </a>
@@ -52,9 +54,7 @@ export function InlineIcon({ src, alt, href, context = 'heading' }: {
 
 export function InlinePortrait({ context = 'heading' }: { context?: 'heading' | 'body' }) {
   const { accentColor } = useTheme()
-  const layout = useLayoutDials()
-  const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
-  const size = Math.round(fontSize * layout.iconScale)
+  const { size, align } = useIconMetrics(context)
 
   return (
     <img
@@ -66,7 +66,7 @@ export function InlinePortrait({ context = 'heading' }: { context?: 'heading' | 
         objectFit: 'cover',
         borderRadius: size * RADIUS_RATIO,
         display: 'inline-block',
-        verticalAlign: layout.iconAlign as 'middle' | 'baseline' | 'text-bottom' | 'text-top',
+        verticalAlign: align,
       }}
     />
   )
