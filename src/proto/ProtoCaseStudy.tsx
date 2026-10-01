@@ -100,7 +100,7 @@ export function ProtoCaseStudy() {
           <p
             style={{
               fontFamily: '"Onest", system-ui, sans-serif',
-              fontSize: layout.bodySize + 2,
+              fontSize: layout.bodySize,
               fontWeight: 300,
               lineHeight: layout.bodyLineHeight,
               color: 'var(--text-dark)',

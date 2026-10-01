@@ -68,6 +68,7 @@ export function usePreviewDials() {
     'Enter easing': { type: 'easing', duration: 0.2, ease: [...EASE] },
     'Morph spring': { type: 'spring', stiffness: 340, damping: 30 },
     'Fade out sec': [0.16, 0.05, 0.5, 0.01],
+    'Opacity': [1, 0.3, 1, 0.05],
   } satisfies DialConfig)
   const d = useDialKit('Hover preview', config, { id: 'proto-preview' })
   return {
@@ -77,6 +78,7 @@ export function usePreviewDials() {
     enter: toMotionTransition(d['Enter easing'] as { type: 'spring' | 'easing'; [key: string]: unknown }),
     morph: toMotionTransition(d['Morph spring'] as { type: 'spring' | 'easing'; [key: string]: unknown }),
     fadeOut: d['Fade out sec'],
+    opacity: d['Opacity'],
   }
 }
 

@@ -68,7 +68,7 @@ export function PreviewLayer() {
           animate(y, ty, dials.enter)
           animate(scale, 1, dials.enter)
         }
-        animate(opacity, 1, { duration: reducedMotion ? 0 : 0.18 })
+        animate(opacity, dials.opacity, { duration: reducedMotion ? 0 : 0.18 })
       }
       if (wasVisible && !reducedMotion) {
         // Moving link → link: dip out at the old spot, re-enter at the new one.
