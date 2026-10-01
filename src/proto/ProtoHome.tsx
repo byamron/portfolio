@@ -206,8 +206,7 @@ export function ProtoHome() {
                 <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
-                On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
-                bunch of other tools and experiments. See more in my {L('arcade')}, {L('github')}, and{' '}
+                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more in my {L('arcade')}, {L('github')}, and{' '}
                 <span ref={xLinkContainerRef} style={{ position: 'relative', display: 'inline' }}>
                   <FlockX
                     href="https://x.com/benyamron"
