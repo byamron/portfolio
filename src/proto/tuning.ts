@@ -24,6 +24,7 @@ export function useLayoutDials() {
     'Body font': { type: 'select', options: ['Onest', 'Literata', 'IBM Plex Mono', 'system-ui'], default: 'Onest' },
     'Body px': [24, 13, 40, 1],
     'Body line-height': [1.35, 1, 2, 0.05],
+    'Show portrait': true,
     'Portrait height px': [160, 48, 280, 4],
     'Control size px': [56, 36, 80, 2],
     'Thumb→heading gap px': [24, 4, 48, 2],
@@ -37,6 +38,7 @@ export function useLayoutDials() {
   const d = useDialKit('Layout', config, { id: 'proto-layout' })
   return {
     headingFont: d['Heading font'] as string,
+    showPortrait: d['Show portrait'] as boolean,
     headingSize: d['Heading px'],
     headingLineHeight: d['Heading line-height'],
     bodyFont: d['Body font'] as string,

@@ -144,7 +144,7 @@ export function ProtoHome() {
           </AnimatePresence>
 
           {/* Portrait thumbnail — 3:4 aspect, above the heading */}
-          <button
+          {layout.showPortrait && <button
             ref={thumbRef}
             type="button"
             aria-label={settingsOpen ? 'Close customization' : 'Customize appearance'}
@@ -175,7 +175,7 @@ export function ProtoHome() {
               alt="Ben Yamron"
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
-          </button>
+          </button>}
 
           {/* Prose */}
           <motion.div
