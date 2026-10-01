@@ -23,7 +23,8 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Show portrait': true, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 32,
     'Paragraph gap px': 22, 'Content max-width px': 920, 'Bottom margin px': 0,
-    'Contrib strip on top': true, 'Icon scale (× text size)': 0.9,
+    'Contrib strip on top': true,
+    'Icon alignment': 'text-bottom', 'Content top padding px': 48,
   },
   'Uniform': {
     'Heading font': 'Literata', 'Heading px': 40, 'Heading line-height': 1.3,
@@ -31,8 +32,8 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Show portrait': false, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
     'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
-    'Contrib strip on top': true, 'Icon scale (× text size)': 0.75,
-    'Icon alignment': 'middle', 'Content top padding px': 192,
+    'Contrib strip on top': true,
+    'Icon alignment': 'text-bottom', 'Content top padding px': 192,
   },
 }
 
@@ -55,8 +56,7 @@ export function useLayoutDials() {
     'Content max-width px': [920, 320, 1200, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
-    'Icon scale (× text size)': [0.9, 0.5, 1.5, 0.05],
-    'Icon alignment': { type: 'select', options: ['middle', 'baseline', 'text-bottom', 'text-top'], default: 'middle' },
+    'Icon alignment': { type: 'select', options: ['text-bottom', 'middle', 'baseline', 'text-top'], default: 'text-bottom' },
     'Content top padding px': [48, 0, 400, 4],
   } satisfies DialConfig)
 
@@ -91,7 +91,6 @@ export function useLayoutDials() {
     contentMaxWidth: d['Content max-width px'],
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
-    iconScale: d['Icon scale (× text size)'],
     iconAlign: d['Icon alignment'] as string,
     contentTopPadding: d['Content top padding px'],
   }
