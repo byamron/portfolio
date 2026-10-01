@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { ContributionStrip } from '@/components/ContributionStrip'
 import { FlockX } from '@/components/FlockX'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
+import { InlineIcon, InlinePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
@@ -190,12 +191,16 @@ export function ProtoHome() {
                 margin: 0,
               }}
             >
-              Ben Yamron is a product designer, currently designing AI for scientific research at {L('consensus')}
+              <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
+              <InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}
+              {L('consensus')}
             </h1>
 
             <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: 22, fontFamily: '"Onest", system-ui, sans-serif', fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
-                Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at {L('mochi-health')}.
+                Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at{' '}
+                <InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" />{' '}
+                {L('mochi-health')}.
               </p>
               <p style={{ margin: 0 }}>
                 On the side, I build {L('flow')}, {L('distill')}, {L('trio')}, {L('ripe')}, {L('havana')}, and a
