@@ -24,7 +24,7 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 32,
     'Paragraph gap px': 22, 'Content max-width px': 920, 'Bottom margin px': 0,
     'Contrib strip on top': true,
-    'Icon alignment': 'text-bottom', 'Content top padding px': 48,
+    'Content top padding px': 48,
   },
   'Uniform': {
     'Heading font': 'Literata', 'Heading px': 40, 'Heading line-height': 1.3,
@@ -33,7 +33,7 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
     'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
     'Contrib strip on top': true,
-    'Icon alignment': 'middle', 'Content top padding px': 192,
+    'Content top padding px': 192,
   },
 }
 
@@ -57,7 +57,6 @@ export function useLayoutDials() {
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
     'Icon scale': [1, 0.65, 1, 0.01],
-    'Icon alignment': { type: 'select', options: ['middle', 'text-bottom', 'baseline', 'text-top'], default: 'middle' },
     'Content top padding px': [48, 0, 400, 4],
   } satisfies DialConfig)
 
@@ -93,7 +92,6 @@ export function useLayoutDials() {
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
     iconScale: d['Icon scale'],
-    iconAlign: d['Icon alignment'] as string,
     contentTopPadding: d['Content top padding px'],
   }
 }
