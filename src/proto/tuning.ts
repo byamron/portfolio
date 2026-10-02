@@ -33,14 +33,14 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
     'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
     'Contrib strip on top': true,
-    'Icon alignment': 'text-bottom', 'Content top padding px': 192,
+    'Icon alignment': 'middle', 'Content top padding px': 192,
   },
 }
 
 /** Layout & type — the core visual knobs with switchable presets. */
 export function useLayoutDials() {
   const config = useStableConfig({
-    'Preset': { type: 'select', options: Object.keys(PRESETS), default: 'Default' },
+    'Preset': { type: 'select', options: Object.keys(PRESETS), default: 'Uniform' },
     'Heading font': { type: 'select', options: ['Literata', 'Onest', 'IBM Plex Mono', 'Georgia', 'system-ui'], default: 'Literata' },
     'Heading px': [40, 20, 60, 1],
     'Heading line-height': [1.2, 1, 1.6, 0.05],
@@ -57,7 +57,7 @@ export function useLayoutDials() {
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
     'Icon scale': [1, 0.65, 1, 0.01],
-    'Icon alignment': { type: 'select', options: ['text-bottom', 'middle', 'baseline', 'text-top'], default: 'text-bottom' },
+    'Icon alignment': { type: 'select', options: ['middle', 'text-bottom', 'baseline', 'text-top'], default: 'middle' },
     'Content top padding px': [48, 0, 400, 4],
   } satisfies DialConfig)
 
