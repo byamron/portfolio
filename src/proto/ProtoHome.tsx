@@ -192,7 +192,7 @@ export function ProtoHome() {
           >
             <div ref={proseRef} style={{ display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
-                <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
+                <InlinePortrait />{' '}<span style={{ color: 'var(--text-dark)', textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb, var(--text-dark) 25%, transparent)', textUnderlineOffset: 3, textDecorationThickness: 1 }}>Ben Yamron</span> is a product designer, currently designing AI for scientific research at{' '}
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
               </p>
               <p style={{ margin: 0 }}>
