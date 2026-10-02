@@ -220,7 +220,7 @@ export function ProtoHome() {
               <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
             </h1>
 
-            <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
+            <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
                 Previously, I designed {L('mochi-subscriptions')} at{' '}
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
