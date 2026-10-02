@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { ContributionStrip } from '@/components/ContributionStrip'
-import { FlockX } from '@/components/FlockX'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { InlineIcon, InlinePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
@@ -66,20 +65,6 @@ export function ProtoHome() {
     cardSelector: '[data-proto-link]',
     borderRadius: 8,
     clearDelay: 200,
-  })
-
-  // FlockX gets its own isolated glass pill instance — exactly like production's
-  // AboutSection contactRef pattern. Sharing a pill with the prose container
-  // causes the shatter cracks to misalign and the pill lifecycle to conflict.
-  const xLinkContainerRef = useRef<HTMLSpanElement>(null)
-  const xGlassApi = useGlassHighlight(xLinkContainerRef, {
-    cardSelector: '[data-contact-card]',
-    borderRadius: 8,
-    clearDelay: 300,
-    pillMaxLean: 0.5,
-    pillMaxTilt: 0.5,
-    cardMaxLean: 0,
-    pullStrength: 0,
   })
 
   const [glowPulse, setGlowPulse] = useState(false)
@@ -197,43 +182,25 @@ export function ProtoHome() {
             />
           </button>}
 
-          {/* Prose */}
+          {/* Prose — one text hierarchy, all grey. Interactive elements go black via CSS. */}
           <motion.div
             animate={{
               opacity: settingsOpen ? 0 : 1,
               transitionEnd: { visibility: settingsOpen ? 'hidden' : 'visible' },
             }}
             transition={fade}
-            style={{ display: 'flex', flexDirection: 'column' }}
           >
-            <h1
-              style={{
-                fontFamily: `"${layout.headingFont}", Georgia, serif`,
-                fontSize: layout.headingSize,
-                fontWeight: 300,
-                lineHeight: layout.headingLineHeight,
-                color: 'var(--text-dark)',
-                margin: 0,
-              }}
-            >
-              <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
-              <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
-            </h1>
-
-            <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
+            <div ref={proseRef} style={{ display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
+              <p style={{ margin: 0 }}>
+                <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
+                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
+              </p>
               <p style={{ margin: 0 }}>
                 Previously, I designed {L('mochi-subscriptions')} at{' '}
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
-                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')},{' '}
-                <span ref={xLinkContainerRef} style={{ position: 'relative', display: 'inline' }}>
-                  <FlockX
-                    href="https://x.com/benyamron"
-                    glassApi={xGlassApi}
-                    style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
-                  >X</FlockX>
-                </span>, or in my {L('arcade')}.
+                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')}, {L('x')}, or in my {L('arcade')}.
               </p>
               <p style={{ margin: 0 }}>
                 I studied design at the{' '}

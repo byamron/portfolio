@@ -4,13 +4,11 @@
 /* Inline prose links: dark text (stands out from grey body) + underline.
    ProtoLink: <a data-proto-link><span>…</span></a> — underline on the span.
    FlockX: <a data-contact-card>X</a> — underline on the anchor itself. */
-[data-proto-link],
-[data-contact-card] {
+[data-proto-link] {
   color: var(--text-dark);
 }
 
-[data-proto-link] span,
-[data-contact-card] {
+[data-proto-link] span {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--text-dark) 25%, transparent);
   text-underline-offset: 3px;
@@ -19,8 +17,6 @@
 }
 
 [data-proto-link]:hover span,
-[data-proto-link]:focus-visible span,
-[data-contact-card]:hover,
-[data-contact-card]:focus-visible {
+[data-proto-link]:focus-visible span {
   text-decoration-color: color-mix(in srgb, var(--text-dark) 55%, transparent);
 }
