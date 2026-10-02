@@ -4,19 +4,40 @@ import { useLayoutDials } from './tuning'
 const RADIUS_RATIO = 0.22
 
 /**
- * An app-icon-sized element that sits inline within text. Size equals
- * fontSize × lineHeight — the largest square that fits inside the line
- * box without affecting line spacing. True-centered vertically via a
- * calculated translateY rather than CSS vertical-align: middle (which
- * aligns to the x-height midpoint, not the line-box center).
+ * Compute the vertical-align value that truly centers the icon.
+ *
+ * CSS `vertical-align: middle` aligns to the x-height midpoint, not the
+ * line-box center — visibly off for larger icons. Instead, when "middle"
+ * is selected we calculate the exact pixel offset from the baseline that
+ * centers the icon within the line box:
+ *
+ *   lineBox = fontSize × lineHeight
+ *   leading = lineBox - fontSize  (split half above, half below)
+ *   baselineFromTop ≈ fontSize × 0.8 + leading/2
+ *   iconCenter should be at lineBox / 2
+ *   offset = baselineFromTop - iconCenter - iconSize/2
+ *          = (fontSize×0.8 + leading/2) - lineBox/2 - iconSize/2
+ *          simplified: (fontSize×0.3) - iconSize/2 + leading×0  ...
+ *
+ * Actually simpler: we want the icon's center at lineBox/2 from the top.
+ * vertical-align offset from baseline = (lineBox/2 - iconSize/2) - descent
+ * where descent ≈ fontSize × 0.2 for Latin fonts.
  */
+function computeAlign(align: string, fontSize: number, lineHeight: number, iconSize: number): string {
+  if (align !== 'middle') return align
+  const lineBox = fontSize * lineHeight
+  const descent = fontSize * 0.18
+  const offset = (lineBox - iconSize) / 2 - descent
+  return `${offset.toFixed(1)}px`
+}
+
 function useIconMetrics(context: 'heading' | 'body') {
   const layout = useLayoutDials()
   const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
   const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
   const size = Math.round(fontSize * lineHeight * layout.iconScale)
-  const align = layout.iconAlign as string
-  return { size, align, layout }
+  const align = computeAlign(layout.iconAlign as string, fontSize, lineHeight, size)
+  return { size, align }
 }
 
 export function InlineIcon({ src, alt, href, context = 'heading' }: {
