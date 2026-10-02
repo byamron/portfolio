@@ -12,6 +12,17 @@ import { EASE, useLayoutDials, useExperimentDials, usePageDials } from './tuning
 
 const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
+// Brand colors for inline icon titles — adjusted per mode for contrast.
+// Light mode: use the brand color directly (dark text on light bg).
+// Dark mode: lighten colors that are too dark against the dark bg.
+const BRAND_COLORS: Record<string, { light: string; dark: string }> = {
+  consensus:  { light: '#068EF1', dark: '#4DB5F7' },
+  mochi:      { light: '#000045', dark: '#8B8BFF' },
+  sony:       { light: '#333333', dark: '#CCCCCC' },
+  uw:         { light: '#4B2E83', dark: '#9B7FD4' },
+  middlebury: { light: '#0D395F', dark: '#5B9AC7' },
+}
+
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
 const backButtonStyle: React.CSSProperties = {
@@ -32,7 +43,9 @@ const backButtonStyle: React.CSSProperties = {
 
 export function ProtoHome() {
   const reducedMotion = useReducedMotion()
-  const { accentColor, bgIntensity } = useTheme()
+  const { accentColor, bgIntensity, resolvedAppearance } = useTheme()
+  const isDark = resolvedAppearance === 'dark'
+  const bc = (key: string) => isDark ? BRAND_COLORS[key]?.dark : BRAND_COLORS[key]?.light
   const layout = useLayoutDials()
   const experiments = useExperimentDials()
   const page = usePageDials()
@@ -197,13 +210,13 @@ export function ProtoHome() {
               }}
             >
               <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
-              <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>
+              <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>
             </h1>
 
             <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
                 Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at{' '}
-                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
+                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
                 On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more in my {L('arcade')}, {L('github')}, and{' '}
@@ -217,9 +230,9 @@ export function ProtoHome() {
               </p>
               <p style={{ margin: 0 }}>
                 I studied Human-Centered Design at the{' '}
-                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, where I worked with {L('uw')},{' '}
-                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-sony.svg" alt="Sony" context="body" />{' '}{L('sony')}</span>, and the {L('cip')}. I learned how to think at{' '}
-                <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
+                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('uw') }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, where I worked with {L('uw')},{' '}
+                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('sony') }}><InlineIcon src="/images/logo-sony.svg" alt="Sony" context="body" />{' '}{L('sony')}</span>, and the {L('cip')}. I learned how to think at{' '}
+                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('middlebury') }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
               </p>
             </div>
           </motion.div>
