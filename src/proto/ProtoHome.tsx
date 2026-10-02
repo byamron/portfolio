@@ -4,7 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { ContributionStrip } from '@/components/ContributionStrip'
 import { FlockX } from '@/components/FlockX'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
-import { InlineIcon, InlinePortrait } from './InlineIcon'
+import { ConsensusIcon, InlineIcon, InlinePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
 import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
@@ -197,7 +197,7 @@ export function ProtoHome() {
               }}
             >
               <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
-              <span style={{ whiteSpace: 'nowrap' }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>
+              <span style={{ whiteSpace: 'nowrap' }}><ConsensusIcon />{' '}{L('consensus')}</span>
             </h1>
 
             <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
