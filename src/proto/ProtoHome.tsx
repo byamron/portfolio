@@ -210,28 +210,27 @@ export function ProtoHome() {
               }}
             >
               <InlinePortrait />{' '}Ben Yamron is a product designer, currently designing AI for scientific research at{' '}
-              <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>
+              <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
             </h1>
 
             <div ref={proseRef} style={{ marginTop: layout.headingBodyGap, display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-dark)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
-                Previously designed {L('mochi-subscriptions')} and {L('mochi-ai-tooling')} at{' '}
+                Previously, I designed {L('mochi-subscriptions')} at{' '}
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
-                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more in my {L('arcade')}, {L('github')}, and{' '}
+                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')},{' '}
                 <span ref={xLinkContainerRef} style={{ position: 'relative', display: 'inline' }}>
                   <FlockX
                     href="https://x.com/benyamron"
                     glassApi={xGlassApi}
                     style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
                   >X</FlockX>
-                </span>.
+                </span>, or in my {L('arcade')}.
               </p>
               <p style={{ margin: 0 }}>
-                I studied Human-Centered Design at the{' '}
-                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('uw') }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, where I worked with {L('uw')},{' '}
-                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('sony') }}><InlineIcon src="/images/logo-sony.svg" alt="Sony" context="body" />{' '}{L('sony')}</span>, and the {L('cip')}. I learned how to think at{' '}
+                I studied design at the{' '}
+                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('uw') }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, and I learned how to think at{' '}
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('middlebury') }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
               </p>
             </div>
