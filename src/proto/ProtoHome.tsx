@@ -45,7 +45,14 @@ export function ProtoHome() {
   const reducedMotion = useReducedMotion()
   const { accentColor, bgIntensity, resolvedAppearance } = useTheme()
   const isDark = resolvedAppearance === 'dark'
-  const bc = (key: string) => isDark ? BRAND_COLORS[key]?.dark : BRAND_COLORS[key]?.light
+  // Mix brand color with the base text color based on the intensity slider.
+  // At 0: pure text color (no brand tint). At 1: full brand color.
+  const bc = (key: string) => {
+    const color = isDark ? BRAND_COLORS[key]?.dark : BRAND_COLORS[key]?.light
+    if (!color) return undefined
+    const t = Math.round(layout.brandColorIntensity * 100)
+    return `color-mix(in srgb, ${color} ${t}%, var(--text-dark))`
+  }
   const layout = useLayoutDials()
   const experiments = useExperimentDials()
   const page = usePageDials()

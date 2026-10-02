@@ -32,8 +32,8 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Show portrait': false, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
     'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
-    'Contrib strip on top': true,
-    'Content top padding px': 192,
+    'Contrib strip on top': true, 'Icon scale': 1,
+    'Content top padding px': 80,
   },
 }
 
@@ -43,21 +43,22 @@ export function useLayoutDials() {
     'Preset': { type: 'select', options: Object.keys(PRESETS), default: 'Uniform' },
     'Heading font': { type: 'select', options: ['Literata', 'Onest', 'IBM Plex Mono', 'Georgia', 'system-ui'], default: 'Literata' },
     'Heading px': [40, 20, 60, 1],
-    'Heading line-height': [1.2, 1, 1.6, 0.05],
-    'Body font': { type: 'select', options: ['Onest', 'Literata', 'IBM Plex Mono', 'system-ui'], default: 'Onest' },
-    'Body px': [24, 13, 40, 1],
-    'Body line-height': [1.35, 1, 2, 0.05],
-    'Show portrait': true,
+    'Heading line-height': [1.3, 1, 1.6, 0.05],
+    'Body font': { type: 'select', options: ['Literata', 'Onest', 'IBM Plex Mono', 'system-ui'], default: 'Literata' },
+    'Body px': [40, 13, 40, 1],
+    'Body line-height': [1.3, 1, 2, 0.05],
+    'Show portrait': false,
     'Portrait height px': [160, 48, 280, 4],
     'Control size px': [56, 36, 80, 2],
     'Thumb→heading gap px': [24, 4, 48, 2],
-    'Heading→body gap px': [32, 12, 64, 2],
-    'Paragraph gap px': [22, 8, 48, 2],
+    'Heading→body gap px': [40, 12, 64, 2],
+    'Paragraph gap px': [40, 8, 48, 2],
     'Content max-width px': [920, 320, 1200, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
     'Icon scale': [1, 0.65, 1, 0.01],
-    'Content top padding px': [48, 0, 400, 4],
+    'Brand color intensity': [0.3, 0, 1, 0.05],
+    'Content top padding px': [80, 0, 400, 4],
   } satisfies DialConfig)
 
   const { values: d, setValue } = useDialKitController('Layout', config, { id: 'proto-layout' })
@@ -92,6 +93,7 @@ export function useLayoutDials() {
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
     iconScale: d['Icon scale'],
+    brandColorIntensity: d['Brand color intensity'],
     contentTopPadding: d['Content top padding px'],
   }
 }
@@ -114,7 +116,7 @@ export function useExperimentDials() {
 /** Hover preview: size + entrance/exit feel + the click morph. */
 export function usePreviewDials() {
   const config = useStableConfig({
-    'Preview size px': [320, 120, 500, 4],
+    'Preview size px': [400, 120, 500, 4],
     'Rise px': [8, 0, 24, 1],
     'Scale from': [0.96, 0.85, 1, 0.005],
     'Enter easing': { type: 'easing', duration: 0.2, ease: [...EASE] },
