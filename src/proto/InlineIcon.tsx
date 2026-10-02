@@ -14,9 +14,9 @@ function useIconMetrics(context: 'heading' | 'body') {
   const layout = useLayoutDials()
   const fontSize = context === 'heading' ? layout.headingSize : layout.bodySize
   const lineHeight = context === 'heading' ? layout.headingLineHeight : layout.bodyLineHeight
-  const size = Math.round(fontSize * lineHeight)
+  const size = Math.round(fontSize * lineHeight * layout.iconScale)
   const align = layout.iconAlign as string
-  return { size, align }
+  return { size, align, layout }
 }
 
 export function InlineIcon({ src, alt, href, context = 'heading' }: {

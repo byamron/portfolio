@@ -56,6 +56,7 @@ export function useLayoutDials() {
     'Content max-width px': [920, 320, 1200, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
+    'Icon scale': [1, 0.65, 1, 0.01],
     'Icon alignment': { type: 'select', options: ['text-bottom', 'middle', 'baseline', 'text-top'], default: 'text-bottom' },
     'Content top padding px': [48, 0, 400, 4],
   } satisfies DialConfig)
@@ -91,6 +92,7 @@ export function useLayoutDials() {
     contentMaxWidth: d['Content max-width px'],
     bottomMargin: d['Bottom margin px'],
     contribOnTop: d['Contrib strip on top'],
+    iconScale: d['Icon scale'],
     iconAlign: d['Icon alignment'] as string,
     contentTopPadding: d['Content top padding px'],
   }
