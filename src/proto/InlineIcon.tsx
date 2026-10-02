@@ -28,8 +28,11 @@ function IconWrapper({ size, children, href }: { size: number; children: React.R
     // Pull the icon into the line box without expanding it.
     // The icon visually overflows but the line height stays natural.
     verticalAlign: 'middle',
-    marginTop: '-0.35em',
-    marginBottom: '-0.35em',
+    // Asymmetric negative margin: more on top to shift the icon up
+    // toward the cap-height center (optical middle of Latin text),
+    // which sits higher than the x-height middle that CSS uses.
+    marginTop: '-0.45em',
+    marginBottom: '-0.25em',
     flexShrink: 0,
   }
 
