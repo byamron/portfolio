@@ -32,7 +32,7 @@ const PRESETS: Record<string, Record<string, number | boolean | string>> = {
     'Show portrait': false, 'Portrait height px': 160,
     'Control size px': 56, 'Thumb→heading gap px': 24, 'Heading→body gap px': 40,
     'Paragraph gap px': 40, 'Content max-width px': 920, 'Bottom margin px': 0,
-    'Contrib strip on top': true, 'Icon scale': 1,
+    'Contrib strip on top': true, 'Icon scale': 0.75,
     'Content top padding px': 80,
   },
 }
@@ -56,8 +56,8 @@ export function useLayoutDials() {
     'Content max-width px': [920, 320, 1200, 8],
     'Bottom margin px': [0, 0, 80, 4],
     'Contrib strip on top': true,
-    'Icon scale': [1, 0.65, 1, 0.01],
-    'Brand color intensity': [0.3, 0, 1, 0.05],
+    'Icon scale': [0.75, 0.65, 1, 0.01],
+    'Brand color intensity': [0, 0, 1, 0.05],
     'Content top padding px': [80, 0, 400, 4],
   } satisfies DialConfig)
 

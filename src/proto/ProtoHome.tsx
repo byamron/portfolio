@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { ContributionStrip } from '@/components/ContributionStrip'
+import { SignatureAnimation } from '@/components/SignatureAnimation'
+import { FlockX } from '@/components/FlockX'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { InlineIcon, InlinePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
@@ -65,6 +67,18 @@ export function ProtoHome() {
     cardSelector: '[data-proto-link]',
     borderRadius: 8,
     clearDelay: 200,
+  })
+
+  // FlockX gets its own isolated glass pill — same pattern as production
+  const xLinkContainerRef = useRef<HTMLSpanElement>(null)
+  const xGlassApi = useGlassHighlight(xLinkContainerRef, {
+    cardSelector: '[data-contact-card]',
+    borderRadius: 8,
+    clearDelay: 300,
+    pillMaxLean: 0.5,
+    pillMaxTilt: 0.5,
+    cardMaxLean: 0,
+    pullStrength: 0,
   })
 
   const [glowPulse, setGlowPulse] = useState(false)
@@ -192,7 +206,7 @@ export function ProtoHome() {
           >
             <div ref={proseRef} style={{ display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
-                <InlinePortrait />{' '}<span style={{ color: 'var(--text-dark)', textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb, var(--text-dark) 25%, transparent)', textUnderlineOffset: 3, textDecorationThickness: 1 }}>Ben Yamron</span> is a product designer, currently designing AI for scientific research at{' '}
+                <InlinePortrait />{' '}<button type="button" onClick={() => setSettingsOpen(o => !o)} style={{ color: 'var(--text-dark)', textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb, var(--text-dark) 25%, transparent)', textUnderlineOffset: 3, textDecorationThickness: 1, background: 'none', border: 'none', font: 'inherit', fontWeight: 'inherit', cursor: 'pointer', padding: 0, margin: 0, lineHeight: 'inherit' }}>Ben Yamron</button> is a product designer, currently designing AI for scientific research at{' '}
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
               </p>
               <p style={{ margin: 0 }}>
@@ -200,7 +214,14 @@ export function ProtoHome() {
                 <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
-                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')}, {L('x')}, or in my {L('arcade')}.
+                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')},{' '}
+                <span ref={xLinkContainerRef} style={{ position: 'relative', display: 'inline' }}>
+                  <FlockX
+                    href="https://x.com/benyamron"
+                    glassApi={xGlassApi}
+                    style={{ color: 'var(--text-dark)', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
+                  >X<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', width: '0.6em', height: '0.6em', marginLeft: '0.14em', verticalAlign: '0.06em', opacity: 0.7 }}><line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" /></svg></FlockX>
+                </span>, or in my {L('arcade')}.
               </p>
               <p style={{ margin: 0 }}>
                 I studied design at the{' '}
@@ -224,6 +245,11 @@ export function ProtoHome() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Signature — enters frame when scrolled to, same positioning as prod */}
+        <div style={{ marginTop: 56 }}>
+          <SignatureAnimation />
         </div>
 
       </div>
