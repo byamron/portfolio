@@ -207,11 +207,11 @@ export function ProtoHome() {
             <div ref={proseRef} style={{ display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
               <p style={{ margin: 0 }}>
                 <InlinePortrait />{' '}<button type="button" onClick={() => setSettingsOpen(o => !o)} style={{ color: 'var(--text-dark)', textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb, var(--text-dark) 25%, transparent)', textUnderlineOffset: 3, textDecorationThickness: 1, background: 'none', border: 'none', font: 'inherit', fontWeight: 'inherit', cursor: 'pointer', padding: 0, margin: 0, lineHeight: 'inherit' }}>Ben Yamron</button> is a product designer, currently designing AI for scientific research at{' '}
-                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
+                <span style={{ whiteSpace: 'nowrap', color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
               </p>
               <p style={{ margin: 0 }}>
                 Previously, I designed {L('mochi-subscriptions')} at{' '}
-                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
+                <span style={{ whiteSpace: 'nowrap', color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
               </p>
               <p style={{ margin: 0 }}>
                 On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')},{' '}
@@ -225,8 +225,8 @@ export function ProtoHome() {
               </p>
               <p style={{ margin: 0 }}>
                 I studied design at the{' '}
-                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('uw') }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, and I learned how to think at{' '}
-                <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: bc('middlebury') }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
+                <span style={{ whiteSpace: 'nowrap', color: bc('uw') }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, and I learned how to think at{' '}
+                <span style={{ whiteSpace: 'nowrap', color: bc('middlebury') }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
               </p>
             </div>
           </motion.div>
