@@ -4,7 +4,10 @@ import { DialRoot } from 'dialkit'
 import { Agentation } from 'agentation'
 import 'dialkit/styles.css'
 import './proto.css'
+import { lazy, Suspense } from 'react'
 import { CustomCursor } from '@/components/CustomCursor'
+
+const RecordToggle = lazy(() => import('@/components/RecordToggle').then(m => ({ default: m.RecordToggle })))
 import { PreviewProvider } from './PreviewContext'
 import { PreviewLayer } from './PreviewLayer'
 import { ProtoHome } from './ProtoHome'
@@ -23,6 +26,12 @@ function ProtoShell() {
       <PreviewLayer />
       {/* Cursor mode (standard/figpal) comes from the customization panel. */}
       <CustomCursor />
+      {/* Record Toggle — bottom-right corner */}
+      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 40 }}>
+        <Suspense fallback={null}>
+          <RecordToggle />
+        </Suspense>
+      </div>
       {/* DEV TOOLING — DialKit dials (see tuning.ts) + Agentation feedback overlay. Strip before merge. */}
       <DialRoot />
       <Agentation />
