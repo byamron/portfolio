@@ -1,67 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useTheme } from '@/contexts/ThemeContext'
+import { useRef } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { ContributionStrip } from '@/components/ContributionStrip'
 import { SignatureAnimation } from '@/components/SignatureAnimation'
-import { FlockX } from '@/components/FlockX'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { InlineIcon, InlinePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
-import { ProtoSettingsPanel } from './ProtoSettingsPanel'
 import { protoBySlug } from './data'
-import { EASE, useLayoutDials, useExperimentDials, usePageDials } from './tuning'
 
 const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
-// Brand colors for inline icon titles — adjusted per mode for contrast.
-// Light mode: use the brand color directly (dark text on light bg).
-// Dark mode: lighten colors that are too dark against the dark bg.
-const BRAND_COLORS: Record<string, { light: string; dark: string }> = {
-  consensus:  { light: '#068EF1', dark: '#4DB5F7' },
-  mochi:      { light: '#000045', dark: '#8B8BFF' },
-  sony:       { light: '#333333', dark: '#CCCCCC' },
-  uw:         { light: '#4B2E83', dark: '#9B7FD4' },
-  middlebury: { light: '#0D395F', dark: '#5B9AC7' },
-}
+const EASE = [0.25, 0.46, 0.45, 0.94] as const
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-
-const backButtonStyle: React.CSSProperties = {
-  width: 40,
-  height: 40,
-  display: 'grid',
-  placeItems: 'center',
-  background: 'transparent',
-  color: 'var(--text-dark)',
-  border: 'none',
-  borderRadius: 8,
-  cursor: 'pointer',
-  fontSize: 18,
-  fontFamily: '"Onest", system-ui, sans-serif',
-  opacity: 0.5,
-  transition: 'opacity 160ms ease, background 160ms ease',
+// Baked layout values (were DialKit-tunable — these are the final Uniform preset values)
+const LAYOUT = {
+  bodySize: 40,
+  bodyLineHeight: 1.3,
+  bodyFont: 'Literata',
+  paragraphGap: 40,
+  contentMaxWidth: 920,
+  contentTopPadding: 80,
+  iconScale: 0.75,
 }
 
 export function ProtoHome() {
   const reducedMotion = useReducedMotion()
-  const { accentColor, bgIntensity, resolvedAppearance } = useTheme()
-  const isDark = resolvedAppearance === 'dark'
-  // Mix brand color with the base text color based on the intensity slider.
-  // At 0: pure text color (no brand tint). At 1: full brand color.
-  const bc = (key: string) => {
-    const color = isDark ? BRAND_COLORS[key]?.dark : BRAND_COLORS[key]?.light
-    if (!color) return undefined
-    const t = Math.round(layout.brandColorIntensity * 100)
-    return `color-mix(in srgb, ${color} ${t}%, var(--text-dark))`
-  }
-  const layout = useLayoutDials()
-  const experiments = useExperimentDials()
-  const page = usePageDials()
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [thumbHovered, setThumbHovered] = useState(false)
-  const thumbRef = useRef<HTMLButtonElement>(null)
 
-  // Glass pill hover on inline prose links (excluding the X link, which has its own)
+  // Glass pill hover on inline prose links
   const proseRef = useRef<HTMLDivElement>(null)
   useGlassHighlight(proseRef, {
     cardSelector: '[data-proto-link]',
@@ -69,58 +33,12 @@ export function ProtoHome() {
     clearDelay: 200,
   })
 
-  // FlockX gets its own isolated glass pill — same pattern as production
-  const xLinkContainerRef = useRef<HTMLSpanElement>(null)
-  const xGlassApi = useGlassHighlight(xLinkContainerRef, {
-    cardSelector: '[data-contact-card]',
-    borderRadius: 8,
-    clearDelay: 300,
-    pillMaxLean: 0.5,
-    pillMaxTilt: 0.5,
-    cardMaxLean: 0,
-    pullStrength: 0,
-  })
-
-  const [glowPulse, setGlowPulse] = useState(false)
-  useEffect(() => {
-    if (!experiments['Glow pulse on release']) return
-    const handler = () => { setGlowPulse(true); setTimeout(() => setGlowPulse(false), 500) }
-    window.addEventListener('proto-glow-pulse', handler)
-    return () => window.removeEventListener('proto-glow-pulse', handler)
-  }, [experiments])
-
-  const closeSettings = () => {
-    setSettingsOpen(false)
-    thumbRef.current?.focus()
-  }
-
-  useEffect(() => {
-    if (!settingsOpen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeSettings() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsOpen])
-
-  const fade = { duration: reducedMotion ? 0 : 0.24, ease: EASE }
-
-  const glowT = lerp(0.45, 1.0, bgIntensity)
-  const pulseBoost = glowPulse ? 10 : 0
-  const baseSpread = lerp(0, 14, bgIntensity) + pulseBoost
-  const baseAlpha = lerp(0, 0.5, bgIntensity) + (glowPulse ? 0.15 : 0)
-  const glow = bgIntensity > 0.01 || glowPulse
-    ? `0 0 ${(thumbHovered ? baseSpread + 6 : baseSpread).toFixed(1)}px color-mix(in srgb, var(--swatch) ${Math.round((thumbHovered ? baseAlpha + 0.12 : baseAlpha) * 100)}%, transparent)`
-    : 'none'
-
-  // Portrait is 3:4 aspect, width = portraitHeight * 0.75
-  const portraitW = Math.round(layout.portraitHeight * 0.75)
-
   return (
     <motion.main
-      initial={{ opacity: 0, y: reducedMotion ? 0 : page.enterRise }}
+      initial={{ opacity: 0, y: reducedMotion ? 0 : 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, transition: { duration: reducedMotion ? 0 : page.exitDuration } }}
-      transition={{ duration: reducedMotion ? 0 : page.enterDuration, ease: EASE }}
+      exit={{ opacity: 0, transition: { duration: reducedMotion ? 0 : 0.22 } }}
+      transition={{ duration: reducedMotion ? 0 : 0.35, ease: EASE }}
       style={{
         position: 'absolute',
         inset: 0,
@@ -131,135 +49,50 @@ export function ProtoHome() {
         alignItems: 'center',
       }}
     >
-      {/* Contribution strip — top position */}
-      {layout.contribOnTop && (
-        <div style={{ alignSelf: 'stretch', flexShrink: 0 }}>
-          <ContributionStrip labelPosition="bottom" />
-        </div>
-      )}
+      {/* Contribution strip — top */}
+      <div style={{ alignSelf: 'stretch', flexShrink: 0 }}>
+        <ContributionStrip labelPosition="bottom" />
+      </div>
 
-      <div style={{ maxWidth: layout.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: `${layout.contentTopPadding}px 24px 48px` }}>
-        <div style={{ position: 'relative' }}>
-          {/* Back button — absolutely positioned above */}
-          <AnimatePresence>
-            {settingsOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
-                transition={fade}
-                style={{ position: 'absolute', top: -56, left: 0 }}
-              >
-                <button
-                  type="button" aria-label="Back to home" onClick={closeSettings}
-                  onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }}
-                  onMouseLeave={e => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.background = 'transparent' }}
-                  onFocus={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'color-mix(in srgb, var(--text-dark) 7%, var(--bg))' }}
-                  onBlur={e => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.background = 'transparent' }}
-                  style={backButtonStyle}
-                >←</button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Portrait thumbnail — 3:4 aspect, above the heading */}
-          {layout.showPortrait && <button
-            ref={thumbRef}
-            type="button"
-            aria-label={settingsOpen ? 'Close customization' : 'Customize appearance'}
-            aria-expanded={settingsOpen}
-            onClick={() => (settingsOpen ? closeSettings() : setSettingsOpen(true))}
-            onMouseEnter={() => setThumbHovered(true)}
-            onMouseLeave={() => setThumbHovered(false)}
-            onFocus={() => setThumbHovered(true)}
-            onBlur={() => setThumbHovered(false)}
-            style={{
-              width: portraitW,
-              height: layout.portraitHeight,
-              padding: 0,
-              border: `1px solid color-mix(in srgb, var(--swatch) ${Math.round(glowT * 25)}%, transparent)`,
-              borderRadius: 8,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              background: 'transparent',
-              boxShadow: glow,
-              transform: thumbHovered && !reducedMotion ? 'scale(1.03)' : 'scale(1)',
-              transition: 'border-color 300ms ease-in-out, transform 200ms ease-out',
-              marginBottom: layout.thumbGap,
-              display: 'block',
-            }}
-          >
-            <img
-              src={`/images/portrait-thumb-${accentColor}.jpg`}
-              alt="Ben Yamron"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          </button>}
-
-          {/* Prose — one text hierarchy, all grey. Interactive elements go black via CSS. */}
-          <motion.div
-            animate={{
-              opacity: settingsOpen ? 0 : 1,
-              transitionEnd: { visibility: settingsOpen ? 'hidden' : 'visible' },
-            }}
-            transition={fade}
-          >
-            <div ref={proseRef} style={{ display: 'flex', flexDirection: 'column', gap: layout.paragraphGap, fontFamily: `"${layout.bodyFont}", system-ui, sans-serif`, fontSize: layout.bodySize, fontWeight: 300, lineHeight: layout.bodyLineHeight, color: 'var(--text-grey)', position: 'relative' }}>
-              <p style={{ margin: 0 }}>
-                <InlinePortrait />{' '}<button type="button" onClick={() => setSettingsOpen(o => !o)} style={{ color: 'var(--text-dark)', textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb, var(--text-dark) 25%, transparent)', textUnderlineOffset: 3, textDecorationThickness: 1, background: 'none', border: 'none', font: 'inherit', fontWeight: 'inherit', cursor: 'pointer', padding: 0, margin: 0, lineHeight: 'inherit' }}>Ben Yamron</button> is a product designer, currently designing AI for scientific research at{' '}
-                <span style={{ whiteSpace: 'nowrap', color: bc('consensus') }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
-              </p>
-              <p style={{ margin: 0 }}>
-                Previously, I designed {L('mochi-subscriptions')} at{' '}
-                <span style={{ whiteSpace: 'nowrap', color: bc('mochi') }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
-              </p>
-              <p style={{ margin: 0 }}>
-                On the side, I build tools and experiments like {L('flow')}, {L('distill')}, {L('havana')}, and {L('ripe')}. See more on {L('github')},{' '}
-                <span ref={xLinkContainerRef} style={{ position: 'relative', display: 'inline' }}>
-                  <FlockX
-                    href="https://x.com/benyamron"
-                    glassApi={xGlassApi}
-                    style={{ color: 'var(--text-dark)', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 6px', margin: '0 -6px' }}
-                  >X<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', width: '0.6em', height: '0.6em', marginLeft: '0.14em', verticalAlign: '0.06em', opacity: 0.7 }}><line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" /></svg></FlockX>
-                </span>, or in my {L('arcade')}.
-              </p>
-              <p style={{ margin: 0 }}>
-                I studied design at the{' '}
-                <span style={{ whiteSpace: 'nowrap', color: bc('uw') }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, and I learned how to think at{' '}
-                <span style={{ whiteSpace: 'nowrap', color: bc('middlebury') }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Settings panel */}
-          <AnimatePresence>
-            {settingsOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
-                transition={fade}
-                style={{ position: 'absolute', top: layout.portraitHeight + layout.thumbGap + 20, left: 0, right: 0 }}
-              >
-                <ProtoSettingsPanel />
-              </motion.div>
-            )}
-          </AnimatePresence>
+      <div style={{ maxWidth: LAYOUT.contentMaxWidth, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: `${LAYOUT.contentTopPadding}px 24px 48px` }}>
+        <div ref={proseRef} style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: LAYOUT.paragraphGap,
+          fontFamily: `"${LAYOUT.bodyFont}", Georgia, serif`,
+          fontSize: LAYOUT.bodySize,
+          fontWeight: 300,
+          lineHeight: LAYOUT.bodyLineHeight,
+          color: 'var(--text-grey)',
+          position: 'relative',
+        }}>
+          <p style={{ margin: 0 }}>
+            <InlinePortrait />{' '}
+            <span style={{ color: 'var(--text-dark)' }}>Ben Yamron</span> is a product designer, currently designing AI for scientific research at{' '}
+            <span style={{ whiteSpace: 'nowrap', color: 'var(--text-dark)' }}><InlineIcon src="/images/logo-consensus.svg" alt="Consensus" href="https://consensus.app/" />{' '}{L('consensus')}</span>.
+          </p>
+          <p style={{ margin: 0 }}>
+            Previously, I designed patient experiences at{' '}
+            <span style={{ whiteSpace: 'nowrap', color: 'var(--text-dark)' }}><InlineIcon src="/images/logo-mochi.svg" alt="Mochi Health" href="https://joinmochi.com/" context="body" />{' '}{L('mochi-health')}</span>.
+          </p>
+          <p style={{ margin: 0 }}>
+            On the side, I build tools and experiments. See more on {L('github')} and {L('x')}.
+          </p>
+          <p style={{ margin: 0 }}>
+            I studied design at the{' '}
+            <span style={{ whiteSpace: 'nowrap', color: 'var(--text-dark)' }}><InlineIcon src="/images/logo-uw.svg" alt="University of Washington" context="body" />{' '}University of Washington</span>, and I learned how to think at{' '}
+            <span style={{ whiteSpace: 'nowrap', color: 'var(--text-dark)' }}><InlineIcon src="/images/logo-middlebury.svg" alt="Middlebury College" context="body" />{' '}Middlebury College</span>.
+          </p>
         </div>
 
-        {/* Signature — enters frame when scrolled to, same positioning as prod */}
+        {/* Signature */}
         <div style={{ marginTop: 56 }}>
           <SignatureAnimation />
         </div>
-
       </div>
 
-      {/* Contribution strip — bottom position */}
-      {!layout.contribOnTop && (
-        <div style={{ alignSelf: 'stretch', marginTop: 48, paddingBottom: layout.bottomMargin, flexShrink: 0 }}>
-          <ContributionStrip />
-        </div>
-      )}
+      {/* Bottom spacer for the fixed record toggle */}
+      <div style={{ height: 80, flexShrink: 0 }} />
     </motion.main>
   )
 }
