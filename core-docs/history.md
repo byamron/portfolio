@@ -2,6 +2,24 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-10 — `/new` MVP polish pass: record dock, entrance cascade, link system, sidebar fixes
+
+**Branch:** `simplified-home-prototype`. Ben's pre-launch feedback on the stripped MVP, plus two background staff lenses (UX, design-engineer) whose findings were folded in.
+
+- **Sidebar trigger vs. contribution strip.** The trigger is the same 16px accent square as a contribution cell and sat directly under "today's" cell. `/new` now sets `--sidebar-trigger-top` (on `<html>`, removed on unmount) to the first line of prose — prod's own logic (trigger aligns with the hero heading). When the prose runs into the 56px sidebar gutter (phones), it falls back to the empty band between strip and text.
+- **Sidebar exit glitch (shared component, also fixes prod).** `overflow` flipped to `hidden` the instant hover ended, slicing the still-fading 300px backdrop to the 56px container — a hard vertical line. Now stays `visible` until `AnimatePresence.onExitComplete`. Verified by polling: `visible/backdrop` until the backdrop unmounts, then `hidden/none`.
+- **Record toggle under the sidebar's hover zone (design-eng P0).** The sidebar is a full-height 56px pointer-catching strip; the toggle at `right: 24` put the record under it, so hovering the record opened the sidebar. Dock now sits at `right: 56 + 24`.
+- **RecordToggle is now prop-driven** (`DEFAULT_PARAMS` + `tuning`, `appearance`, `labelColor/Edge`, `creditPlacement/Align`, `idleCaption`, `creditFont`, `title/artistColor`, `trackOffColor`, `focusColor`). It had hardcoded `appearance: "dark"`. Host wrapper `src/proto/RecordDock.tsx` follows the site's light/dark mode, puts the label in the accent hue (`hsl(var(--accent-hue), 42%, 40%)`, deep enough for the cream print; `labelAccent` mixes back to the original oxblood), keeps the wood and warm glow, tones the off-track to the page (`color-mix(var(--bg), var(--text-dark) 12%)` mixed in CSS via a per-frame `--rt-x`, since the loop can only mix hex), and uses `--swatch` for focus.
+- **Now-playing credit restored.** It rendered `top: H + 20px` below a switch pinned 24px from the viewport bottom — off-screen. Pinned dock: credit above, right-aligned, Onest, page colors. Verified live: "Martini Sunset · Kevin MacLeod" fades to opacity 1 after the needle drops.
+- **Dock placement.** Pinned bottom-right only at ≥1280px (where the 920px column leaves room); below that it ends the page inline after the signature, so it never floats over text while reading.
+- **Calmer turntable defaults** for a reading page (design-eng table): glow 0.25/1.2, tone 40, breath detail 0.35, treble 1.0, grain 0.12, vinyl 0.3/0.4, crackle 0.25. Dev-only DialKit tuner (`RecordDockTuner.tsx`, lazy behind `import.meta.env.DEV`; verified absent from `dist/`) exposes ~17 dials incl. an idle-caption text field.
+- **Entrance cascade + signature timing.** Modeled on nelson.co (inline styles: `opacity 0`, `translateY(16px)`, `blur(6–8px)` per element). Strip then each paragraph rises 12px out of `blur(6px)` over 0.6s, 90ms stagger; the signature's new `startDelayMs` (shared component, default 0 so prod is unchanged) waits for the cascade to settle (~1.17s) and for the signature to be in view.
+- **Responsive type.** `clamp(26px, 20px + 1.4vw, 40px)`; icons, gaps, pill padding in `em`. 40px kept for paragraph gap as `1em` (Ben's tuned value) over the reviewer's `1lh` suggestion.
+- **Link system + a11y (UX P0/P1).** See design-language.md § Prose home. Logos moved inside their links (was a second tab stop to the same URL, read as "Consensus, link. Consensus, link."); all logos/portrait `alt=""`; sr-only `<h1>`; `--swatch` focus ring; dark-mode underline 40%; pill padding `0 0.3em` / radius 12 (was 4px 6px, taller than the 52px line at 40px type); `!important` and dead DialKit/FlockX rules removed.
+- **Copy.** Side-project names stay out until there's something to show. Added "Say hi by email or on LinkedIn." above the signature (UX lens: reads like a letter the signature signs off).
+
+**Deferred / open:** idle-caption copy for the toggle (slot built, empty by default); first-vs-third person in the intro (UX flagged the switch from "Ben Yamron is…" to "Previously, I…"); RecordToggle's RAF loop never idles; hover previews (UX lens recommends none until case studies exist, so a preview always means "there's more here").
+
 ## 2026-08-19 — V2 home prototype round 4: face-centered crops, intensity-linked glow, back-arrow close, staff-review fixes
 
 **Branch:** `simplified-home-prototype`. Continues the `/new` prototype.

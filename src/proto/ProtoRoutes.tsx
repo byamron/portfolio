@@ -6,11 +6,15 @@ import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
 import { ProtoHome } from './ProtoHome'
+import { RecordDock, useRecordDockPinned } from './RecordDock'
 
-const RecordToggle = lazy(() => import('@/components/RecordToggle').then(m => ({ default: m.RecordToggle })))
+// Dead-code-eliminated from production builds: the tuner (and DialKit) only
+// exist under `vite dev`.
+const RecordDockTuner = import.meta.env.DEV ? lazy(() => import('./RecordDockTuner')) : null
 
 function ProtoShell() {
   const location = useLocation()
+  const pinned = useRecordDockPinned()
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', color: 'var(--text-dark)' }}>
       <AnimatePresence mode="sync" initial={false}>
@@ -21,15 +25,16 @@ function ProtoShell() {
       <CustomCursor />
       <CursorCompanion />
       <SidebarThemeControls />
-      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 40 }}>
-        <Suspense fallback={null}>
-          <RecordToggle />
-        </Suspense>
-      </div>
+      {pinned && <RecordDock placement="fixed" />}
     </div>
   )
 }
 
 export function ProtoRoutes() {
-  return <ProtoShell />
+  if (!RecordDockTuner) return <ProtoShell />
+  return (
+    <Suspense fallback={null}>
+      <RecordDockTuner><ProtoShell /></RecordDockTuner>
+    </Suspense>
+  )
 }

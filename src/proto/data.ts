@@ -1,26 +1,22 @@
-// Data for the /new home prototype — MVP ship.
-// Only entries with real external destinations.
-
-export type ProtoMedia =
-  | { type: 'video'; src: string }
-  | { type: 'image'; src: string }
-  | { type: 'lottie'; src: string }
-  | { type: 'blank' }
+// Links on the /new home. One rule: an underline means "this goes somewhere";
+// ↗ means it leaves the site. Black text and leading logos are about naming
+// (people, places, platforms), never on their own a link affordance.
 
 export interface ProtoEntry {
   id: string
   label: string
-  /** External site URL. */
   href: string
-  media: ProtoMedia
-  aspect: number
+  /** Leading app-icon logo, rendered inside the link so it's one target. */
+  icon?: string
 }
 
 export const protoEntries: ProtoEntry[] = [
-  { id: 'consensus', label: 'Consensus', href: 'https://consensus.app/', media: { type: 'blank' }, aspect: 1.6 },
-  { id: 'mochi-health', label: 'Mochi Health', href: 'https://joinmochi.com/', media: { type: 'video', src: '/images/preview-mochi-health.mp4' }, aspect: 1.333 },
-  { id: 'github', label: 'GitHub', href: 'https://github.com/byamron', media: { type: 'image', src: '/images/preview-github.png' }, aspect: 1.602 },
-  { id: 'x', label: 'X', href: 'https://x.com/benyamron', media: { type: 'image', src: '/images/preview-x.png' }, aspect: 1.602 },
+  { id: 'consensus', label: 'Consensus', href: 'https://consensus.app/', icon: '/images/logo-consensus.svg' },
+  { id: 'mochi-health', label: 'Mochi Health', href: 'https://joinmochi.com/', icon: '/images/logo-mochi.svg' },
+  { id: 'github', label: 'GitHub', href: 'https://github.com/byamron' },
+  { id: 'x', label: 'X', href: 'https://x.com/benyamron' },
+  { id: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/in/benyamron' },
+  { id: 'email', label: 'email', href: 'mailto:ben.yamron@icloud.com' },
 ]
 
 export const protoBySlug = new Map(protoEntries.map(e => [e.id, e]))

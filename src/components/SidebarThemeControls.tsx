@@ -321,10 +321,14 @@ const CURSOR_BASE = DIVIDER_4 + 1                      // 12
 
 export function SidebarThemeControls() {
   const [hovered, setHovered] = useState(false)
+  // Backdrop is 300px wide inside a 56px container; clipping it the instant
+  // hover ends slices its fade-out into a hard vertical edge.
+  const [backdropExiting, setBackdropExiting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const isEntrance = useRef(isInitialEntrance()).current
   const slideProps = useMemo(() => ({ x: hovered ? 0 : 20, y: 0 }), [hovered])
+  useEffect(() => { if (hovered) setBackdropExiting(true) }, [hovered])
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
   const { cursorMode, setCursorMode } = useCursor()
@@ -500,13 +504,13 @@ export function SidebarThemeControls() {
         width: 56,
         height: '100vh',
         zIndex: 100,
-        overflow: hovered ? 'visible' : 'hidden',
+        overflow: hovered || backdropExiting ? 'visible' : 'hidden',
         pointerEvents: isTouch && !hovered ? 'none' : 'auto',
         viewTransitionName: 'sidebar',
       }}
     >
       {/* Sidebar backdrop — mount/unmount to avoid compositing cost at rest */}
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => setBackdropExiting(false)}>
         {hovered && (
           <motion.div
             key="sidebar-backdrop"

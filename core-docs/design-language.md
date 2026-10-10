@@ -187,6 +187,16 @@ The type scale adapts proportionally at narrower two-column viewports to maintai
 
 Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238, 0.2)`) — present enough to signal interactivity, transparent enough to not create visual clutter across 11 links. The arrow `→` is a Unicode character, not an SVG or icon, keeping it typographically integrated. A `4px` gap separates text from arrow.
 
+#### Prose home (`/new`) — naming vs. linking
+
+The prose home deliberately departs from the project-link treatment above: one serif voice (Literata 300, `clamp(26px, 20px + 1.4vw, 40px)`, line-height 1.3, paragraphs `1em` apart), grey prose (`--text-grey`) with black names. Three signals, one job each:
+
+- **Black text** — a named thing in the story (Ben, companies, schools, platforms). Never by itself a link.
+- **Leading app-icon logo** — a place Ben belonged (Consensus, Mochi Health, UW, Middlebury). Decorative (`alt=""`; the name follows). When the name is a link, the logo sits *inside* the anchor so logo + name are one target with one glass highlight; a logo is never its own link.
+- **Underline** — the only "this goes somewhere" signal. `↗` additionally marks "leaves for another website" (SVG glyph; Phosphor's `ArrowUpRight` broke inline line wrapping). `mailto:` gets the underline without `↗`.
+
+So UW and Middlebury get black + logo with no underline (no destination), and GitHub/X get black + underline + `↗` with no logo (platforms, not places). Icons are sized in `em` (`0.975em`, ≈ line-height × 0.75) with asymmetric negative margins so they center on cap height without growing the line box; a logo stays glued only to the first word of a long name so it can still wrap on phones.
+
 ### What typography does NOT do
 
 - Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.

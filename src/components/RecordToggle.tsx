@@ -414,39 +414,81 @@ function capsulePerimeter(W: number, H: number, offset: number, n: number): Peri
 // Component
 // ═══════════════════════════════════════════════════════════════
 
-export function RecordToggle() {
+export const DEFAULT_PARAMS: Params = {
+  // Short enough that the platter is almost at speed when the needle
+  // lands: the music comes in with just a believable settle into tempo
+  spinUp: 0.6,
+  spinDown: 0.8,
+  offDelay: 0.04,
+  rpm: 100 / 3,
+  glow: "breath",
+  glowDark: 0.4,
+  // Light mode multiplies a warm tint into a pale page, so it needs far
+  // more weight than dark mode's additive light to read at all.
+  glowLight: 2,
+  glowToneLight: 32,
+  glowFadeIn: 2,
+  breathDetail: 0.6,
+  trebleBoost: 1.4,
+  breathStyle: "blend",
+  armScaleMin: 0.9,
+  grain: 0.2,
+  vinylDark: 0.4,
+  vinylLight: 0.55,
+  haptics: true,
+  offStyle: "tactile",
+  soundHint: "auto",
+  crackle: 0.35,
+  appearance: "dark",
+};
+
+export type { Params as RecordToggleParams, TrackId as RecordTrackId };
+export { TRACKS as RECORD_TRACKS };
+
+export interface RecordToggleProps {
+  /** Follows the host page; overrides tuning.appearance. */
+  appearance?: Appearance;
+  tuning?: Partial<Params>;
+  trackId?: TrackId;
+  size?: number;
+  /** "above" for a widget pinned to the bottom of the viewport. */
+  creditPlacement?: "below" | "above";
+  /** Horizontal alignment of the credit relative to the switch. */
+  creditAlign?: "center" | "start" | "end";
+  /** Any CSS colour (var() is fine) for the record label and its rim. */
+  labelColor?: string;
+  labelEdge?: string;
+  /** Shown in the credit slot while idle (e.g. an invitation to press). */
+  idleCaption?: string;
+  creditFont?: string;
+  titleColor?: string;
+  artistColor?: string;
+  /** Off-state track colour; lets the switch sit in the page's own tone. */
+  trackOffColor?: string;
+  focusColor?: string;
+}
+
+export function RecordToggle({
+  appearance,
+  tuning,
+  trackId = "martini",
+  size = 0.6,
+  creditPlacement = "below",
+  creditAlign = creditPlacement === "above" ? "end" : "center",
+  labelColor = C.label,
+  labelEdge = "#8e3631",
+  idleCaption,
+  creditFont,
+  titleColor,
+  artistColor,
+  trackOffColor,
+  focusColor,
+}: RecordToggleProps = {}) {
   const [on, setOn] = useState(false);
-  const [trackId, setTrackId] = useState<TrackId>("martini");
-  const [size, setSize] = useState(0.6);
-  const [params, setParams] = useState<Params>({
-    // Short enough that the platter is almost at speed when the needle
-    // lands: the music comes in with just a believable settle into tempo
-    spinUp: 0.6,
-    spinDown: 0.8,
-    offDelay: 0.04,
-    rpm: 100 / 3,
-    glow: "breath",
-    glowDark: 0.4,
-    // Light mode multiplies a warm tint into a pale page, so it needs far
-    // more weight than dark mode's additive light to read at all.
-    glowLight: 2,
-    glowToneLight: 32,
-    glowFadeIn: 2,
-    breathDetail: 0.6,
-    trebleBoost: 1.4,
-    breathStyle: "blend",
-    armScaleMin: 0.9,
-    grain: 0.2,
-    vinylDark: 0.4,
-    vinylLight: 0.55,
-    haptics: true,
-    offStyle: "tactile",
-    soundHint: "auto",
-    crackle: 0.35,
-    appearance: "dark",
-  });
-  const set = <K extends keyof Params>(k: K, v: Params[K]) =>
-    setParams((p) => ({ ...p, [k]: v }));
+  const params = useMemo<Params>(
+    () => ({ ...DEFAULT_PARAMS, ...tuning, ...(appearance ? { appearance } : null) }),
+    [tuning, appearance],
+  );
 
   const theme = THEME[params.appearance];
   const labelId = "rt" + useId().replace(/[^a-zA-Z0-9_-]/g, "");
@@ -484,6 +526,13 @@ export function RecordToggle() {
   onRef.current = on;
   paramsRef.current = params;
   geomRef.current = geom;
+  // Credit + hint are centred under the switch, or right-aligned above it
+  const creditTxRef = useRef("-50%");
+  creditTxRef.current = creditAlign === "center" ? "-50%" : "0px";
+  // Host-supplied off-track colour (may be a var()): mixed in CSS, since the
+  // loop can only mix literal hex.
+  const trackOffRef = useRef(trackOffColor);
+  trackOffRef.current = trackOffColor;
   themeRef.current = theme;
 
   const trackEl = useRef<HTMLButtonElement>(null);
@@ -873,7 +922,8 @@ export function RecordToggle() {
       const kx = knob.x * g.travel;
 
       if (trackEl.current) {
-        trackEl.current.style.background = mixOklab(th.trackOff, th.plinth, knob.x);
+        if (trackOffRef.current) trackEl.current.style.setProperty("--rt-x", knob.x.toFixed(4));
+        else trackEl.current.style.background = mixOklab(th.trackOff, th.plinth, knob.x);
         // Tactile: the off track is a recess in the surface; it lifts out
         // into the plinth (which has its own lacquered edge) as it turns on.
         if (P.offStyle === "tactile") {
@@ -920,12 +970,12 @@ export function RecordToggle() {
         // Credits arrive with the needle, leave with it
         const np = clamp01(nowPlaying.x);
         nowPlayingEl.current.style.opacity = String(np);
-        nowPlayingEl.current.style.transform = `translate(-50%, ${(1 - np) * 4}px)`;
+        nowPlayingEl.current.style.transform = `translate(${creditTxRef.current}, ${(1 - np) * 4}px)`;
       }
       if (hintEl.current) {
         const hv = clamp01(hint.x);
         hintEl.current.style.opacity = String(hv);
-        hintEl.current.style.transform = `translate(-50%, ${(1 - hv) * 4}px)`;
+        hintEl.current.style.transform = `translate(${creditTxRef.current}, ${(1 - hv) * 4}px)`;
       }
       if (armEl.current) {
         const vis = armOpacity;
@@ -1233,7 +1283,9 @@ export function RecordToggle() {
               border: "none",
               padding: 0,
               cursor: "pointer",
-              background: theme.trackOff,
+              background: trackOffColor
+                ? `color-mix(in oklab, ${trackOffColor}, ${theme.plinth} calc(var(--rt-x, 0) * 100%))`
+                : theme.trackOff,
               WebkitTapHighlightColor: "transparent",
               touchAction: "none",
             }}
@@ -1330,7 +1382,7 @@ export function RecordToggle() {
                       width: labelR * 2,
                       height: labelR * 2,
                       borderRadius: "50%",
-                      background: `radial-gradient(circle at 50% 50%, ${C.label} 0 68%, #8e3631 100%)`,
+                      background: `radial-gradient(circle at 50% 50%, ${labelColor} 0 68%, ${labelEdge} 100%)`,
                     }}
                   >
                     {/* Printed label: rule, curved caps, title — sized in a 100-unit box */}
@@ -1470,66 +1522,91 @@ export function RecordToggle() {
             </svg>
           </button>
 
-          {/* Now playing — sits under the plinth, out of the layout flow */}
-          <div
-            ref={nowPlayingEl}
-            id={`${labelId}-now-playing`}
-            aria-hidden={!on}
-            style={{
+          {/* Now playing — out of the layout flow: centred under the plinth,
+              or right-aligned above it when the switch is pinned to the
+              bottom of the viewport. The idle caption shares the slot. */}
+          {(() => {
+            const above = creditPlacement === "above";
+            const gap = Math.max(14, H * 0.22);
+            const slot = (offset: number): React.CSSProperties => ({
               position: "absolute",
-              left: "50%",
-              top: H + Math.max(20, H * 0.3),
-              transform: "translate(-50%, 4px)",
-              opacity: 0,
-              width: "max-content",
-              maxWidth: Math.max(160, vw - 32),
-              textAlign: "center",
-              textWrap: "balance",
-              fontFamily: FONT,
+              ...(above ? { bottom: H + gap + offset } : { top: H + gap + offset }),
+              ...(creditAlign === "center" ? { left: "50%", textAlign: "center" }
+                : creditAlign === "end" ? { right: 0, textAlign: "right" }
+                : { left: 0, textAlign: "left" }),
+            });
+            const tx = creditAlign === "center" ? "-50%" : "0px";
+            const text: React.CSSProperties = {
+              fontFamily: creditFont ?? FONT,
               fontSize: creditSize,
               letterSpacing: "-0.005em",
               pointerEvents: "none",
               userSelect: "none",
-            }}
-          >
-            {/* Always rendered so it can fade out; hidden from AT while off */}
-            <span style={{ color: theme.title }}>{track.fullTitle}</span>
-            <span style={{ color: theme.artist }}> · {track.artist}</span>
-          </div>
+              width: "max-content",
+              maxWidth: Math.max(160, vw - 32),
+            };
+            return (
+              <>
+                <div
+                  ref={nowPlayingEl}
+                  id={`${labelId}-now-playing`}
+                  aria-hidden={!on}
+                  style={{ ...slot(0), ...text, transform: `translate(${tx}, 4px)`, opacity: 0, textWrap: "balance" }}
+                >
+                  {/* Always rendered so it can fade out; hidden from AT while off */}
+                  <span style={{ color: titleColor ?? theme.title }}>{track.fullTitle}</span>
+                  <span style={{ color: artistColor ?? theme.artist }}> · {track.artist}</span>
+                </div>
 
-          {/* iOS sound check: rides in under the credit at the first needle
-              drop. If you can hear the crackle, you're set; if not, this is why. */}
-          <div
-            ref={hintEl}
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: H + Math.max(20, H * 0.3) + creditSize * 1.9,
-              transform: "translate(-50%, 4px)",
-              opacity: 0,
-              display: "flex",
-              alignItems: "center",
-              gap: creditSize * 0.4,
-              whiteSpace: "nowrap",
-              fontFamily: FONT,
-              fontSize: creditSize * 0.86,
-              color: theme.artist,
-              pointerEvents: "none",
-              userSelect: "none",
-            }}
-          >
-            <svg width={creditSize} height={creditSize} viewBox="0 0 16 16" aria-hidden>
-              <path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="currentColor" />
-              <path d="M10.5 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6.5 6.5 0 0 1 0 9" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-            Ringer on for the full effect
-          </div>
+                {idleCaption && (
+                  <div
+                    aria-hidden
+                    style={{
+                      ...slot(0),
+                      ...text,
+                      color: artistColor ?? theme.artist,
+                      transform: `translate(${tx}, ${on ? 4 : 0}px)`,
+                      opacity: on ? 0 : 1,
+                      transition: "opacity 240ms ease, transform 240ms ease",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {idleCaption}
+                  </div>
+                )}
+
+                {/* iOS sound check: rides in beside the credit at the first
+                    needle drop. If you can hear the crackle, you're set. */}
+                <div
+                  ref={hintEl}
+                  aria-hidden
+                  style={{
+                    ...slot(creditSize * 1.9),
+                    ...text,
+                    transform: `translate(${tx}, 4px)`,
+                    opacity: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: creditSize * 0.4,
+                    whiteSpace: "nowrap",
+                    fontSize: creditSize * 0.86,
+                    color: artistColor ?? theme.artist,
+                  }}
+                >
+                  <svg width={creditSize} height={creditSize} viewBox="0 0 16 16" aria-hidden>
+                    <path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="currentColor" />
+                    <path d="M10.5 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6.5 6.5 0 0 1 0 9" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  Ringer on for the full effect
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
       <style>{`
         .record-toggle:focus { outline: none; }
-        .record-toggle:focus-visible { outline: 2px solid ${params.appearance === "dark" ? "#8ab4ff" : "#2f6fed"}; outline-offset: 4px; }
+        .record-toggle:focus-visible { outline: 2px solid ${focusColor ?? (params.appearance === "dark" ? "#8ab4ff" : "#2f6fed")}; outline-offset: 4px; }
       `}</style>
     </>
   );

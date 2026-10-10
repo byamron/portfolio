@@ -1,62 +1,39 @@
 import { useTheme } from '@/contexts/ThemeContext'
 
-const RADIUS_RATIO = 0.22
-const ICON_SCALE = 0.75
+// Sized in em so icons track the prose size at every breakpoint:
+// line-height (1.3) × 0.75 ≈ the largest square that sits inside the line box.
+const SIZE = '0.975em'
 
-// Baked values from the Uniform preset
-const BODY_SIZE = 40
-const LINE_HEIGHT = 1.3
-
-function iconSize() {
-  return Math.round(BODY_SIZE * LINE_HEIGHT * ICON_SCALE)
+const wrapper: React.CSSProperties = {
+  display: 'inline-flex',
+  width: SIZE,
+  height: SIZE,
+  verticalAlign: 'middle',
+  // Asymmetric pull: centres on cap height rather than x-height, and the
+  // negative margins keep the icon from growing the line box.
+  marginTop: '-0.45em',
+  marginBottom: '-0.25em',
+  flexShrink: 0,
 }
 
-function IconWrapper({ size, children, href }: { size: number; children: React.ReactNode; href?: string }) {
-  const style: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: size,
-    height: size,
-    verticalAlign: 'middle',
-    marginTop: '-0.45em',
-    marginBottom: '-0.25em',
-    flexShrink: 0,
-  }
-
-  if (href) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" style={style}>
-        {children}
-      </a>
-    )
-  }
-  return <span style={style}>{children}</span>
+const image: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  borderRadius: '22%',
+  display: 'block',
 }
 
-export function InlineIcon({ src, alt, href }: { src: string; alt: string; href?: string; context?: string }) {
-  const size = iconSize()
+/** Decorative: the name always follows, so the icon stays silent to AT. */
+export function InlineIcon({ src }: { src: string }) {
   return (
-    <IconWrapper size={size} href={href}>
-      <img
-        src={src}
-        alt={alt}
-        style={{ width: size, height: size, objectFit: 'cover', borderRadius: size * RADIUS_RATIO, display: 'block' }}
-      />
-    </IconWrapper>
+    <span style={wrapper} aria-hidden="true">
+      <img src={src} alt="" style={image} />
+    </span>
   )
 }
 
 export function InlinePortrait() {
   const { accentColor } = useTheme()
-  const size = iconSize()
-  return (
-    <IconWrapper size={size}>
-      <img
-        src={`/images/portrait-square-${accentColor}.jpg`}
-        alt="Ben Yamron"
-        style={{ width: size, height: size, objectFit: 'cover', borderRadius: size * RADIUS_RATIO, display: 'block' }}
-      />
-    </IconWrapper>
-  )
+  return <InlineIcon src={`/images/portrait-square-${accentColor}.jpg`} />
 }

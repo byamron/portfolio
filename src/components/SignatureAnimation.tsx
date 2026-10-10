@@ -2,10 +2,10 @@ import { lazy, Suspense } from 'react'
 
 const SignatureAnimationInner = lazy(() => import('./SignatureAnimationInner'))
 
-export function SignatureAnimation() {
+export function SignatureAnimation({ startDelayMs = 0 }: { startDelayMs?: number }) {
   return (
     <Suspense fallback={null}>
-      <SignatureAnimationInner />
+      <SignatureAnimationInner startDelayMs={startDelayMs} />
     </Suspense>
   )
 }
