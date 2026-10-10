@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useHover } from '@/contexts/HoverContext'
@@ -34,7 +34,17 @@ interface Layout {
   svgWidth: number
 }
 
-export function ContributionStrip({ labelPosition = 'top' }: { labelPosition?: 'top' | 'bottom' } = {}) {
+interface ContributionStripProps {
+  labelPosition?: 'top' | 'bottom'
+  /** Space above the strip; defaults to prod's left-column rhythm. */
+  topGap?: number
+  /** Rendered at the right end of the label row. */
+  labelAccessory?: ReactNode
+  /** Right padding for the accessory (e.g. to clear a sidebar gutter). */
+  accessoryInset?: number
+}
+
+export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessory, accessoryInset = 40 }: ContributionStripProps = {}) {
   const { bgIntensity, resolvedAppearance } = useTheme()
   const { setHoveringLink } = useHover()
   const prefersReducedMotion = !!useReducedMotion()
@@ -391,7 +401,7 @@ export function ContributionStrip({ labelPosition = 'top' }: { labelPosition?: '
     <section
       ref={stripRef}
       style={{
-        marginTop: labelPosition === 'top' ? 64 : 0,
+        marginTop: topGap ?? (labelPosition === 'top' ? 64 : 0),
         paddingBottom: 16 - HIT_PAD,
         position: 'relative',
         display: 'flex',
@@ -459,6 +469,11 @@ export function ContributionStrip({ labelPosition = 'top' }: { labelPosition?: '
         >
           &rarr;
         </button>
+        {labelAccessory && (
+          <div style={{ marginLeft: 'auto', paddingRight: accessoryInset, display: 'flex', alignItems: 'center' }}>
+            {labelAccessory}
+          </div>
+        )}
       </div>
 
       <div
