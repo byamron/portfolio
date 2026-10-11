@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-11 — `/new`: portrait opens the theme sidebar; handle hidden at rest
+
+**Branch:** `simplified-home-prototype`. Ben disliked the trigger square "just hanging out at rest". Decision (Ben, after a UX read): the inline portrait is the visible way in — click opens the sidebar, pinned until a click outside or Escape; hovering the right edge still opens it (and closes on leave) with no dedicated affordance at rest.
+
+- `SidebarThemeControls` (shared): opt-in `hideTriggerAtRest` prop (prod unchanged); window events `THEME_SIDEBAR_TOGGLE` (opens pinned; detail `{ opener }` for focus return) and `THEME_SIDEBAR_STATE` (broadcasts `{ open }`). Pinned ignores mouse-leave; dismiss = pointerdown outside (ignores `[data-theme-sidebar-trigger]` so the opener toggles itself) or Escape (focus returns to the opener). Trigger square clicks route through `close()` so they clear the pinned flag; the touch tap-outside handler also ignores the external trigger.
+- Portrait (`InlinePortrait`): a real `<button aria-label="Customize theme" aria-expanded>`; wears the trigger square's intensity-linked accent glow at rest (the theme visibly lives here), lifts + brightens on hover/focus, `--swatch` focus ring. One rotate nudge per session after the cascade + signature (~3.6s), skipped under reduced motion; Framer owns transform on an inner span so the nudge doesn't clobber the hover lift.
+- Verified headless: rest (closed, square hidden/aria-hidden) → portrait click opens → mouse away stays open → outside click closes → reopen + Escape closes with focus back on the portrait → edge hover opens → leave closes.
+
 ## 2026-10-10 — `/new` MVP polish pass: record dock, entrance cascade, link system, sidebar fixes
 
 **Branch:** `simplified-home-prototype`. Ben's pre-launch feedback on the stripped MVP, plus two background staff lenses (UX, design-engineer) whose findings were folded in.

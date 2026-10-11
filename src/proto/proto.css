@@ -33,6 +33,14 @@
   outline: none;
 }
 
+.proto-portrait:focus-visible {
+  outline: 2px solid var(--swatch);
+  outline-offset: 2px;
+}
+.proto-portrait:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

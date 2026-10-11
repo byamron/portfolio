@@ -319,8 +319,27 @@ const MODE_BASE = DIVIDER_3 + 1                       // 8
 const DIVIDER_4 = MODE_BASE + modes.length             // 11
 const CURSOR_BASE = DIVIDER_4 + 1                      // 12
 
-export function SidebarThemeControls() {
+/** Dispatch on window (detail: { opener }) to open the sidebar pinned —
+ *  it then stays open until a click outside, Escape, or another toggle. */
+export const THEME_SIDEBAR_TOGGLE = 'theme-sidebar:toggle'
+/** Broadcast on window with detail: { open } whenever the sidebar opens/closes. */
+export const THEME_SIDEBAR_STATE = 'theme-sidebar:state'
+
+interface SidebarThemeControlsProps {
+  /** Hide the trigger square until the sidebar is open (an external element,
+   *  via THEME_SIDEBAR_TOGGLE, is the visible way in; edge hover still works). */
+  hideTriggerAtRest?: boolean
+}
+
+export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarThemeControlsProps = {}) {
   const [hovered, setHovered] = useState(false)
+  // Opened by a click (external trigger): mouse-leave doesn't close it.
+  const [pinned, setPinned] = useState(false)
+  const hoveredRef = useRef(hovered)
+  hoveredRef.current = hovered
+  const pinnedRef = useRef(pinned)
+  pinnedRef.current = pinned
+  const openerRef = useRef<HTMLElement | null>(null)
   // Backdrop is 300px wide inside a 56px container; clipping it the instant
   // hover ends slices its fade-out into a hard vertical edge.
   const [backdropExiting, setBackdropExiting] = useState(false)
@@ -388,15 +407,66 @@ export function SidebarThemeControls() {
   }
 
   const handleLeave = () => {
+    if (pinnedRef.current) return
     closeTimeout.current = setTimeout(() => setHovered(false), 250)
   }
+
+  const triggerHidden = hideTriggerAtRest && !hovered
+  const toggleFromTrigger = () => {
+    if (hoveredRef.current) close(false)
+    else setHovered(true)
+  }
+
+  const close = useCallback((restoreFocus: boolean) => {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current)
+    setHovered(false)
+    setPinned(false)
+    if (restoreFocus) openerRef.current?.focus()
+  }, [])
+
+  // External trigger: toggles a pinned open state.
+  useEffect(() => {
+    const onToggle = (e: Event) => {
+      if (hoveredRef.current && pinnedRef.current) { close(false); return }
+      if (closeTimeout.current) clearTimeout(closeTimeout.current)
+      openerRef.current = (e as CustomEvent<{ opener?: HTMLElement }>).detail?.opener ?? null
+      setHovered(true)
+      setPinned(true)
+    }
+    window.addEventListener(THEME_SIDEBAR_TOGGLE, onToggle)
+    return () => window.removeEventListener(THEME_SIDEBAR_TOGGLE, onToggle)
+  }, [close])
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(THEME_SIDEBAR_STATE, { detail: { open: hovered } }))
+  }, [hovered])
+
+  // Pinned: dismiss on a press outside (the trigger toggles itself) or Escape.
+  useEffect(() => {
+    if (!hovered) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!pinnedRef.current) return
+      const t = e.target as Element
+      if (sidebarRef.current?.contains(t) || t.closest?.('[data-theme-sidebar-trigger]')) return
+      close(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(true) }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [hovered, close])
 
   // Close panel when tapping outside on touch devices
   useEffect(() => {
     if (!hovered) return
     const handler = (e: TouchEvent) => {
       if (sidebarRef.current?.contains(e.target as Node)) return
+      if ((e.target as Element).closest?.('[data-theme-sidebar-trigger]')) return
       setHovered(false)
+      setPinned(false)
     }
     document.addEventListener('touchstart', handler)
     return () => document.removeEventListener('touchstart', handler)
@@ -555,13 +625,14 @@ export function SidebarThemeControls() {
         <div
           ref={triggerRef}
           role="button"
-          tabIndex={0}
+          tabIndex={triggerHidden ? -1 : 0}
+          aria-hidden={triggerHidden || undefined}
           aria-label={hovered ? 'Close theme controls' : 'Open theme controls'}
           aria-expanded={hovered}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              setHovered(h => !h)
+              toggleFromTrigger()
             }
           }}
           style={{
@@ -570,7 +641,8 @@ export function SidebarThemeControls() {
             height: 16,
             borderRadius: 5,
             background: activeSwatchVar,
-            opacity: lerp(0.45, 1.0, bgIntensity),
+            opacity: triggerHidden ? 0 : lerp(0.45, 1.0, bgIntensity),
+            pointerEvents: triggerHidden ? 'none' : undefined,
             boxShadow: bgIntensity > 0.01
               ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px color-mix(in srgb, ${activeSwatchVar} ${Math.round(lerp(0, 0.5, bgIntensity) * 100)}%, transparent)`
               : 'none',
@@ -580,7 +652,7 @@ export function SidebarThemeControls() {
         >
           {/* Enlarged hit area for touch */}
           <div
-            onClick={() => setHovered(h => !h)}
+            onClick={toggleFromTrigger}
             style={{
               position: 'absolute',
               top: '50%',

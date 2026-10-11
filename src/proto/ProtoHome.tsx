@@ -34,6 +34,9 @@ const SIGNATURE_DELAY_MS = Math.round(
   (CASCADE.delay + CASCADE.stagger * (CASCADE_ITEMS - 1) + CASCADE.duration) * 1000,
 )
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
+// Roughly how long the Rive signature takes to draw; the portrait's one-time
+// nudge waits for it so the page has a single beat of motion at a time.
+const SIGNATURE_DRAW_MS = 2400
 
 /** Name with a leading logo: keep the logo with the first word only, so long
  *  names can still wrap on narrow screens. */
@@ -131,7 +134,7 @@ export function ProtoHome() {
           }}
         >
           <motion.p {...para(0)}>
-            <InlinePortrait />{' '}
+            <InlinePortrait nudgeAfterMs={SIGNATURE_DELAY_MS + SIGNATURE_DRAW_MS} />{' '}
             <span style={{ color: 'var(--text-dark)' }}>Ben Yamron</span> is a product designer, currently designing AI for scientific research at {L('consensus')}.
           </motion.p>
           <motion.p {...para(1)}>

@@ -17,7 +17,8 @@ function ProtoShell() {
       <ProtoHome />
       <CustomCursor />
       <CursorCompanion />
-      <SidebarThemeControls />
+      {/* The portrait is the visible way in; the right edge still opens it on hover. */}
+      <SidebarThemeControls hideTriggerAtRest />
     </div>
   )
 }
