@@ -409,9 +409,38 @@ async function copyText(text: string): Promise<boolean> {
 // Then a point-mass glider (lift ∝ v², drag ∝ v², gravity) takes over — the
 // phugoid it produces is the swoop-climb-stall-dip of a real paper plane.
 
-const PAPER = '#fffdf9'
-const PAPER_SHADE = '#efebe3' // a fold's top layer, a touch shaded
-const EDGE = 'rgba(40,30,20,0.32)'
+const EDGE = 'rgba(40,30,20,0.3)'
+
+// Grain as a pattern fill, not a filter: rasterised once from a small noise
+// tile, so animating the paper never re-runs a filter (that was the jank).
+let paperTile: string | null = null
+function paperTexture() {
+  if (paperTile) return paperTile
+  const c = document.createElement('canvas')
+  c.width = c.height = 96
+  const g = c.getContext('2d')!
+  const img = g.createImageData(96, 96)
+  for (let i = 0; i < img.data.length; i += 4) {
+    // Paper white with fine luminance grain and a few darker fibres.
+    const n = Math.random()
+    const d = n * 10 + (n > 0.985 ? 18 : 0)
+    img.data[i] = 255 - d
+    img.data[i + 1] = 253 - d * 1.05
+    img.data[i + 2] = 249 - d * 1.15
+    img.data[i + 3] = 255
+  }
+  g.putImageData(img, 0, 0)
+  return (paperTile = c.toDataURL())
+}
+/** <pattern> sized so one tile pixel ≈ one screen pixel at `pxPerUnit`. */
+function PaperPattern({ id, pxPerUnit }: { id: string; pxPerUnit: number }) {
+  const w = 96 / pxPerUnit
+  return (
+    <pattern id={id} patternUnits="userSpaceOnUse" width={w} height={w}>
+      <image href={paperTexture()} width={w} height={w} />
+    </pattern>
+  )
+}
 
 // Envelope-sized sheet halves (so it can grow out of the icon), then the
 // sheet, then the shapes after each fold. Left half; right half mirrors x.
@@ -431,23 +460,35 @@ const L_EDGE_SHUT = 'M 0 -22 L 0 2 L -17 19 Z'
 const L_KEEL = 'M 0 -22 L -8.5 -1.5 L -8.5 22 L 0 22 Z'
 const L_WING_UP = 'M -8.5 -1.5 L -17 19 L -17 22 L -8.5 22 Z'
 const L_WING_DOWN = 'M -8.5 -1.5 L 0 19 L 0 22 L -8.5 22 Z'
-const mirror = (d: string) => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => `${-parseFloat(x)} ${y}`)
+const mapPts = (d: string, f: (x: number, y: number) => [number, number]) =>
+  d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => f(parseFloat(x), parseFloat(y)).map(v => +v.toFixed(2)).join(' '))
+const mirror = (d: string) => mapPts(d, (x, y) => [-x, y])
 
-// Flying sprite (3/4 view, nose right): wing over keel.
-const FLY_WING = 'M -13 -7 L 14 0 L 14 0 L -5 1.5 Z'
-const FLY_KEEL = 'M -5 1.5 L 14 0 L -8 8 L -8 6 Z'
+// Flying sprite (3/4 view, nose right), in sprite units. Point order matches
+// the side-view fold shapes corner-for-corner (nose, fold line, tail…) so the
+// "open the wings" morph never cross-wires.
+const FLY_WING = 'M 14 0 L -5 1.5 L -5 1.5 L -13 -7 Z'
+const FLY_KEEL = 'M 14 0 L -5 1.5 L -8 6 L -8 8 Z'
 
 const FOLD_SCALE = 1.25 // px per sheet unit while folding (sheet ≈ 55px tall)
 // The folded dart is the sheet's full height long (44 × FOLD_SCALE ≈ 55px);
 // the flying sprite's nose-to-tail (−13…14) is scaled to match.
 const FLY_SCALE = (44 * FOLD_SCALE) / 27
+// The fold's last frame *is* the flight sprite: map sprite units into the
+// fold stage's local frame (stage turned 90° cw: screen (X,Y) = (−y, x)).
+const toStage = (d: string) => mapPts(d, (fx, fy) => [(FLY_SCALE / FOLD_SCALE) * fy, -(FLY_SCALE / FOLD_SCALE) * fx])
+const STAGE_WING = toStage(FLY_WING)
+const STAGE_KEEL = toStage(FLY_KEEL)
 
 type Pt = { x: number; y: number }
+interface Throw { v0: number; gamma0: number } // launch speed (px/s), angle (rad)
 
-/** The fold, beside the icon. Resolves with where the plane ends up. */
-function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => void }) {
+const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
+
+/** The fold, beside the icon: one overlapping timeline — each fold begins
+ *  as the last settles — ending on the exact flight pose. */
+function PaperFold({ from, launch, onFolded }: { from: DOMRect; launch: Throw; onFolded: (at: Pt) => void }) {
   const stage = useAnimationControls()
-  const leftHalf = useAnimationControls()
   const rightHalf = useAnimationControls()
   const baseL = useAnimationControls(), baseR = useAnimationControls()
   const cornerL = useAnimationControls(), cornerR = useAnimationControls()
@@ -455,67 +496,63 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
   const keel = useAnimationControls(), wing = useAnimationControls()
   const crease = useAnimationControls()
   const flap = useAnimationControls()
-  const [side, setSide] = useState(false) // swapped to the keel/wing model
+  const [phase, setPhase] = useState<'top' | 'side'>('top')
   const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 }
   // Fold in the empty space to the right of the icon row.
   const at = { x: start.x + 78, y: start.y - 4 }
 
   useEffect(() => {
-    let alive = true
-    // Sine in-out: each fold eases in from rest and settles, like a hand.
-    const SMOOTH = [0.37, 0, 0.63, 1] as const
-    const step = { duration: 0.46, ease: SMOOTH }
-    const settle = () => new Promise(r => setTimeout(r, 90))
-    const flip = (c: ReturnType<typeof useAnimationControls>, d: string, delay = 0) =>
-      c.start({ d, fill: [PAPER, PAPER_SHADE, PAPER_SHADE], transition: { ...step, delay } })
-    ;(async () => {
-      // 0 · The envelope lifts out of the slot, opening into a flat sheet.
-      flap.start({ opacity: 0, transition: { duration: 0.18 } })
-      baseL.start({ d: L_SHEET, transition: { duration: 0.42, ease: EASE_OUT } })
-      baseR.start({ d: mirror(L_SHEET), transition: { duration: 0.42, ease: EASE_OUT } })
-      await stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: { duration: 0.5, ease: EASE_OUT } })
-      if (!alive) return
-      // 1 · Crease lengthwise: a quick half-fold and back, leaving the line.
-      crease.start({ pathLength: 1, opacity: 1, transition: { duration: 0.3 } })
-      await rightHalf.start({ scaleX: [1, 0.15, 1], transition: { duration: 0.6, ease: SMOOTH } })
-      await settle()
-      if (!alive) return
-      // 2 · Top corners to the crease (left, then right).
-      cornerL.set({ opacity: 1 }); cornerR.set({ opacity: 1 })
-      baseL.start({ d: L_AFTER_CORNER, transition: step })
-      flip(cornerL, L_CORNER_SHUT)
-      baseR.start({ d: mirror(L_AFTER_CORNER), transition: { ...step, delay: 0.2 } })
-      await flip(cornerR, mirror(L_CORNER_SHUT), 0.2)
-      await settle()
-      if (!alive) return
-      // 3 · The new slanted edges to the crease.
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const at$ = (sec: number, fn: () => void) => timers.push(setTimeout(fn, sec * 1000))
+    const tw = (duration: number, delay = 0) => ({ duration, delay, ease: SMOOTH })
+    const launchDeg = (launch.gamma0 * 180) / Math.PI
+
+    // 0 · The envelope lifts out of the slot, opening into a flat sheet.
+    flap.start({ opacity: 0, transition: { duration: 0.25 } })
+    baseL.start({ d: L_SHEET, transition: tw(0.6) })
+    baseR.start({ d: mirror(L_SHEET), transition: tw(0.6) })
+    stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: { duration: 0.75, ease: EASE_OUT } })
+    // 1 · Crease lengthwise: a half-fold and back, leaving the line.
+    crease.start({ pathLength: 1, opacity: 1, transition: tw(0.5, 0.75) })
+    rightHalf.start({ scaleX: [1, 0.18, 1], transition: { duration: 0.75, delay: 0.6, ease: SMOOTH } })
+    // 2 · Top corners to the crease, left then right.
+    at$(1.3, () => { cornerL.set({ opacity: 1 }); cornerR.set({ opacity: 1 }) })
+    baseL.start({ d: L_AFTER_CORNER, transition: tw(0.55, 1.3) })
+    cornerL.start({ d: L_CORNER_SHUT, transition: tw(0.55, 1.3) })
+    baseR.start({ d: mirror(L_AFTER_CORNER), transition: tw(0.55, 1.5) })
+    cornerR.start({ d: mirror(L_CORNER_SHUT), transition: tw(0.55, 1.5) })
+    // 3 · The new slanted edges to the crease.
+    at$(2.05, () => {
       cornerL.set({ opacity: 0 }); cornerR.set({ opacity: 0 })
       edgeL.set({ opacity: 1 }); edgeR.set({ opacity: 1 })
-      baseL.start({ d: L_AFTER_EDGE, transition: step })
-      flip(edgeL, L_EDGE_SHUT)
-      baseR.start({ d: mirror(L_AFTER_EDGE), transition: { ...step, delay: 0.2 } })
-      await flip(edgeR, mirror(L_EDGE_SHUT), 0.2)
-      await settle()
-      if (!alive) return
-      // 4 · Fold in half: the right half turns over onto the left.
-      await rightHalf.start({ scaleX: -1, transition: { duration: 0.55, ease: SMOOTH } })
-      await settle()
-      if (!alive) return
-      // 5 · Turn to the side (nose right), then the wing comes down.
-      setSide(true)
-      await stage.start({ rotate: 90, transition: { duration: 0.55, ease: SMOOTH } })
-      if (!alive) return
-      await wing.start({ d: L_WING_DOWN, fill: [PAPER, PAPER_SHADE, PAPER_SHADE], transition: step })
-      if (!alive) return
-      // 6 · Open the wings, a breath, and away.
-      keel.start({ opacity: 0, transition: { duration: 0.16 } })
-      await wing.start({ opacity: 0, transition: { duration: 0.16 } })
-      if (alive) onFolded(at)
-    })()
-    return () => { alive = false }
+      baseL.start({ d: L_AFTER_EDGE, transition: tw(0.55) })
+      edgeL.start({ d: L_EDGE_SHUT, transition: tw(0.55) })
+      baseR.start({ d: mirror(L_AFTER_EDGE), transition: tw(0.55, 0.2) })
+      edgeR.start({ d: mirror(L_EDGE_SHUT), transition: tw(0.55, 0.2) })
+    })
+    // 4 · Fold in half: the right half turns over onto the left.
+    rightHalf.start({ scaleX: -1, transition: { duration: 0.65, delay: 2.85, ease: SMOOTH } })
+    // 5 · Turn to the side (nose right), then the wing comes down.
+    at$(3.52, () => setPhase('side'))
+    stage.start({ rotate: 90, transition: tw(0.7, 3.5) })
+    at$(4.0, () => { wing.start({ d: L_WING_DOWN, transition: tw(0.55) }) })
+    // 6 · Wings open into the flying pose, tilted to the launch angle…
+    at$(4.5, () => {
+      wing.start({ d: STAGE_WING, transition: tw(0.5) })
+      keel.start({ d: STAGE_KEEL, transition: tw(0.5) })
+      stage.start({ rotate: 90 - launchDeg, transition: tw(0.5) })
+    })
+    // …a small wind-up, and release.
+    at$(5.0, () => {
+      const back = 7
+      const dx = -Math.cos(launch.gamma0) * back, dy = Math.sin(launch.gamma0) * back
+      stage.start({ x: at.x - start.x + dx, y: at.y - start.y + dy, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } })
+        .then(() => onFolded({ x: at.x + dx, y: at.y + dy }))
+    })
+    return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const paper = { stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
+  const paper = { fill: 'url(#paper-fold)', stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
   return createPortal(
     <motion.svg
       aria-hidden="true"
@@ -524,42 +561,34 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
       animate={stage}
       style={{
         position: 'fixed', left: start.x - 40, top: start.y - 40, zIndex: 9999, pointerEvents: 'none',
-        overflow: 'visible', color: 'var(--text-dark)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.18))',
+        overflow: 'visible', color: 'var(--text-dark)', willChange: 'transform',
+        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.16))',
       }}
     >
-      <defs>
-        <filter id="paper-grain" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="7" result="n" />
-          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.04  0 0 0 0 0.02  0 0 0 0.17 0" result="grain" />
-          <feComposite in="grain" in2="SourceGraphic" operator="in" result="g2" />
-          <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="g2" /></feMerge>
-        </filter>
-      </defs>
-      <g filter="url(#paper-grain)">
-        {!side ? (
-          <>
-            <motion.g animate={leftHalf}>
-              <motion.path initial={{ d: L_ENVELOPE }} animate={baseL} fill={PAPER} {...paper} />
-              <motion.path initial={{ d: L_CORNER_OPEN, opacity: 0 }} animate={cornerL} fill={PAPER} {...paper} />
-              <motion.path initial={{ d: L_EDGE_OPEN, opacity: 0 }} animate={edgeL} fill={PAPER_SHADE} {...paper} />
-            </motion.g>
-            {/* Right half pivots on the crease (x = 0) for steps 1 and 4. */}
-            <motion.g animate={rightHalf} style={{ originX: '0px', transformBox: 'view-box' } as React.CSSProperties}>
-              <motion.path initial={{ d: mirror(L_ENVELOPE) }} animate={baseR} fill={PAPER} {...paper} />
-              <motion.path initial={{ d: mirror(L_CORNER_OPEN), opacity: 0 }} animate={cornerR} fill={PAPER} {...paper} />
-              <motion.path initial={{ d: mirror(L_EDGE_OPEN), opacity: 0 }} animate={edgeR} fill={PAPER_SHADE} {...paper} />
-            </motion.g>
-            <motion.path d="M 0 -22 L 0 22" stroke={EDGE} strokeWidth={0.4} initial={{ pathLength: 0, opacity: 0 }} animate={crease} />
-            {/* The envelope's flap, fading as it opens into a sheet. */}
-            <motion.path d="M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.1} strokeLinejoin="round" initial={{ opacity: 0.8 }} animate={flap} />
-          </>
-        ) : (
-          <>
-            <motion.path initial={{ d: L_KEEL }} animate={keel} fill={PAPER} {...paper} />
-            <motion.path initial={{ d: L_WING_UP, fill: PAPER_SHADE }} animate={wing} {...paper} />
-          </>
-        )}
-      </g>
+      <defs><PaperPattern id="paper-fold" pxPerUnit={FOLD_SCALE} /></defs>
+      {phase === 'top' ? (
+        <>
+          <g>
+            <motion.path initial={{ d: L_ENVELOPE }} animate={baseL} {...paper} />
+            <motion.path initial={{ d: L_CORNER_OPEN, opacity: 0 }} animate={cornerL} {...paper} />
+            <motion.path initial={{ d: L_EDGE_OPEN, opacity: 0 }} animate={edgeL} {...paper} />
+          </g>
+          {/* Right half pivots on the crease (x = 0) for steps 1 and 4. */}
+          <motion.g animate={rightHalf} style={{ originX: '0px', transformBox: 'view-box' } as React.CSSProperties}>
+            <motion.path initial={{ d: mirror(L_ENVELOPE) }} animate={baseR} {...paper} />
+            <motion.path initial={{ d: mirror(L_CORNER_OPEN), opacity: 0 }} animate={cornerR} {...paper} />
+            <motion.path initial={{ d: mirror(L_EDGE_OPEN), opacity: 0 }} animate={edgeR} {...paper} />
+          </motion.g>
+          <motion.path d="M 0 -22 L 0 22" stroke={EDGE} strokeWidth={0.4} initial={{ pathLength: 0, opacity: 0 }} animate={crease} />
+          {/* The envelope's flap, fading as it opens into a sheet. */}
+          <motion.path d="M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.1} strokeLinejoin="round" initial={{ opacity: 0.8 }} animate={flap} />
+        </>
+      ) : (
+        <>
+          <motion.path initial={{ d: L_KEEL }} animate={keel} {...paper} />
+          <motion.path initial={{ d: L_WING_UP }} animate={wing} {...paper} />
+        </>
+      )}
     </motion.svg>,
     document.body,
   )
@@ -569,7 +598,7 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
  *  dv/dt = −D − g·sinγ, dγ/dt = (L − g·cosγ)/v, L = kL·v², D = L/LD. Launched
  *  faster than trim it climbs, slows, noses over and swoops — the phugoid.
  *  Turbulence nudges γ; now and then it banks into a turn and reverses. */
-function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
+function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone: () => void }) {
   const el = useRef<HTMLDivElement>(null)
   const sprite = useRef<SVGSVGElement>(null)
   useEffect(() => {
@@ -579,7 +608,7 @@ function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
     const G = 240, V_TRIM = r(105, 135), LD = r(4, 6.5)
     const kL = G / (V_TRIM * V_TRIM), kD = kL / LD
     let x = from.x, y = from.y
-    let v = r(165, 255), gamma = (r(4, 30) * Math.PI) / 180 // a hard throw can loop
+    let v = launch.v0, gamma = launch.gamma0 // a hard throw can loop
     let dir = 1, bank = 0, turning = 0 // bank: 0 → π over a turn
     const seed = Math.random() * 100
     const gustAmp = r(0.12, 0.38), gustRate = r(0.7, 1.4)
@@ -600,12 +629,11 @@ function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
           bank += (Math.PI / turnSecs) * h
           if (bank >= Math.PI) { bank = 0; turning = 0; dir = -dir }
         }
-        const turnDrag = turning ? 1.5 : 1
         const lift = kL * v * v * (turning ? Math.abs(Math.cos(bank)) * 0.4 + 0.6 : 1)
-        const drag = kD * v * v * turnDrag
-        // Smooth turbulence: a few incommensurate sines.
+        const drag = kD * v * v * (turning ? 1.5 : 1)
+        // Smooth turbulence: a few incommensurate sines (faded in after release).
         const tg = t * gustRate
-        const gust = gustAmp * (Math.sin(tg * 1.7 + seed) + 0.6 * Math.sin(tg * 3.1 + seed * 2) + 0.3 * Math.sin(tg * 5.3 + seed * 3))
+        const gust = Math.min(1, t / 0.6) * gustAmp * (Math.sin(tg * 1.7 + seed) + 0.6 * Math.sin(tg * 3.1 + seed * 2) + 0.3 * Math.sin(tg * 5.3 + seed * 3))
         v = Math.max(35, v + (-drag - G * Math.sin(gamma)) * h)
         gamma += ((lift - G * Math.cos(gamma)) / v + gust) * h
         const facing = turning ? dir * Math.cos(bank) : dir
@@ -613,11 +641,11 @@ function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
         y -= v * Math.sin(gamma) * h
       }
       const out = x < -90 || x > vw + 90 || y > vh + 90 || y < -160
-      if (out || t > 14) fade = Math.max(0, fade - 0.06)
+      if (out || t > 14) fade = Math.max(0, fade - 0.04)
       const facing = turning ? dir * Math.cos(bank) : dir
       const sx = Math.sign(facing || 1) * Math.max(0.12, Math.abs(facing))
       if (el.current) {
-        el.current.style.transform = `translate(${x}px, ${y}px)`
+        el.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
         el.current.style.opacity = String(fade)
       }
       if (sprite.current) sprite.current.style.transform = `scaleX(${sx}) rotate(${(-gamma * 180) / Math.PI}deg)`
@@ -628,19 +656,20 @@ function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
     return () => cancelAnimationFrame(raf)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return createPortal(
-    <div ref={el} aria-hidden="true" style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', transform: `translate(${from.x}px, ${from.y}px)` }}>
-      <svg ref={sprite} width={64} height={64} viewBox="-32 -32 64 64" style={{ position: 'absolute', left: -32, top: -32, overflow: 'visible', filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.2))' }}>
-        <defs>
-          <filter id="paper-grain-fly" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="7" result="n" />
-            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.04  0 0 0 0 0.02  0 0 0 0.17 0" result="grain" />
-            <feComposite in="grain" in2="SourceGraphic" operator="in" result="g2" />
-            <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="g2" /></feMerge>
-          </filter>
-        </defs>
-        <g transform={`scale(${FLY_SCALE})`} filter="url(#paper-grain-fly)">
-          <path d={FLY_KEEL} fill={PAPER_SHADE} stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
-          <path d={FLY_WING} fill={PAPER} stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
+    <div ref={el} aria-hidden="true" style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', willChange: 'transform', transform: `translate3d(${from.x}px, ${from.y}px, 0)` }}>
+      <svg
+        ref={sprite}
+        width={64} height={64} viewBox="-32 -32 64 64"
+        style={{
+          position: 'absolute', left: -32, top: -32, overflow: 'visible', willChange: 'transform',
+          transform: `rotate(${(-launch.gamma0 * 180) / Math.PI}deg)`,
+          filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))',
+        }}
+      >
+        <defs><PaperPattern id="paper-fly" pxPerUnit={FLY_SCALE} /></defs>
+        <g transform={`scale(${FLY_SCALE})`}>
+          <path d={FLY_KEEL} fill="url(#paper-fly)" stroke={EDGE} strokeWidth={0.3} strokeLinejoin="round" />
+          <path d={FLY_WING} fill="url(#paper-fly)" stroke={EDGE} strokeWidth={0.3} strokeLinejoin="round" />
         </g>
       </svg>
     </div>,
@@ -649,10 +678,15 @@ function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
 }
 
 function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
+  // Chosen up front so the fold can end tilted at the exact launch angle.
+  const launch = useMemo<Throw>(() => ({
+    v0: 165 + Math.random() * 90,
+    gamma0: ((4 + Math.random() * 26) * Math.PI) / 180,
+  }), [])
   const [flight, setFlight] = useState<Pt | null>(null)
   return flight
-    ? <PaperFlight from={flight} onDone={onDone} />
-    : <PaperFold from={from} onFolded={setFlight} />
+    ? <PaperFlight from={flight} launch={launch} onDone={onDone} />
+    : <PaperFold from={from} launch={launch} onFolded={setFlight} />
 }
 
 /** Email. Hover: the envelope turns to paper, folds into a plane and flies
