@@ -41,7 +41,6 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
     'On': G.on,
     'Intensity': [G.intensity, 0, 3, 0.05],
     'Radius px': [G.radius, 24, 320, 2],
-    'Falloff stop %': [G.falloff, 10, 95, 1],
     'Accent tint': [G.tint, 0, 2, 0.05],
   } satisfies DialConfig), { id: 'proto-cursor-glow' })
 
@@ -85,7 +84,7 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
       on: glow['On'] as boolean,
       intensity: glow['Intensity'],
       radius: glow['Radius px'],
-      falloff: glow['Falloff stop %'],
+      falloff: G.falloff,
       tint: glow['Accent tint'],
     },
     record: {

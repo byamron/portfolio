@@ -24,15 +24,18 @@ export function CursorGlow() {
     let raf = 0
     let x = 0
     let y = 0
+    let scale = 1
+    // Composited: the gradient is painted once on a 2r×2r layer and only
+    // ever moved/scaled with transform (and faded with opacity) — no
+    // per-frame repaint of a full-screen gradient.
     // Over a link the glow melts into the pill: it slides to the pill's
-    // centre and shrinks as it fades (data-melt turns on transitions for the
-    // @property-registered position/scale). Leaving re-grows it from there
-    // back to the cursor, then it tracks the pointer directly again.
+    // centre and shrinks as it fades (data-melt turns on the transform /
+    // opacity transitions). Leaving re-grows it back to the cursor, then it
+    // tracks the pointer directly again.
     let melted: Element | null = null
     let meltTimer = 0
-    const setPos = (px: number, py: number) => {
-      el.style.setProperty('--gx', `${px}px`)
-      el.style.setProperty('--gy', `${py}px`)
+    const place = (px: number, py: number) => {
+      el.style.transform = `translate3d(${px}px, ${py}px, 0) translate(-50%, -50%) scale(${scale})`
     }
     const melt = () => {
       window.clearTimeout(meltTimer)
@@ -41,7 +44,7 @@ export function CursorGlow() {
     }
     const paint = () => {
       raf = 0
-      if (!melted) setPos(x, y)
+      if (!melted) place(x, y)
     }
     const onMove = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return
@@ -52,14 +55,14 @@ export function CursorGlow() {
         melted = card
         const r = card.getBoundingClientRect()
         melt()
-        setPos(r.left + r.width / 2, r.top + r.height / 2)
-        el.style.setProperty('--glow-scale', '0.35')
+        scale = 0.35
+        place(r.left + r.width / 2, r.top + r.height / 2)
         el.removeAttribute('data-on')
       } else if (!card && melted) {
         melted = null
         melt()
-        setPos(x, y)
-        el.style.setProperty('--glow-scale', '1')
+        scale = 1
+        place(x, y)
         el.setAttribute('data-on', '')
       } else if (!card) {
         el.setAttribute('data-on', '')
@@ -85,9 +88,10 @@ export function CursorGlow() {
       aria-hidden="true"
       className="cursor-glow"
       style={{
+        width: cursorGlow.radius * 2,
+        height: cursorGlow.radius * 2,
         '--glow-r': `${cursorGlow.radius}px`,
         '--glow-k': cursorGlow.intensity,
-        '--glow-stop': `${cursorGlow.falloff}%`,
         '--glow-tint': cursorGlow.tint,
       } as React.CSSProperties}
     />

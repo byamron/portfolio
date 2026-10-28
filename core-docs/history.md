@@ -2,6 +2,11 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-28 — Cursor glow: candle falloff + composited layer
+
+- **Falloff:** the gradient was linear to a 55% stop then transparent — a visible edge. Now ≈ e^(−3.5t²)·(1−t²)^1.5 sampled at 10 stops: soft core, long faint tail, zero at the rim (radius 72 → 120, intensity 0.6 → 0.75 so the core reads the same). DialKit "Falloff stop" removed.
+- **Performance (Ben asked):** it was a full-viewport layer whose gradient centre moved via custom properties — a full re-raster every pointer frame. Now a 2r×2r layer, gradient painted once, moved/scaled only with `transform` (+ opacity), `will-change` → compositor-only; the melt into the pill is a transform/opacity transition (the @property registrations are gone). Measured over 60 moves at 2× DPR: raster tasks 1440 → 0, raster time 619ms → 0, DrawFrame 154ms → ~0, main-thread total 549ms → 81ms.
+
 ## 2026-10-28 — `/new/simple` round 6–7: continuous paper, staff review
 
 - **Root cause of the "gaps" Ben recorded:** several delayed `controls.start()` calls queued on one control at t=0 — Framer cancels the earlier ones, so the sheet never grew before the corner folds and the crease never ran; and the right half's CSS transform on an SVG `<g>` never applied (fold-in-half was really an instant model swap). Now: a parameter per step (motion values), every face computed from them each frame and written as path attributes; the half-turn is a transform *attribute*.

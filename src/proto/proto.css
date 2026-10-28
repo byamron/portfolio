@@ -214,11 +214,6 @@
   outline: none;
 }
 
-/* Typed so they can transition while the glow melts into / out of a pill. */
-@property --gx { syntax: '<length>'; inherits: false; initial-value: -999px; }
-@property --gy { syntax: '<length>'; inherits: false; initial-value: -999px; }
-@property --glow-scale { syntax: '<number>'; inherits: false; initial-value: 1; }
-
 /* Cursor glow experiment (CursorGlow.tsx) — the glass pill's cursor light
    (useGlassHighlight: light mode hsl(hue 45% 50%) at 0.04 × 1.8, dark mode
    hsl(hue 15% 90%) at 0.04), lifted onto the page. --glow-k scales it. */
@@ -227,15 +222,29 @@
   --glow-l: 50%;
   --glow-a: calc(0.072 * var(--glow-k, 1));
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
   pointer-events: none;
   opacity: 0;
+  will-change: transform, opacity;
+  transform: translate3d(-999px, -999px, 0);
   transition: opacity 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* Light, not a disc: a soft bright core and a long, ever-fainter tail
+     (≈ e^(−3.5t²)·(1−t²)^1.5, sampled), so there's no edge to see — like a
+     candle in a dark room. */
   background: radial-gradient(
-    circle calc(var(--glow-r, 72px) * var(--glow-scale)) at var(--gx) var(--gy),
-    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), var(--glow-a)),
-    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.1)) var(--glow-stop, 55%),
-    transparent 100%
+    circle closest-side at 50% 50%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 1.000)) 0%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.968)) 8%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.879)) 16%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.711)) 26%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.477)) 38%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.242)) 52%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.092)) 66%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.023)) 80%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.005)) 90%,
+    hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.000)) 100%
   );
 }
 [data-theme="dark"] .cursor-glow {
@@ -249,9 +258,7 @@
 .cursor-glow[data-melt] {
   /* Opacity eases in late, so the slide-and-shrink reads before it's gone. */
   transition: opacity 220ms cubic-bezier(0.4, 0, 1, 1),
-    --gx 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    --gy 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    --glow-scale 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Contact easter eggs (ContactFx.tsx) ─────────────────────────────── */
