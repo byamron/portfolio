@@ -118,13 +118,15 @@ function Terminal({ greeting, onRun }: { greeting: string; onRun: () => 'launche
   const reducedMotion = useReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<[string, string] | null>(null)
   useEffect(() => {
     if (!typedRun) return
     const t = setTimeout(() => {
-      if (reducedMotion) { setResult('blimp grounded'); return }
+      if (reducedMotion) { setResult(['hold', 'blimp grounded']); return }
       const r = onRun()
-      setResult(r === 'launched' ? 'blimp launched' : r === 'flying' ? 'blimp already in the air' : 'blimp on standby')
+      setResult(r === 'launched' ? ['done', 'blimp launched']
+        : r === 'flying' ? ['hold', 'waiting for air traffic control…']
+        : ['ready', 'blimp on standby'])
     }, 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun, reducedMotion])
@@ -146,7 +148,7 @@ function Terminal({ greeting, onRun }: { greeting: string; onRun: () => 'launche
         )}
         {result && (
           <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
-            <span className="term-str">done</span>  {result}
+            <span className="term-str">{result[0]}</span>  {result[1]}
           </motion.div>
         )}
         {!result && <span className="term-caret" />}
@@ -832,7 +834,7 @@ function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
 export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const reducedMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
-  // Up to a few planes in the air at once — a new hover throws another.
+  // At most one plane folding or in the air.
   const [planes, setPlanes] = useState<{ id: number; from: DOMRect }[]>([])
   const nextId = useRef(0)
   const [slotEmpty, setSlotEmpty] = useState(false)
@@ -854,7 +856,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       }
 
   const fly = () => {
-    if (!canFly || reducedMotion || slotEmpty || copied || planes.length >= 3) return
+    // One plane at a time: the next can't be folded until this one has gone.
+    if (!canFly || reducedMotion || slotEmpty || copied || planes.length > 0) return
     const glyph = btn.current?.querySelector('svg')
     if (!glyph) return
     const from = glyph.getBoundingClientRect()
