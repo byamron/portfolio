@@ -640,6 +640,7 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 - Hover popovers aren't "hoverable" (WCAG 1.4.13): `pointer-events: none`, so a magnifier user can't move onto the card to read it — decorative + `aria-hidden`; Ben's call.
 - Terminal line numbers (0.3 opacity) and the business card's 8.5px mono rows are low-contrast but `aria-hidden` decoration.
 - Email address is never shown or announced (copy-only by Ben's decision) — consider it in the accessible name.
+- Rail glide pill moves like the page pill (push-further): stretch along travel from `useVelocity(pillY)` (~1 + 0.04·|v|, clamped), breathe in from ~0.85 on first show, shrink to 0.96 on fade; skip under reduced motion. Ben's call — the rail is tool-like, the rigid glide may be right.
 - Strip dev panels (ProtoTuner/DialKit/protoSettings knobs) before any merge.
 
 ## `/new/simple` round 7 — continuous paper + staff review (2026-10-28)

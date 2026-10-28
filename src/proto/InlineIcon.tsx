@@ -50,6 +50,8 @@ export function ThemePortrait() {
   const reducedMotion = useReducedMotion()
   const pop = useAnimationControls()
   const prevAccent = useRef(accentColor)
+  // Empty until the theme actually changes, so it isn't read out on load.
+  const [announce, setAnnounce] = useState('')
 
   useEffect(() => {
     if (prevAccent.current === accentColor) return
@@ -60,6 +62,7 @@ export function ThemePortrait() {
     const step = (VALID_ACCENTS.indexOf(accentColor) - VALID_ACCENTS.indexOf(prevAccent.current) + n) % n
     const forward = step <= n / 2
     prevAccent.current = accentColor
+    setAnnounce(`Theme changed to ${accentColor}`)
     if (reducedMotion) return
     // Snap to a squash on the same frame as the swap, then spring past 1 and
     // settle: reads as the new photo bouncing in.
@@ -95,7 +98,7 @@ export function ThemePortrait() {
     </button>
     {/* Announced from outside the sentence, so browse mode doesn't read it
         as part of the intro. */}
-    {createPortal(<span className="sr-only" role="status">{`Theme: ${accentColor}`}</span>, document.body)}
+    {createPortal(<span className="sr-only" role="status">{announce}</span>, document.body)}
     </>
   )
 }

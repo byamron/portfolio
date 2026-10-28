@@ -595,7 +595,8 @@ export function SidebarThemeControls({
       if (sidebarRef.current?.contains(t) || t.closest?.('[data-theme-sidebar-trigger]')) return
       close(false)
     }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(true) }
+    // A layer above (e.g. a pop-out) that handled Escape marks it handled.
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented) close(true) }
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKey)
     return () => {
@@ -662,6 +663,7 @@ export function SidebarThemeControls({
     pillFade.current = animate(pillO, to, { ...(to ? PILL_FADE_IN : PILL_FADE_OUT), onComplete: () => { pillFade.current = null } })
   }, [pillO])
   const glideShown = useRef(false)
+  const glideTarget = useRef<Element | null>(null)
   const glideHide = useRef<ReturnType<typeof setTimeout> | null>(null)
   const glideTo = useCallback((el: Element) => {
     const col = columnRef.current
@@ -673,6 +675,7 @@ export function SidebarThemeControls({
     const w = Math.max(r.width + (r.width > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
     const h = Math.max(r.height + (r.height > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
     const target = { x: r.left - c.left + (r.width - w) / 2, y: r.top - c.top + (r.height - h) / 2, width: w, height: h }
+    glideTarget.current = el
     const place = !glideShown.current || prefersReducedMotion ? 'jump' : 'set'
     pillX[place](target.x); pillY[place](target.y); pillW[place](target.width); pillH[place](target.height)
     fadePill(1)
@@ -701,7 +704,9 @@ export function SidebarThemeControls({
     const col = columnRef.current
     if (!col) return false
     let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
-    col.querySelectorAll(GLIDE_TARGETS).forEach(el => {
+    // Closed, the controls are faded but still laid out: only the handle counts.
+    const targets = hoveredRef.current ? col.querySelectorAll(GLIDE_TARGETS) : col.querySelectorAll('.sidebar-icon-trigger')
+    targets.forEach(el => {
       const q = el.getBoundingClientRect()
       if (!q.width) return
       l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
@@ -709,6 +714,15 @@ export function SidebarThemeControls({
     return x >= l - 6 && x <= r + 6 && y >= t - 6 && y <= b + 6
   }, [])
   useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current); stopRailWatch() }, [stopRailWatch])
+  // Closing the rail (Escape, outside click, the handle) hides the controls:
+  // the pill stays only if it's on the handle.
+  useEffect(() => {
+    if (!glidePill || hovered) return
+    if (railWatch.current || (glideTarget.current && !glideTarget.current.matches('.sidebar-icon-trigger'))) {
+      stopRailWatch()
+      glideOut()
+    }
+  }, [hovered, glidePill, stopRailWatch, glideOut])
   const glideHandlers = glidePill ? {
     onPointerOver: (e: React.PointerEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
@@ -717,6 +731,8 @@ export function SidebarThemeControls({
     onPointerOut: (e: React.PointerEvent) => {
       const to = e.relatedTarget as Element | null
       if (to && columnRef.current?.contains(to)) return
+      // A lifted finger has no "between controls".
+      if (e.pointerType === 'touch') { stopRailWatch(); glideOut(); return }
       if (!inRail(e.clientX, e.clientY)) { glideOut(); return }
       stopRailWatch()
       railWatch.current = (m: PointerEvent) => {

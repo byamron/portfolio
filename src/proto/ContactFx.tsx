@@ -38,13 +38,16 @@ function useHoverStage() {
   // Opened by hover, focus may be anywhere: Escape dismisses from the page.
   useEffect(() => {
     if (!stage) return
+    // Capture phase + preventDefault: Escape closes only this top layer, not
+    // an open settings rail underneath as well.
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
+      if (e.key !== 'Escape' || e.defaultPrevented) return
+      e.preventDefault()
       if (timer.current) clearTimeout(timer.current)
       setStage(0)
     }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
   }, [stage])
   const handlers = {
     onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType !== 'touch') open(true) },
