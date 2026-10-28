@@ -2,6 +2,15 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-28 — `/new/simple`: email note → paper plane (Ben's direction)
+
+- **Hover:** the prod email preview's note ("Hi Ben, / I love your portfolio and / you seem really cool. / Let's chat! / Best, / [Your name]") types out under the button in IBM Plex Mono 12/1.6 (the terminal's setting), with a caret and a beat at line ends. Mounted/faded by hand, not AnimatePresence — the note keeps typing through its exit and an exited copy could linger invisibly.
+- **Click:** copies (check + status at once). The note completes; a 220px letter-proportioned sheet (34×44 sheet units) fades in under it, text inset 20/16px so the words land exactly where they were typed (measured: within 0.5 CSS px). The SVG text on the sheet turns on in the same render the DOM note turns off (no double-dark frame). In dark mode the note's colour eases to ink as the paper arrives.
+- **Fold with text:** every flap is drawn as its own region of the sheet under the top-down fold map (1−c)·I + c·reflection (an SVG matrix per face), filled with the printed side while c < ½ and the blank back after — the corner flaps carry their words up, foreshortened, and the message ends up inside the plane. The right half is the mirror (Mx·M·Mx) in a group scaled by `lift`. Hairline edges use non-scaling strokes. 0 blank frames over ~600 sampled.
+- **Throw:** after folding in half, the plane turns to the side and is lifted into the hand — up to the icon row, receding from note size to a throwable 120px — sitting just right of the check, over where the note will be. Released, the glider's tail position drives a soft-edged mask that wipes "Email address copied" in behind it; the 1.8s hold starts once it's fully revealed (fallback reveal if the plane turns back early).
+- **DialKit "Email note":** typing chars/s (30), fold pace (×1), plane length (120px).
+- Old hover plane (envelope → sheet) removed.
+
 ## 2026-10-28 — `/new/simple` round 8: defaults, ATC queue, flow pipeline (simplify + staff review)
 
 - **Defaults:** Ben's DialKit glow (0.15 / 224 / tint 1) and record tuning (crackle 0.15, vinyl 0.45/0.6, grain 0.35, spin 0.8/0.8, glow 0.25/1.2, tone 40, breath 0.35, treble 1, fade-in 2.5).

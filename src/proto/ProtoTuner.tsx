@@ -44,6 +44,13 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
     'Accent tint': [G.tint, 0, 2, 0.05],
   } satisfies DialConfig), { id: 'proto-cursor-glow' })
 
+  const E = P.emailFx
+  const email = useDialKit('Email note', useStableConfig({
+    'Typing chars/s': [E.typeCps, 10, 80, 1],
+    'Fold pace (×)': [E.foldPace, 0.5, 1.6, 0.05],
+    'Plane length px': [E.planeLength, 70, 200, 2],
+  } satisfies DialConfig), { id: 'proto-email' })
+
   const rec = useDialKit('Record', useStableConfig({
     'Size': [R.size, 0.4, 1, 0.02],
     'Track': { type: 'select', options: ['martini', 'venice', 'lovin'], default: R.trackId },
@@ -85,6 +92,11 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
       intensity: glow['Intensity'],
       radius: glow['Radius px'],
       tint: glow['Accent tint'],
+    },
+    emailFx: {
+      typeCps: email['Typing chars/s'],
+      foldPace: email['Fold pace (×)'],
+      planeLength: email['Plane length px'],
     },
     record: {
       size: rec['Size'],

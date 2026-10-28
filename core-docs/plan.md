@@ -624,6 +624,13 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## `/new/simple` — email note → paper plane (2026-10-28)
+
+- [x] Hover types the note under the button; click lands it on paper, folds (text on the real flaps), lifts into the hand beside the check, throws; the tail reveals "Email address copied".
+- [x] Touch / phone / reduced motion: check + note only; keyboard focus types, Enter throws.
+
+**Open for Ben:** total click→throw ≈ 6s (fold pace dial); paper may overlap the strip on short windows (the sheet is 285px tall); the note's wording ("you seem really cool") taken from Ben's message — confirm against the prod video.
+
 ## `/new/simple` round 8 — defaults, ATC queue, flow pipeline (2026-10-28)
 
 - [x] Ben's DialKit values are defaults (glow 0.15 / 224 / tint 1; record crackle, vinyl, grain, spin, glow tuning).

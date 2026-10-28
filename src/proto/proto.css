@@ -216,6 +216,39 @@
 }
 /* Phones: under the icon row, right-aligned to the button. */
 .simple-copied-float[data-below] { transform: translateX(-100%); }
+/* Thrown: the plane's tail uncovers the note (soft edge at --rx). */
+.simple-copied-float[data-reveal] {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--rx) - 18px), transparent var(--rx));
+  mask-image: linear-gradient(90deg, #000 calc(var(--rx) - 18px), transparent var(--rx));
+}
+
+/* The email note, typing out under the button (ContactFx). Set like the
+   terminal; on the page in the text colour, then ink once it's on paper. */
+.email-letter {
+  position: fixed;
+  z-index: 10001;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  color: var(--text-dark);
+  pointer-events: none;
+  /* Legible if it runs over the contribution strip. */
+  text-shadow: 0 0 2px var(--bg), 0 0 6px var(--bg);
+  opacity: 0;
+  transition: opacity 160ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94), text-shadow 220ms;
+}
+.email-letter[data-shown] {
+  opacity: 1;
+  animation: email-letter-in 140ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+@keyframes email-letter-in { from { opacity: 0; } }
+.email-letter[data-on-paper] {
+  color: #2b2620;
+  text-shadow: none;
+}
 
 /* The terminal follows the page's mode: a light window in light mode, a
    dark one in dark mode (not an inverted chip), each a step off the page so
