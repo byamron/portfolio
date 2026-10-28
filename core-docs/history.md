@@ -2,6 +2,17 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-28 — `/new/simple` round 3: decisions, text presets, contact micro-interactions, mobile
+
+**Branch:** `simplified-home-prototype`, **rebased onto `origin/main`** (next-update has been stale since 2026-08-23; main is the live base). Partial-clone fetch hit missing objects once; a clean retry worked. App.tsx conflict (both sides added a standalone route — kept both); every branch-side contribution-data commit resolved to main's newer data. Backup ref: `backup/simplified-home-prototype-pre-rebase`.
+
+- **Zero-day tooltips** (`utils/contributions.ts` `zeroDayNote`, shared with prod's heatmap): work-account line only on zero days in 10/02–10/26; other past zero days pick from a weekday list ("Designing, not committing", "Choosing between two greys"…) or a weekend list ("Running around SF", "Cooking (actual food)"…), index = day × 3 mod n so it's stable and never repeats day-to-day. Contribution days keep their counts.
+- **Handle shake:** `accent-cycled` → settings glyph rotates (−14°→11°→settle, 0.5s) and its knobs tweak ±4px (CSS, knob group re-keyed to restart). Not when the rail is open.
+- **Glow melts into the pill:** `--gx/--gy/--glow-scale` registered with `@property` so they can transition only while `data-melt` is set (220ms); otherwise position updates are instant.
+- **Text presets:** exhaustive line-break search (puppeteer measuring every 2/3-line split of 5 copy versions, rules: no mid-line comma, no weak line endings, "product designer"/"AI tools" unsplit). Even 3-line options only exist with copy tweaks ("byline": "Ben Yamron, product designer, / currently building AI tools / for researchers at Consensus."). Presets size by type (`size`), column may go 1440 wide, block shrink-wraps. **Phone breaks** designed per copy (5 lines, 91–100% even) replace the 26px browser wrap; phone size = 80% of the preset size, max 38px.
+- **ContactFx.tsx:** shared `useHoverStage` (stage 1 on enter/focus, stage 2 after 1.6s, fine pointers only) + `IconPopover` (springs from the icon centre). GitHub terminal = inverted surface, Plex Mono; sparkline is real bars (Plex Mono lacks the ▁▂ block glyphs and ❯ — they rendered as tofu). Business card = paper object, same both modes, 3D flip via rotateY + backface-visibility. Email plane = portal SVG, point-for-point `d` morph (sheet halves → wing/keel), feTurbulence paper grain (drop-shadow on the outer svg — an inline CSS filter would override the grain filter attribute).
+- **Mobile:** touch-only ≥44px hit areas via ::after; measuring copies moved into a zero-size clipped box (they made `<main>` programmatically scrollable sideways).
+
 ## 2026-10-28 — `/new/simple` round 2: Ben's feedback batch (R1–R21)
 
 **Branch:** `simplified-home-prototype` (uncommitted at time of writing). Requests + success criteria live in plan.md § "`/new/simple` round 2"; all verified headless (puppeteer) unless noted.

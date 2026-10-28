@@ -624,6 +624,21 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## `/new/simple` round 3 — Ben's decisions + micro-interactions (2026-10-28)
+
+- [x] **D1 Email copy only** — address never shown; accessible name "Copy email address".
+- [x] **D2 Zero-day tooltips** — "Cooking on my work account" only on zero days 10/02–10/26; other past zero days get a dry weekday/weekend line (stable per date, never repeated on consecutive days); contribution days keep counts. Tests: 76 pass.
+- [x] **D3 Portrait cycles theme + handle shake** — settings glyph wiggles and its knobs tweak (skipped when rail open / reduced motion).
+- [x] **D4 Glow melts into the pill** — @property-typed position/scale transition: glow slides to the pill centre, shrinks to 0.35, fades (~140ms); re-emerges to the cursor; no lag when tracking.
+- [x] **D5 Rebased onto origin/main** (next-update is stale since Aug). Only main's additions differ from the pre-rebase backup (`backup/simplified-home-prototype-pre-rebase`); contribution data taken from main.
+- [x] **T Text presets** — 9 presets (2-line S/M/L, 3-line byline S/M/L, 3-line stair S/M/L), DialKit "Text preset" or `?preset=`; measured desktop rag 100/98, 100/79/99, 36/72/100; designed 5-line phone breaks (91–100% even) at 27–38px.
+- [x] **M1 Email → paper airplane** on copy (envelope → paper w/ SVG grain → plane → flight ~1s; check lands at 330ms).
+- [x] **M2 GitHub terminal** — `gh graph --year 2026` → real 20-week bar sparkline + total (~0.5s); linger 1.6s → `git commit -m "say hi"` + result.
+- [x] **M3 LinkedIn business card** flips out; linger → turns over (monogram + URL).
+- [x] **MOB** — 390×844 touch: no sideways scroll, ≥44px hit areas (portrait, strip link, swatches), rail overlay, email plane + note fit, hover-only effects off on touch.
+
+**Follow-ups:** Paper.design shader for the plane's paper (SVG grain used — a WebGL context per 1s flight at 24px isn't worth it yet); popovers have no tap equivalent on phones (links navigate — by design for now); rail ≤600px tall still overruns the strip reserve.
+
 ## `/new/simple` round 2 — Ben's feedback batch (active, 2026-10-28)
 
 Branch `simplified-home-prototype`. One sentence + four icon links + strip, theme/record in the sidebar (see history 2026-10-28). Ben's requests from this round, each with the check that proves it:

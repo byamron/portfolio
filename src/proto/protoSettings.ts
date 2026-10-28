@@ -35,6 +35,8 @@ export interface ProtoSettings {
     maxText: number
     /** Line-break variant (SimpleHome COPY_VARIANTS key). */
     copy: string
+    /** TEXT_PRESETS key, or 'custom' to use copy / maxText / maxWidth. */
+    preset: string
   }
   /** /new/simple experiment: the glass pill's cursor light, page-wide. */
   cursorGlow: { on: boolean; intensity: number; radius: number; falloff: number; tint: number }
@@ -45,7 +47,7 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   proseMax: 40,
   recordPlacement: 'strip',
   stickyStrip: false,
-  simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even (no comma)' },
+  simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · M' },
   // Half the pill's own light: Ben found the 1:1 lift too strong on the page.
   cursorGlow: { on: true, intensity: 0.6, radius: 72, falloff: 55, tint: 1 },
   record: {

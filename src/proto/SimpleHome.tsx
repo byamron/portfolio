@@ -1,12 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion'
-import { Check, EnvelopeSimple, GithubLogo, LinkedinLogo, XLogo, type Icon } from '@phosphor-icons/react'
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { EnvelopeSimple, GithubLogo, LinkedinLogo, XLogo, type Icon } from '@phosphor-icons/react'
 import { ContributionStrip } from '@/components/ContributionStrip'
 import { FlockX } from '@/components/FlockX'
 import { useGlassHighlight } from '@/hooks/useGlassHighlight'
+import { CopyEmailButton, GitHubLink, LinkedInLink } from './ContactFx'
 import { InlineIcon, ThemePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
-import { COPY_VARIANTS, protoBySlug, type Seg } from './data'
+import { COPY_VARIANTS, PHONE_BREAKS, protoBySlug, TEXT_PRESETS, type Seg } from './data'
 import { fluidSize, useProtoSettings } from './protoSettings'
 
 // /new/simple — the sketch: one sentence, four ways to reach Ben, the
@@ -39,105 +40,36 @@ function renderSeg(seg: Seg, i: number, measuring: boolean) {
   return <span key={i}>{seg}</span>
 }
 
-const EMAIL = 'ben.yamron@icloud.com'
-const COPIED_MS = 1800
-const ICON_SWAP = { type: 'spring', stiffness: 700, damping: 26 } as const
-
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch {
-    // Insecure context / permissions: the old selection route still works.
-    const ta = Object.assign(document.createElement('textarea'), { value: text })
-    ta.style.cssText = 'position:fixed;opacity:0'
-    document.body.appendChild(ta)
-    ta.select()
-    const ok = document.execCommand('copy')
-    ta.remove()
-    return ok
-  }
+const PHONE_QUERY = '(max-width: 640px)'
+const PHONE_MAX_TEXT = 38
+const subscribePhone = (cb: () => void) => {
+  const mq = window.matchMedia(PHONE_QUERY)
+  mq.addEventListener('change', cb)
+  return () => mq.removeEventListener('change', cb)
 }
+const usePhone = () => useSyncExternalStore(subscribePhone, () => window.matchMedia(PHONE_QUERY).matches, () => false)
 
-/** Email: copies the address instead of opening a mail client. The envelope
- *  springs into a check and a note slides out beside it, then both settle back. */
-function CopyEmailButton({ icon }: { icon: React.ReactNode }) {
-  const [copied, setCopied] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout>>(null)
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
-  const reducedMotion = useReducedMotion()
-  const swap = reducedMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-        initial: { opacity: 0, scale: 0.4, rotate: -30 },
-        animate: { opacity: 1, scale: 1, rotate: 0 },
-        exit: { opacity: 0, scale: 0.4, rotate: 30 },
-      }
-  return (
-    <span style={{ position: 'relative', display: 'flex' }}>
-      <button
-        type="button"
-        data-social
-        className="simple-social"
-        aria-label={`Copy email address (${EMAIL})`}
-        onClick={async () => {
-          // Couldn't copy: fall back to what an envelope usually means.
-          if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
-          if (timer.current) clearTimeout(timer.current)
-          // Off for a frame on a repeat click, so the note replays and the
-          // status region re-announces.
-          setCopied(false)
-          requestAnimationFrame(() => setCopied(true))
-          timer.current = setTimeout(() => setCopied(false), COPIED_MS)
-        }}
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
-            key={copied ? 'check' : 'mail'}
-            {...swap}
-            transition={ICON_SWAP}
-            style={{ display: 'flex' }}
-          >
-            {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : icon}
-          </motion.span>
-        </AnimatePresence>
-      </button>
-      {/* Out of flow, so the row never shifts; read out politely. */}
-      <span
-        role="status"
-        style={{
-          position: 'absolute', left: '100%', top: '50%', marginLeft: 6,
-          transform: 'translateY(-50%)', whiteSpace: 'nowrap', pointerEvents: 'none',
-        }}
-      >
-        <AnimatePresence>
-          {copied && (
-            <motion.span
-              key="toast"
-              className="simple-copied"
-              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -6, filter: 'blur(3px)' }}
-              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -4, filter: 'blur(2px)' }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              style={{ display: 'inline-block' }}
-            >
-              Email address copied
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </span>
-    </span>
-  )
-}
+// Presets size by type, not width: the column may go this wide and the
+// block shrink-wraps to the text.
+const PRESET_MAX_WIDTH = 1440
 
 export function SimpleHome() {
   const reducedMotion = useReducedMotion()
-  const { proseMax, simpleLayout: layout } = useProtoSettings()
+  const { proseMax, simpleLayout: tuned } = useProtoSettings()
+  // A preset (DialKit, or ?preset=… so it works on phones/prod builds) sets
+  // copy + target size and lets the column go wide; 'custom' uses the dials.
+  const urlPreset = new URLSearchParams(window.location.search).get('preset')
+  const preset = TEXT_PRESETS[urlPreset ?? ''] ?? (tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined)
+  const layout = preset ? { ...tuned, copy: preset.copy, maxText: preset.size, maxWidth: PRESET_MAX_WIDTH } : tuned
   const pageRef = useRef<HTMLElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
   const centred = layout.align === 'center'
 
-  const lines = COPY_VARIANTS[layout.copy] ?? Object.values(COPY_VARIANTS)[0]!
+  const phone = usePhone()
+  const phoneLines = phone ? PHONE_BREAKS[layout.copy] : undefined
+  const lines = phoneLines ?? COPY_VARIANTS[layout.copy] ?? Object.values(COPY_VARIANTS)[0]!
+  // Phones keep the preset's relative size (S < M < L), capped for the measure.
+  const maxText = phoneLines ? Math.min(PHONE_MAX_TEXT, Math.round((preset?.size ?? 48) * 0.8)) : layout.maxText
 
   // Fit mode: the text size is whatever makes the longest line exactly fill
   // the column (the measure). Each line's width in em is read from hidden
@@ -158,12 +90,12 @@ export function SimpleHome() {
     const ro = new ResizeObserver(measure)
     for (const c of box.children) ro.observe(c)
     return () => ro.disconnect()
-  }, [layout.copy])
+  }, [layout.copy, phoneLines])
   const longestEm = lineEms ? Math.max(...lineEms) : null
   const fit = layout.sizeMode === 'fit' && longestEm !== null
   const fontSize = fit
     // 1% slack so rounding/hinting differences never wrap a line.
-    ? `clamp(${layout.minText}px, calc(99cqi / ${longestEm!.toFixed(4)}), ${layout.maxText}px)`
+    ? `clamp(${layout.minText}px, calc(99cqi / ${longestEm!.toFixed(4)}), ${maxText}px)`
     : fluidSize(proseMax)
 
   // Shrink-wrap: a wrapped paragraph's box is as wide as its container, not
@@ -190,7 +122,7 @@ export function SimpleHome() {
     document.fonts?.ready.then(measure)
     return () => ro.disconnect()
     // fontSize: a new size re-wraps the text, so the widest line moves too.
-  }, [layout.shrinkWrap, layout.maxWidth, layout.wrap, centred, fontSize, layout.copy])
+  }, [layout.shrinkWrap, layout.maxWidth, layout.wrap, centred, fontSize, layout.copy, phoneLines])
 
   // On the whole page, so the strip's GitHub link (data-link-card) shares the
   // prose links' glass.
@@ -260,7 +192,7 @@ export function SimpleHome() {
         }}
       >
         <motion.p
-          className="simple-intro"
+          className={phoneLines ? 'simple-intro' : 'simple-intro simple-intro--auto-phone'}
           variants={item}
           custom={0}
           style={{
@@ -274,17 +206,18 @@ export function SimpleHome() {
           }}
         >
           {lines.map((line, li) => (
-            <span key={li}>
+            <span key={`${phoneLines ? 'p' : 'd'}${li}`}>
               {li > 0 && <br />}
               {line.map((seg, i) => renderSeg(seg, i, false))}
             </span>
           ))}
         </motion.p>
-        {/* Measuring copies (fit mode): one per line, 100px, never wrapping. */}
+        {/* Measuring copies (fit mode): one per line, 100px, never wrapping.
+            In a zero-size clipped box so their ~2000px width never adds
+            scrollable overflow; their own boxes still measure true. */}
+        <div aria-hidden="true" inert style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, overflow: 'hidden' }}>
         <div
           ref={measureRef}
-          aria-hidden="true"
-          inert
           style={{
             position: 'absolute', visibility: 'hidden', pointerEvents: 'none', top: 0, left: 0,
             fontFamily: '"Literata", Georgia, serif', fontSize: 100, fontWeight: 300,
@@ -295,6 +228,7 @@ export function SimpleHome() {
               {line.map((seg, i) => renderSeg(seg, i, true))}
             </span>
           ))}
+        </div>
         </div>
 
         <motion.ul
@@ -312,6 +246,10 @@ export function SimpleHome() {
               <li key={id}>
                 {id === 'email' ? (
                   <CopyEmailButton icon={icon} />
+                ) : id === 'github' ? (
+                  <GitHubLink href={href} label={label} icon={icon} />
+                ) : id === 'linkedin' ? (
+                  <LinkedInLink href={href} label={label} icon={icon} />
                 ) : id === 'x' ? (
                   // The flock easter egg: the glass cracks from behind the
                   // logo, shatters, and birds fly out.

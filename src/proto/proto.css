@@ -90,6 +90,12 @@
 @media (prefers-reduced-motion: reduce) {
   .sliders-knob { transition: none; }
 }
+/* Portrait changed the theme: the knobs tweak once, like someone just
+   adjusted them. */
+.sliders-tweak .sliders-knob-a { animation: sliders-tweak-a 520ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.sliders-tweak .sliders-knob-b { animation: sliders-tweak-b 520ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes sliders-tweak-a { 40% { transform: translateX(-4px); } }
+@keyframes sliders-tweak-b { 40% { transform: translateX(4px); } }
 
 /* Playing: a small accent dot on the trigger's corner, breathing slowly. */
 .sliders-playing {
@@ -134,11 +140,12 @@
   }
 }
 
-/* Phones: the type sits at its floor and wraps anyway, so the forced break
-   only makes ragged lines; let the browser balance it. */
+/* Phones without designed breaks (PHONE_BREAKS): the type sits at its
+   floor and wraps anyway, so the forced break only makes ragged lines; let
+   the browser balance it. */
 @media (max-width: 640px) {
-  .simple-intro br { display: none; }
-  .simple-intro { text-wrap: balance !important; }
+  .simple-intro--auto-phone br { display: none; }
+  .simple-intro--auto-phone { text-wrap: balance !important; }
 }
 
 .proto-portrait:focus-visible {
@@ -204,6 +211,11 @@
   outline: none;
 }
 
+/* Typed so they can transition while the glow melts into / out of a pill. */
+@property --gx { syntax: '<length>'; inherits: false; initial-value: -999px; }
+@property --gy { syntax: '<length>'; inherits: false; initial-value: -999px; }
+@property --glow-scale { syntax: '<number>'; inherits: false; initial-value: 1; }
+
 /* Cursor glow experiment (CursorGlow.tsx) — the glass pill's cursor light
    (useGlassHighlight: light mode hsl(hue 45% 50%) at 0.04 × 1.8, dark mode
    hsl(hue 15% 90%) at 0.04), lifted onto the page. --glow-k scales it. */
@@ -217,7 +229,7 @@
   opacity: 0;
   transition: opacity 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   background: radial-gradient(
-    circle var(--glow-r, 72px) at var(--gx, -999px) var(--gy, -999px),
+    circle calc(var(--glow-r, 72px) * var(--glow-scale)) at var(--gx) var(--gy),
     hsla(var(--accent-hue), var(--glow-s), var(--glow-l), var(--glow-a)),
     hsla(var(--accent-hue), var(--glow-s), var(--glow-l), calc(var(--glow-a) * 0.1)) var(--glow-stop, 55%),
     transparent 100%
@@ -230,4 +242,173 @@
 }
 .cursor-glow[data-on] {
   opacity: 1;
+}
+.cursor-glow[data-melt] {
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    --gx 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    --gy 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    --glow-scale 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Contact easter eggs (ContactFx.tsx) ─────────────────────────────── */
+
+.simple-copied-slot {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 6px;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* GitHub terminal: an inverted surface, so it reads as a window in either
+   mode; the sparkline wears the accent. */
+.term-window {
+  --term-bg: color-mix(in oklab, var(--text-dark) 94%, var(--bg));
+  --term-fg: var(--bg);
+  --term-accent: var(--swatch);
+  background: var(--term-bg);
+  color: var(--term-fg);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(0, 0, 0, 0.2);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 12px;
+}
+[data-theme="dark"] .term-window {
+  --term-accent: color-mix(in oklab, var(--swatch), black 45%);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(255, 255, 255, 0.15);
+}
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-bottom: 0.5px solid color-mix(in oklab, var(--term-fg) 12%, transparent);
+}
+.term-bar span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--term-fg) 28%, transparent);
+}
+.term-bar em {
+  flex: 1;
+  text-align: center;
+  font-style: normal;
+  font-size: 11px;
+  opacity: 0.5;
+  margin-right: 24px; /* optically centre past the dots */
+}
+.term-body {
+  padding: 8px 12px 10px;
+  min-height: 46px;
+}
+.term-spark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  vertical-align: -1px;
+}
+.term-spark i {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--term-accent);
+}
+.term-caret {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  vertical-align: -2px;
+  background: currentColor;
+  opacity: 0.7;
+  animation: term-blink 1s steps(1) infinite;
+}
+@keyframes term-blink { 50% { opacity: 0; } }
+
+/* LinkedIn business card: a paper object, the same in either mode. */
+.biz-card {
+  position: relative;
+  height: 128px;
+  transform-style: preserve-3d;
+}
+.biz-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: #fbfaf7;
+  color: #1f1d1b;
+  border-radius: 6px;
+  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+}
+.biz-back {
+  transform: rotateY(180deg);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.biz-name {
+  font-family: 'Literata', Georgia, serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.2;
+}
+.biz-title {
+  font-family: 'Onest', sans-serif;
+  font-size: 12px;
+  color: #6e6a66;
+  margin-top: 2px;
+}
+.biz-org {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Onest', sans-serif;
+  font-size: 12px;
+  color: #3b3835;
+}
+.biz-org img {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+}
+.biz-mono {
+  font-family: 'Literata', Georgia, serif;
+  font-weight: 300;
+  font-size: 34px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.biz-url {
+  font-family: 'Onest', sans-serif;
+  font-size: 11px;
+  color: #6e6a66;
+}
+
+/* Touch: grow small targets to ≥44px without changing how they look. */
+@media (pointer: coarse) {
+  .theme-portrait,
+  .simple-home section a[data-link-card],
+  [data-glide] [data-sidebar-control] {
+    position: relative;
+  }
+  .theme-portrait::after,
+  .simple-home section a[data-link-card]::after,
+  [data-glide] [data-sidebar-control]::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
 }

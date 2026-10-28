@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { contribFill, formatDate, getTooltipText } from '@/components/ContributionHeatmap'
+import { getTooltipText as getStripTooltip, WORK_ACCOUNT_TOOLTIP, ZERO_DAY_WEEKDAY, ZERO_DAY_WEEKEND, zeroDayNote } from '@/utils/contributions'
 
 describe('contribFill', () => {
   it('returns an hsla() string', () => {
@@ -147,8 +148,35 @@ describe('getTooltipText', () => {
     expect(result).toBe('1 contribution on January 15th')
   })
 
-  it('shows 0 contributions for past dates with zero count', () => {
-    const result = getTooltipText('2020-01-15', 0)
-    expect(result).toBe('0 contributions on January 15th')
+  it('gives past zero-count days a line instead of "0 contributions"', () => {
+    const result = getTooltipText('2020-01-15', 0) // a Wednesday
+    expect(ZERO_DAY_WEEKDAY).toContain(result)
+  })
+})
+
+describe('zeroDayNote', () => {
+  it('says "Cooking on my work account" across 2026-10-02…10-26 (inclusive)', () => {
+    expect(zeroDayNote('2026-10-02')).toBe(WORK_ACCOUNT_TOOLTIP)
+    expect(zeroDayNote('2026-10-14')).toBe(WORK_ACCOUNT_TOOLTIP)
+    expect(zeroDayNote('2026-10-26')).toBe(WORK_ACCOUNT_TOOLTIP)
+    expect(zeroDayNote('2026-10-01')).not.toBe(WORK_ACCOUNT_TOOLTIP)
+    expect(zeroDayNote('2026-10-27')).not.toBe(WORK_ACCOUNT_TOOLTIP)
+  })
+
+  it('keeps the real count on contribution days inside the span', () => {
+    expect(getStripTooltip('2026-10-14', 3, '2026-10-28')).toBe('3 contributions on October 14th')
+  })
+
+  it('draws weekend lines on weekends and weekday lines on weekdays', () => {
+    expect(ZERO_DAY_WEEKEND).toContain(zeroDayNote('2026-09-26')) // Saturday
+    expect(ZERO_DAY_WEEKDAY).toContain(zeroDayNote('2026-09-28')) // Monday
+  })
+
+  it('is stable per date and never repeats on consecutive days', () => {
+    expect(zeroDayNote('2026-03-10')).toBe(zeroDayNote('2026-03-10'))
+    const pairs: [string, string][] = [['2026-03-09', '2026-03-10'], ['2026-03-10', '2026-03-11'], ['2026-03-14', '2026-03-15']]
+    for (const [a, b] of pairs) {
+      expect(zeroDayNote(a)).not.toBe(zeroDayNote(b))
+    }
   })
 })

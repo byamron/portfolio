@@ -56,13 +56,42 @@ export function formatDate(dateStr: string): string {
  * explicitly — otherwise a session left open across a midnight boundary can
  * have the last square's date silently stop matching a re-computed "today".
  */
-// Ben's commits in this stretch went to his work GitHub account, so this
-// one's graph reads quiet. Inclusive ISO dates.
-const WORK_ACCOUNT_SPAN = { from: '2026-10-02', to: '2026-10-26' }
+// Zero-contribution days get a line instead of "0 contributions". In this
+// stretch Ben's commits went to his work GitHub account; elsewhere it's one
+// of a few dry, specific guesses at what he was doing instead. Days that
+// have contributions always show the real count.
+const WORK_ACCOUNT_SPAN = { from: '2026-10-02', to: '2026-10-26' } // inclusive
 export const WORK_ACCOUNT_TOOLTIP = 'Cooking on my work account'
 
-export function workAccountNote(date: string): string | null {
-  return date >= WORK_ACCOUNT_SPAN.from && date <= WORK_ACCOUNT_SPAN.to ? WORK_ACCOUNT_TOOLTIP : null
+export const ZERO_DAY_WEEKDAY = [
+  'Designing, not committing',
+  'Sketching on paper',
+  'Reviewing someone else’s code',
+  'Thinking it through first',
+  'Talking to users',
+  'Choosing between two greys',
+  'Rewriting the spec',
+  'In Figma all day',
+]
+export const ZERO_DAY_WEEKEND = [
+  'Running around SF',
+  'Offline, on purpose',
+  'Cooking (actual food)',
+  'At the farmers market',
+  'Reading something long',
+  'Somewhere without wifi',
+  'Out of range',
+]
+
+/** The line for a past zero-contribution day. Deterministic per date, and
+ *  consecutive days never repeat (a step coprime to each list's length). */
+export function zeroDayNote(date: string): string {
+  if (date >= WORK_ACCOUNT_SPAN.from && date <= WORK_ACCOUNT_SPAN.to) return WORK_ACCOUNT_TOOLTIP
+  const d = new Date(date + 'T00:00:00')
+  const day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000)
+  const weekend = d.getDay() === 0 || d.getDay() === 6
+  const list = weekend ? ZERO_DAY_WEEKEND : ZERO_DAY_WEEKDAY
+  return list[(day * 3) % list.length]!
 }
 
 export function getTooltipText(date: string, count: number, today?: string): string {
@@ -72,8 +101,7 @@ export function getTooltipText(date: string, count: number, today?: string): str
   }
   if (date === today) return `Today, ${formatDate(date)} — contributions in progress`
   if (date > today) return 'No contributions (yet)'
-  const note = workAccountNote(date)
-  if (note) return note
+  if (count === 0) return zeroDayNote(date)
   return `${count} contribution${count !== 1 ? 's' : ''} on ${formatDate(date)}`
 }
 

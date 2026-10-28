@@ -1,16 +1,15 @@
-import { lazy, Suspense, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { motion, useAnimationControls, useReducedMotion } from 'framer-motion'
 import { Route, Routes } from 'react-router-dom'
 import './proto.css'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
-import { SidebarThemeControls } from '@/components/SidebarThemeControls'
+import { SidebarThemeControls, THEME_SIDEBAR_STATE } from '@/components/SidebarThemeControls'
 import { ProtoHome } from './ProtoHome'
 import { CursorGlow } from './CursorGlow'
 import { RecordDock } from './RecordDock'
 import { SimpleHome } from './SimpleHome'
 
-// Dead-code-eliminated from production builds: the tuner (and DialKit) only
-// exist under `vite dev`.
 // /new/simple: the toolbar grows a little and the record shrinks to meet it,
 // so the record reads as one more control in the rail.
 const SIMPLE_CONTROL_SCALE = 1.15
@@ -19,6 +18,8 @@ const RECORD_ASPECT = 236 / 144
 // The rail stops above the contribution strip (label + cells + breathing room).
 const STRIP_RESERVE = 104
 
+// Dead-code-eliminated from production builds: the tuner (and DialKit) only
+// exist under `vite dev`.
 const ProtoTuner = import.meta.env.DEV ? lazy(() => import('./ProtoTuner')) : null
 
 // No AnimatePresence here: its `initial={false}` reaches every motion
@@ -34,16 +35,42 @@ function ProtoShell({ children }: { children: ReactNode }) {
 }
 
 /** Settings glyph whose knobs are real: they slide to opposite ends while
- *  the rail is open (proto.css, keyed off the trigger's aria-expanded). */
+ *  the rail is open (proto.css, keyed off the trigger's aria-expanded).
+ *  When the portrait changes the theme with the rail shut, it wiggles and
+ *  its knobs tweak — pointing at where the theme controls live. */
 function SlidersGlyph({ playing }: { playing: boolean }) {
+  const reducedMotion = useReducedMotion()
+  const wiggle = useAnimationControls()
+  const [railOpen, setRailOpen] = useState(false)
+  const [tweak, setTweak] = useState(0)
+  useEffect(() => {
+    const onState = (e: Event) => setRailOpen(!!(e as CustomEvent<{ open: boolean }>).detail?.open)
+    window.addEventListener(THEME_SIDEBAR_STATE, onState)
+    return () => window.removeEventListener(THEME_SIDEBAR_STATE, onState)
+  }, [])
+  useEffect(() => {
+    const onCycled = () => {
+      if (railOpen || reducedMotion) return
+      setTweak(t => t + 1)
+      wiggle.start({ rotate: [0, -14, 11, -6, 3, 0], transition: { duration: 0.5, ease: 'easeOut' } })
+    }
+    document.addEventListener('accent-cycled', onCycled)
+    return () => document.removeEventListener('accent-cycled', onCycled)
+  }, [railOpen, reducedMotion, wiggle])
   return (
     <>
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden="true">
+    <motion.svg
+      animate={wiggle}
+      width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden="true"
+    >
       <line x1="4" y1="8" x2="20" y2="8" />
       <line x1="4" y1="16" x2="20" y2="16" />
-      <circle className="sliders-knob sliders-knob-a" cx="15" cy="8" r="2.5" fill="var(--bg)" />
-      <circle className="sliders-knob sliders-knob-b" cx="9" cy="16" r="2.5" fill="var(--bg)" />
-    </svg>
+      {/* Re-keyed per tweak so the knobs' CSS animation restarts. */}
+      <g key={tweak} className={tweak ? 'sliders-tweak' : undefined}>
+        <circle className="sliders-knob sliders-knob-a" cx="15" cy="8" r="2.5" fill="var(--bg)" />
+        <circle className="sliders-knob sliders-knob-b" cx="9" cy="16" r="2.5" fill="var(--bg)" />
+      </g>
+    </motion.svg>
     {/* Music is on: the record keeps playing after the rail closes, so the
         way back to it says so. */}
     <span className={`sliders-playing${playing ? ' is-on' : ''}`} aria-hidden="true" />

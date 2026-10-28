@@ -4,7 +4,7 @@ import { useRef, type ReactNode } from 'react'
 import { DialRoot, useDialKit, type DialConfig } from 'dialkit'
 import 'dialkit/styles.css'
 import { DEFAULT_PARAMS } from '@/components/RecordToggle'
-import { COPY_VARIANTS } from './data'
+import { COPY_VARIANTS, TEXT_PRESETS } from './data'
 import { PROTO_DEFAULTS as P, ProtoSettingsContext, type ProtoSettings, type RecordPlacement } from './protoSettings'
 
 const R = P.record
@@ -23,11 +23,12 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
 
   const S = P.simpleLayout
   const simple = useDialKit('Simple layout', useStableConfig({
-    'Copy': { type: 'select', options: Object.keys(COPY_VARIANTS), default: S.copy },
+    'Text preset': { type: 'select', options: ['custom', ...Object.keys(TEXT_PRESETS)], default: S.preset },
+    'Copy (custom)': { type: 'select', options: Object.keys(COPY_VARIANTS), default: S.copy },
     'Size mode': { type: 'select', options: ['fit', 'fluid'], default: S.sizeMode },
     'Max width px': [S.maxWidth, 480, 1400, 10],
     'Min text px (fit)': [S.minText, 16, 40, 1],
-    'Max text px (fit)': [S.maxText, 32, 80, 1],
+    'Max text px (custom)': [S.maxText, 24, 80, 1],
     'Align': { type: 'select', options: ['left', 'center'], default: S.align },
     'Line wrap': { type: 'select', options: ['balance', 'pretty'], default: S.wrap },
     'Shrink-wrap (optical centre)': S.shrinkWrap,
@@ -72,8 +73,9 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
       shrinkWrap: simple['Shrink-wrap (optical centre)'] as boolean,
       sizeMode: simple['Size mode'] as 'fit' | 'fluid',
       minText: simple['Min text px (fit)'],
-      maxText: simple['Max text px (fit)'],
-      copy: simple['Copy'] as string,
+      maxText: simple['Max text px (custom)'],
+      copy: simple['Copy (custom)'] as string,
+      preset: simple['Text preset'] as string,
     },
     cursorGlow: {
       on: glow['On'] as boolean,

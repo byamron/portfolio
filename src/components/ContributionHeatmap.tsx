@@ -4,7 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useCursor } from '@/contexts/CursorContext'
 import { useHover } from '@/contexts/HoverContext'
 import contributionData from '@/data/contributions.json'
-import { workAccountNote } from '@/utils/contributions'
+import { zeroDayNote } from '@/utils/contributions'
 
 interface ContributionDay {
   date: string
@@ -80,7 +80,8 @@ export function getTooltipText(date: string, count: number): string {
   const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
   if (date === today) return `Today, ${formatDate(date)} — contributions in progress`
   if (date > today) return 'No contributions (yet)'
-  return workAccountNote(date) ?? `${count} contribution${count !== 1 ? 's' : ''} on ${formatDate(date)}`
+  if (count === 0) return zeroDayNote(date)
+  return `${count} contribution${count !== 1 ? 's' : ''} on ${formatDate(date)}`
 }
 
 interface GridCell {
