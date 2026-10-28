@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'framer-motion'
+import { animate, AnimatePresence, motion, useAnimationControls, useMotionValue, useReducedMotion } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
 import { PaperTexture } from '@paper-design/shaders-react'
 import { useProtoSettings } from './protoSettings'
@@ -474,15 +474,20 @@ const STAGE_WING = toStage(FLY_WING)
 const STAGE_KEEL = toStage(FLY_KEEL)
 
 type Pt = { x: number; y: number }
+const RELEASE_S = 0.3
 interface Throw { v0: number; gamma0: number } // launch speed (px/s), angle (rad)
 
 const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
 
 /** The fold, beside the icon: one overlapping timeline — each fold begins
  *  as the last settles — ending on the exact flight pose. */
-function PaperFold({ from, launch, onFolded }: { from: DOMRect; launch: Throw; onFolded: (at: Pt) => void }) {
+function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => void }) {
   const stage = useAnimationControls()
-  const rightHalf = useAnimationControls()
+  // The right half's fold about the crease (x = 0), as scaleX. Written to the
+  // SVG transform *attribute* — CSS transforms on an SVG <g> didn't apply.
+  const rightFold = useMotionValue(1)
+  const rightRef = useRef<SVGGElement>(null)
+  useEffect(() => rightFold.on('change', v => rightRef.current?.setAttribute('transform', `scale(${v} 1)`)), [rightFold])
   const baseL = useAnimationControls(), baseR = useAnimationControls()
   const cornerL = useAnimationControls(), cornerR = useAnimationControls()
   const edgeL = useAnimationControls(), edgeR = useAnimationControls()
@@ -495,53 +500,58 @@ function PaperFold({ from, launch, onFolded }: { from: DOMRect; launch: Throw; o
   const at = { x: start.x + 78, y: start.y - 4 }
 
   useEffect(() => {
+    // Every motion is started at its own moment. (Queuing several delayed
+    // .start() calls on one control at once lets the later ones cancel the
+    // earlier — that's what used to skip the sheet opening and the crease.)
     const timers: ReturnType<typeof setTimeout>[] = []
     const at$ = (sec: number, fn: () => void) => timers.push(setTimeout(fn, sec * 1000))
-    const tw = (duration: number, delay = 0) => ({ duration, delay, ease: SMOOTH })
-    const launchDeg = (launch.gamma0 * 180) / Math.PI
+    const tw = (duration: number) => ({ duration, ease: SMOOTH })
 
-    // 0 · The envelope lifts out of the slot, opening into a flat sheet.
-    flap.start({ opacity: 0, transition: { duration: 0.25 } })
-    baseL.start({ d: L_SHEET, transition: tw(0.6) })
-    baseR.start({ d: mirror(L_SHEET), transition: tw(0.6) })
-    stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: { duration: 0.75, ease: EASE_OUT } })
-    // 1 · Crease lengthwise: a half-fold and back, leaving the line.
-    crease.start({ pathLength: 1, opacity: 1, transition: tw(0.5, 0.75) })
-    rightHalf.start({ scaleX: [1, 0.18, 1], transition: { duration: 0.75, delay: 0.6, ease: SMOOTH } })
+    // 0 · The envelope slides out of the slot and opens into a flat sheet.
+    flap.start({ opacity: 0, transition: { duration: 0.35 } })
+    baseL.start({ d: L_SHEET, transition: tw(0.7) })
+    baseR.start({ d: mirror(L_SHEET), transition: tw(0.7) })
+    stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: tw(0.8) })
+    // 1 · Crease lengthwise: the right half lifts over and lays back down.
+    at$(0.8, () => {
+      crease.start({ pathLength: 1, opacity: 1, transition: tw(0.6) })
+      animate(rightFold, [1, 0.18, 1], tw(0.8))
+    })
     // 2 · Top corners to the crease, left then right.
-    at$(1.3, () => { cornerL.set({ opacity: 1 }); cornerR.set({ opacity: 1 }) })
-    baseL.start({ d: L_AFTER_CORNER, transition: tw(0.55, 1.3) })
-    cornerL.start({ d: L_CORNER_SHUT, transition: tw(0.55, 1.3) })
-    baseR.start({ d: mirror(L_AFTER_CORNER), transition: tw(0.55, 1.5) })
-    cornerR.start({ d: mirror(L_CORNER_SHUT), transition: tw(0.55, 1.5) })
+    at$(1.55, () => {
+      cornerL.set({ opacity: 1 }); cornerR.set({ opacity: 1 })
+      baseL.start({ d: L_AFTER_CORNER, transition: tw(0.6) })
+      cornerL.start({ d: L_CORNER_SHUT, transition: tw(0.6) })
+    })
+    at$(1.75, () => {
+      baseR.start({ d: mirror(L_AFTER_CORNER), transition: tw(0.6) })
+      cornerR.start({ d: mirror(L_CORNER_SHUT), transition: tw(0.6) })
+    })
     // 3 · The new slanted edges to the crease.
-    at$(2.05, () => {
+    at$(2.38, () => {
       cornerL.set({ opacity: 0 }); cornerR.set({ opacity: 0 })
       edgeL.set({ opacity: 1 }); edgeR.set({ opacity: 1 })
-      baseL.start({ d: L_AFTER_EDGE, transition: tw(0.55) })
-      edgeL.start({ d: L_EDGE_SHUT, transition: tw(0.55) })
-      baseR.start({ d: mirror(L_AFTER_EDGE), transition: tw(0.55, 0.2) })
-      edgeR.start({ d: mirror(L_EDGE_SHUT), transition: tw(0.55, 0.2) })
+      baseL.start({ d: L_AFTER_EDGE, transition: tw(0.6) })
+      edgeL.start({ d: L_EDGE_SHUT, transition: tw(0.6) })
+    })
+    at$(2.58, () => {
+      baseR.start({ d: mirror(L_AFTER_EDGE), transition: tw(0.6) })
+      edgeR.start({ d: mirror(L_EDGE_SHUT), transition: tw(0.6) })
     })
     // 4 · Fold in half: the right half turns over onto the left.
-    rightHalf.start({ scaleX: -1, transition: { duration: 0.65, delay: 2.85, ease: SMOOTH } })
+    at$(3.2, () => { animate(rightFold, -1, tw(0.7)) })
     // 5 · Turn to the side (nose right), then the wing comes down.
-    at$(3.52, () => setPhase('side'))
-    stage.start({ rotate: 90, transition: tw(0.7, 3.5) })
-    at$(4.0, () => { wing.start({ d: L_WING_DOWN, transition: tw(0.55) }) })
-    // 6 · Wings open into the flying pose, tilted to the launch angle…
-    at$(4.5, () => {
-      wing.start({ d: STAGE_WING, transition: tw(0.5) })
-      keel.start({ d: STAGE_KEEL, transition: tw(0.5) })
-      stage.start({ rotate: 90 - launchDeg, transition: tw(0.5) })
+    at$(3.9, () => {
+      setPhase('side')
+      stage.start({ rotate: 90, transition: tw(0.75) })
     })
-    // …a small wind-up, and release.
-    at$(5.0, () => {
-      const back = 7
-      const dx = -Math.cos(launch.gamma0) * back, dy = Math.sin(launch.gamma0) * back
-      stage.start({ x: at.x - start.x + dx, y: at.y - start.y + dy, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } })
-        .then(() => onFolded({ x: at.x + dx, y: at.y + dy }))
+    at$(4.6, () => { wing.start({ d: L_WING_DOWN, transition: tw(0.6) }) })
+    // 6 · Open the wings into the flying pose — level, in place — and let go.
+    at$(5.15, () => {
+      wing.start({ d: STAGE_WING, transition: tw(0.55) })
+      keel.start({ d: STAGE_KEEL, transition: tw(0.55) })
     })
+    at$(5.72, () => onFolded(at))
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -567,11 +577,11 @@ function PaperFold({ from, launch, onFolded }: { from: DOMRect; launch: Throw; o
             <motion.path initial={{ d: L_EDGE_OPEN, opacity: 0 }} animate={edgeL} {...paper} />
           </g>
           {/* Right half pivots on the crease (x = 0) for steps 1 and 4. */}
-          <motion.g animate={rightHalf} style={{ originX: '0px', transformBox: 'view-box' } as React.CSSProperties}>
+          <g ref={rightRef}>
             <motion.path initial={{ d: mirror(L_ENVELOPE) }} animate={baseR} {...paper} />
             <motion.path initial={{ d: mirror(L_CORNER_OPEN), opacity: 0 }} animate={cornerR} {...paper} />
             <motion.path initial={{ d: mirror(L_EDGE_OPEN), opacity: 0 }} animate={edgeR} {...paper} />
-          </motion.g>
+          </g>
           <motion.path d="M 0 -22 L 0 22" stroke={EDGE} strokeWidth={0.4} initial={{ pathLength: 0, opacity: 0 }} animate={crease} />
           {/* The envelope's flap, fading as it opens into a sheet. */}
           <motion.path d="M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.1} strokeLinejoin="round" initial={{ opacity: 0.8 }} animate={flap} />
@@ -630,8 +640,10 @@ function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone
         v = Math.max(35, v + (-drag - G * Math.sin(gamma)) * h)
         gamma += ((lift - G * Math.cos(gamma)) / v + gust) * h
         const facing = turning ? dir * Math.cos(bank) : dir
-        x += facing * v * Math.cos(gamma) * h
-        y -= v * Math.sin(gamma) * h
+        // Release: the hand eases it up to speed over the first 0.3s.
+        const k = t < RELEASE_S ? (t / RELEASE_S) * (t / RELEASE_S) * (3 - 2 * (t / RELEASE_S)) : 1
+        x += facing * v * Math.cos(gamma) * h * k
+        y -= v * Math.sin(gamma) * h * k
       }
       const out = x < -90 || x > vw + 90 || y > vh + 90 || y < -160
       if (out || t > 14) fade = Math.max(0, fade - 0.04)
@@ -671,15 +683,13 @@ function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone
 }
 
 function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
-  // Chosen up front so the fold can end tilted at the exact launch angle.
-  const launch = useMemo<Throw>(() => ({
-    v0: 165 + Math.random() * 90,
-    gamma0: ((4 + Math.random() * 26) * Math.PI) / 180,
-  }), [])
+  // Released level from the fold's pose (no tilt); thrown above trim speed,
+  // lift exceeds weight and it climbs on its own.
+  const launch = useMemo<Throw>(() => ({ v0: 175 + Math.random() * 85, gamma0: 0 }), [])
   const [flight, setFlight] = useState<Pt | null>(null)
   return flight
     ? <PaperFlight from={flight} launch={launch} onDone={onDone} />
-    : <PaperFold from={from} launch={launch} onFolded={setFlight} />
+    : <PaperFold from={from} onFolded={setFlight} />
 }
 
 /** Email. Hover: the envelope turns to paper, folds into a plane and flies

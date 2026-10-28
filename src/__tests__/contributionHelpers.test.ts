@@ -155,11 +155,11 @@ describe('getTooltipText', () => {
 })
 
 describe('zeroDayNote', () => {
-  it('says "Cooking on my work account" across 2026-10-02…10-26 (inclusive)', () => {
-    expect(zeroDayNote('2026-10-02')).toBe(WORK_ACCOUNT_TOOLTIP)
+  it('says "Cooking on my work account" across 2026-10-11…10-26 (inclusive)', () => {
+    expect(zeroDayNote('2026-10-11')).toBe(WORK_ACCOUNT_TOOLTIP)
     expect(zeroDayNote('2026-10-14')).toBe(WORK_ACCOUNT_TOOLTIP)
     expect(zeroDayNote('2026-10-26')).toBe(WORK_ACCOUNT_TOOLTIP)
-    expect(zeroDayNote('2026-10-01')).not.toBe(WORK_ACCOUNT_TOOLTIP)
+    expect(zeroDayNote('2026-10-10')).not.toBe(WORK_ACCOUNT_TOOLTIP)
     expect(zeroDayNote('2026-10-27')).not.toBe(WORK_ACCOUNT_TOOLTIP)
   })
 

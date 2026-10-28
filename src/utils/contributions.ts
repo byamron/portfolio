@@ -60,13 +60,12 @@ export function formatDate(dateStr: string): string {
 // stretch Ben's commits went to his work GitHub account; elsewhere it's one
 // of a few dry, specific guesses at what he was doing instead. Days that
 // have contributions always show the real count.
-const WORK_ACCOUNT_SPAN = { from: '2026-10-02', to: '2026-10-26' } // inclusive
+const WORK_ACCOUNT_SPAN = { from: '2026-10-11', to: '2026-10-26' } // inclusive
 export const WORK_ACCOUNT_TOOLTIP = 'Cooking on my work account'
 
 export const ZERO_DAY_WEEKDAY = [
   'Designing, not committing',
   'Sketching on paper',
-  'Reviewing someone else’s code',
   'Thinking it through first',
   'Talking to users',
   'Choosing between two greys',
