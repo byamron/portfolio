@@ -53,8 +53,7 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   stickyStrip: false,
   cardCase: 'caps',
   simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · S' },
-  // Half the pill's own light: Ben found the 1:1 lift too strong on the page.
-  cursorGlow: { on: true, intensity: 0.75, radius: 120, falloff: 55, tint: 1 },
+  cursorGlow: { on: true, intensity: 0.15, radius: 224, falloff: 55, tint: 1 }, // Ben's tuning
   record: {
     size: 0.6,
     trackId: 'martini',

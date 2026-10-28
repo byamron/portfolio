@@ -93,11 +93,17 @@ const prompt = <span style={{ opacity: 0.5 }}>$ </span>
 
 // The program, one line at a time. Plain text is typed; colour comes from a
 // tiny highlighter so the half-typed line is coloured too.
-const CODE = [
+const codeFor = (greeting: string) => [
   "const blimp = new Blimp()",
-  "blimp.banner('Hi')",
+  `blimp.banner('${greeting}')`,
   "blimp.fly('across the top')",
 ]
+// What the banner says — a different hello each flight (never twice running).
+const GREETINGS = ['Hi', 'Hello', 'Hey', 'Hey there', 'Hi there', 'Hiya', 'Howdy', 'Ahoy', 'Greetings', 'Good day']
+const pickGreeting = (not?: string) => {
+  const pool = GREETINGS.filter(g => g !== not)
+  return pool[Math.floor(Math.random() * pool.length)]!
+}
 function highlight(src: string) {
   return src.split(/('[^']*'?)/).map((part, i) =>
     part.startsWith("'")
@@ -107,7 +113,8 @@ function highlight(src: string) {
   )
 }
 
-function Terminal({ onRun }: { onRun: () => 'launched' | 'flying' | 'standby' }) {
+function Terminal({ greeting, onRun }: { greeting: string; onRun: () => 'launched' | 'flying' | 'standby' }) {
+  const CODE = codeFor(greeting)
   const reducedMotion = useReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
@@ -168,7 +175,7 @@ const BANNER_B = 'M 118 30 C 92 35, 58 26, 12 33 L 12 71 C 58 64, 92 72, 118 66 
 /** A small, chubby airship: shaded envelope with gores and seams, fins,
  *  gondola, and a "Hi" banner on a tether. Lit from the top-left. */
 const BLIMP = { cx: 214, cy: 50, rx: 70, ry: 33 }
-function BlimpArt() {
+function BlimpArt({ greeting }: { greeting: string }) {
   const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
   const { cx, cy, rx, ry } = BLIMP
   const tail = cx - rx
@@ -201,12 +208,14 @@ function BlimpArt() {
         fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75"
       />
       <motion.text
-        x="65" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500" fontSize="18" fill="#2b2620"
+        x="65" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500"
+        // Mono: ~0.6em per character; longer hellos step down to fit the cloth.
+        fontSize={greeting.length <= 5 ? 18 : greeting.length <= 8 ? 15 : 13.5} fill="#2b2620"
         // Rides the cloth, not across it: the banner's centre moves ~0.7 units
         // between its two ripple shapes (cubic midpoints of BANNER_A/B).
         initial={{ y: 55 }} animate={{ y: [55, 55.65, 55] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       >
-        Hi
+        {greeting}
       </motion.text>
 
       {/* Fins: short and stubby to match the round body */}
@@ -236,7 +245,7 @@ function BlimpArt() {
 const BLIMP_SPEED = 95
 
 /** Crosses the top of the viewport at a constant cruise, bobbing gently. */
-function BlimpFlight({ onDone }: { onDone: () => void }) {
+function BlimpFlight({ greeting, onDone }: { greeting: string; onDone: () => void }) {
   const vw = window.innerWidth
   const distance = vw + 340
   return createPortal(
@@ -253,7 +262,7 @@ function BlimpFlight({ onDone }: { onDone: () => void }) {
         animate={{ y: [0, -5, 0, 4, 0], rotate: [0, -1.2, 0, 1, 0] }}
         transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <BlimpArt />
+        <BlimpArt greeting={greeting} />
       </motion.div>
     </motion.div>,
     document.body,
@@ -269,6 +278,14 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   // start from keyboard focus passing through (WCAG 2.2.2).
   const pointerRef = useRef(false)
   pointerRef.current = viaPointer
+  // A new hello for each visit to the terminal (kept while one is in the air,
+  // so the code on screen always matches the banner flying).
+  const [greeting, setGreeting] = useState(() => pickGreeting())
+  const lastStage = useRef(0)
+  useEffect(() => {
+    if (lastStage.current === 0 && stage > 0 && !flyingRef.current) setGreeting(g => pickGreeting(g))
+    lastStage.current = stage
+  }, [stage])
   const launch = useMemo(() => (): 'launched' | 'flying' | 'standby' => {
     if (!pointerRef.current) return 'standby'
     if (flyingRef.current) return 'flying'
@@ -282,9 +299,9 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
         {icon}
       </a>
       <IconPopover show={stage > 0} width={300}>
-        {stage > 0 && <Terminal onRun={launch} />}
+        {stage > 0 && <Terminal greeting={greeting} onRun={launch} />}
       </IconPopover>
-      {flying && <BlimpFlight onDone={() => { flyingRef.current = false; setFlying(false) }} />}
+      {flying && <BlimpFlight greeting={greeting} onDone={() => { flyingRef.current = false; setFlying(false) }} />}
     </span>
   )
 }
@@ -534,10 +551,10 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
   const uid = useId().replace(/:/g, '')
   const stage = useAnimationControls()
   const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 }
-  // Just beside the icon, in the empty space past the end of the row. (The
-  // "Email address copied" note is layered above the paper, so a click
-  // mid-fold still reads.)
-  const at = { x: start.x + 78, y: start.y - 4 }
+  // Just below the icon, in the empty space under the row — clear of the
+  // "Email address copied" note to its right. (Sheet ≈ 55px tall at fold
+  // scale: centre it half a sheet plus a 12px gap below the 44px button.)
+  const at = { x: start.x, y: start.y + 22 + 12 + (44 * FOLD_SCALE) / 2 }
 
   // Step parameters (0…1 unless noted).
   const open = useMotionValue(0)
@@ -875,7 +892,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           if (r) {
             // Phones: no room beside the last icon — under the row, right-aligned.
             const below = window.matchMedia('(max-width: 640px)').matches
-            setNoteAt(below ? { x: r.right, y: r.bottom + 6, below } : { x: r.right + 6, y: r.top + r.height / 2, below })
+            setNoteAt(below ? { x: r.right, y: r.bottom + 8, below } : { x: r.right + 8, y: r.top + r.height / 2, below })
           }
           requestAnimationFrame(() => setCopied(true))
           later(COPIED_MS, () => setCopied(false))
