@@ -691,9 +691,11 @@ export function SidebarThemeControls({
   // the pill holds on the last control — so the next one is always a glide,
   // never a fade-out-and-jump — and it fades once the pointer leaves.
   const railWatch = useRef<((e: PointerEvent) => void) | null>(null)
+  const railLeave = useRef<(() => void) | null>(null)
   const stopRailWatch = useCallback(() => {
     if (railWatch.current) window.removeEventListener('pointermove', railWatch.current)
-    railWatch.current = null
+    if (railLeave.current) document.documentElement.removeEventListener('pointerleave', railLeave.current)
+    railWatch.current = railLeave.current = null
   }, [])
   const inRail = useCallback((x: number, y: number) => {
     const col = columnRef.current
@@ -723,6 +725,9 @@ export function SidebarThemeControls({
         glideOut()
       }
       window.addEventListener('pointermove', railWatch.current, { passive: true })
+      // Leaving the window from the gap sends no further pointermove.
+      railLeave.current = () => { stopRailWatch(); glideOut() }
+      document.documentElement.addEventListener('pointerleave', railLeave.current)
     },
     onFocus: (e: React.FocusEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
