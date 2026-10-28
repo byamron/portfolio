@@ -200,6 +200,9 @@
   font-family: 'Onest', sans-serif;
   font-size: var(--text-size-small);
   color: var(--text-grey);
+  /* A halo in the page colour: invisible on the page, keeps the note legible
+     where it crosses a paper airplane folding beside the icon. */
+  text-shadow: 0 0 2px var(--bg), 0 0 5px var(--bg), 0 0 9px var(--bg);
 }
 .simple-social:focus-visible,
 .sidebar-icon-trigger:focus-visible {
@@ -253,26 +256,18 @@
 
 /* ── Contact easter eggs (ContactFx.tsx) ─────────────────────────────── */
 
-.simple-copied-slot {
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  margin-left: 6px;
+/* "Email address copied" — drawn in the top layer beside the button (the
+   page sits in a fixed shell, so only a body-level layer can sit above the
+   paper airplane folding next to the icon). */
+.simple-copied-float {
+  position: fixed;
+  z-index: 10000;
   transform: translateY(-50%);
   white-space: nowrap;
   pointer-events: none;
 }
-/* Phones: no room beside the last icon — the note sits under the row,
-   right-aligned to the button. */
-@media (max-width: 640px) {
-  .simple-copied-slot {
-    left: auto;
-    right: 0;
-    top: calc(100% + 6px);
-    margin-left: 0;
-    transform: none;
-  }
-}
+/* Phones: under the icon row, right-aligned to the button. */
+.simple-copied-float[data-below] { transform: translateX(-100%); }
 
 /* GitHub terminal: an inverted surface, so it reads as a window in either
    mode; strings wear the accent. */

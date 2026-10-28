@@ -135,7 +135,7 @@ function Terminal({ onRun }: { onRun: () => 'launched' | 'flying' | 'standby' })
           </div>
         ))}
         {line >= CODE.length && (
-          <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={45} onDone={() => setTypedRun(true)} /></div>
+          <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={35} onDone={() => setTypedRun(true)} /></div>
         )}
         {result && (
           <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
@@ -155,8 +155,8 @@ function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }
   done.current = onDone
   useEffect(() => {
     if (n >= text.length) { const t = setTimeout(() => done.current(), 140); return () => clearTimeout(t) }
-    // ~42 chars/s with a little human unevenness.
-    const t = setTimeout(() => setN(v => v + 1), 1000 / 42 * (0.6 + Math.random() * 0.8))
+    // ~32 chars/s with a little human unevenness.
+    const t = setTimeout(() => setN(v => v + 1), 1000 / 32 * (0.6 + Math.random() * 0.8))
     return () => clearTimeout(t)
   }, [n, text])
   return <>{highlight(text.slice(0, n))}</>
@@ -202,7 +202,9 @@ function BlimpArt() {
       />
       <motion.text
         x="65" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500" fontSize="18" fill="#2b2620"
-        initial={{ y: 55 }} animate={{ y: [55, 57, 55] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        // Rides the cloth, not across it: the banner's centre moves ~0.7 units
+        // between its two ripple shapes (cubic midpoints of BANNER_A/B).
+        initial={{ y: 55 }} animate={{ y: [55, 55.65, 55] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       >
         Hi
       </motion.text>
@@ -532,8 +534,10 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
   const uid = useId().replace(/:/g, '')
   const stage = useAnimationControls()
   const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 }
-  // Past the end of the icon row — clear of the "Email address copied" note.
-  const at = { x: start.x + 215, y: start.y - 4 }
+  // Just beside the icon, in the empty space past the end of the row. (The
+  // "Email address copied" note is layered above the paper, so a click
+  // mid-fold still reads.)
+  const at = { x: start.x + 78, y: start.y - 4 }
 
   // Step parameters (0…1 unless noted).
   const open = useMotionValue(0)
@@ -815,6 +819,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const [planes, setPlanes] = useState<{ id: number; from: DOMRect }[]>([])
   const nextId = useRef(0)
   const [slotEmpty, setSlotEmpty] = useState(false)
+  const [noteAt, setNoteAt] = useState<{ x: number; y: number; below: boolean } | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const btn = useRef<HTMLButtonElement>(null)
   const canFly = useMemo(finePointer, [])
@@ -866,6 +871,12 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           // Off for a frame on a repeat click, so the note replays and the
           // status region re-announces.
           setCopied(false)
+          const r = btn.current?.getBoundingClientRect()
+          if (r) {
+            // Phones: no room beside the last icon — under the row, right-aligned.
+            const below = window.matchMedia('(max-width: 640px)').matches
+            setNoteAt(below ? { x: r.right, y: r.bottom + 6, below } : { x: r.right + 6, y: r.top + r.height / 2, below })
+          }
           requestAnimationFrame(() => setCopied(true))
           later(COPIED_MS, () => setCopied(false))
         }}
@@ -895,23 +906,29 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         <PaperPlane key={pl.id} from={pl.from} onDone={() => setPlanes(ps => ps.filter(x => x.id !== pl.id))} />
       ))}
       {/* Out of flow, so the row never shifts; read out politely. */}
-      <span role="status" className="simple-copied-slot">
-        <AnimatePresence>
-          {copied && (
-            <motion.span
-              key="toast"
-              className="simple-copied"
-              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -6, filter: 'blur(3px)' }}
-              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -4, filter: 'blur(2px)' }}
-              transition={{ duration: 0.2, ease: EASE_OUT }}
-              style={{ display: 'inline-block' }}
-            >
-              Email address copied
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </span>
+      {/* Announced in place; drawn in the top layer (beside the button), so
+          a paper airplane folding right there never covers it. */}
+      <span role="status" className="sr-only">{copied ? 'Email address copied' : ''}</span>
+      {noteAt && createPortal(
+        <span aria-hidden="true" className="simple-copied-float" style={{ left: noteAt.x, top: noteAt.y }} data-below={noteAt.below || undefined}>
+          <AnimatePresence>
+            {copied && (
+              <motion.span
+                key="toast"
+                className="simple-copied"
+                initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -6, filter: 'blur(3px)' }}
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -4, filter: 'blur(2px)' }}
+                transition={{ duration: 0.2, ease: EASE_OUT }}
+                style={{ display: 'inline-block' }}
+              >
+                Email address copied
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </span>,
+        document.body,
+      )}
     </span>
   )
 }
