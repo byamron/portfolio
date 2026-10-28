@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { animate, AnimatePresence, cancelFrame, frame, motion, useAnimationControls, useMotionValue, useReducedMotion } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
@@ -100,8 +100,8 @@ const codeFor = (greeting: string) => [
 ]
 // What the banner says — a different hello each flight (never twice running).
 const GREETINGS = ['Hi', 'Hello', 'Hey', 'Hey there', 'Hi there', 'Hiya', 'Howdy', 'Ahoy', 'Greetings', 'Good day']
-const pickGreeting = (not?: string) => {
-  const pool = GREETINGS.filter(g => g !== not)
+const pickGreeting = (...not: (string | null)[]) => {
+  const pool = GREETINGS.filter(g => !not.includes(g))
   return pool[Math.floor(Math.random() * pool.length)]!
 }
 function highlight(src: string) {
@@ -113,7 +113,12 @@ function highlight(src: string) {
   )
 }
 
-function Terminal({ greeting, onRun }: { greeting: string; onRun: () => 'launched' | 'flying' | 'standby' }) {
+function Terminal({ greeting, onRun, cleared }: {
+  greeting: string
+  onRun: () => 'launched' | 'flying' | 'standby'
+  /** A held launch was cleared (the sky emptied while you waited). */
+  cleared: boolean
+}) {
   const CODE = codeFor(greeting)
   const reducedMotion = useReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
@@ -125,11 +130,15 @@ function Terminal({ greeting, onRun }: { greeting: string; onRun: () => 'launche
       if (reducedMotion) { setResult(['hold', 'blimp grounded']); return }
       const r = onRun()
       setResult(r === 'launched' ? ['done', 'blimp launched']
-        : r === 'flying' ? ['hold', 'waiting for air traffic control…']
+        : r === 'flying' ? ['hold', 'waiting for air traffic control']
         : ['ready', 'blimp on standby'])
     }, 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun, reducedMotion])
+  useEffect(() => {
+    if (cleared) setResult(r => (r?.[0] === 'hold' ? ['done', 'cleared · blimp launched'] : r))
+  }, [cleared])
+  const holding = result?.[0] === 'hold' && !reducedMotion
   return (
     <div className="term-window">
       <div className="term-bar">
@@ -149,6 +158,8 @@ function Terminal({ greeting, onRun }: { greeting: string; onRun: () => 'launche
         {result && (
           <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
             <span className="term-str">{result[0]}</span>  {result[1]}
+            {/* Holding: the caret stays on the line — still running, not frozen. */}
+            {holding && <> <span className="term-caret" /></>}
           </motion.div>
         )}
         {!result && <span className="term-caret" />}
@@ -181,6 +192,10 @@ function BlimpArt({ greeting }: { greeting: string }) {
   const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
   const { cx, cy, rx, ry } = BLIMP
   const tail = cx - rx
+  // Mono: ~0.6em per character; longer hellos step down to fit the cloth.
+  const bannerSize = greeting.length <= 5 ? 18 : greeting.length <= 8 ? 15 : 13.5
+  // Capitals centred on the cloth at every size (Plex Mono caps ≈ 0.7em).
+  const bannerY = 48.7 + 0.35 * bannerSize
   return (
     <svg width={300} height={104} viewBox="0 0 300 104" aria-hidden="true" style={{ overflow: 'visible' }}>
       <defs>
@@ -211,11 +226,10 @@ function BlimpArt({ greeting }: { greeting: string }) {
       />
       <motion.text
         x="65" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500"
-        // Mono: ~0.6em per character; longer hellos step down to fit the cloth.
-        fontSize={greeting.length <= 5 ? 18 : greeting.length <= 8 ? 15 : 13.5} fill="#2b2620"
+        fontSize={bannerSize} fill="#2b2620"
         // Rides the cloth, not across it: the banner's centre moves ~0.7 units
         // between its two ripple shapes (cubic midpoints of BANNER_A/B).
-        initial={{ y: 55 }} animate={{ y: [55, 55.65, 55] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        initial={{ y: bannerY }} animate={{ y: [bannerY, bannerY + 0.65, bannerY] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       >
         {greeting}
       </motion.text>
@@ -280,30 +294,57 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   // start from keyboard focus passing through (WCAG 2.2.2).
   const pointerRef = useRef(false)
   pointerRef.current = viaPointer
-  // A new hello for each visit to the terminal (kept while one is in the air,
-  // so the code on screen always matches the banner flying).
+  // A new hello for each visit to the terminal; the blimp in the air keeps
+  // the one it launched with, and the next never repeats it.
   const [greeting, setGreeting] = useState(() => pickGreeting())
+  const [flightGreeting, setFlightGreeting] = useState<string | null>(null)
+  const greetingRef = useRef(greeting)
+  greetingRef.current = greeting
+  const flightGreetingRef = useRef(flightGreeting)
+  flightGreetingRef.current = flightGreeting
   const lastStage = useRef(0)
   useEffect(() => {
-    if (lastStage.current === 0 && stage > 0 && !flyingRef.current) setGreeting(g => pickGreeting(g))
+    if (lastStage.current === 0 && stage > 0) setGreeting(g => pickGreeting(g, flightGreetingRef.current))
     lastStage.current = stage
   }, [stage])
+  // One blimp at a time. A run while one is up is held for air traffic
+  // control, and cleared to launch when that one lands — if you're still here.
+  const [flightId, setFlightId] = useState(0)
+  const queuedRef = useRef(false)
+  const stageRef = useRef(stage)
+  stageRef.current = stage
+  const [cleared, setCleared] = useState(false)
+  useEffect(() => { if (stage === 0) { queuedRef.current = false; setCleared(false) } }, [stage])
+  const takeOff = useCallback(() => {
+    flyingRef.current = true
+    setFlightGreeting(greetingRef.current)
+    setFlightId(n => n + 1)
+    setFlying(true)
+  }, [])
   const launch = useCallback((): 'launched' | 'flying' | 'standby' => {
     if (!pointerRef.current) return 'standby'
-    if (flyingRef.current) return 'flying'
-    flyingRef.current = true
-    setFlying(true)
+    if (flyingRef.current) { queuedRef.current = true; return 'flying' }
+    takeOff()
     return 'launched'
-  }, [])
+  }, [takeOff])
+  const landed = useCallback(() => {
+    flyingRef.current = false
+    setFlying(false)
+    if (queuedRef.current && stageRef.current > 0 && pointerRef.current) {
+      queuedRef.current = false
+      setCleared(true)
+      takeOff()
+    }
+  }, [takeOff])
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
         {icon}
       </a>
       <IconPopover show={stage > 0} width={300}>
-        {stage > 0 && <Terminal greeting={greeting} onRun={launch} />}
+        {stage > 0 && <Terminal greeting={greeting} onRun={launch} cleared={cleared} />}
       </IconPopover>
-      {flying && <BlimpFlight greeting={greeting} onDone={() => { flyingRef.current = false; setFlying(false) }} />}
+      {flying && flightGreeting && <BlimpFlight key={flightId} greeting={flightGreeting} onDone={landed} />}
     </span>
   )
 }
@@ -405,7 +446,7 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
 
 const EMAIL = protoBySlug.get('email')!.href.replace(/^mailto:/, '')
 const COPIED_MS = 1800
-// After a hover flight: the plane has folded and left; the envelope returns.
+// After a hover throw: the sheet has slid out of the slot; a fresh envelope returns.
 const ENVELOPE_BACK_MS = 520
 const DWELL_MS = 150
 const ICON_SWAP = { type: 'spring', stiffness: 700, damping: 26 } as const
@@ -574,7 +615,10 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
   const els = useRef<Record<string, SVGPathElement | null>>({})
   const ref = (k: string) => (el: SVGPathElement | null) => { els.current[k] = el }
 
-  useEffect(() => {
+  // A layout effect: when the fold turns to the side view, the new faces get
+  // their paths before that frame paints (an effect would leave one frame
+  // with no paper).
+  useLayoutEffect(() => {
     const set = (k: string, d: string | null, opacity = 1) => {
       const el = els.current[k]
       if (!el) return
@@ -693,20 +737,20 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
       <path ref={ref(p + 'cornerMove')} {...face} />
     </>
   )
+  // The shadow sits on a wrapper that only ever stays put, so it always
+  // falls straight down instead of turning with the paper.
   return createPortal(
+    <div aria-hidden="true" style={{ position: 'fixed', left: start.x - 40, top: start.y - 40, width: 80, height: 80, zIndex: 9999, pointerEvents: 'none', filter: PAPER_SHADOW }}>
     <motion.svg
-      aria-hidden="true"
       width={80} height={80} viewBox="-40 -40 80 80"
       initial={{ x: 0, y: 0, scale: 1, rotate: 0 }}
       animate={stage}
-      style={{
-        position: 'fixed', left: start.x - 40, top: start.y - 40, zIndex: 9999, pointerEvents: 'none',
-        overflow: 'visible', color: 'var(--text-dark)', willChange: 'transform', filter: PAPER_SHADOW,
-      }}
+      style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', color: 'var(--text-dark)', willChange: 'transform' }}
     >
       <defs><PaperPattern id={`${uid}-paper`} pxPerUnit={FOLD_SCALE} /></defs>
+      {/* Keyed, so the side view never inherits a front-view node. */}
       {!side ? (
-        <>
+        <g key="front">
           {halfPaths('L')}
           {halfPaths('R')}
           {/* Seam cover: one sheet until the crease is made. */}
@@ -717,17 +761,18 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
           <path ref={ref('Rtop')} fill="none" stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
           {/* The icon's own outline, handing over to paper as the sheet fills in. */}
           <path ref={ref('glyph')} d="M -10 -7 L 10 -7 L 10 7 L -10 7 Z M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round" />
-        </>
+        </g>
       ) : (
-        <>
+        <g key="side">
           <path ref={ref('far')} {...face} />
           <path ref={ref('keel')} {...face} />
           <path ref={ref('near')} {...face} />
           <path ref={ref('nearFlap')} {...face} />
           <path ref={ref('hingeCover')} stroke="#fffdf9" strokeWidth={0.9} />
-        </>
+        </g>
       )}
-    </motion.svg>,
+    </motion.svg>
+    </div>,
     document.body,
   )
 }
@@ -803,11 +848,12 @@ function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const face = { fill: `url(#${uid}-paper)`, stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
   return createPortal(
-    <div ref={el} aria-hidden="true" style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', willChange: 'transform', transform: `translate3d(${from.x}px, ${from.y}px, 0)` }}>
+    // Shadow on the wrapper (translate only), not the pitching sprite.
+    <div ref={el} aria-hidden="true" style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', willChange: 'transform', transform: `translate3d(${from.x}px, ${from.y}px, 0)`, filter: PAPER_SHADOW }}>
       <svg
         ref={sprite}
         width={80} height={80} viewBox="-40 -40 80 80"
-        style={{ position: 'absolute', left: -40, top: -40, overflow: 'visible', willChange: 'transform', filter: PAPER_SHADOW }}
+        style={{ position: 'absolute', left: -40, top: -40, overflow: 'visible', willChange: 'transform' }}
       >
         {/* The fold's last frame exactly: same faces, same turn and scale. */}
         <g transform={`rotate(90) scale(${FOLD_SCALE})`}>
@@ -862,15 +908,41 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         exit: { opacity: 0, scale: 0.4, rotate: 30 },
       }
 
+  // The dwell timer fires after the render it was armed in, so it reads the
+  // live state, not the state captured when the pointer arrived.
+  const live = useRef({ copied, plane, slotEmpty })
+  useLayoutEffect(() => { live.current = { copied, plane, slotEmpty } })
+
+  const placeNote = useCallback(() => {
+    const r = btn.current?.getBoundingClientRect()
+    if (!r) return
+    // Phones: no room beside the last icon — under the row, right-aligned.
+    const below = window.matchMedia(PHONE_QUERY).matches
+    setNoteAt(below ? { x: r.right, y: r.bottom + 8, below } : { x: r.right + 8, y: r.top + r.height / 2, below })
+  }, [])
+  // The note sits in the top layer, so it follows the button if the layout
+  // moves while it's showing.
+  useEffect(() => {
+    if (!copied) return
+    window.addEventListener('resize', placeNote)
+    window.addEventListener('scroll', placeNote, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('resize', placeNote)
+      window.removeEventListener('scroll', placeNote, { capture: true })
+    }
+  }, [copied, placeNote])
+
   const fly = () => {
+    const { copied, plane, slotEmpty } = live.current
     // One plane at a time: the next can't be folded until this one has gone.
+    // Narrow windows put the note under the button, where the plane folds.
     if (!canFly || reducedMotion || slotEmpty || copied || plane) return
+    if (window.matchMedia(PHONE_QUERY).matches) return
     const glyph = btn.current?.querySelector('svg')
     if (!glyph) return
     const from = glyph.getBoundingClientRect()
     setPlane(from)
     setSlotEmpty(true)
-    // The plane has folded and left the slot by now; a new envelope arrives.
     later(ENVELOPE_BACK_MS, () => setSlotEmpty(false))
   }
 
@@ -890,6 +962,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         }}
         onPointerLeave={() => { if (dwell.current) clearTimeout(dwell.current) }}
         onClick={async () => {
+          // A click inside the dwell copies; it doesn't also throw a plane.
+          if (dwell.current) clearTimeout(dwell.current)
           // Couldn't copy: fall back to what an envelope usually means.
           if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
           timers.current.forEach(clearTimeout)
@@ -898,12 +972,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           // Off for a frame on a repeat click, so the note replays and the
           // status region re-announces.
           setCopied(false)
-          const r = btn.current?.getBoundingClientRect()
-          if (r) {
-            // Phones: no room beside the last icon — under the row, right-aligned.
-            const below = window.matchMedia(PHONE_QUERY).matches
-            setNoteAt(below ? { x: r.right, y: r.bottom + 8, below } : { x: r.right + 8, y: r.top + r.height / 2, below })
-          }
+          placeNote()
           requestAnimationFrame(() => setCopied(true))
           later(COPIED_MS, () => setCopied(false))
         }}

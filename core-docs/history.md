@@ -2,6 +2,19 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-28 — `/new/simple` round 8: defaults, ATC queue, flow pipeline (simplify + staff review)
+
+- **Defaults:** Ben's DialKit glow (0.15 / 224 / tint 1) and record tuning (crackle 0.15, vinyl 0.45/0.6, grain 0.35, spin 0.8/0.8, glow 0.25/1.2, tone 40, breath 0.35, treble 1, fade-in 2.5).
+- **Air traffic control:** one blimp and one plane at a time. A terminal run while a blimp is up prints "hold  waiting for air traffic control" with the caret live on that line; when the blimp lands (and you're still hovering) it prints "done  cleared · blimp launched" and launches. The flying blimp keeps its own greeting; each terminal visit picks one that's neither the last nor the one in the air.
+- **`/simplify`:** dead code, single sources of truth, cheaper glow/fold rendering (5240f7c).
+- **Staff review fixes:**
+  - *Email:* a click inside the 150ms dwell no longer also throws a plane (the dwell is cancelled; the timer reads live state, not the closure from pointer-enter). No plane in windows ≤640px (the note sits under the button there, where the plane folds). The note follows the button on resize/scroll while it shows.
+  - *Fold:* the side-view swap left one frame with no paper (paths filled in a post-paint effect; a stale front-view node reused) → layout effect + keyed front/side groups; 0 blank frames in 4 probed runs. The drop-shadow moved to non-rotating wrappers, so it no longer turns with the paper or snaps at takeoff.
+  - *Glow:* at alpha 1–3 the canvas's premultiplied storage rounded the hue away (grey core inside a yellow ring — the remaining "hard edge"). Now each premultiplied channel is dithered on its own and written un-premultiplied, so on average the true colour survives; measured light-mode deltas track the expected tint channel-for-channel. Alpha mask cached per size/peak; painted at 1× (soft glow, ¼ the pixels): repaint 66–127ms → 11–21ms. No canvas at all on touch / reduced motion (live media queries). Melt in/out is a JS exponential glide toward a moving target, so the glow no longer jumps ~13px when it re-emerges from a link.
+  - *Blimp banner:* the baseline follows the font size, so long greetings sit centred on the cloth like "Hi".
+  - *Focus:* the settings trigger goes to full opacity on focus (its ring was 2.45:1 at 0.6); the strip's GitHub link uses the shared `--focus-ring`.
+  - *Prod heatmap:* the sparkline spring undershoots short bars below zero height — 27 console errors on `/` — now clamped at 0 (`SparkBar`), visually identical.
+
 ## 2026-10-28 — Cursor glow: candle falloff + composited layer
 
 - **Falloff:** the gradient was linear to a 55% stop then transparent — a visible edge. Now ≈ e^(−3.5t²)·(1−t²)^1.5 sampled at 10 stops: soft core, long faint tail, zero at the rim (radius 72 → 120, intensity 0.6 → 0.75 so the core reads the same). DialKit "Falloff stop" removed.

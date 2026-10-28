@@ -513,6 +513,7 @@ export function SidebarThemeControls({
   // box each, etc.) and feed the model's error back in.
   const columnRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- re-measures every render (see below)
   useLayoutEffect(() => {
     if (fitBottomReserve === undefined) return
     const col = columnRef.current
@@ -524,7 +525,8 @@ export function SidebarThemeControls({
     if (Math.abs(error - fitError) > 1) setFitError(error)
     // No deps on purpose: re-measuring after every render is what lets the fit
     // settle once late-loading fonts/icons change the real stack height (fit
-    // mode only — returns at once otherwise; converges in ≤1 extra render).
+    // mode only — returns at once otherwise; converges in ≤1 extra render;
+    // the >1px guard stops the loop).
   })
 
   const handleEnter = () => {

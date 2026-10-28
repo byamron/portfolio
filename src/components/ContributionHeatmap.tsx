@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, animate, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useCursor } from '@/contexts/CursorContext'
 import { useHover } from '@/contexts/HoverContext'
@@ -166,6 +166,22 @@ const CURRENT_YEAR = new Date().getFullYear()
 
 export type SparkPos = 'left' | 'right'
 export type CollapseTransition = 'none' | 'drawer' | 'crossfade' | 'scatter' | 'height'
+
+/** A sparkline bar settling from a shuffled height. The spring undershoots
+ *  its target by ~11%, which takes short bars below zero height (an invalid
+ *  SVG attribute); the height is clamped at 0, which draws the same. */
+function SparkBar({ x, width, fill, base, from, to, delay }: {
+  x: number; width: number; fill: string; base: number; from: number; to: number; delay: number
+}) {
+  const height = useMotionValue(from)
+  const clamped = useTransform(height, v => Math.max(0, v))
+  const y = useTransform(clamped, v => base - v)
+  useEffect(() => {
+    const anim = animate(height, to, { type: 'spring', stiffness: 180, damping: 12, mass: 0.6, delay })
+    return () => anim.stop()
+  }, [height, to, delay])
+  return <motion.rect x={x} width={width} rx={0.5} fill={fill} y={y} height={clamped} />
+}
 
 export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, sparkPos = 'left', collapseTransition = 'none' }: { displayMode?: HeatmapMode; vizGap?: number; sparkPos?: SparkPos; collapseTransition?: CollapseTransition }) {
   const { grid, totalContributions, maxCount, todayCoord } = useMemo(() => buildYearGrid(CURRENT_YEAR), [])
@@ -764,27 +780,15 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
           const grow = 0.3 + (wave * 0.5 + noise * 0.3) // 0.3–1.1 extra
           const shuffledH = Math.min(sparkHeight - 1, h + (sparkHeight - h) * grow)
           return (
-            <motion.rect
+            <SparkBar
               key={`${sparkAnimKey}-${i}`}
               x={i * (barWidth + barGap)}
               width={barWidth}
-              rx={0.5}
               fill={contribFill(total, maxWeekly, hue, bgIntensity, isDark)}
-              initial={{
-                y: sparkHeight - shuffledH,
-                height: shuffledH,
-              }}
-              animate={{
-                y: sparkHeight - h,
-                height: h,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 180,
-                damping: 12,
-                mass: 0.6,
-                delay: i * 0.006,
-              }}
+              base={sparkHeight}
+              from={shuffledH}
+              to={h}
+              delay={i * 0.006}
             />
           )
         })}

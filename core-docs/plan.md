@@ -624,6 +624,20 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## `/new/simple` round 8 — defaults, ATC queue, flow pipeline (2026-10-28)
+
+- [x] Ben's DialKit values are defaults (glow 0.15 / 224 / tint 1; record crackle, vinyl, grain, spin, glow tuning).
+- [x] One blimp and one paper plane at a time; a run while a blimp is up holds ("waiting for air traffic control" + live caret) and launches when the sky clears, with a fresh greeting.
+- [x] `/simplify` + `/flow:staff-review` (4 lenses) — fixes in history. Zero console errors on `/`, `/new`, `/new/simple` (desktop, 1024×600, 390 phone).
+
+**Follow-ups from this review:**
+- Dark-mode glow is ~1 level above the page at 0.15 (the light-mode peak is ~2× dark's) — Ben to judge it in dark; a separate dark intensity if it should read there.
+- Greeting list vs the voice rules: reviewers flag "Ahoy" (nautical pun on an airship), "Howdy" / "Hiya" / "Greetings" / "Good day" (character voices); suggest Hi / Hello / Hey / Hi there / Hey there (+ maybe `hello, world`). Ben's call.
+- Headless blending truncates at alpha 1–3, so the glow's on-screen falloff could only be verified in light mode here — eyeball dark on a real GPU.
+- Theme change still costs ~90ms of main thread on this sandbox (React re-render + portrait pop; the glow paint is now 11–21ms).
+- `npm run build` fails locally when the `ui-playground` submodule is checked out (its strict-mode errors + unused `@ts-expect-error` in PlaygroundDemo/Gallery) — pre-existing on main, CI unaffected.
+- Strip dev panels (ProtoTuner/DialKit/protoSettings knobs) before any merge.
+
 ## `/new/simple` round 7 — continuous paper + staff review (2026-10-28)
 
 - [x] Paper airplane is one continuous sheet: per-step parameters drive every face each frame (no cancelled animations, no layer swaps that show); corner flap splits on the next hinge; turned-over half shows a plain back; the dart's real wing fold (nose → bottom-edge midpoint) modelled in 3D (wing turns ψ about the hinge, orthographic view, roll to open); flight sprite = the fold's last frame. Level release, no tilt.
@@ -636,7 +650,7 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 - The plane "lands" on the contribution strip — try as a recorded variant (could read corny).
 - Bake drop-shadows into the SVGs (filter re-runs per frame on the morphing fold / blimp banner); profile first.
 - LinkedIn card: 2 WebGL contexts per hover — render the PaperTexture once to an image if it stutters; check the flip in Safari (canvas + backface-visibility).
-- Prod heatmap's pre-existing negative-height `<rect>` console errors (spring overshoot) — clamp.
+- [x] Prod heatmap's pre-existing negative-height `<rect>` console errors (spring overshoot) — clamped (round 8).
 - Easter-egg density on the contact row (all four perform) and the Consensus mark on a personal card — Ben's call.
 - Zero-day copy: reviewers flag "Designing, not committing" / "Cooking (actual food)" as puns and "Out of range" / "Somewhere without wifi" as near-duplicates; "Cooking on my work account" is Ben's wording. Ben's call.
 - Strip dev panels (ProtoTuner/DialKit/protoSettings knobs) before any merge.

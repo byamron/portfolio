@@ -37,12 +37,17 @@
 }
 
 /* One focus ring for every interactive element on the /new pages. */
-:is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger):focus-visible {
+:is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger, .simple-home a[data-link-card]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-:is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger):focus:not(:focus-visible) {
+:is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger, .simple-home a[data-link-card]):focus:not(:focus-visible) {
   outline: none;
+}
+/* The trigger rests at 0.6 opacity (inline), which would dim its ring
+   below 3:1 on the light backgrounds. */
+.sidebar-icon-trigger:focus-visible {
+  opacity: 1 !important;
 }
 
 /* Settings trigger (sidebar rail). Its glass is the rail's glide pill;
@@ -186,9 +191,9 @@
   opacity: 1;
 }
 .cursor-glow[data-melt] {
-  /* Opacity eases in late, so the slide-and-shrink reads before it's gone. */
-  transition: opacity 220ms cubic-bezier(0.4, 0, 1, 1),
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Opacity eases in late, so the slide-and-shrink (CursorGlow.tsx) reads
+     before it's gone. */
+  transition: opacity 220ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* ── Contact easter eggs (ContactFx.tsx) ─────────────────────────────── */
