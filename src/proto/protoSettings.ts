@@ -43,7 +43,7 @@ export interface ProtoSettings {
     presetSize?: number
   }
   /** /new/simple experiment: the glass pill's cursor light, page-wide. */
-  cursorGlow: { on: boolean; intensity: number; radius: number; falloff: number; tint: number }
+  cursorGlow: { on: boolean; intensity: number; radius: number; tint: number }
 }
 
 // Calmer than the playground defaults: the record sits beside a reading page.
@@ -53,7 +53,7 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   stickyStrip: false,
   cardCase: 'caps',
   simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · S' },
-  cursorGlow: { on: true, intensity: 0.15, radius: 224, falloff: 55, tint: 1 }, // Ben's tuning
+  cursorGlow: { on: true, intensity: 0.15, radius: 224, tint: 1 }, // Ben's tuning
   record: {
     size: 0.6,
     trackId: 'martini',
@@ -92,3 +92,10 @@ export function fluidSize(max: number) {
 // The sidebar's hover zone is a full-height 56px strip on the right edge;
 // anything inside it opens the sidebar instead of taking the click.
 export const SIDEBAR_GUTTER = 56
+
+// Shared across the /new pages.
+export const EASE_OUT = [0.22, 1, 0.36, 1] as const
+export const PHONE_QUERY = '(max-width: 640px)'
+/** Everything the page's glass pill lands on (SimpleHome's glass container);
+ *  the cursor glow steps aside over these and the sidebar's glide targets. */
+export const PAGE_GLASS_CARDS = '[data-proto-link], [data-social], [data-contact-card], [data-link-card]'

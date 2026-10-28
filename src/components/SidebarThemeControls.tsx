@@ -323,7 +323,7 @@ const EXTRA_IDX = DIVIDER_5 + 1                        // 15
 
 const TRIGGER_ICON_BOX = 44 // matches the page's icon buttons
 // What the glide pill lands on: the trigger, every button, the strip, the record.
-const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
+export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
 // Fit mode floors: intensity strip (before ×controlScale) and divider air.
 const STRIP_MIN = 42
 const DIVIDER_MIN = 10
@@ -332,7 +332,7 @@ const DIVIDER_MAX = 18
 // Record-shaped extra control: its width tracks the icon buttons (a touch
 // wider so the record reads), its height follows the record's 236:144 plinth.
 const EXTRA_OVERHANG = 5
-const RECORD_ASPECT = 236 / 144
+export const RECORD_ASPECT = 236 / 144 // RecordToggle's plinth (not imported: it's lazy-loaded)
 
 export interface SidebarMetrics {
   /** Icon-button size at the current compression. */
@@ -373,11 +373,14 @@ interface SidebarThemeControlsProps {
   /** One frosted pill for the whole rail that glides between controls
    *  (instead of a pill per group + the trigger's own glass). */
   glidePill?: boolean
+  /** Column top (px). Default: the --sidebar-trigger-top CSS variable a page
+   *  may set (e.g. aligned to measured content), else 64. */
+  triggerTop?: number
 }
 
 export function SidebarThemeControls({
   hideTriggerAtRest = false, triggerIcon, extraControl, controlScale = 1,
-  openOn = 'hover', stagger = 0.04, fitBottomReserve, triggerLabel = 'settings', glidePill = false,
+  openOn = 'hover', stagger = 0.04, fitBottomReserve, triggerLabel = 'settings', glidePill = false, triggerTop: triggerTopProp,
 }: SidebarThemeControlsProps = {}) {
   const [hovered, setHovered] = useState(false)
   // Opened by a click (external trigger): mouse-leave doesn't close it.
@@ -455,10 +458,8 @@ export function SidebarThemeControls({
     return triggerSize + dividerCount * (2 * dm + 1) + swatches + modes + cursors + extra
   }
   const [fitError, setFitError] = useState(0)
-  // Fit mode only — prod never pays for the style read.
-  const triggerTop = fitBottomReserve !== undefined
-    ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-trigger-top')) || 64
-    : 64
+  // Fit mode only needs it, and a prop avoids a style read on every render.
+  const triggerTop = triggerTopProp ?? 64
   let compressT = Math.min(1, Math.max(0, (viewportHeight - MIN_VP) / (FULL_VP - MIN_VP)))
   let fitStrip: number | null = null
   let fitDivider: number | null = null
@@ -521,6 +522,9 @@ export function SidebarThemeControls({
     const model = stackWithoutStrip(compressT, dividerMargin) + stripHeight
     const error = Math.round(actual - model)
     if (Math.abs(error - fitError) > 1) setFitError(error)
+    // No deps on purpose: re-measuring after every render is what lets the fit
+    // settle once late-loading fonts/icons change the real stack height (fit
+    // mode only — returns at once otherwise; converges in ≤1 extra render).
   })
 
   const handleEnter = () => {
@@ -535,16 +539,9 @@ export function SidebarThemeControls({
 
   const triggerHidden = !triggerIcon && hideTriggerAtRest && !hovered
   const toggleFromTrigger = () => {
-    if (triggerIcon) {
-      // A visible button: hover may already have opened it, so a click pins
-      // rather than toggling it shut under the cursor.
-      if (hoveredRef.current && pinnedRef.current) { close(false); return }
-      if (closeTimeout.current) clearTimeout(closeTimeout.current)
-      openerRef.current = triggerRef.current
-      setHovered(true)
-      setPinned(true)
-      return
-    }
+    // A visible icon button: hover may already have opened it, so a click
+    // pins rather than toggling it shut under the cursor.
+    if (triggerIcon) { pinOpen(triggerRef.current); return }
     if (hoveredRef.current) close(false)
     else setHovered(true)
   }
@@ -556,18 +553,22 @@ export function SidebarThemeControls({
     if (restoreFocus) openerRef.current?.focus()
   }, [])
 
-  // External trigger: toggles a pinned open state.
+  /** Toggle a pinned open state (stays open until a click outside, Escape,
+   *  or another toggle). Focus returns to `opener` on Escape. */
+  const pinOpen = useCallback((opener: HTMLElement | null) => {
+    if (hoveredRef.current && pinnedRef.current) { close(false); return }
+    if (closeTimeout.current) clearTimeout(closeTimeout.current)
+    openerRef.current = opener
+    setHovered(true)
+    setPinned(true)
+  }, [close])
+
+  // External trigger (e.g. a portrait elsewhere on the page).
   useEffect(() => {
-    const onToggle = (e: Event) => {
-      if (hoveredRef.current && pinnedRef.current) { close(false); return }
-      if (closeTimeout.current) clearTimeout(closeTimeout.current)
-      openerRef.current = (e as CustomEvent<{ opener?: HTMLElement }>).detail?.opener ?? null
-      setHovered(true)
-      setPinned(true)
-    }
+    const onToggle = (e: Event) => pinOpen((e as CustomEvent<{ opener?: HTMLElement }>).detail?.opener ?? null)
     window.addEventListener(THEME_SIDEBAR_TOGGLE, onToggle)
     return () => window.removeEventListener(THEME_SIDEBAR_TOGGLE, onToggle)
-  }, [close])
+  }, [pinOpen])
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(THEME_SIDEBAR_STATE, { detail: { open: hovered } }))
@@ -805,7 +806,7 @@ export function SidebarThemeControls({
           right: 16,
           display: 'flex',
           alignItems: 'center',
-          top: 'var(--sidebar-trigger-top, 64px)',
+          top: triggerTopProp ?? 'var(--sidebar-trigger-top, 64px)',
           flexDirection: 'column' as const,
           filter: 'drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 90%, transparent))',
         }}

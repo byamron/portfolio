@@ -1,15 +1,15 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { animate, AnimatePresence, motion, useAnimationControls, useMotionValue, useReducedMotion } from 'framer-motion'
+import { animate, AnimatePresence, cancelFrame, frame, motion, useAnimationControls, useMotionValue, useReducedMotion } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
 import { PaperTexture } from '@paper-design/shaders-react'
-import { useProtoSettings } from './protoSettings'
+import { protoBySlug } from './data'
+import { EASE_OUT, PHONE_QUERY, useProtoSettings } from './protoSettings'
 
 // Contact-row easter eggs for /new/simple, in the X flock's spirit: an
 // immediate payoff, plus a little more if you stay. Each one changes the
 // icon or pops a small object out of it — never new page chrome.
 
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 const POP = { type: 'spring', stiffness: 520, damping: 30, mass: 0.7 } as const
 // Hover longer than a glance and the second beat plays.
 const LINGER_MS = 1600
@@ -175,7 +175,7 @@ const BANNER_A = 'M 118 30 C 92 25, 58 35, 12 29 L 12 67 C 58 73, 92 63, 118 66 
 const BANNER_B = 'M 118 30 C 92 35, 58 26, 12 33 L 12 71 C 58 64, 92 72, 118 66 Z'
 
 /** A small, chubby airship: shaded envelope with gores and seams, fins,
- *  gondola, and a "Hi" banner on a tether. Lit from the top-left. */
+ *  gondola, and a greeting banner on a tether. Lit from the top-left. */
 const BLIMP = { cx: 214, cy: 50, rx: 70, ry: 33 }
 function BlimpArt({ greeting }: { greeting: string }) {
   const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
@@ -288,7 +288,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     if (lastStage.current === 0 && stage > 0 && !flyingRef.current) setGreeting(g => pickGreeting(g))
     lastStage.current = stage
   }, [stage])
-  const launch = useMemo(() => (): 'launched' | 'flying' | 'standby' => {
+  const launch = useCallback((): 'launched' | 'flying' | 'standby' => {
     if (!pointerRef.current) return 'standby'
     if (flyingRef.current) return 'flying'
     flyingRef.current = true
@@ -403,7 +403,7 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
 // Email: copy → the envelope becomes paper, folds into a plane, flies off.
 // ─────────────────────────────────────────────────────────────────────────
 
-const EMAIL = 'ben.yamron@icloud.com'
+const EMAIL = protoBySlug.get('email')!.href.replace(/^mailto:/, '')
 const COPIED_MS = 1800
 // After a hover flight: the plane has folded and left; the envelope returns.
 const ENVELOPE_BACK_MS = 520
@@ -507,10 +507,14 @@ const WING_FLAP: P2[] = [[0, -22], [-5.96, 7.96], [-17, 19]]
 /** Orthographic view of a wing point turned ψ about the dart hinge (0 = flat,
  *  in the sheet's plane; 180 = folded down onto the keel), with the whole plane
  *  rolled `roll` about its length so an open wing reads. side: +1 near, −1 far. */
-function wingPoint(p: P2, psi: number, roll: number, side: 1 | -1): P2 {
+// The hinge's unit direction (constant).
+const HINGE_U: P2 = (() => {
   const ux = HINGE_T[0] - NOSE[0], uy = HINGE_T[1] - NOSE[1]
   const ul = Math.hypot(ux, uy)
-  const u: P2 = [ux / ul, uy / ul]
+  return [ux / ul, uy / ul]
+})()
+function wingPoint(p: P2, psi: number, roll: number, side: 1 | -1): P2 {
+  const u = HINGE_U
   const dx = p[0] - NOSE[0], dy = p[1] - NOSE[1]
   const a = dx * u[0] + dy * u[1]
   const qx = dx - a * u[0], qy = dy - a * u[1]
@@ -583,8 +587,9 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
     const half = (prefix: string, fx: (p: P2) => P2, c: number, e: number, plainBack: boolean) => {
       const o = open.get()
       const base = e > 0 ? BASE_3 : c > 0 ? BASE_2 : ENVELOPE.map((p, i) => lerp2(p, SHEET[i]!, o))
-      set(prefix + 'base', pathOf(base.map(fx)), o)
-      set(prefix + 'baseFill', pathOf(base.map(fx)), o)
+      const baseD = pathOf(base.map(fx))
+      set(prefix + 'base', baseD, o)
+      set(prefix + 'baseFill', baseD, o)
       if (plainBack) { // turned over: we see the plain back of this half
         ;['cornerFull', 'cornerStatic', 'cornerMove', 'edge'].forEach(k => set(prefix + k, null))
         return
@@ -631,8 +636,11 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
       }
     }
     render()
-    const unsub = [open, lift, creased, cornerL, cornerR, edgeL, edgeR, psi, roll].map(mv => mv.on('change', render))
-    return () => unsub.forEach(u => u())
+    // Several values often move in the same frame: render once, in Framer's
+    // own render step (same frame as the stage transform; deduped per frame).
+    const schedule = () => frame.render(render)
+    const unsub = [open, lift, creased, cornerL, cornerR, edgeL, edgeR, psi, roll].map(mv => mv.on('change', schedule))
+    return () => { unsub.forEach(u => u()); cancelFrame(render) }
   }, [side]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -835,8 +843,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const reducedMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
   // At most one plane folding or in the air.
-  const [planes, setPlanes] = useState<{ id: number; from: DOMRect }[]>([])
-  const nextId = useRef(0)
+  const [plane, setPlane] = useState<DOMRect | null>(null)
   const [slotEmpty, setSlotEmpty] = useState(false)
   const [noteAt, setNoteAt] = useState<{ x: number; y: number; below: boolean } | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -857,11 +864,11 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
 
   const fly = () => {
     // One plane at a time: the next can't be folded until this one has gone.
-    if (!canFly || reducedMotion || slotEmpty || copied || planes.length > 0) return
+    if (!canFly || reducedMotion || slotEmpty || copied || plane) return
     const glyph = btn.current?.querySelector('svg')
     if (!glyph) return
     const from = glyph.getBoundingClientRect()
-    setPlanes(ps => [...ps, { id: nextId.current++, from }])
+    setPlane(from)
     setSlotEmpty(true)
     // The plane has folded and left the slot by now; a new envelope arrives.
     later(ENVELOPE_BACK_MS, () => setSlotEmpty(false))
@@ -894,7 +901,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           const r = btn.current?.getBoundingClientRect()
           if (r) {
             // Phones: no room beside the last icon — under the row, right-aligned.
-            const below = window.matchMedia('(max-width: 640px)').matches
+            const below = window.matchMedia(PHONE_QUERY).matches
             setNoteAt(below ? { x: r.right, y: r.bottom + 8, below } : { x: r.right + 8, y: r.top + r.height / 2, below })
           }
           requestAnimationFrame(() => setCopied(true))
@@ -922,12 +929,9 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           </motion.span>
         </AnimatePresence>
       </button>
-      {planes.map(pl => (
-        <PaperPlane key={pl.id} from={pl.from} onDone={() => setPlanes(ps => ps.filter(x => x.id !== pl.id))} />
-      ))}
-      {/* Out of flow, so the row never shifts; read out politely. */}
-      {/* Announced in place; drawn in the top layer (beside the button), so
-          a paper airplane folding right there never covers it. */}
+      {plane && <PaperPlane from={plane} onDone={() => setPlane(null)} />}
+      {/* Announced in place; drawn in the top layer beside the button, so it
+          never shifts the row and a passing paper airplane can't cover it. */}
       <span role="status" className="sr-only">{copied ? 'Email address copied' : ''}</span>
       {noteAt && createPortal(
         <span aria-hidden="true" className="simple-copied-float" style={{ left: noteAt.x, top: noteAt.y }} data-below={noteAt.below || undefined}>

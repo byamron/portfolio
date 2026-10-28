@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { useProtoSettings } from './protoSettings'
+import { GLIDE_TARGETS } from '@/components/SidebarThemeControls'
+import { GLASS_DEFAULTS } from '@/hooks/useGlassHighlight'
+import { PAGE_GLASS_CARDS, useProtoSettings } from './protoSettings'
 
+const MELT_MS = 220
 // Over these the glass pill already lights the cursor; the page glow steps
 // aside so the two don't stack.
-const MELT_MS = 220
-const LIT_BY_PILL = '[data-proto-link], [data-social], [data-contact-card], [data-link-card], [data-sidebar-control], .sidebar-icon-trigger, [data-sidebar] [role=slider], [data-sidebar] [role=switch]'
+const LIT_BY_PILL = `${PAGE_GLASS_CARDS}, ${GLIDE_TARGETS}`
 
 // The glow's falloff (candle-like: soft core, long tail, zero at the rim).
 const falloff = (t: number) => Math.exp(-3.5 * t * t) * Math.pow(Math.max(0, 1 - t * t), 1.5)
@@ -16,20 +18,27 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   return [f(0) * 255, f(8) * 255, f(4) * 255]
 }
 
-/** Paints the glow once into a canvas — per-pixel alpha from the falloff,
- *  with random dithering before rounding. At these intensities the glow is
- *  only a few 8-bit levels above the page, so a CSS gradient bands into a
- *  flat disc with a visible rim; dithering dissolves those steps. */
-function renderGlow(radius: number, intensity: number, tint: number): string {
+/** Paints the glow into its canvas — per-pixel alpha from the falloff, with
+ *  random dithering before rounding. At these intensities the glow is only a
+ *  few 8-bit levels above the page, so a CSS gradient bands into a flat disc
+ *  with a visible rim; dithering dissolves those steps. Returns a key of
+ *  everything it depends on, so callers can skip identical repaints. */
+function glowKey(radius: number, intensity: number, tint: number) {
   const root = document.documentElement
   const dark = root.getAttribute('data-theme') === 'dark'
   const hue = parseFloat(getComputedStyle(root).getPropertyValue('--accent-hue')) || 34
-  // Same light as the glass pill's cursor light (useGlassHighlight).
-  const [r, g, b] = dark ? hslToRgb(hue, 0.15 * tint, 0.9) : hslToRgb(hue, Math.min(1, 0.45 * tint), 0.5)
-  const peak = (dark ? 0.04 : 0.072) * intensity
   const dpr = Math.min(2, window.devicePixelRatio || 1)
+  return { dark, hue, dpr, key: [dark, hue, dpr, radius, intensity, tint].join('|') }
+}
+function renderGlow(c: HTMLCanvasElement, radius: number, intensity: number, tint: number, dark: boolean, hue: number, dpr: number) {
+  // The glass pill's cursor light (useGlassHighlight): light mode from its
+  // defaults; dark mode is fixed there too (hsl(hue 15% 90%) at cursorLight).
+  const G = GLASS_DEFAULTS
+  const [r, g, b] = dark
+    ? hslToRgb(hue, 0.15 * tint, 0.9)
+    : hslToRgb(hue, Math.min(1, (G.lightCursorSaturation / 100) * tint), G.lightCursorLightness / 100)
+  const peak = G.cursorLight * (dark ? 1 : G.lightCursorIntensity) * intensity
   const size = Math.round(radius * 2 * dpr)
-  const c = document.createElement('canvas')
   c.width = c.height = size
   const ctx = c.getContext('2d')!
   const img = ctx.createImageData(size, size)
@@ -44,29 +53,33 @@ function renderGlow(radius: number, intensity: number, tint: number): string {
     }
   }
   ctx.putImageData(img, 0, 0)
-  return c.toDataURL()
 }
 
 /**
- * Experiment (/new/simple): the glass pill's cursor light, everywhere. Same
- * accent-tinted radial as useGlassHighlight's pill fill (proto.css), on a
- * fixed layer under the page content. Mouse/pen only; off under
- * reduced motion, like the pill's own light.
+ * Experiment (/new/simple): the glass pill's cursor light, everywhere — a
+ * dithered canvas on a fixed, compositor-only layer under the page content.
+ * Mouse/pen only; off under reduced motion, like the pill's own light.
  */
 export function CursorGlow() {
   const { cursorGlow } = useProtoSettings()
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLCanvasElement>(null)
 
-  // The texture: re-rendered only when the glow's settings or the theme change.
+  // The texture: repainted only when something it depends on changes
+  // (ThemeContext fires 'theme-changed' for every theme update, incl. the
+  // background-intensity slider, which the glow ignores — hence the key).
   useEffect(() => {
     const el = ref.current
     if (!el || !cursorGlow.on) return
-    const paint = () => { el.style.backgroundImage = `url(${renderGlow(cursorGlow.radius, cursorGlow.intensity, cursorGlow.tint)})` }
-    paint()
-    const mo = new MutationObserver(paint)
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-accent'] })
-    document.addEventListener('theme-changed', paint)
-    return () => { mo.disconnect(); document.removeEventListener('theme-changed', paint) }
+    let last = ''
+    const repaint = () => {
+      const { dark, hue, dpr, key } = glowKey(cursorGlow.radius, cursorGlow.intensity, cursorGlow.tint)
+      if (key === last) return
+      last = key
+      renderGlow(el, cursorGlow.radius, cursorGlow.intensity, cursorGlow.tint, dark, hue, dpr)
+    }
+    repaint()
+    document.addEventListener('theme-changed', repaint)
+    return () => document.removeEventListener('theme-changed', repaint)
   }, [cursorGlow.on, cursorGlow.radius, cursorGlow.intensity, cursorGlow.tint])
 
   useEffect(() => {
@@ -78,9 +91,9 @@ export function CursorGlow() {
     let x = 0
     let y = 0
     let scale = 1
-    // Composited: the gradient is painted once on a 2r×2r layer and only
-    // ever moved/scaled with transform (and faded with opacity) — no
-    // per-frame repaint of a full-screen gradient.
+    // Composited: the texture is painted once on a 2r×2r layer and only ever
+    // moved/scaled with transform (and faded with opacity) — no per-frame
+    // repaint.
     // Over a link the glow melts into the pill: it slides to the pill's
     // centre and shrinks as it fades (data-melt turns on the transform /
     // opacity transitions). Leaving re-grows it back to the cursor, then it
@@ -95,7 +108,7 @@ export function CursorGlow() {
       el.setAttribute('data-melt', '')
       meltTimer = window.setTimeout(() => el.removeAttribute('data-melt'), MELT_MS + 40)
     }
-    const paint = () => {
+    const follow = () => {
       raf = 0
       if (!melted) place(x, y)
     }
@@ -120,7 +133,7 @@ export function CursorGlow() {
       } else if (!card) {
         el.setAttribute('data-on', '')
       }
-      if (!raf) raf = requestAnimationFrame(paint)
+      if (!raf) raf = requestAnimationFrame(follow)
     }
     const onLeave = () => el.removeAttribute('data-on')
     window.addEventListener('pointermove', onMove, { passive: true })
@@ -136,7 +149,7 @@ export function CursorGlow() {
 
   if (!cursorGlow.on) return null
   return (
-    <div
+    <canvas
       ref={ref}
       aria-hidden="true"
       className="cursor-glow"

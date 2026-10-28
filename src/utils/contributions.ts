@@ -50,12 +50,6 @@ export function formatDate(dateStr: string): string {
   return `${month} ${day}${suffix}`
 }
 
-/**
- * `today` defaults to a fresh read, but callers holding a frozen value (e.g.
- * `buildContributionDays()`'s `today`, computed once at mount) should pass it
- * explicitly — otherwise a session left open across a midnight boundary can
- * have the last square's date silently stop matching a re-computed "today".
- */
 // Zero-contribution days get a line instead of "0 contributions". In this
 // stretch Ben's commits went to his work GitHub account; elsewhere it's one
 // of a few dry, specific guesses at what he was doing instead. Days that
@@ -102,6 +96,12 @@ export function getTooltipLabel(date: string, count: number, today?: string): st
   return count === 0 && text === zeroDayNote(date) ? `${text}, ${formatDate(date)}` : text
 }
 
+/**
+ * `today` defaults to a fresh read, but callers holding a frozen value (e.g.
+ * `buildContributionDays()`'s `today`, computed once at mount) should pass it
+ * explicitly — otherwise a session left open across a midnight boundary can
+ * have the last square's date silently stop matching a re-computed "today".
+ */
 export function getTooltipText(date: string, count: number, today?: string): string {
   if (today === undefined) {
     const now = new Date()

@@ -84,7 +84,6 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
       on: glow['On'] as boolean,
       intensity: glow['Intensity'],
       radius: glow['Radius px'],
-      falloff: G.falloff,
       tint: glow['Accent tint'],
     },
     record: {

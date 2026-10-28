@@ -8,21 +8,17 @@ import { CopyEmailButton, GitHubLink, LinkedInLink } from './ContactFx'
 import { InlineIcon, ThemePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
 import { COPY_VARIANTS, PHONE_BREAKS, protoBySlug, TEXT_PRESETS, type Seg } from './data'
-import { fluidSize, useProtoSettings } from './protoSettings'
+import { EASE_OUT, fluidSize, PAGE_GLASS_CARDS, PHONE_QUERY, useProtoSettings } from './protoSettings'
 
 // /new/simple — the sketch: one sentence, four ways to reach Ben, the
 // contribution strip. Theme + record live in the sidebar (ProtoRoutes).
 
 const LINE_HEIGHT = 1.3
-// The sidebar's settings button sits this far from the top (its rail is
-// right: 16), i.e. in the page's top-right corner.
-const TRIGGER_TOP = 24
 
 // Glass pill radius for prose links and the icon buttons (matches .simple-social).
 const SOCIAL_RADIUS = 12
 
 const CASCADE = { delay: 0.12, stagger: 0.08, duration: 0.45 } // prod's entrance beat
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 const SOCIALS: { id: string; label: string; Icon: Icon }[] = [
   { id: 'linkedin', label: 'LinkedIn (opens in new tab)', Icon: LinkedinLogo },
@@ -40,7 +36,6 @@ function renderSeg(seg: Seg, i: number, measuring: boolean) {
   return <span key={i}>{seg}</span>
 }
 
-const PHONE_QUERY = '(max-width: 640px)'
 const STRIP_LABEL_INSET = 40 // ContributionStrip's label paddingLeft
 const PHONE_MAX_TEXT = 38
 const subscribePhone = (cb: () => void) => {
@@ -132,16 +127,11 @@ export function SimpleHome() {
   // On the whole page, so the strip's GitHub link (data-link-card) shares the
   // prose links' glass.
   const glassApi = useGlassHighlight(pageRef, {
-    cardSelector: '[data-proto-link], [data-social], [data-contact-card], [data-link-card]',
+    cardSelector: PAGE_GLASS_CARDS,
     borderRadius: SOCIAL_RADIUS,
     clearDelay: 200,
   })
 
-  useLayoutEffect(() => {
-    const root = document.documentElement
-    root.style.setProperty('--sidebar-trigger-top', `${TRIGGER_TOP}px`)
-    return () => { root.style.removeProperty('--sidebar-trigger-top') }
-  }, [])
 
   const item: Variants = reducedMotion
     ? { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0 } } }
@@ -247,7 +237,6 @@ export function SimpleHome() {
         >
           {SOCIALS.map(({ id, label, Icon }) => {
             const { href } = protoBySlug.get(id)!
-            const isWeb = href.startsWith('http')
             const icon = <Icon size={24} weight="regular" aria-hidden="true" />
             return (
               <li key={id}>
@@ -257,23 +246,12 @@ export function SimpleHome() {
                   <GitHubLink href={href} label={label} icon={icon} />
                 ) : id === 'linkedin' ? (
                   <LinkedInLink href={href} label={label} icon={icon} />
-                ) : id === 'x' ? (
-                  // The flock easter egg: the glass cracks from behind the
-                  // logo, shatters, and birds fly out.
+                ) : (
+                  // X — the flock easter egg: the glass cracks from behind
+                  // the logo, shatters, and birds fly out.
                   <FlockX href={href} className="simple-social" ariaLabel={label} epicenter="center" glassRadius={SOCIAL_RADIUS} glassApi={glassApi}>
                     {icon}
                   </FlockX>
-                ) : (
-                  <a
-                    data-social
-                    className="simple-social"
-                    href={href}
-                    aria-label={label}
-                    target={isWeb ? '_blank' : undefined}
-                    rel={isWeb ? 'noopener noreferrer' : undefined}
-                  >
-                    {icon}
-                  </a>
                 )}
               </li>
             )

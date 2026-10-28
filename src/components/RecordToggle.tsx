@@ -472,6 +472,12 @@ export interface RecordToggleProps {
   onChange?: (on: boolean) => void;
 }
 
+/** The credit's entrance nudge at progress p (0 → 1): rises 4px into place,
+ *  or slides in from the switch when it sits beside it. One formula for the
+ *  first render and the animation loop, so they can't drift apart. */
+const creditXform = (side: boolean, tx: string, p: number) =>
+  side ? `translate(${(1 - p) * 4}px, -50%)` : `translate(${tx}, ${(1 - p) * 4}px)`;
+
 export function RecordToggle({
   appearance,
   tuning,
@@ -545,10 +551,7 @@ export function RecordToggle({
   // when the credit sits beside it.
   const creditSideRef = useRef(false);
   creditSideRef.current = creditPlacement === "left";
-  const creditTransform = (p: number) =>
-    creditSideRef.current
-      ? `translate(${(1 - p) * 4}px, -50%)`
-      : `translate(${creditTxRef.current}, ${(1 - p) * 4}px)`;
+  const creditTransform = (p: number) => creditXform(creditSideRef.current, creditTxRef.current, p);
   // Host-supplied off-track colour (may be a var()): mixed in CSS, since the
   // loop can only mix literal hex.
   const trackOffRef = useRef(trackOffColor);
@@ -1575,7 +1578,7 @@ export function RecordToggle({
                     : { left: 0, textAlign: "left" }),
                 };
             const tx = creditAlign === "center" ? "-50%" : "0px";
-            const rest = (p: number) => side ? `translate(${(1 - p) * 4}px, -50%)` : `translate(${tx}, ${(1 - p) * 4}px)`;
+            const rest = (p: number) => creditXform(side, tx, p);
             const text: React.CSSProperties = {
               fontFamily: creditFont ?? FONT,
               fontSize: creditSize,

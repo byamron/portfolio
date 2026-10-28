@@ -7,7 +7,7 @@ import { InlineIcon, InlinePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
 import { protoBySlug } from './data'
 import { RecordDock } from './RecordDock'
-import { fluidSize, SIDEBAR_GUTTER, useProtoSettings } from './protoSettings'
+import { EASE_OUT, fluidSize, SIDEBAR_GUTTER, useProtoSettings } from './protoSettings'
 
 const L = (id: string) => <ProtoLink entry={protoBySlug.get(id)!} />
 
@@ -33,7 +33,6 @@ const CASCADE_ITEMS = 6 // 5 paragraphs + strip
 const SIGNATURE_DELAY_MS = Math.round(
   (CASCADE.delay + CASCADE.stagger * (CASCADE_ITEMS - 1) + CASCADE.duration) * 1000,
 )
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 // Roughly how long the Rive signature takes to draw; the portrait's one-time
 // nudge waits for it so the page has a single beat of motion at a time.
 const SIGNATURE_DRAW_MS = 2400

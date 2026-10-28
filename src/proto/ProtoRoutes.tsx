@@ -5,7 +5,7 @@ import { MusicNotesSimple } from '@phosphor-icons/react'
 import './proto.css'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
-import { SidebarThemeControls, THEME_SIDEBAR_STATE } from '@/components/SidebarThemeControls'
+import { RECORD_ASPECT, SidebarThemeControls, THEME_SIDEBAR_STATE } from '@/components/SidebarThemeControls'
 import { ProtoHome } from './ProtoHome'
 import { CursorGlow } from './CursorGlow'
 import { RecordDock } from './RecordDock'
@@ -14,8 +14,9 @@ import { SimpleHome } from './SimpleHome'
 // /new/simple: the toolbar grows a little and the record shrinks to meet it,
 // so the record reads as one more control in the rail.
 const SIMPLE_CONTROL_SCALE = 1.15
-// RecordToggle's size unit: 96px of plinth height, 236:144 plinth.
-const RECORD_ASPECT = 236 / 144
+// RecordToggle's size unit is 96px of plinth height.
+// The settings button sits in the page's top-right corner.
+const SIMPLE_TRIGGER_TOP = 24
 // The rail stops above the contribution strip (label + cells + breathing room).
 const STRIP_RESERVE = 104
 
@@ -95,6 +96,7 @@ function SimpleShell() {
         stagger={0.018}
         glidePill
         fitBottomReserve={STRIP_RESERVE}
+        triggerTop={SIMPLE_TRIGGER_TOP}
         extraControl={({ extraWidth }) => (
           <RecordDock credit="left" size={extraWidth / RECORD_ASPECT / 96} idleCaption={<MusicNotesSimple size={15} weight="regular" style={{ display: 'block' }} />} onChange={setPlaying} />
         )}

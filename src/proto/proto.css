@@ -36,48 +36,20 @@
   text-decoration-color: color-mix(in srgb, var(--text-dark) 60%, transparent);
 }
 
-[data-proto-link]:focus-visible {
+/* One focus ring for every interactive element on the /new pages. */
+:is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-[data-proto-link]:focus:not(:focus-visible) {
+:is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger):focus:not(:focus-visible) {
   outline: none;
 }
 
-/* Settings trigger (sidebar rail): the same frosted glass as the prose
-   links' pill, on hover and while the panel it opens is showing — unless the
-   rail's glide pill (data-glide) is doing that job. */
+/* Settings trigger (sidebar rail). Its glass is the rail's glide pill;
+   here just its press spring and the open/rest opacity fade. */
 .sidebar-icon-trigger {
-  border: 0.5px solid transparent;
   transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    border-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    opacity 200ms ease-in-out !important;
-}
-@media (hover: hover) {
-  [data-sidebar]:not([data-glide]) .sidebar-icon-trigger:hover {
-    background: hsla(var(--accent-hue), 20%, 40%, 0.08);
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
-    box-shadow: inset 0 -1px 0 0 rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.08);
-  }
-  [data-theme="dark"] [data-sidebar]:not([data-glide]) .sidebar-icon-trigger:hover {
-    background: hsla(var(--accent-hue), 20%, 55%, 0.12);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.10);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-}
-[data-sidebar]:not([data-glide]) .sidebar-icon-trigger[aria-expanded="true"] {
-  background: hsla(var(--accent-hue), 20%, 40%, 0.08);
-  box-shadow: inset 0 -1px 0 0 rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-[data-theme="dark"] [data-sidebar]:not([data-glide]) .sidebar-icon-trigger[aria-expanded="true"] {
-  background: hsla(var(--accent-hue), 20%, 55%, 0.12);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.12);
+    opacity 200ms ease-in-out;
 }
 
 /* Its knobs swap ends while the rail is open — the icon is a slider you
@@ -148,14 +120,6 @@
   .simple-intro--auto-phone { text-wrap: balance !important; }
 }
 
-.proto-portrait:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.proto-portrait:focus:not(:focus-visible) {
-  outline: none;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -201,29 +165,19 @@
   font-size: var(--text-size-small);
   color: var(--text-grey);
   /* A halo in the page colour: invisible on the page, keeps the note legible
-     where it crosses a paper airplane folding beside the icon. */
+     if the flying paper airplane passes behind it. */
   text-shadow: 0 0 2px var(--bg), 0 0 5px var(--bg), 0 0 9px var(--bg);
 }
-.simple-social:focus-visible,
-.sidebar-icon-trigger:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.simple-social:focus:not(:focus-visible),
-.sidebar-icon-trigger:focus:not(:focus-visible) {
-  outline: none;
-}
-
 /* Cursor glow experiment (CursorGlow.tsx) — the glass pill's cursor light
-   lifted onto the page. The light itself is a dithered texture painted once
-   in JS (candle-like falloff, no banding); this layer only moves it. */
+   lifted onto the page. The light is a dithered canvas painted in JS
+   (candle-like falloff, no banding); this layer only moves it. */
 .cursor-glow {
   position: fixed;
   left: 0;
   top: 0;
   pointer-events: none;
   opacity: 0;
-  background-size: 100% 100%;
+  display: block;
   will-change: transform, opacity;
   transform: translate3d(-999px, -999px, 0);
   transition: opacity 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
