@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useProtoSettings } from './protoSettings'
 
@@ -15,7 +15,7 @@ export function RecordDock({ credit, align, size, idleCaption, onChange }: {
   /** Overrides the tuned dock size (the sidebar sizes its record to the rail). */
   size?: number
   /** Shown beside/under the switch while it's off (overrides the tuner's). */
-  idleCaption?: string
+  idleCaption?: ReactNode
   onChange?: (on: boolean) => void
 }) {
   const { record: s } = useProtoSettings()

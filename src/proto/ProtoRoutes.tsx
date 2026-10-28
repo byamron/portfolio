@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion'
 import { Route, Routes } from 'react-router-dom'
+import { MusicNotesSimple } from '@phosphor-icons/react'
 import './proto.css'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
@@ -94,7 +95,7 @@ function SimpleShell() {
         glidePill
         fitBottomReserve={STRIP_RESERVE}
         extraControl={({ extraWidth }) => (
-          <RecordDock credit="left" size={extraWidth / RECORD_ASPECT / 96} idleCaption="Smooth jazz" onChange={setPlaying} />
+          <RecordDock credit="left" size={extraWidth / RECORD_ASPECT / 96} idleCaption={<MusicNotesSimple size={15} weight="regular" style={{ display: 'block' }} />} onChange={setPlaying} />
         )}
       />
     </ProtoShell>

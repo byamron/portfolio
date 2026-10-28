@@ -460,8 +460,8 @@ export interface RecordToggleProps {
   /** Any CSS colour (var() is fine) for the record label and its rim. */
   labelColor?: string;
   labelEdge?: string;
-  /** Shown in the credit slot while idle (e.g. an invitation to press). */
-  idleCaption?: string;
+  /** Shown in the credit slot while idle (e.g. an invitation to press, or an icon). */
+  idleCaption?: React.ReactNode;
   creditFont?: string;
   titleColor?: string;
   artistColor?: string;

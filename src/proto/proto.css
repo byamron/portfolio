@@ -1,3 +1,7 @@
+/* Literata italic for the letterpress business card (ContactFx) — loaded
+   here so only the /new pages pay for it. */
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,300;1,400&display=swap');
+
 /* /new home — inline prose links.
    Grey prose, black names. An underline is the only "this goes somewhere"
    signal; it sits on the label so it never runs under a logo or the ↗. */
@@ -317,6 +321,15 @@
   border-radius: 1px;
   background: var(--term-accent);
 }
+.term-ln {
+  display: inline-block;
+  width: 12px;
+  margin-right: 10px;
+  text-align: right;
+  opacity: 0.3;
+}
+.term-kw { opacity: 0.55; }
+.term-str { color: var(--term-accent); }
 .term-caret {
   display: inline-block;
   width: 7px;
@@ -328,69 +341,88 @@
 }
 @keyframes term-blink { 50% { opacity: 0; } }
 
-/* LinkedIn business card: a paper object, the same in either mode. */
+/* LinkedIn business card — deliberately old-fashioned: cream card stock
+   (Paper's paper-texture shader), letterpress-style engraved serif, a thin
+   rule, a debossed monogram seal on the back. The same in either mode. */
 .biz-card {
   position: relative;
-  height: 128px;
+  height: 134px;
   transform-style: preserve-3d;
 }
 .biz-face {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  background: #fbfaf7;
-  color: #1f1d1b;
-  border-radius: 6px;
-  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(0, 0, 0, 0.12);
-  padding: 16px 18px;
+  background: #f2ecdf;
+  color: #2b2620;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(40, 30, 10, 0.08), 0 12px 26px -10px rgba(40, 30, 10, 0.4), 0 0 0 0.5px rgba(60, 50, 30, 0.2);
   display: flex;
   flex-direction: column;
-}
-.biz-back {
-  transform: rotateY(180deg);
   align-items: center;
   justify-content: center;
-  gap: 8px;
-}
-.biz-name {
   font-family: 'Literata', Georgia, serif;
+  /* Letterpress: ink pressed into the stock (light lip below, shade above). */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -0.5px 0 rgba(0, 0, 0, 0.1);
+}
+.biz-face > :not(.biz-stock) { position: relative; z-index: 1; }
+.biz-stock { position: absolute !important; inset: 0; z-index: 0; }
+.biz-back { transform: rotateY(180deg); gap: 10px; }
+.biz-name {
+  font-size: 13px;
   font-weight: 400;
-  font-size: 20px;
-  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-right: -0.2em; /* optically centre past the trailing tracking */
 }
 .biz-title {
-  font-family: 'Onest', sans-serif;
-  font-size: 12px;
-  color: #6e6a66;
-  margin-top: 2px;
-}
-.biz-org {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Onest', sans-serif;
-  font-size: 12px;
-  color: #3b3835;
-}
-.biz-org img {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12);
-}
-.biz-mono {
-  font-family: 'Literata', Georgia, serif;
+  font-style: italic;
   font-weight: 300;
-  font-size: 34px;
-  letter-spacing: 0.04em;
-  line-height: 1;
+  font-size: 12px;
+  color: #5b5348;
+  margin-top: 5px;
+}
+.biz-rule {
+  width: 26px;
+  height: 0.5px;
+  background: #8a7f6c;
+  margin: 12px 0 0;
+}
+.biz-foot {
+  position: absolute !important;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5b5348;
+}
+.biz-seal {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 0.75px solid #8a7f6c;
+  box-shadow: inset 0 0 0 3px #f2ecdf00, inset 0 0 0 3.6px rgba(138, 127, 108, 0.7);
+}
+.biz-seal span {
+  font-style: italic;
+  font-weight: 300;
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  color: rgba(43, 38, 32, 0.8);
 }
 .biz-url {
-  font-family: 'Onest', sans-serif;
-  font-size: 11px;
-  color: #6e6a66;
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5b5348;
 }
 
 /* Touch: grow small targets to ≥44px without changing how they look. */

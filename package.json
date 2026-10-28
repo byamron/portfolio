@@ -14,6 +14,7 @@
     "build:consensus": "cd apps/consensus-prototype && npm install && npx vite build --base=/consensus/ && rm -rf ../../public/consensus && cp -R dist ../../public/consensus"
   },
   "dependencies": {
+    "@paper-design/shaders-react": "^0.0.82",
     "@phosphor-icons/react": "^2.1.7",
     "@rive-app/react-canvas": "^4.27.2",
     "framer-motion": "^11.18.0",

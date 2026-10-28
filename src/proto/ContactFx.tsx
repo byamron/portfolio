@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
-import { buildContributionDays } from '@/utils/contributions'
+import { PaperTexture } from '@paper-design/shaders-react'
 
 // Contact-row easter eggs for /new/simple, in the X flock's spirit: an
 // immediate payoff, plus a little more if you stay. Each one changes the
@@ -64,25 +64,12 @@ function IconPopover({ show, children, width }: { show: boolean; children: React
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// GitHub: a little terminal that writes a command, runs it, shows the result.
+// GitHub: a little editor writes a blimp, runs it, and the blimp flies
+// across the top of the page (it finishes its trip even after you leave).
 // ─────────────────────────────────────────────────────────────────────────
 
-function useContributionSparkline(weeks = 20) {
-  return useMemo(() => {
-    const { days, total, year } = buildContributionDays()
-    const sums: number[] = []
-    for (let i = days.length; i > 0 && sums.length < weeks; i -= 7) {
-      sums.unshift(days.slice(Math.max(0, i - 7), i).reduce((n, d) => n + d.contributionCount, 0))
-    }
-    const max = Math.max(1, ...sums)
-    // 0 → a 1px baseline tick; otherwise 2–12px, so quiet weeks still show.
-    const spark = sums.map(n => (n === 0 ? 1 : 2 + Math.round((n / max) * 10)))
-    return { spark, total, year }
-  }, [weeks])
-}
-
 /** Types `text` at a fast clip, then calls onDone. Reduced motion: instant. */
-function Typed({ text, onDone, cps = 70 }: { text: string; onDone?: () => void; cps?: number }) {
+function Typed({ text, onDone, cps = 110 }: { text: string; onDone?: () => void; cps?: number }) {
   const reducedMotion = useReducedMotion()
   const [n, setN] = useState(reducedMotion ? text.length : 0)
   const done = useRef(onDone)
@@ -95,96 +82,273 @@ function Typed({ text, onDone, cps = 70 }: { text: string; onDone?: () => void; 
   return <>{text.slice(0, n)}</>
 }
 
-const termLine: React.CSSProperties = { whiteSpace: 'pre', lineHeight: 1.55 }
+const termLine: React.CSSProperties = { whiteSpace: 'pre', lineHeight: 1.6 }
 const prompt = <span style={{ opacity: 0.5 }}>$ </span>
 
-function Terminal({ stage }: { stage: 1 | 2 }) {
-  const { spark, total, year } = useContributionSparkline()
-  const [ran1, setRan1] = useState(false)
-  const [typed2, setTyped2] = useState(false)
-  const [ran2, setRan2] = useState(false)
-  // A beat of "running" between typing and output.
+// The program, one line at a time. Plain text is typed; colour comes from a
+// tiny highlighter so the half-typed line is coloured too.
+const CODE = [
+  "const blimp = new Blimp('github')",
+  "blimp.banner('Hi')",
+  "blimp.fly('across the top')",
+]
+function highlight(src: string) {
+  return src.split(/('[^']*'?)/).map((part, i) =>
+    part.startsWith("'")
+      ? <span key={i} className="term-str">{part}</span>
+      : part.split(/\b(const|new)\b/).map((w, j) =>
+          w === 'const' || w === 'new' ? <span key={`${i}${j}`} className="term-kw">{w}</span> : w),
+  )
+}
+
+function Terminal({ onRun }: { onRun: () => boolean }) {
+  const reducedMotion = useReducedMotion()
+  const [line, setLine] = useState(0) // code lines finished
+  const [typedRun, setTypedRun] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
   useEffect(() => {
-    if (!typed2) return
-    const t = setTimeout(() => setRan2(true), 160)
+    if (!typedRun) return
+    const t = setTimeout(() => {
+      if (reducedMotion) { setResult('blimp grounded (reduced motion)'); return }
+      setResult(onRun() ? 'blimp launched' : 'blimp already in the air')
+    }, 180)
     return () => clearTimeout(t)
-  }, [typed2])
+  }, [typedRun, onRun, reducedMotion])
   return (
     <div className="term-window">
       <div className="term-bar">
         <span /><span /><span />
-        <em>~/byamron</em>
+        <em>hi.js</em>
       </div>
       <div className="term-body">
-        <div style={termLine}>{prompt}<Typed text={`gh graph --year ${year}`} cps={90} onDone={() => setTimeout(() => setRan1(true), 120)} /></div>
-        {ran1 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.12 }} style={termLine}>
-            <span className="term-spark" aria-hidden="true">
-              {spark.map((h, i) => <i key={i} style={{ height: h }} />)}
-            </span>{'  '}{total.toLocaleString('en-US')} contributions
+        {CODE.map((src, i) => i <= line && (
+          <div key={i} style={termLine}>
+            <span className="term-ln">{i + 1}</span>
+            {i < line ? highlight(src) : <TypedHighlighted text={src} onDone={() => setLine(l => l + 1)} />}
+          </div>
+        ))}
+        {line >= CODE.length && (
+          <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={150} onDone={() => setTypedRun(true)} /></div>
+        )}
+        {result && (
+          <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
+            <span className="term-str">done</span>  {result}
           </motion.div>
         )}
-        {ran1 && stage === 2 && (
-          <div style={termLine}>{prompt}<Typed text={'git commit -m "say hi"'} onDone={() => setTyped2(true)} /></div>
-        )}
-        {ran2 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.12 }}>
-            <div style={termLine}><span style={{ opacity: 0.6 }}>[main 3f9c2a1]</span> say hi</div>
-            <div style={{ ...termLine, opacity: 0.6 }}> 1 file changed, 1 insertion(+)</div>
-          </motion.div>
-        )}
-        {(!ran1 || ran2) && <span className="term-caret" />}
+        {!result && <span className="term-caret" />}
       </div>
     </div>
   )
 }
 
+function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }) {
+  const reducedMotion = useReducedMotion()
+  const [n, setN] = useState(reducedMotion ? text.length : 0)
+  const done = useRef(onDone)
+  done.current = onDone
+  useEffect(() => {
+    if (n >= text.length) { const t = setTimeout(() => done.current(), 60); return () => clearTimeout(t) }
+    const t = setTimeout(() => setN(v => v + 4), 1000 / 30) // ~120 chars/s
+    return () => clearTimeout(t)
+  }, [n, text])
+  return <>{highlight(text.slice(0, n))}</>
+}
+
+// GitHub's mark (simple-icons, 24×24).
+const GITHUB_MARK = 'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'
+
+const BANNER_A = 'M 118 30 C 92 25, 58 35, 12 29 L 12 67 C 58 73, 92 63, 118 66 Z'
+const BANNER_B = 'M 118 30 C 92 35, 58 26, 12 33 L 12 71 C 58 64, 92 72, 118 66 Z'
+
+/** A small airship: shaded envelope with gores and seams, fins, gondola,
+ *  the GitHub mark, and a "Hi" banner on a tether. Lit from the top-left. */
+function BlimpArt() {
+  const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
+  return (
+    <svg width={380} height={104} viewBox="0 0 380 104" aria-hidden="true" style={{ overflow: 'visible' }}>
+      <defs>
+        <linearGradient id="blimp-body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style={{ stopColor: '#fdfcfa' }} />
+          <stop offset="0.45" style={tint(12, 85)} />
+          <stop offset="1" style={tint(14, 58)} />
+        </linearGradient>
+        <radialGradient id="blimp-rim" cx="0.58" cy="0.38" r="0.62">
+          <stop offset="0.6" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.2" />
+        </radialGradient>
+        <linearGradient id="blimp-fin" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style={tint(14, 72)} />
+          <stop offset="1" style={tint(16, 50)} />
+        </linearGradient>
+        <clipPath id="blimp-clip"><ellipse cx="265" cy="50" rx="105" ry="34" /></clipPath>
+        <filter id="blimp-soft"><feGaussianBlur stdDeviation="3" /></filter>
+      </defs>
+
+      {/* Tether + banner (trails behind; the cloth ripples) */}
+      <path d="M 118 48 Q 136 52 160 50" fill="none" stroke="rgba(60,50,40,0.45)" strokeWidth="1" />
+      <motion.path
+        initial={{ d: BANNER_A }}
+        animate={{ d: [BANNER_A, BANNER_B, BANNER_A] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75"
+      />
+      <text x="65" y="56" textAnchor="middle" fontFamily="Literata, Georgia, serif" fontSize="22" fill="#2b2620">Hi</text>
+
+      {/* Fins */}
+      <path d="M 182 26 L 160 4 L 148 6 L 166 32 Z" fill="url(#blimp-fin)" />
+      <path d="M 182 74 L 160 96 L 148 94 L 166 68 Z" fill="url(#blimp-fin)" />
+      <path d="M 176 50 L 150 43 L 148 57 Z" fill="url(#blimp-fin)" opacity="0.9" />
+
+      {/* Gondola */}
+      <rect x="246" y="80" width="46" height="13" rx="6.5" style={{ fill: 'hsl(var(--accent-hue) 10% 38%)' }} />
+      {[254, 263, 272, 281].map(x => <rect key={x} x={x} y="84" width="5" height="4" rx="1" fill="#f3efe6" opacity="0.8" />)}
+
+      {/* Envelope */}
+      <ellipse cx="265" cy="50" rx="105" ry="34" fill="url(#blimp-body)" />
+      <g clipPath="url(#blimp-clip)" fill="none" stroke="rgba(40,30,20,0.08)" strokeWidth="1">
+        <ellipse cx="265" cy="50" rx="62" ry="34" />
+        <ellipse cx="265" cy="50" rx="26" ry="34" />
+        <ellipse cx="265" cy="50" rx="105" ry="13" />
+      </g>
+      <ellipse cx="265" cy="50" rx="105" ry="34" fill="url(#blimp-rim)" />
+      <ellipse cx="248" cy="30" rx="66" ry="8" fill="#fff" opacity="0.55" filter="url(#blimp-soft)" />
+
+      {/* GitHub mark on the flank, slightly foreshortened by the curve */}
+      <g transform="translate(296 34) scale(1.3 1.25)" opacity="0.88">
+        <path d={GITHUB_MARK} fill="#24292f" />
+      </g>
+    </svg>
+  )
+}
+
+/** Crosses the top of the viewport at a constant cruise, bobbing gently. */
+function BlimpFlight({ onDone }: { onDone: () => void }) {
+  const vw = window.innerWidth
+  const distance = vw + 420
+  return createPortal(
+    <motion.div
+      aria-hidden="true"
+      initial={{ x: -400 }}
+      animate={{ x: vw + 20 }}
+      // Linear on purpose: an airship cruises at constant speed.
+      transition={{ duration: distance / 170, ease: 'linear' }}
+      onAnimationComplete={onDone}
+      style={{ position: 'fixed', top: 56, left: 0, zIndex: 9990, pointerEvents: 'none', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.12))' }}
+    >
+      <motion.div
+        animate={{ y: [0, -5, 0, 4, 0], rotate: [0, -1.2, 0, 1, 0] }}
+        transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <BlimpArt />
+      </motion.div>
+    </motion.div>,
+    document.body,
+  )
+}
+
 export function GitHubLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   const { stage, handlers } = useHoverStage()
+  const [flying, setFlying] = useState(false)
+  const flyingRef = useRef(false)
+  // Lives here (not in the popover), so the flight outlasts the hover.
+  const launch = useMemo(() => () => {
+    if (flyingRef.current) return false
+    flyingRef.current = true
+    setFlying(true)
+    return true
+  }, [])
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
         {icon}
       </a>
-      <IconPopover show={stage > 0} width={292}>
-        {stage > 0 && <Terminal stage={stage as 1 | 2} />}
+      <IconPopover show={stage > 0} width={300}>
+        {stage > 0 && <Terminal onRun={launch} />}
       </IconPopover>
+      {flying && <BlimpFlight onDone={() => { flyingRef.current = false; setFlying(false) }} />}
     </span>
   )
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// LinkedIn: a business card flips out; stay and it turns over.
+// LinkedIn: an old-fashioned business card — letterpress on card stock, a
+// counterpoint to the site's glass — that keeps turning in the hand.
 // ─────────────────────────────────────────────────────────────────────────
+
+const FLIP_FIRST_MS = 1100
+const FLIP_EVERY_MS = 2300
+
+/** Card stock: Paper's paper-texture shader, static, warm cream. */
+function CardStock() {
+  return (
+    <PaperTexture
+      className="biz-stock"
+      colorBack="#f2ecdf"
+      colorPaper="#f7f2e7"
+      colorShadow="#d3c9b3"
+      roughness={0.28}
+      roughnessSize={0.3}
+      fiber={0.3}
+      fiberSize={0.3}
+      folds={0}
+      crumples={0}
+      wrinkles={0}
+      drops={0.05}
+      seed={21}
+      angle={300}
+      fit="cover"
+      speed={0}
+    />
+  )
+}
 
 export function LinkedInLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   const { stage, handlers } = useHoverStage()
   const reducedMotion = useReducedMotion()
+  const [turns, setTurns] = useState(0)
+  useEffect(() => {
+    if (!stage || reducedMotion) { setTurns(0); return }
+    let iv: ReturnType<typeof setInterval>
+    const first = setTimeout(() => {
+      setTurns(t => t + 1)
+      iv = setInterval(() => setTurns(t => t + 1), FLIP_EVERY_MS)
+    }, FLIP_FIRST_MS)
+    return () => { clearTimeout(first); clearInterval(iv) }
+  }, [stage > 0, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
         {icon}
       </a>
-      <IconPopover show={stage > 0} width={224}>
-        <div style={{ perspective: 700 }}>
+      <IconPopover show={stage > 0} width={236}>
+        <div style={{ perspective: 800 }}>
+          {/* A slow drift so the card feels held, not pinned. */}
           <motion.div
-            className="biz-card"
-            initial={reducedMotion ? false : { rotateY: -70 }}
-            animate={{ rotateY: stage === 2 ? 180 : 0 }}
-            transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 22 }}
+            animate={reducedMotion ? {} : { y: [0, -3, 0], rotateZ: [-0.8, 0.6, -0.8] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <div className="biz-face">
-              <div className="biz-name">Ben Yamron</div>
-              <div className="biz-title">Product Designer</div>
-              <div className="biz-org">
-                <img src="/images/logo-consensus.svg" alt="" />
-                Consensus
+            <motion.div
+              className="biz-card"
+              initial={reducedMotion ? false : { rotateY: -70 }}
+              animate={{ rotateY: turns * 180 }}
+              transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 16 }}
+            >
+              <div className="biz-face">
+                <CardStock />
+                <div className="biz-name">Ben Yamron</div>
+                <div className="biz-title">Product Designer</div>
+                <div className="biz-rule" />
+                <div className="biz-foot">
+                  <span>Consensus</span>
+                  <span>San Francisco</span>
+                </div>
               </div>
-            </div>
-            <div className="biz-face biz-back">
-              <div className="biz-mono">BY</div>
-              <div className="biz-url">linkedin.com/in/benyamron</div>
-            </div>
+              <div className="biz-face biz-back">
+                <CardStock />
+                <div className="biz-seal"><span>BY</span></div>
+                <div className="biz-url">linkedin.com/in/benyamron</div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </IconPopover>
@@ -198,8 +362,8 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
 
 const EMAIL = 'ben.yamron@icloud.com'
 const COPIED_MS = 1800
-// When the check lands: the plane has folded and left the slot.
-const CHECK_AT_MS = 330
+// After a hover flight: the plane has folded and left; the envelope returns.
+const ENVELOPE_BACK_MS = 520
 const ICON_SWAP = { type: 'spring', stiffness: 700, damping: 26 } as const
 
 async function copyText(text: string): Promise<boolean> {
@@ -284,13 +448,17 @@ function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
   )
 }
 
-/** Email: copies the address (no mail client, address never shown). */
+/** Email. Hover: the envelope turns to paper, folds into a plane and flies
+ *  off, then a fresh envelope springs back into the slot. Click: copies the
+ *  address (never shown) — check + "Email address copied". */
 export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const reducedMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
   const [plane, setPlane] = useState<DOMRect | null>(null)
+  const [slotEmpty, setSlotEmpty] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const btn = useRef<HTMLButtonElement>(null)
+  const canFly = useMemo(finePointer, [])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
   const later = (ms: number, fn: () => void) => timers.current.push(setTimeout(fn, ms))
 
@@ -301,7 +469,16 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         animate: { opacity: 1, scale: 1, rotate: 0 },
         exit: { opacity: 0, scale: 0.4, rotate: 30 },
       }
-  const flying = !!plane
+
+  const fly = () => {
+    if (!canFly || reducedMotion || plane || copied) return
+    const glyph = btn.current?.querySelector('svg')
+    if (!glyph) return
+    setPlane(glyph.getBoundingClientRect())
+    setSlotEmpty(true)
+    // The plane has folded and left the slot by now; a new envelope arrives.
+    later(ENVELOPE_BACK_MS, () => setSlotEmpty(false))
+  }
 
   return (
     <span style={{ position: 'relative', display: 'flex' }}>
@@ -311,26 +488,28 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         data-social
         className="simple-social"
         aria-label="Copy email address"
+        onPointerEnter={e => { if (e.pointerType !== 'touch') fly() }}
         onClick={async () => {
           // Couldn't copy: fall back to what an envelope usually means.
           if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
           timers.current.forEach(clearTimeout)
           timers.current = []
+          setSlotEmpty(false)
+          // Off for a frame on a repeat click, so the note replays and the
+          // status region re-announces.
           setCopied(false)
-          const icon = btn.current?.querySelector('svg')
-          if (!reducedMotion && icon && !plane) setPlane(icon.getBoundingClientRect())
-          later(reducedMotion ? 0 : CHECK_AT_MS, () => setCopied(true))
-          later((reducedMotion ? 0 : CHECK_AT_MS) + COPIED_MS, () => setCopied(false))
+          requestAnimationFrame(() => setCopied(true))
+          later(COPIED_MS, () => setCopied(false))
         }}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
-            key={copied ? 'check' : flying ? 'empty' : 'mail'}
+            key={copied ? 'check' : slotEmpty ? 'empty' : 'mail'}
             {...swap}
             transition={ICON_SWAP}
             style={{ display: 'flex', width: 24, height: 24 }}
           >
-            {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : flying ? null : icon}
+            {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : slotEmpty ? null : icon}
           </motion.span>
         </AnimatePresence>
       </button>

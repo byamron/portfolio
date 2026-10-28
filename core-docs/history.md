@@ -2,6 +2,13 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-28 — `/new/simple` round 4: plane on hover, legacy business card, GitHub blimp
+
+- **Email:** the paper-plane flight moved to hover (fine pointers; the envelope springs back into the slot at 520ms); click copies only (check + note).
+- **LinkedIn card:** deliberately old-fashioned as a counterpoint to the glass — cream stock from Paper's `PaperTexture` shader (`@paper-design/shaders-react` 0.0.82, static, low roughness/fiber/drops after a first pass read too rough), letterpress text-shadow, tracked uppercase name, Literata *italic* title (italic loaded via `@import` in proto.css so only /new pays), hairline rule, CONSENSUS · SAN FRANCISCO foot, debossed double-ring "BY" seal on the back. Keeps turning while hovered (first turn 1.1s, then every 2.3s, soft spring) over a slow drift.
+- **GitHub:** the terminal now writes `hi.js` (3 highlighted lines: `new Blimp('github')`, `.banner('Hi')`, `.fly('across the top')`), runs `node hi.js`, prints "done  blimp launched", and an SVG airship crosses the top of the viewport at a constant 170px/s (linear on purpose — cruising) with a gentle bob: vertical-gradient envelope + rim shade + soft specular + gore/seam lines, fins, gondola windows, GitHub mark, tethered "Hi" banner whose cloth ripples (path morph). The flight lives in `GitHubLink`, so it finishes after the hover ends; one at a time; reduced motion = "blimp grounded". (Plex Mono lacks ✓/↗/❯ — kept to ASCII.)
+- **Record idle caption** is now a music-note icon (`MusicNotesSimple`); `idleCaption` accepts a node.
+
 ## 2026-10-28 — `/new/simple` round 3: decisions, text presets, contact micro-interactions, mobile
 
 **Branch:** `simplified-home-prototype`, **rebased onto `origin/main`** (next-update has been stale since 2026-08-23; main is the live base). Partial-clone fetch hit missing objects once; a clean retry worked. App.tsx conflict (both sides added a standalone route — kept both); every branch-side contribution-data commit resolved to main's newer data. Backup ref: `backup/simplified-home-prototype-pre-rebase`.
