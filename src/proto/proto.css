@@ -1,7 +1,3 @@
-/* Literata italic for the letterpress business card (ContactFx) — loaded
-   here so only the /new pages pay for it. */
-@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,300;1,400&display=swap');
-
 /* /new home — inline prose links.
    Grey prose, black names. An underline is the only "this goes somewhere"
    signal; it sits on the label so it never runs under a logo or the ↗. */
@@ -341,89 +337,81 @@
 }
 @keyframes term-blink { 50% { opacity: 0; } }
 
-/* LinkedIn business card — deliberately old-fashioned: cream card stock
-   (Paper's paper-texture shader), letterpress-style engraved serif, a thin
-   rule, a debossed monogram seal on the back. The same in either mode. */
+/* LinkedIn business card — Ben's Consensus-style template: cream stock
+   (Paper's paper-texture shader, barely there), a light-blue ruled grid,
+   the name in bold blue capitals (Onest), details in mono capitals (Plex
+   Mono), the Consensus mark where the QR code was. Same in either mode. */
 .biz-card {
   position: relative;
-  height: 134px;
+  height: 150px;
   transform-style: preserve-3d;
 }
 .biz-face {
+  --biz-rule: #b9d3e6;
+  --biz-blue: #4f7fbe;
+  --biz-ink: #4a4744;
   position: absolute;
   inset: 0;
   overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  background: #f2ecdf;
-  color: #2b2620;
-  border-radius: 3px;
-  box-shadow: 0 1px 1px rgba(40, 30, 10, 0.08), 0 12px 26px -10px rgba(40, 30, 10, 0.4), 0 0 0 0.5px rgba(60, 50, 30, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Literata', Georgia, serif;
-  /* Letterpress: ink pressed into the stock (light lip below, shade above). */
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -0.5px 0 rgba(0, 0, 0, 0.1);
+  background: #fbf8f1;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(40, 30, 10, 0.08), 0 12px 26px -10px rgba(40, 30, 10, 0.38), 0 0 0 0.5px rgba(60, 50, 30, 0.18);
+  padding: 10px;
 }
-.biz-face > :not(.biz-stock) { position: relative; z-index: 1; }
 .biz-stock { position: absolute !important; inset: 0; z-index: 0; }
-.biz-back { transform: rotateY(180deg); gap: 10px; }
-.biz-name {
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  margin-right: -0.2em; /* optically centre past the trailing tracking */
+.biz-back { transform: rotateY(180deg); }
+.biz-grid {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 46px;
+  grid-template-rows: 1fr 23px 23px;
+  gap: 4px;
 }
-.biz-title {
-  font-style: italic;
-  font-weight: 300;
-  font-size: 12px;
-  color: #5b5348;
-  margin-top: 5px;
-}
-.biz-rule {
-  width: 26px;
-  height: 0.5px;
-  background: #8a7f6c;
-  margin: 12px 0 0;
-}
-.biz-foot {
-  position: absolute !important;
-  left: 16px;
-  right: 16px;
-  bottom: 12px;
+.biz-grid > * { border: 0.75px solid var(--biz-rule); }
+.biz-name-cell {
+  grid-column: 1 / -1;
   display: flex;
-  justify-content: space-between;
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
+  align-items: center;
+  padding: 0 10px;
+  font-family: 'Onest', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #5b5348;
+  color: var(--biz-blue);
 }
-.biz-seal {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
+.biz-row {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--biz-ink);
+  white-space: nowrap;
+}
+.biz-logo-cell {
+  grid-column: 2;
+  grid-row: 2 / span 2;
   display: grid;
   place-items: center;
-  border: 0.75px solid #8a7f6c;
-  box-shadow: inset 0 0 0 3px #f2ecdf00, inset 0 0 0 3.6px rgba(138, 127, 108, 0.7);
 }
-.biz-seal span {
-  font-style: italic;
-  font-weight: 300;
-  font-size: 19px;
-  letter-spacing: 0.06em;
-  color: rgba(43, 38, 32, 0.8);
-}
-.biz-url {
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #5b5348;
-}
+.biz-logo-cell img { width: 30px; height: 30px; border-radius: 7px; }
+/* Back: the mark large, the profile URL beneath. */
+.biz-grid-back { grid-template-columns: 1fr; grid-template-rows: 1fr 23px; }
+.biz-grid-back .biz-logo-cell { grid-column: 1; grid-row: 1; }
+.biz-grid-back .biz-logo-cell img { width: 52px; height: 52px; border-radius: 12px; }
+.biz-grid-back .biz-row { justify-content: center; }
+/* Sentence case (DialKit): the copy as written, a touch less tracking. */
+.biz-card--sentence .biz-name-cell { text-transform: none; letter-spacing: -0.005em; }
+.biz-card--sentence .biz-row { text-transform: none; letter-spacing: 0.02em; font-size: 9.5px; }
 
 /* Touch: grow small targets to ≥44px without changing how they look. */
 @media (pointer: coarse) {

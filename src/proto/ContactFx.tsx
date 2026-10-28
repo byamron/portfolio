@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
 import { PaperTexture } from '@paper-design/shaders-react'
+import { useProtoSettings } from './protoSettings'
 
 // Contact-row easter eggs for /new/simple, in the X flock's spirit: an
 // immediate payoff, plus a little more if you stay. Each one changes the
@@ -128,7 +129,7 @@ function Terminal({ onRun }: { onRun: () => boolean }) {
           </div>
         ))}
         {line >= CODE.length && (
-          <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={150} onDone={() => setTypedRun(true)} /></div>
+          <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={45} onDone={() => setTypedRun(true)} /></div>
         )}
         {result && (
           <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
@@ -147,8 +148,10 @@ function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }
   const done = useRef(onDone)
   done.current = onDone
   useEffect(() => {
-    if (n >= text.length) { const t = setTimeout(() => done.current(), 60); return () => clearTimeout(t) }
-    const t = setTimeout(() => setN(v => v + 4), 1000 / 30) // ~120 chars/s
+    if (n >= text.length) { const t = setTimeout(() => done.current(), 140); return () => clearTimeout(t) }
+    // ~42 chars/s with a little human unevenness.
+    const t = setTimeout(() => setN(v => v + 1), 1000 / 42 * (0.6 + Math.random() * 0.8))
+    return () => clearTimeout(t)
     return () => clearTimeout(t)
   }, [n, text])
   return <>{highlight(text.slice(0, n))}</>
@@ -160,32 +163,36 @@ const GITHUB_MARK = 'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.
 const BANNER_A = 'M 118 30 C 92 25, 58 35, 12 29 L 12 67 C 58 73, 92 63, 118 66 Z'
 const BANNER_B = 'M 118 30 C 92 35, 58 26, 12 33 L 12 71 C 58 64, 92 72, 118 66 Z'
 
-/** A small airship: shaded envelope with gores and seams, fins, gondola,
- *  the GitHub mark, and a "Hi" banner on a tether. Lit from the top-left. */
+/** A small, chubby airship: shaded envelope with gores and seams, fins,
+ *  gondola, the GitHub mark centred on its flank, and a "Hi" banner on a
+ *  tether. Lit from the top-left. */
+const BLIMP = { cx: 214, cy: 50, rx: 70, ry: 33 }
 function BlimpArt() {
   const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
+  const { cx, cy, rx, ry } = BLIMP
+  const tail = cx - rx
   return (
-    <svg width={380} height={104} viewBox="0 0 380 104" aria-hidden="true" style={{ overflow: 'visible' }}>
+    <svg width={300} height={104} viewBox="0 0 300 104" aria-hidden="true" style={{ overflow: 'visible' }}>
       <defs>
         <linearGradient id="blimp-body" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" style={{ stopColor: '#fdfcfa' }} />
           <stop offset="0.45" style={tint(12, 85)} />
           <stop offset="1" style={tint(14, 58)} />
         </linearGradient>
-        <radialGradient id="blimp-rim" cx="0.58" cy="0.38" r="0.62">
-          <stop offset="0.6" stopColor="#000" stopOpacity="0" />
+        <radialGradient id="blimp-rim" cx="0.52" cy="0.38" r="0.6">
+          <stop offset="0.62" stopColor="#000" stopOpacity="0" />
           <stop offset="1" stopColor="#000" stopOpacity="0.2" />
         </radialGradient>
         <linearGradient id="blimp-fin" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" style={tint(14, 72)} />
           <stop offset="1" style={tint(16, 50)} />
         </linearGradient>
-        <clipPath id="blimp-clip"><ellipse cx="265" cy="50" rx="105" ry="34" /></clipPath>
+        <clipPath id="blimp-clip"><ellipse cx={cx} cy={cy} rx={rx} ry={ry} /></clipPath>
         <filter id="blimp-soft"><feGaussianBlur stdDeviation="3" /></filter>
       </defs>
 
       {/* Tether + banner (trails behind; the cloth ripples) */}
-      <path d="M 118 48 Q 136 52 160 50" fill="none" stroke="rgba(60,50,40,0.45)" strokeWidth="1" />
+      <path d={`M 118 48 Q 128 52 ${tail + 4} 50`} fill="none" stroke="rgba(60,50,40,0.45)" strokeWidth="1" />
       <motion.path
         initial={{ d: BANNER_A }}
         animate={{ d: [BANNER_A, BANNER_B, BANNER_A] }}
@@ -194,44 +201,47 @@ function BlimpArt() {
       />
       <text x="65" y="56" textAnchor="middle" fontFamily="Literata, Georgia, serif" fontSize="22" fill="#2b2620">Hi</text>
 
-      {/* Fins */}
-      <path d="M 182 26 L 160 4 L 148 6 L 166 32 Z" fill="url(#blimp-fin)" />
-      <path d="M 182 74 L 160 96 L 148 94 L 166 68 Z" fill="url(#blimp-fin)" />
-      <path d="M 176 50 L 150 43 L 148 57 Z" fill="url(#blimp-fin)" opacity="0.9" />
+      {/* Fins: short and stubby to match the round body */}
+      <path d={`M ${tail + 22} 27 L ${tail + 4} 10 L ${tail - 6} 12 L ${tail + 8} 32 Z`} fill="url(#blimp-fin)" />
+      <path d={`M ${tail + 22} 73 L ${tail + 4} 90 L ${tail - 6} 88 L ${tail + 8} 68 Z`} fill="url(#blimp-fin)" />
+      <path d={`M ${tail + 16} 50 L ${tail - 6} 44 L ${tail - 7} 56 Z`} fill="url(#blimp-fin)" opacity="0.9" />
 
-      {/* Gondola */}
-      <rect x="246" y="80" width="46" height="13" rx="6.5" style={{ fill: 'hsl(var(--accent-hue) 10% 38%)' }} />
-      {[254, 263, 272, 281].map(x => <rect key={x} x={x} y="84" width="5" height="4" rx="1" fill="#f3efe6" opacity="0.8" />)}
+      {/* Gondola, centred under the body */}
+      <rect x={cx - 20} y={cy + ry - 4} width="40" height="12" rx="6" style={{ fill: 'hsl(var(--accent-hue) 10% 38%)' }} />
+      {[-12, -4, 4].map(dx => <rect key={dx} x={cx + dx} y={cy + ry} width="5" height="4" rx="1" fill="#f3efe6" opacity="0.8" />)}
 
       {/* Envelope */}
-      <ellipse cx="265" cy="50" rx="105" ry="34" fill="url(#blimp-body)" />
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-body)" />
       <g clipPath="url(#blimp-clip)" fill="none" stroke="rgba(40,30,20,0.08)" strokeWidth="1">
-        <ellipse cx="265" cy="50" rx="62" ry="34" />
-        <ellipse cx="265" cy="50" rx="26" ry="34" />
-        <ellipse cx="265" cy="50" rx="105" ry="13" />
+        <ellipse cx={cx} cy={cy} rx={rx * 0.6} ry={ry} />
+        <ellipse cx={cx} cy={cy} rx={rx * 0.25} ry={ry} />
+        <ellipse cx={cx} cy={cy} rx={rx} ry={ry * 0.38} />
       </g>
-      <ellipse cx="265" cy="50" rx="105" ry="34" fill="url(#blimp-rim)" />
-      <ellipse cx="248" cy="30" rx="66" ry="8" fill="#fff" opacity="0.55" filter="url(#blimp-soft)" />
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-rim)" />
+      <ellipse cx={cx - 10} cy={cy - 20} rx={rx * 0.62} ry="7" fill="#fff" opacity="0.55" filter="url(#blimp-soft)" />
 
-      {/* GitHub mark on the flank, slightly foreshortened by the curve */}
-      <g transform="translate(296 34) scale(1.3 1.25)" opacity="0.88">
+      {/* GitHub mark, centred on the flank */}
+      <g transform={`translate(${cx - 16} ${cy - 17}) scale(1.34)`} opacity="0.88">
         <path d={GITHUB_MARK} fill="#24292f" />
       </g>
     </svg>
   )
 }
 
+// px/s — an unhurried float (≈18s across a 1440px window).
+const BLIMP_SPEED = 95
+
 /** Crosses the top of the viewport at a constant cruise, bobbing gently. */
 function BlimpFlight({ onDone }: { onDone: () => void }) {
   const vw = window.innerWidth
-  const distance = vw + 420
+  const distance = vw + 340
   return createPortal(
     <motion.div
       aria-hidden="true"
-      initial={{ x: -400 }}
+      initial={{ x: -320 }}
       animate={{ x: vw + 20 }}
       // Linear on purpose: an airship cruises at constant speed.
-      transition={{ duration: distance / 170, ease: 'linear' }}
+      transition={{ duration: distance / BLIMP_SPEED, ease: 'linear' }}
       onAnimationComplete={onDone}
       style={{ position: 'fixed', top: 56, left: 0, zIndex: 9990, pointerEvents: 'none', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.12))' }}
     >
@@ -271,29 +281,31 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// LinkedIn: an old-fashioned business card — letterpress on card stock, a
-// counterpoint to the site's glass — that keeps turning in the hand.
+// LinkedIn: a printed business card (Ben's Consensus-style template — cream
+// stock, light-blue ruled grid, bold blue name, mono details), turning over
+// and over in the hand while you hover.
 // ─────────────────────────────────────────────────────────────────────────
 
-const FLIP_FIRST_MS = 1100
-const FLIP_EVERY_MS = 2300
+// Long enough between turns to read each side.
+const FLIP_FIRST_MS = 1800
+const FLIP_EVERY_MS = 4000
 
-/** Card stock: Paper's paper-texture shader, static, warm cream. */
+/** Card stock: Paper's paper-texture shader, static and barely there. */
 function CardStock() {
   return (
     <PaperTexture
       className="biz-stock"
-      colorBack="#f2ecdf"
-      colorPaper="#f7f2e7"
-      colorShadow="#d3c9b3"
-      roughness={0.28}
-      roughnessSize={0.3}
-      fiber={0.3}
-      fiberSize={0.3}
+      colorBack="#fbf8f1"
+      colorPaper="#fdfbf6"
+      colorShadow="#e9e2d2"
+      roughness={0.12}
+      roughnessSize={0.25}
+      fiber={0.14}
+      fiberSize={0.25}
       folds={0}
       crumples={0}
       wrinkles={0}
-      drops={0.05}
+      drops={0}
       seed={21}
       angle={300}
       fit="cover"
@@ -305,6 +317,7 @@ function CardStock() {
 export function LinkedInLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   const { stage, handlers } = useHoverStage()
   const reducedMotion = useReducedMotion()
+  const { cardCase } = useProtoSettings()
   const [turns, setTurns] = useState(0)
   useEffect(() => {
     if (!stage || reducedMotion) { setTurns(0); return }
@@ -320,7 +333,7 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
         {icon}
       </a>
-      <IconPopover show={stage > 0} width={236}>
+      <IconPopover show={stage > 0} width={248}>
         <div style={{ perspective: 800 }}>
           {/* A slow drift so the card feels held, not pinned. */}
           <motion.div
@@ -328,25 +341,26 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
             transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
           >
             <motion.div
-              className="biz-card"
+              className={`biz-card biz-card--${cardCase}`}
               initial={reducedMotion ? false : { rotateY: -70 }}
               animate={{ rotateY: turns * 180 }}
               transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 16 }}
             >
               <div className="biz-face">
                 <CardStock />
-                <div className="biz-name">Ben Yamron</div>
-                <div className="biz-title">Product Designer</div>
-                <div className="biz-rule" />
-                <div className="biz-foot">
-                  <span>Consensus</span>
-                  <span>San Francisco</span>
+                <div className="biz-grid">
+                  <div className="biz-name-cell">Ben<br />Yamron</div>
+                  <div className="biz-row">Product designer</div>
+                  <div className="biz-row">linkedin.com/in/benyamron</div>
+                  <div className="biz-logo-cell"><img src="/images/logo-consensus.svg" alt="" /></div>
                 </div>
               </div>
               <div className="biz-face biz-back">
                 <CardStock />
-                <div className="biz-seal"><span>BY</span></div>
-                <div className="biz-url">linkedin.com/in/benyamron</div>
+                <div className="biz-grid biz-grid-back">
+                  <div className="biz-logo-cell"><img src="/images/logo-consensus.svg" alt="" /></div>
+                  <div className="biz-row">Consensus</div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -382,70 +396,263 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-// Two 4-point shapes per half so the morph is point-for-point: the sheet's
-// top/bottom halves become the plane's wing and keel (viewBox centred on 0).
-const SHEET_TOP = 'M -10 -7 L 10 -7 L 10 0 L -10 0 Z'
-const SHEET_BOTTOM = 'M -10 0 L 10 0 L 10 7 L -10 7 Z'
-const WING = 'M -11 -6 L 12 0 L 12 0 L -4 1 Z'
-const KEEL = 'M -4 1 L 12 0 L -7 7 L -7 5 Z'
+// ── Paper airplane: a real dart fold, then a physical glide ─────────────
+//
+// Fold (classic dart), drawn top-down on a portrait sheet, nose up, in sheet
+// units (x ±17, y ±22; crease at x = 0). Every fold moves its free corner
+// straight across the hinge — the true top-down projection of paper turning
+// over a fold line:
+//   1. crease lengthwise (and open)          2. top corners to the crease
+//   3. new slanted edges to the crease       4. fold in half along the crease
+//   5. turn to the side; each wing down so its edge meets the crease
+//   6. open the wings → launch
+// Then a point-mass glider (lift ∝ v², drag ∝ v², gravity) takes over — the
+// phugoid it produces is the swoop-climb-stall-dip of a real paper plane.
 
-function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
-  const cx = from.left + from.width / 2
-  const cy = from.top + from.height / 2
-  const flyX = window.innerWidth - cx + 60
-  const flyY = -(cy + 60)
-  const fold = { duration: 0.22, delay: 0.1, ease: EASE_OUT }
+const PAPER = '#fffdf9'
+const PAPER_SHADE = '#efebe3' // a fold's top layer, a touch shaded
+const EDGE = 'rgba(40,30,20,0.32)'
+
+// Envelope-sized sheet halves (so it can grow out of the icon), then the
+// sheet, then the shapes after each fold. Left half; right half mirrors x.
+const L_ENVELOPE = 'M 0 -7 L -10 -7 L -10 7 L 0 7 Z'
+const L_SHEET = 'M 0 -22 L -17 -22 L -17 22 L 0 22 Z'
+const L_AFTER_CORNER = 'M 0 -22 L -17 -5 L -17 22 L 0 22 Z'
+const L_AFTER_EDGE = 'M 0 -22 L -17 19 L -17 22 L 0 22 Z'
+// Corner flap: hinge (0,-22)–(-17,-5); free corner (-17,-22) → (0,-5).
+const L_CORNER_OPEN = 'M 0 -22 L -17 -22 L -17 -5 Z'
+const L_CORNER_SHUT = 'M 0 -22 L 0 -5 L -17 -5 Z'
+// Edge flap: hinge from the nose at the 112.5° bisector to (-17,19); the
+// slanted edge's end (-17,-5) → (0, 2) on the crease.
+const L_EDGE_OPEN = 'M 0 -22 L -17 -5 L -17 19 Z'
+const L_EDGE_SHUT = 'M 0 -22 L 0 2 L -17 19 Z'
+// After folding in half (right onto left): keel (crease side) + wing, split
+// at x = -8.5; the wing folds down over that line so its edge meets the crease.
+const L_KEEL = 'M 0 -22 L -8.5 -1.5 L -8.5 22 L 0 22 Z'
+const L_WING_UP = 'M -8.5 -1.5 L -17 19 L -17 22 L -8.5 22 Z'
+const L_WING_DOWN = 'M -8.5 -1.5 L 0 19 L 0 22 L -8.5 22 Z'
+const mirror = (d: string) => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => `${-parseFloat(x)} ${y}`)
+
+// Flying sprite (3/4 view, nose right): wing over keel.
+const FLY_WING = 'M -13 -7 L 14 0 L 14 0 L -5 1.5 Z'
+const FLY_KEEL = 'M -5 1.5 L 14 0 L -8 8 L -8 6 Z'
+
+const FOLD_SCALE = 1.25 // px per sheet unit while folding (sheet ≈ 55px tall)
+// The folded dart is the sheet's full height long (44 × FOLD_SCALE ≈ 55px);
+// the flying sprite's nose-to-tail (−13…14) is scaled to match.
+const FLY_SCALE = (44 * FOLD_SCALE) / 27
+
+type Pt = { x: number; y: number }
+
+/** The fold, beside the icon. Resolves with where the plane ends up. */
+function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => void }) {
+  const stage = useAnimationControls()
+  const leftHalf = useAnimationControls()
+  const rightHalf = useAnimationControls()
+  const baseL = useAnimationControls(), baseR = useAnimationControls()
+  const cornerL = useAnimationControls(), cornerR = useAnimationControls()
+  const edgeL = useAnimationControls(), edgeR = useAnimationControls()
+  const keel = useAnimationControls(), wing = useAnimationControls()
+  const crease = useAnimationControls()
+  const flap = useAnimationControls()
+  const [side, setSide] = useState(false) // swapped to the keel/wing model
+  const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 }
+  // Fold in the empty space to the right of the icon row.
+  const at = { x: start.x + 78, y: start.y - 4 }
+
+  useEffect(() => {
+    let alive = true
+    // Sine in-out: each fold eases in from rest and settles, like a hand.
+    const SMOOTH = [0.37, 0, 0.63, 1] as const
+    const step = { duration: 0.46, ease: SMOOTH }
+    const settle = () => new Promise(r => setTimeout(r, 90))
+    const flip = (c: ReturnType<typeof useAnimationControls>, d: string, delay = 0) =>
+      c.start({ d, fill: [PAPER, PAPER_SHADE, PAPER_SHADE], transition: { ...step, delay } })
+    ;(async () => {
+      // 0 · The envelope lifts out of the slot, opening into a flat sheet.
+      flap.start({ opacity: 0, transition: { duration: 0.18 } })
+      baseL.start({ d: L_SHEET, transition: { duration: 0.42, ease: EASE_OUT } })
+      baseR.start({ d: mirror(L_SHEET), transition: { duration: 0.42, ease: EASE_OUT } })
+      await stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: { duration: 0.5, ease: EASE_OUT } })
+      if (!alive) return
+      // 1 · Crease lengthwise: a quick half-fold and back, leaving the line.
+      crease.start({ pathLength: 1, opacity: 1, transition: { duration: 0.3 } })
+      await rightHalf.start({ scaleX: [1, 0.15, 1], transition: { duration: 0.6, ease: SMOOTH } })
+      await settle()
+      if (!alive) return
+      // 2 · Top corners to the crease (left, then right).
+      cornerL.set({ opacity: 1 }); cornerR.set({ opacity: 1 })
+      baseL.start({ d: L_AFTER_CORNER, transition: step })
+      flip(cornerL, L_CORNER_SHUT)
+      baseR.start({ d: mirror(L_AFTER_CORNER), transition: { ...step, delay: 0.2 } })
+      await flip(cornerR, mirror(L_CORNER_SHUT), 0.2)
+      await settle()
+      if (!alive) return
+      // 3 · The new slanted edges to the crease.
+      cornerL.set({ opacity: 0 }); cornerR.set({ opacity: 0 })
+      edgeL.set({ opacity: 1 }); edgeR.set({ opacity: 1 })
+      baseL.start({ d: L_AFTER_EDGE, transition: step })
+      flip(edgeL, L_EDGE_SHUT)
+      baseR.start({ d: mirror(L_AFTER_EDGE), transition: { ...step, delay: 0.2 } })
+      await flip(edgeR, mirror(L_EDGE_SHUT), 0.2)
+      await settle()
+      if (!alive) return
+      // 4 · Fold in half: the right half turns over onto the left.
+      await rightHalf.start({ scaleX: -1, transition: { duration: 0.55, ease: SMOOTH } })
+      await settle()
+      if (!alive) return
+      // 5 · Turn to the side (nose right), then the wing comes down.
+      setSide(true)
+      await stage.start({ rotate: 90, transition: { duration: 0.55, ease: SMOOTH } })
+      if (!alive) return
+      await wing.start({ d: L_WING_DOWN, fill: [PAPER, PAPER_SHADE, PAPER_SHADE], transition: step })
+      if (!alive) return
+      // 6 · Open the wings, a breath, and away.
+      keel.start({ opacity: 0, transition: { duration: 0.16 } })
+      await wing.start({ opacity: 0, transition: { duration: 0.16 } })
+      if (alive) onFolded(at)
+    })()
+    return () => { alive = false }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const paper = { stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
   return createPortal(
     <motion.svg
       aria-hidden="true"
-      width={48} height={48} viewBox="-24 -24 48 48"
+      width={80} height={80} viewBox="-40 -40 80 80"
+      initial={{ x: 0, y: 0, scale: 1, rotate: 0 }}
+      animate={stage}
       style={{
-        position: 'fixed', left: cx - 24, top: cy - 24, zIndex: 9999, pointerEvents: 'none', overflow: 'visible',
-        color: 'var(--text-dark)', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.22))',
+        position: 'fixed', left: start.x - 40, top: start.y - 40, zIndex: 9999, pointerEvents: 'none',
+        overflow: 'visible', color: 'var(--text-dark)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.18))',
       }}
-      initial={{ x: 0, y: 0, rotate: 0, scale: 1 }}
-      // Lift as paper, fold, a small dip on launch, then away up-right.
-      animate={{
-        x: [0, 0, -4, flyX * 0.35, flyX],
-        y: [0, -2, 3, flyY * 0.25, flyY],
-        rotate: [0, 0, 6, -14, -22],
-        scale: [1, 1.2, 1.25, 1.35, 1.05],
-      }}
-      transition={{ duration: 1.05, times: [0, 0.1, 0.33, 0.6, 1], ease: 'easeIn' }}
-      onAnimationComplete={onDone}
     >
       <defs>
-        {/* Paper fibre: low-contrast fractal noise multiplied into the white. */}
         <filter id="paper-grain" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n" />
-          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.09 0" result="grain" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="7" result="n" />
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.04  0 0 0 0 0.02  0 0 0 0.17 0" result="grain" />
           <feComposite in="grain" in2="SourceGraphic" operator="in" result="g2" />
           <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="g2" /></feMerge>
         </filter>
       </defs>
       <g filter="url(#paper-grain)">
-        <motion.path
-          initial={{ d: SHEET_TOP }}
-          animate={{ d: WING }}
-          transition={fold}
-          fill="#fffdf9" stroke="rgba(0,0,0,0.3)" strokeWidth={0.6} strokeLinejoin="round"
-        />
-        <motion.path
-          initial={{ d: SHEET_BOTTOM }}
-          animate={{ d: KEEL }}
-          transition={fold}
-          fill="#e9e6e1" stroke="rgba(0,0,0,0.3)" strokeWidth={0.6} strokeLinejoin="round"
-        />
-        {/* The envelope's flap, fading as it becomes plain paper. */}
-        <motion.path
-          d="M -10 -7 L 0 0.5 L 10 -7"
-          fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinejoin="round"
-          initial={{ opacity: 0.8 }} animate={{ opacity: 0 }} transition={{ duration: 0.1 }}
-        />
+        {!side ? (
+          <>
+            <motion.g animate={leftHalf}>
+              <motion.path initial={{ d: L_ENVELOPE }} animate={baseL} fill={PAPER} {...paper} />
+              <motion.path initial={{ d: L_CORNER_OPEN, opacity: 0 }} animate={cornerL} fill={PAPER} {...paper} />
+              <motion.path initial={{ d: L_EDGE_OPEN, opacity: 0 }} animate={edgeL} fill={PAPER_SHADE} {...paper} />
+            </motion.g>
+            {/* Right half pivots on the crease (x = 0) for steps 1 and 4. */}
+            <motion.g animate={rightHalf} style={{ originX: '0px', transformBox: 'view-box' } as React.CSSProperties}>
+              <motion.path initial={{ d: mirror(L_ENVELOPE) }} animate={baseR} fill={PAPER} {...paper} />
+              <motion.path initial={{ d: mirror(L_CORNER_OPEN), opacity: 0 }} animate={cornerR} fill={PAPER} {...paper} />
+              <motion.path initial={{ d: mirror(L_EDGE_OPEN), opacity: 0 }} animate={edgeR} fill={PAPER_SHADE} {...paper} />
+            </motion.g>
+            <motion.path d="M 0 -22 L 0 22" stroke={EDGE} strokeWidth={0.4} initial={{ pathLength: 0, opacity: 0 }} animate={crease} />
+            {/* The envelope's flap, fading as it opens into a sheet. */}
+            <motion.path d="M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.1} strokeLinejoin="round" initial={{ opacity: 0.8 }} animate={flap} />
+          </>
+        ) : (
+          <>
+            <motion.path initial={{ d: L_KEEL }} animate={keel} fill={PAPER} {...paper} />
+            <motion.path initial={{ d: L_WING_UP, fill: PAPER_SHADE }} animate={wing} {...paper} />
+          </>
+        )}
       </g>
     </motion.svg>,
     document.body,
   )
+}
+
+/** Point-mass glider, integrated at 240 Hz and written straight to the DOM.
+ *  dv/dt = −D − g·sinγ, dγ/dt = (L − g·cosγ)/v, L = kL·v², D = L/LD. Launched
+ *  faster than trim it climbs, slows, noses over and swoops — the phugoid.
+ *  Turbulence nudges γ; now and then it banks into a turn and reverses. */
+function PaperFlight({ from, onDone }: { from: Pt; onDone: () => void }) {
+  const el = useRef<HTMLDivElement>(null)
+  const sprite = useRef<SVGSVGElement>(null)
+  useEffect(() => {
+    // Every throw is different: launch speed and angle, trim, glide ratio,
+    // the air's character, and whether / when it banks into turns.
+    const r = (a: number, b: number) => a + Math.random() * (b - a)
+    const G = 240, V_TRIM = r(105, 135), LD = r(4, 6.5)
+    const kL = G / (V_TRIM * V_TRIM), kD = kL / LD
+    let x = from.x, y = from.y
+    let v = r(165, 255), gamma = (r(4, 30) * Math.PI) / 180 // a hard throw can loop
+    let dir = 1, bank = 0, turning = 0 // bank: 0 → π over a turn
+    const seed = Math.random() * 100
+    const gustAmp = r(0.12, 0.38), gustRate = r(0.7, 1.4)
+    const turnCount = Math.floor(r(0, 3)) // 0, 1 or 2
+    const turns = [r(1.2, 3.2), r(4.2, 7.5)].slice(0, turnCount)
+    const turnSecs = r(0.8, 1.2)
+    let t = 0, last = performance.now(), raf = 0, fade = 1
+    const vw = window.innerWidth, vh = window.innerHeight
+    const frame = (now: number) => {
+      let dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      while (dt > 0) {
+        const h = Math.min(dt, 1 / 240)
+        dt -= h
+        t += h
+        if (!turning && turns.length && t >= turns[0]!) { turns.shift(); turning = 1 }
+        if (turning) {
+          bank += (Math.PI / turnSecs) * h
+          if (bank >= Math.PI) { bank = 0; turning = 0; dir = -dir }
+        }
+        const turnDrag = turning ? 1.5 : 1
+        const lift = kL * v * v * (turning ? Math.abs(Math.cos(bank)) * 0.4 + 0.6 : 1)
+        const drag = kD * v * v * turnDrag
+        // Smooth turbulence: a few incommensurate sines.
+        const tg = t * gustRate
+        const gust = gustAmp * (Math.sin(tg * 1.7 + seed) + 0.6 * Math.sin(tg * 3.1 + seed * 2) + 0.3 * Math.sin(tg * 5.3 + seed * 3))
+        v = Math.max(35, v + (-drag - G * Math.sin(gamma)) * h)
+        gamma += ((lift - G * Math.cos(gamma)) / v + gust) * h
+        const facing = turning ? dir * Math.cos(bank) : dir
+        x += facing * v * Math.cos(gamma) * h
+        y -= v * Math.sin(gamma) * h
+      }
+      const out = x < -90 || x > vw + 90 || y > vh + 90 || y < -160
+      if (out || t > 14) fade = Math.max(0, fade - 0.06)
+      const facing = turning ? dir * Math.cos(bank) : dir
+      const sx = Math.sign(facing || 1) * Math.max(0.12, Math.abs(facing))
+      if (el.current) {
+        el.current.style.transform = `translate(${x}px, ${y}px)`
+        el.current.style.opacity = String(fade)
+      }
+      if (sprite.current) sprite.current.style.transform = `scaleX(${sx}) rotate(${(-gamma * 180) / Math.PI}deg)`
+      if (fade <= 0) { onDone(); return }
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return createPortal(
+    <div ref={el} aria-hidden="true" style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', transform: `translate(${from.x}px, ${from.y}px)` }}>
+      <svg ref={sprite} width={64} height={64} viewBox="-32 -32 64 64" style={{ position: 'absolute', left: -32, top: -32, overflow: 'visible', filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.2))' }}>
+        <defs>
+          <filter id="paper-grain-fly" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="7" result="n" />
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.04  0 0 0 0 0.02  0 0 0 0.17 0" result="grain" />
+            <feComposite in="grain" in2="SourceGraphic" operator="in" result="g2" />
+            <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="g2" /></feMerge>
+          </filter>
+        </defs>
+        <g transform={`scale(${FLY_SCALE})`} filter="url(#paper-grain-fly)">
+          <path d={FLY_KEEL} fill={PAPER_SHADE} stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
+          <path d={FLY_WING} fill={PAPER} stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
+        </g>
+      </svg>
+    </div>,
+    document.body,
+  )
+}
+
+function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
+  const [flight, setFlight] = useState<Pt | null>(null)
+  return flight
+    ? <PaperFlight from={flight} onDone={onDone} />
+    : <PaperFold from={from} onFolded={setFlight} />
 }
 
 /** Email. Hover: the envelope turns to paper, folds into a plane and flies
@@ -454,7 +661,9 @@ function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
 export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const reducedMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
-  const [plane, setPlane] = useState<DOMRect | null>(null)
+  // Up to a few planes in the air at once — a new hover throws another.
+  const [planes, setPlanes] = useState<{ id: number; from: DOMRect }[]>([])
+  const nextId = useRef(0)
   const [slotEmpty, setSlotEmpty] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const btn = useRef<HTMLButtonElement>(null)
@@ -471,10 +680,11 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       }
 
   const fly = () => {
-    if (!canFly || reducedMotion || plane || copied) return
+    if (!canFly || reducedMotion || slotEmpty || copied || planes.length >= 3) return
     const glyph = btn.current?.querySelector('svg')
     if (!glyph) return
-    setPlane(glyph.getBoundingClientRect())
+    const from = glyph.getBoundingClientRect()
+    setPlanes(ps => [...ps, { id: nextId.current++, from }])
     setSlotEmpty(true)
     // The plane has folded and left the slot by now; a new envelope arrives.
     later(ENVELOPE_BACK_MS, () => setSlotEmpty(false))
@@ -513,7 +723,9 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           </motion.span>
         </AnimatePresence>
       </button>
-      {plane && <PaperPlane from={plane} onDone={() => setPlane(null)} />}
+      {planes.map(pl => (
+        <PaperPlane key={pl.id} from={pl.from} onDone={() => setPlanes(ps => ps.filter(x => x.id !== pl.id))} />
+      ))}
       {/* Out of flow, so the row never shifts; read out politely. */}
       <span role="status" className="simple-copied-slot">
         <AnimatePresence>

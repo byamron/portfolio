@@ -19,6 +19,8 @@ export interface ProtoSettings {
   recordPlacement: RecordPlacement
   /** Strip stays at the viewport bottom while the page scrolls behind it. */
   stickyStrip: boolean
+  /** LinkedIn business card lettering. */
+  cardCase: 'caps' | 'sentence'
   record: RecordDockSettings
   /** /new/simple text block. */
   simpleLayout: {
@@ -37,6 +39,8 @@ export interface ProtoSettings {
     copy: string
     /** TEXT_PRESETS key, or 'custom' to use copy / maxText / maxWidth. */
     preset: string
+    /** Overrides the preset's type size (DialKit slider, S → M). */
+    presetSize?: number
   }
   /** /new/simple experiment: the glass pill's cursor light, page-wide. */
   cursorGlow: { on: boolean; intensity: number; radius: number; falloff: number; tint: number }
@@ -47,7 +51,8 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   proseMax: 40,
   recordPlacement: 'strip',
   stickyStrip: false,
-  simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · M' },
+  cardCase: 'caps',
+  simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · S' },
   // Half the pill's own light: Ben found the 1:1 lift too strong on the page.
   cursorGlow: { on: true, intensity: 0.6, radius: 72, falloff: 55, tint: 1 },
   record: {

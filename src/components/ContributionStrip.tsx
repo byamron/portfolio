@@ -14,6 +14,7 @@ const HIT_PAD = 10
 const PILL_PAD = 2
 const PILL_RADIUS = RADIUS + PILL_PAD
 const TIP_OFFSET = 8
+const TIP_EDGE = 4
 
 const JUMP_EASE = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 
@@ -255,7 +256,8 @@ export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessor
       ? scroller.offsetTop + scroller.offsetHeight + TIP_OFFSET
       : scroller.offsetTop - TIP_OFFSET
     const cx = mark + CELL / 2 - scroller.scrollLeft
-    const x = Math.min(Math.max(cx - w / 2, 0), Math.max(0, strip.clientWidth - w))
+    // Keep a small gap from the strip's (= the window's) edges.
+    const x = Math.min(Math.max(cx - w / 2, TIP_EDGE), Math.max(TIP_EDGE, strip.clientWidth - w - TIP_EDGE))
 
     tipState.current.tx = x
     tipState.current.tw = w

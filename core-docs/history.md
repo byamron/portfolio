@@ -2,6 +2,15 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-28 — `/new/simple` round 5: real dart fold + physical glide, card template, blimp, presets
+
+- **Paper airplane (hover):** a real classic-dart fold drawn top-down in sheet units — crease, corners to crease, edges to crease (112.5° bisector hinge), fold in half (right onto left), turn to side view, wing down so its edge meets the crease, open → launch. Each fold moves its free corner straight across the hinge (true projection); sine in-out easing, ~0.46s steps with short settles (~4.5s total), beside the icon at 1.25px/unit. Flight = point-mass glider at 240Hz (dv/dt = −D − g sinγ, dγ/dt = (L − g cosγ)/v, L = kL v², D = L/LD): launched above trim it climbs, slows, noses over and swoops (phugoid; hard throws loop). Every throw randomises launch speed/angle, trim, L/D, turbulence and 0–2 banked turns (sprite foreshortens through the turn, direction reverses). Sprite scaled so the flying plane is the folded dart's physical size; stronger SVG grain. Up to 3 planes in the air.
+- **Business card:** Ben's Consensus-style template — cream stock (PaperTexture, barely there), light-blue ruled grid, BEN / YAMRON in Onest 600 blue caps, Plex Mono rows (Product designer · linkedin.com/in/benyamron), Consensus mark in the old QR cell; back = mark + CONSENSUS. Turns every 4s (first at 1.8s). DialKit "Business card case": caps / sentence.
+- **Blimp:** shorter, chubbier envelope (rx 70) with the GitHub mark centred; 95px/s. Terminal types ~42 chars/s with human unevenness.
+- **Text presets:** 2 lines (default S, DialKit "Text px (S→M)" 34–46) and Ben's 4 lines ("Ben Yamron / is a product designer / currently building AI for research / at Consensus.") replace the 3-line variants.
+- **Record:** the idle music note now waits until the track credit has fully faded before returning (loop-owned opacity) — the off transition mirrors the on.
+- **Intensity default** 20% → 10% (shared ThemeContext; first visits only). Strip tooltip keeps 4px from the window edge.
+
 ## 2026-10-28 — `/new/simple` round 4: plane on hover, legacy business card, GitHub blimp
 
 - **Email:** the paper-plane flight moved to hover (fine pointers; the envelope springs back into the slot at 520ms); click copies only (check + note).

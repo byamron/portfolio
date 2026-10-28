@@ -60,7 +60,9 @@ export function SimpleHome() {
   // copy + target size and lets the column go wide; 'custom' uses the dials.
   const urlPreset = new URLSearchParams(window.location.search).get('preset')
   const preset = TEXT_PRESETS[urlPreset ?? ''] ?? (tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined)
-  const layout = preset ? { ...tuned, copy: preset.copy, maxText: preset.size, maxWidth: PRESET_MAX_WIDTH } : tuned
+  // The DialKit S→M slider sets the active preset's size (URL presets keep theirs).
+  const presetSize = preset && !urlPreset && tuned.presetSize ? tuned.presetSize : preset?.size
+  const layout = preset ? { ...tuned, copy: preset.copy, maxText: presetSize!, maxWidth: PRESET_MAX_WIDTH } : tuned
   const pageRef = useRef<HTMLElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
   const centred = layout.align === 'center'
@@ -69,7 +71,7 @@ export function SimpleHome() {
   const phoneLines = phone ? PHONE_BREAKS[layout.copy] : undefined
   const lines = phoneLines ?? COPY_VARIANTS[layout.copy] ?? Object.values(COPY_VARIANTS)[0]!
   // Phones keep the preset's relative size (S < M < L), capped for the measure.
-  const maxText = phoneLines ? Math.min(PHONE_MAX_TEXT, Math.round((preset?.size ?? 48) * 0.8)) : layout.maxText
+  const maxText = phoneLines ? Math.min(PHONE_MAX_TEXT, Math.round((presetSize ?? 48) * 0.8)) : layout.maxText
 
   // Fit mode: the text size is whatever makes the longest line exactly fill
   // the column (the measure). Each line's width in em is read from hidden

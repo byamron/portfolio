@@ -19,11 +19,13 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
     'Text size px (wide)': [P.proseMax, 24, 72, 1],
     'Record placement': { type: 'select', options: ['strip', 'inline'], default: P.recordPlacement },
     'Sticky strip': P.stickyStrip,
+    'Business card case': { type: 'select', options: ['caps', 'sentence'], default: P.cardCase },
   } satisfies DialConfig), { id: 'proto-page' })
 
   const S = P.simpleLayout
   const simple = useDialKit('Simple layout', useStableConfig({
     'Text preset': { type: 'select', options: ['custom', ...Object.keys(TEXT_PRESETS)], default: S.preset },
+    'Text px (S→M)': [TEXT_PRESETS['2 lines · S']!.size, TEXT_PRESETS['2 lines · S']!.size, TEXT_PRESETS['2 lines · M']!.size, 1],
     'Copy (custom)': { type: 'select', options: Object.keys(COPY_VARIANTS), default: S.copy },
     'Size mode': { type: 'select', options: ['fit', 'fluid'], default: S.sizeMode },
     'Max width px': [S.maxWidth, 480, 1400, 10],
@@ -66,6 +68,7 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
     proseMax: page['Text size px (wide)'],
     recordPlacement: page['Record placement'] as RecordPlacement,
     stickyStrip: page['Sticky strip'] as boolean,
+    cardCase: page['Business card case'] as 'caps' | 'sentence',
     simpleLayout: {
       align: simple['Align'] as 'left' | 'center',
       maxWidth: simple['Max width px'],
@@ -76,6 +79,7 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
       maxText: simple['Max text px (custom)'],
       copy: simple['Copy (custom)'] as string,
       preset: simple['Text preset'] as string,
+      presetSize: simple['Text px (S→M)'],
     },
     cursorGlow: {
       on: glow['On'] as boolean,

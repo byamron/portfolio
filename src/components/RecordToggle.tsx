@@ -565,6 +565,7 @@ export function RecordToggle({
   const grainEl = useRef<HTMLDivElement>(null);
   const nowPlayingEl = useRef<HTMLDivElement>(null);
   const hintEl = useRef<HTMLDivElement>(null);
+  const idleEl = useRef<HTMLDivElement>(null);
   const lacquerEl = useRef<HTMLDivElement>(null);
   const pressRef = useRef(false);
   const skipOffDelay = useRef(false);
@@ -991,6 +992,16 @@ export function RecordToggle({
         const np = clamp01(nowPlaying.x);
         nowPlayingEl.current.style.opacity = String(np);
         nowPlayingEl.current.style.transform = creditTransform(np);
+        // The idle caption only returns once the credit has fully left —
+        // the mirror of the way in, where it leaves before the credit lands.
+        if (idleEl.current) {
+          const show = !onRef.current && np < 0.02;
+          if (idleEl.current.dataset.show !== String(show)) {
+            idleEl.current.dataset.show = String(show);
+            idleEl.current.style.opacity = show ? "1" : "0";
+            idleEl.current.style.transform = creditTransform(show ? 1 : 0);
+          }
+        }
       }
       if (hintEl.current) {
         const hv = clamp01(hint.x);
@@ -1589,13 +1600,18 @@ export function RecordToggle({
 
                 {idleCaption && (
                   <div
+                    ref={idleEl}
                     aria-hidden
+                    // Opacity/transform are owned by the animation loop after
+                    // mount (it waits for the credit to clear); these are the
+                    // initial, idle values and never change, so React won't
+                    // re-apply them over the loop.
                     style={{
                       ...slot(0),
                       ...text,
                       color: artistColor ?? theme.artist,
-                      transform: rest(on ? 0 : 1),
-                      opacity: on ? 0 : 1,
+                      transform: rest(1),
+                      opacity: 1,
                       transition: "opacity 240ms ease, transform 240ms ease",
                       whiteSpace: "nowrap",
                     }}

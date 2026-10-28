@@ -27,16 +27,10 @@ export const protoBySlug = new Map(protoEntries.map(e => [e.id, e]))
 // N = "Ben Yamron", C = Consensus link. Each inner array is one line.
 export type Seg = string | 'P' | 'N' | 'C'
 export const COPY_VARIANTS: Record<string, Seg[][]> = {
-  // Pauses only at line ends; "product designer" and "AI tools" never split.
-  // Measured line lengths (% of the longest) in comments.
+  // Pauses only at line ends. Measured line lengths (% of the longest).
   'two · even': [['P', 'N', ' is a product designer currently'], ['building AI for researchers at ', 'C', '.']], // 100 / 98
-  'two · AI tools': [['P', 'N', ' is a product designer currently'], ['building AI tools for researchers at ', 'C', '.']], // 91 / 100
-  'two · research': [['P', 'N', ' is a product designer currently'], ['building AI for research at ', 'C', '.']], // 100 / 91
-  'two · original': [['P', 'N', ' is a product designer,'], ['currently building AI for researchers at ', 'C', '.']], // 67 / 100
-  'three · byline': [['P', 'N', ', product designer,'], ['currently building AI tools'], ['for researchers at ', 'C', '.']], // 100 / 79 / 99
-  'three · designing tools': [['P', 'N', ' is a product designer'], ['currently designing AI tools'], ['for researchers at ', 'C', '.']], // 100 / 77 / 92
-  'three · stair': [['P', 'N'], ['is a product designer building'], ['AI tools for researchers at ', 'C', '.']], // 36 / 72 / 100
-  'three · stair, currently': [['P', 'N'], ['is a product designer currently'], ['building AI for researchers at ', 'C', '.']], // 33 / 68 / 100
+  // Ben's four-line version.
+  'four · stacked': [['P', 'N'], ['is a product designer'], ['currently building AI for research'], ['at ', 'C', '.']],
 }
 
 /** Phone breaks (≤640px) per copy variant — designed, not left to the
@@ -44,8 +38,7 @@ export const COPY_VARIANTS: Record<string, Seg[][]> = {
  *  Variants without one fall back to browser-balanced wrapping. */
 export const PHONE_BREAKS: Record<string, Seg[][]> = {
   'two · even': [['P', 'N', ' is'], ['a product designer'], ['currently building'], ['AI for researchers'], ['at ', 'C', '.']], // 91/100/99/95/95
-  'three · byline': [['P', 'N', ','], ['product designer,'], ['currently building'], ['AI tools for researchers'], ['at ', 'C', '.']], // 67/76/80/100/76
-  'three · stair': [['P', 'N', ' is'], ['a product designer'], ['building AI tools'], ['for researchers'], ['at ', 'C', '.']], // 91/100/90/81/95
+  'four · stacked': [['P', 'N'], ['is a product designer'], ['currently building'], ['AI for research'], ['at ', 'C', '.']],
 }
 
 /** Size × line-count presets (DialKit "Text preset", or ?preset=… in the URL
@@ -55,11 +48,8 @@ export const TEXT_PRESETS: Record<string, { copy: string; size: number }> = {
   '2 lines · S': { copy: 'two · even', size: 34 },
   '2 lines · M': { copy: 'two · even', size: 46 },
   '2 lines · L': { copy: 'two · even', size: 58 },
-  '3 lines · byline · S': { copy: 'three · byline', size: 38 },
-  '3 lines · byline · M': { copy: 'three · byline', size: 50 },
-  '3 lines · byline · L': { copy: 'three · byline', size: 62 },
-  '3 lines · stair · S': { copy: 'three · stair', size: 34 },
-  '3 lines · stair · M': { copy: 'three · stair', size: 42 },
-  '3 lines · stair · L': { copy: 'three · stair', size: 50 },
+  '4 lines · S': { copy: 'four · stacked', size: 34 },
+  '4 lines · M': { copy: 'four · stacked', size: 44 },
+  '4 lines · L': { copy: 'four · stacked', size: 54 },
 }
 

@@ -71,7 +71,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [bgIntensity, setBgIntensityState] = useState<number>(() => {
     const stored = localStorage.getItem(INTENSITY_KEY)
-    if (!stored) return 0.2
+    if (!stored) return 0.1 // first visit: 10% (0 = least intense)
     const parsed = parseFloat(stored)
     // Migrate old 0–3 integer values to 0–1 range
     const value = (Number.isInteger(parsed) && parsed >= 1 && parsed <= 3) ? parsed / 3 : parsed
