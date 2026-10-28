@@ -89,7 +89,7 @@ const prompt = <span style={{ opacity: 0.5 }}>$ </span>
 // The program, one line at a time. Plain text is typed; colour comes from a
 // tiny highlighter so the half-typed line is coloured too.
 const CODE = [
-  "const blimp = new Blimp('github')",
+  "const blimp = new Blimp()",
   "blimp.banner('Hi')",
   "blimp.fly('across the top')",
 ]
@@ -157,15 +157,11 @@ function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }
   return <>{highlight(text.slice(0, n))}</>
 }
 
-// GitHub's mark (simple-icons, 24×24).
-const GITHUB_MARK = 'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'
-
 const BANNER_A = 'M 118 30 C 92 25, 58 35, 12 29 L 12 67 C 58 73, 92 63, 118 66 Z'
 const BANNER_B = 'M 118 30 C 92 35, 58 26, 12 33 L 12 71 C 58 64, 92 72, 118 66 Z'
 
 /** A small, chubby airship: shaded envelope with gores and seams, fins,
- *  gondola, the GitHub mark centred on its flank, and a "Hi" banner on a
- *  tether. Lit from the top-left. */
+ *  gondola, and a "Hi" banner on a tether. Lit from the top-left. */
 const BLIMP = { cx: 214, cy: 50, rx: 70, ry: 33 }
 function BlimpArt() {
   const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
@@ -199,7 +195,7 @@ function BlimpArt() {
         transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
         fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75"
       />
-      <text x="65" y="56" textAnchor="middle" fontFamily="Literata, Georgia, serif" fontSize="22" fill="#2b2620">Hi</text>
+      <text x="65" y="55" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500" fontSize="18" fill="#2b2620">Hi</text>
 
       {/* Fins: short and stubby to match the round body */}
       <path d={`M ${tail + 22} 27 L ${tail + 4} 10 L ${tail - 6} 12 L ${tail + 8} 32 Z`} fill="url(#blimp-fin)" />
@@ -220,10 +216,6 @@ function BlimpArt() {
       <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-rim)" />
       <ellipse cx={cx - 10} cy={cy - 20} rx={rx * 0.62} ry="7" fill="#fff" opacity="0.55" filter="url(#blimp-soft)" />
 
-      {/* GitHub mark, centred on the flank */}
-      <g transform={`translate(${cx - 16} ${cy - 17}) scale(1.34)`} opacity="0.88">
-        <path d={GITHUB_MARK} fill="#24292f" />
-      </g>
     </svg>
   )
 }
@@ -335,10 +327,11 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
       </a>
       <IconPopover show={stage > 0} width={248}>
         <div style={{ perspective: 800 }}>
-          {/* A slow drift so the card feels held, not pinned. */}
+          {/* A barely-there drift — held, not pinned; you'd only see it if
+              you looked for it. */}
           <motion.div
-            animate={reducedMotion ? {} : { y: [0, -3, 0], rotateZ: [-0.8, 0.6, -0.8] }}
-            transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+            animate={reducedMotion ? {} : { y: [0, -1, 0], rotateZ: [-0.25, 0.2, -0.25] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
           >
             <motion.div
               className={`biz-card biz-card--${cardCase}`}
