@@ -403,11 +403,11 @@
   display: grid;
   place-items: center;
 }
-.biz-logo-cell img { width: 30px; height: 30px; border-radius: 7px; }
+.biz-logo-cell img { width: 34px; height: 34px; } /* bare mark, printed on the stock */
 /* Back: the mark large, the profile URL beneath. */
 .biz-grid-back { grid-template-columns: 1fr; grid-template-rows: 1fr 23px; }
 .biz-grid-back .biz-logo-cell { grid-column: 1; grid-row: 1; }
-.biz-grid-back .biz-logo-cell img { width: 52px; height: 52px; border-radius: 12px; }
+.biz-grid-back .biz-logo-cell img { width: 60px; height: 60px; }
 .biz-grid-back .biz-row { justify-content: center; }
 /* Sentence case (DialKit): the copy as written, a touch less tracking. */
 .biz-card--sentence .biz-name-cell { text-transform: none; letter-spacing: -0.005em; }

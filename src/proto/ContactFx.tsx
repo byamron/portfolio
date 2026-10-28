@@ -345,13 +345,13 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
                   <div className="biz-name-cell">Ben<br />Yamron</div>
                   <div className="biz-row">Product designer</div>
                   <div className="biz-row">linkedin.com/in/benyamron</div>
-                  <div className="biz-logo-cell"><img src="/images/logo-consensus.svg" alt="" /></div>
+                  <div className="biz-logo-cell"><img src="/images/logo-consensus-mark.svg" alt="" /></div>
                 </div>
               </div>
               <div className="biz-face biz-back">
                 <CardStock />
                 <div className="biz-grid biz-grid-back">
-                  <div className="biz-logo-cell"><img src="/images/logo-consensus.svg" alt="" /></div>
+                  <div className="biz-logo-cell"><img src="/images/logo-consensus-mark.svg" alt="" /></div>
                   <div className="biz-row">Consensus</div>
                 </div>
               </div>
