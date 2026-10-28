@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, type ReactNode } from 'react'
-import { motion, AnimatePresence, useAnimationControls, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, animate, useMotionValue, useReducedMotion, useSpring, type AnimationPlaybackControls, type MotionStyle } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
@@ -322,6 +322,16 @@ const DIVIDER_5 = CURSOR_BASE + cursorOptions.length   // 14
 const EXTRA_IDX = DIVIDER_5 + 1                        // 15
 
 const TRIGGER_ICON_BOX = 44 // matches the page's icon buttons
+// The glide pill fades through a CSS variable, not `opacity`: Framer hands an
+// opacity animation to WAAPI, which ends a frame before Framer commits the
+// final value — a one-frame blink to 0 at the end of every fade-in. Variables
+// always animate on the main thread.
+const PILL_FADE_IN = { duration: 0.12, ease: 'easeOut' } as const
+const PILL_FADE_OUT = { duration: 0.16, ease: 'easeOut' } as const
+// Persistent springs that are re-targeted (velocity carried over), not
+// restarted per control — a fast sweep across the rail is one smooth glide.
+const PILL_SPRING = { stiffness: 560, damping: 40, mass: 0.7 }
+
 // What the glide pill lands on: the trigger, every button, the strip, the record.
 export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
 // Fit mode floors: intensity strip (before ×controlScale) and divider air.
@@ -640,7 +650,17 @@ export function SidebarThemeControls({
   // filter stacking context). It springs from target to target; leaving the
   // rail fades it after a short grace (crossing a gap between two controls
   // shouldn't flicker), and it reappears in place on the next hover.
-  const glide = useAnimationControls()
+  const pillX = useSpring(0, PILL_SPRING)
+  const pillY = useSpring(0, PILL_SPRING)
+  const pillW = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
+  const pillH = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
+  const pillO = useMotionValue(0)
+  const pillFade = useRef<AnimationPlaybackControls | null>(null)
+  const fadePill = useCallback((to: 0 | 1) => {
+    if (pillO.get() === to && !pillFade.current) return
+    pillFade.current?.stop()
+    pillFade.current = animate(pillO, to, { ...(to ? PILL_FADE_IN : PILL_FADE_OUT), onComplete: () => { pillFade.current = null } })
+  }, [pillO])
   const glideShown = useRef(false)
   const glideHide = useRef<ReturnType<typeof setTimeout> | null>(null)
   const glideTo = useCallback((el: Element) => {
@@ -653,30 +673,56 @@ export function SidebarThemeControls({
     const w = Math.max(r.width + (r.width > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
     const h = Math.max(r.height + (r.height > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
     const target = { x: r.left - c.left + (r.width - w) / 2, y: r.top - c.top + (r.height - h) / 2, width: w, height: h }
-    if (!glideShown.current || prefersReducedMotion) {
-      glide.set(target)
-      glide.start({ opacity: 1, transition: { duration: 0.12 } })
-    } else {
-      glide.start({ ...target, opacity: 1, transition: { type: 'spring', stiffness: 560, damping: 40, mass: 0.7, opacity: { duration: 0.12 } } })
-    }
+    const place = !glideShown.current || prefersReducedMotion ? 'jump' : 'set'
+    pillX[place](target.x); pillY[place](target.y); pillW[place](target.width); pillH[place](target.height)
+    fadePill(1)
     glideShown.current = true
-  }, [glide, prefersReducedMotion])
+  }, [pillX, pillY, pillW, pillH, fadePill, prefersReducedMotion])
   const glideOut = useCallback(() => {
     if (glideHide.current) clearTimeout(glideHide.current)
     glideHide.current = setTimeout(() => {
       glideShown.current = false
-      glide.start({ opacity: 0, transition: { duration: 0.16 } })
+      fadePill(0)
     }, 140)
-  }, [glide])
-  useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current) }, [])
+  }, [fadePill])
+  // The air between controls (e.g. handle → first option) is the page's, not
+  // the rail's, so leaving a control there doesn't mean leaving the rail.
+  // While the pointer stays within the rail's span (handle to last control)
+  // the pill holds on the last control — so the next one is always a glide,
+  // never a fade-out-and-jump — and it fades once the pointer leaves.
+  const railWatch = useRef<((e: PointerEvent) => void) | null>(null)
+  const stopRailWatch = useCallback(() => {
+    if (railWatch.current) window.removeEventListener('pointermove', railWatch.current)
+    railWatch.current = null
+  }, [])
+  const inRail = useCallback((x: number, y: number) => {
+    const col = columnRef.current
+    if (!col) return false
+    let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
+    col.querySelectorAll(GLIDE_TARGETS).forEach(el => {
+      const q = el.getBoundingClientRect()
+      if (!q.width) return
+      l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
+    })
+    return x >= l - 6 && x <= r + 6 && y >= t - 6 && y <= b + 6
+  }, [])
+  useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current); stopRailWatch() }, [stopRailWatch])
   const glideHandlers = glidePill ? {
     onPointerOver: (e: React.PointerEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
-      if (t && columnRef.current?.contains(t)) glideTo(t)
+      if (t && columnRef.current?.contains(t)) { stopRailWatch(); glideTo(t) }
     },
     onPointerOut: (e: React.PointerEvent) => {
       const to = e.relatedTarget as Element | null
-      if (!to || !columnRef.current?.contains(to) || !to.closest(GLIDE_TARGETS)) glideOut()
+      if (to && columnRef.current?.contains(to)) return
+      if (!inRail(e.clientX, e.clientY)) { glideOut(); return }
+      stopRailWatch()
+      railWatch.current = (m: PointerEvent) => {
+        if (inRail(m.clientX, m.clientY)) return
+        stopRailWatch()
+        glideOut()
+      }
+      window.addEventListener('pointermove', railWatch.current, { passive: true })
     },
     onFocus: (e: React.FocusEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
@@ -816,9 +862,12 @@ export function SidebarThemeControls({
         {glidePill && (
           <motion.div
             aria-hidden="true"
-            animate={glide}
-            initial={{ opacity: 0 }}
+            data-glide-pill
             style={{
+              x: pillX, y: pillY, width: pillW, height: pillH,
+              // A CSS variable (see PILL_FADE_IN): MotionStyle doesn't type custom properties.
+              ...({ '--pill-o': pillO } as unknown as MotionStyle),
+              opacity: 'var(--pill-o)',
               position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none',
               borderRadius: 12,
               // Same frost as the page's glass pill (useGlassHighlight skinPill).

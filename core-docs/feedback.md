@@ -2,6 +2,14 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-10-28 — "It jumps the first time": interaction glitches need per-frame traces, and gaps between targets count
+
+**What happened:** Ben reported the rail's glide pill often jumped (instead of travelling) from the settings handle to the first option. Earlier checks of the pill only looked at end states. A per-frame trace showed two causes: (1) the air between handle and options belongs to the page, so crossing it triggered the pill's leave-grace — a slow first move faded it out and it reappeared on the option with no travel (a 56px one-frame jump); (2) Framer hands `opacity` animations to WAAPI, which ends one frame before Framer commits the final inline value — a one-frame blink to 0 at the end of every fade-in.
+
+**Lesson learned:** For any "moves between targets" interaction, treat the gaps between targets as part of the interaction (hold state until the pointer leaves the whole group's span), and verify with a per-frame trace of the moving element (max step per frame, opacity dips) at several pointer speeds — including slow, deliberate first moves on a fresh page. When a Framer opacity fade must never blink (e.g. a persistent pill), animate a CSS variable and read `opacity: var(--x)` — variables always run on the main thread. Also: `tsc -p .` on this repo checks nothing (the root tsconfig only has references) — use `tsc -b` (and ignore the uninitialized/checked-out `ui-playground` submodule errors per the 2026-07-22 entry).
+
+---
+
 ## 2026-08-19 — A running dev server can serve a silently-empty `<div id="root">` after new deps are added mid-session
 
 **What happened:** After running `npm install` for new packages (dialkit, agentation, plus a new `@phosphor-icons/react` import) into an already-running `vite` dev server, the page started rendering a completely empty `<div id="root"></div>` — no error overlay, no console output, `vite build` and `tsc -b` both clean. Spent a long stretch chasing this as a React runtime bug (suspected infinite render loop, chased and fixed a real-but-unrelated DialKit config-memoization issue along the way) before finding the actual cause.

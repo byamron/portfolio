@@ -934,10 +934,19 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   // moves while it's showing.
   useEffect(() => {
     if (!copied) return
-    window.addEventListener('resize', placeNote)
+    // Crossing the phone breakpoint re-lays the row out on React's next
+    // render, after 'resize' fires — so place again once that has landed.
+    let raf = 0
+    const onResize = () => {
+      placeNote()
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => { raf = requestAnimationFrame(placeNote) })
+    }
+    window.addEventListener('resize', onResize)
     window.addEventListener('scroll', placeNote, { capture: true, passive: true })
     return () => {
-      window.removeEventListener('resize', placeNote)
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', onResize)
       window.removeEventListener('scroll', placeNote, { capture: true })
     }
   }, [copied, placeNote])

@@ -636,6 +636,10 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 - Headless blending truncates at alpha 1–3, so the glow's on-screen falloff could only be verified in light mode here — eyeball dark on a real GPU.
 - Theme change still costs ~90ms of main thread on this sandbox (React re-render + portrait pop; the glow paint is now 11–21ms).
 - `npm run build` fails locally when the `ui-playground` submodule is checked out (its strict-mode errors + unused `@ts-expect-error` in PlaygroundDemo/Gallery) — pre-existing on main, CI unaffected.
+- Unused devDependencies `agentation` and `motion` (added on this branch) — remove unless planned; `@paper-design/shaders-react` is pre-1.0 (vet publisher before merge).
+- Hover popovers aren't "hoverable" (WCAG 1.4.13): `pointer-events: none`, so a magnifier user can't move onto the card to read it — decorative + `aria-hidden`; Ben's call.
+- Terminal line numbers (0.3 opacity) and the business card's 8.5px mono rows are low-contrast but `aria-hidden` decoration.
+- Email address is never shown or announced (copy-only by Ben's decision) — consider it in the accessible name.
 - Strip dev panels (ProtoTuner/DialKit/protoSettings knobs) before any merge.
 
 ## `/new/simple` round 7 — continuous paper + staff review (2026-10-28)

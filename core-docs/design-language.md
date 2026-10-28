@@ -211,6 +211,8 @@ So UW and Middlebury get black + logo with no underline (no destination), and Gi
 - **Phones get designed line breaks**, not browser wrapping, and the type stays large (27–38px).
 - **Cursor glow melts into the pill** over links (one light, not two): slides to the pill centre, shrinks, fades; re-emerges on leave. It's a few 8-bit levels above the page, so it's a dithered canvas (per premultiplied channel — plain RGBA rounds the hue away at alpha 1–3), never a CSS gradient (bands into a disc with a rim). Mouse/pen only; no canvas on touch or reduced motion.
 - **Drop-shadows go on a wrapper that doesn't rotate**, so light stays overhead while the object turns.
+- **Pop-out windows follow the page's mode** (the terminal is light in light mode, dark in dark mode, a step off the page) — never an inverted chip.
+- **The rail's glide pill always travels.** Gaps between controls belong to the rail: the pill holds on the last control until the pointer leaves the rail's span, so the next control is a glide, never a fade-and-jump.
 - **Cursor glow** (kept by Ben, 2026-10-28) breaks "glass doesn't exist at rest" — if it ships, record the exception in § The glass rules.
 
 ### What typography does NOT do
