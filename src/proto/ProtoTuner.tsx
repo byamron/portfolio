@@ -4,6 +4,7 @@ import { useRef, type ReactNode } from 'react'
 import { DialRoot, useDialKit, type DialConfig } from 'dialkit'
 import 'dialkit/styles.css'
 import { DEFAULT_PARAMS } from '@/components/RecordToggle'
+import { COPY_VARIANTS } from './data'
 import { PROTO_DEFAULTS as P, ProtoSettingsContext, type ProtoSettings, type RecordPlacement } from './protoSettings'
 
 const R = P.record
@@ -15,10 +16,31 @@ function useStableConfig<C extends DialConfig>(config: C): C {
 
 export default function ProtoTuner({ children }: { children: ReactNode }) {
   const page = useDialKit('Page', useStableConfig({
-    'Text size px (wide)': [P.proseMax, 24, 56, 1],
+    'Text size px (wide)': [P.proseMax, 24, 72, 1],
     'Record placement': { type: 'select', options: ['strip', 'inline'], default: P.recordPlacement },
     'Sticky strip': P.stickyStrip,
   } satisfies DialConfig), { id: 'proto-page' })
+
+  const S = P.simpleLayout
+  const simple = useDialKit('Simple layout', useStableConfig({
+    'Copy': { type: 'select', options: Object.keys(COPY_VARIANTS), default: S.copy },
+    'Size mode': { type: 'select', options: ['fit', 'fluid'], default: S.sizeMode },
+    'Max width px': [S.maxWidth, 480, 1400, 10],
+    'Min text px (fit)': [S.minText, 16, 40, 1],
+    'Max text px (fit)': [S.maxText, 32, 80, 1],
+    'Align': { type: 'select', options: ['left', 'center'], default: S.align },
+    'Line wrap': { type: 'select', options: ['balance', 'pretty'], default: S.wrap },
+    'Shrink-wrap (optical centre)': S.shrinkWrap,
+  } satisfies DialConfig), { id: 'proto-simple-layout' })
+
+  const G = P.cursorGlow
+  const glow = useDialKit('Cursor glow', useStableConfig({
+    'On': G.on,
+    'Intensity': [G.intensity, 0, 3, 0.05],
+    'Radius px': [G.radius, 24, 320, 2],
+    'Falloff stop %': [G.falloff, 10, 95, 1],
+    'Accent tint': [G.tint, 0, 2, 0.05],
+  } satisfies DialConfig), { id: 'proto-cursor-glow' })
 
   const rec = useDialKit('Record', useStableConfig({
     'Size': [R.size, 0.4, 1, 0.02],
@@ -43,6 +65,23 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
     proseMax: page['Text size px (wide)'],
     recordPlacement: page['Record placement'] as RecordPlacement,
     stickyStrip: page['Sticky strip'] as boolean,
+    simpleLayout: {
+      align: simple['Align'] as 'left' | 'center',
+      maxWidth: simple['Max width px'],
+      wrap: simple['Line wrap'] as 'balance' | 'pretty',
+      shrinkWrap: simple['Shrink-wrap (optical centre)'] as boolean,
+      sizeMode: simple['Size mode'] as 'fit' | 'fluid',
+      minText: simple['Min text px (fit)'],
+      maxText: simple['Max text px (fit)'],
+      copy: simple['Copy'] as string,
+    },
+    cursorGlow: {
+      on: glow['On'] as boolean,
+      intensity: glow['Intensity'],
+      radius: glow['Radius px'],
+      falloff: glow['Falloff stop %'],
+      tint: glow['Accent tint'],
+    },
     record: {
       size: rec['Size'],
       trackId: rec['Track'] as typeof R.trackId,
@@ -69,7 +108,9 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
   return (
     <ProtoSettingsContext.Provider value={settings}>
       {children}
-      <DialRoot />
+      {/* Top-left and collapsed: the right edge belongs to the theme sidebar
+          and the bottom to the contribution strip. */}
+      <DialRoot position="top-left" defaultOpen={false} />
       <style>{'.dialkit-preset-manager { display: none !important; }'}</style>
     </ProtoSettingsContext.Provider>
   )

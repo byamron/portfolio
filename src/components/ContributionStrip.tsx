@@ -42,9 +42,11 @@ interface ContributionStripProps {
   labelAccessory?: ReactNode
   /** Right padding for the accessory (e.g. to clear a sidebar gutter). */
   accessoryInset?: number
+  /** Left padding of the label row; prod indents it 40px. */
+  labelInset?: number
 }
 
-export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessory, accessoryInset = 40 }: ContributionStripProps = {}) {
+export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessory, accessoryInset = 40, labelInset = 40 }: ContributionStripProps = {}) {
   const { bgIntensity, resolvedAppearance } = useTheme()
   const { setHoveringLink } = useHover()
   const prefersReducedMotion = !!useReducedMotion()
@@ -412,7 +414,7 @@ export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessor
         style={{
           display: 'flex', justifyContent: 'flex-start', alignItems: 'center',
           fontFamily: "'Onest', sans-serif", fontSize: 'var(--text-size-small)', lineHeight: 1.3,
-          color: 'var(--text-grey)', paddingLeft: 40,
+          color: 'var(--text-grey)', paddingLeft: labelInset,
           order: labelPosition === 'bottom' ? 2 : 0,
           marginBottom: labelPosition === 'top' ? 16 - HIT_PAD : 0,
           marginTop: labelPosition === 'bottom' ? 16 - HIT_PAD : 0,
@@ -437,6 +439,8 @@ export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessor
             style={{
               color: 'inherit', textDecoration: 'underline',
               textDecorationColor: 'var(--text-underline)', textUnderlineOffset: 3,
+              // Room for the glass pill; the negative margin keeps the text put.
+              padding: '3px 6px', margin: '-3px -6px',
             }}
           >
             GitHub

@@ -624,6 +624,46 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## `/new/simple` round 2 — Ben's feedback batch (active, 2026-10-28)
+
+Branch `simplified-home-prototype`. One sentence + four icon links + strip, theme/record in the sidebar (see history 2026-10-28). Ben's requests from this round, each with the check that proves it:
+
+- [x] **R1 Strip at the foot, full bleed** (as on `/new`). ✓ when the strip spans the full viewport width at the bottom when content fits, and stacks below content when it scrolls.
+- [x] **R2 Record sized to the toolbar.** Toolbar controls grow (×1.15), record shrinks to meet them. ✓ when the record is ≈ one icon button wide (±6px) and one swatch tall (±4px), still reads as a record/switch, and small-size detail is cleaned up (no sub-pixel label print, groove moiré or hairline tonearm).
+- [x] **R3 Portraits fit squares.** ✓ when all 5 square crops share one framing rule (head ≈ half the frame, centred, same headroom) and read clearly at 40px.
+- [x] **R4 Even pill padding.** ✓ when the Consensus pill's measured padding is equal top/bottom (±1px) and left/right (±1px).
+- [x] **R5 X birds on the X icon, cracks fitted.** ✓ when hovering X cracks the glass from the icon's centre, cracks end exactly on the rounded-square outline, shards tile the whole pill (corners included), then birds fly.
+- [x] **R6 Work-account tooltip.** ✓ when every day 2026-10-02 → 2026-10-26 (Ben's "yesterday", PT) reads "Cooking on my work account", other days unchanged.
+- [x] **R7 Record credit to the left.** ✓ when the now-playing line sits on the switch's centre line, right-aligned to its left edge, running out to the left, one line.
+- [x] **R8 Portrait = theme toy.** ✓ when clicking it cycles the accent like prod, and any theme change (portrait or sidebar) swaps the image the same frame (no load lag) with a crisp, springy pop.
+- [x] **R9 / R14 Cursor glow everywhere (experiment), tunable.** ✓ when the pill's cursor light follows the mouse page-wide, steps aside over links, is off for touch/reduced motion, and has its own DialKit panel (on, intensity, radius, falloff, tint); default softer.
+- [x] **R10 Strip GitHub link gets the glass pill.** ✓ when hovering it shows the same animated pill as the prose links.
+- [x] **R11 Motion is crisp, snappy, playful.** ✓ when the rail opens fast (whole stagger ≲ 350ms), presses give tactile feedback, the pop is a spring not a slow ease, and nothing waits on loading.
+- [x] **R12 = R8's no-lag swap.**
+- [x] **R13 Record fits the rail by design.** ✓ when at 900px and 700px viewport heights every control and the record are fully visible (no scroll, no clipping), all centred on one axis, with the record as the rail's last control.
+- [x] **R15 Toolbar opens on click only (this page).** ✓ when hovering today's square at the right edge shows its tooltip without opening the toolbar; the settings icon opens/closes; outside click and Escape close.
+- [x] **R16 Strip GitHub pill has room** (padding 3/6px, negative margins). ✓ measured 6.5/5.4 × 3.3/2.8.
+- [x] **R17 Settings trigger has a glass hover** (and keeps it while open); no clipping at rest.
+- [x] **R18 Text block feels centred.** ✓ shrink-wrapped block centred to ±1px at 1024–1512; DialKit: align left/centre (copy + icons), max width, wrap, shrink-wrap.
+- [x] **R19 Two lines, ~50ch.** "Ben Yamron is a product designer," / "currently building AI for researchers at Consensus." Text size fitted (container-query units) so line 2 fills the max width; icons scale with it; floor 26px wraps on phones. DialKit: size mode, max width, min/max text.
+- [x] **R20 Email copies.** ✓ clipboard = address, envelope springs to a check, "Email address copied" slides out (role=status), resets after 1.8s.
+- [x] **R22 Rail glide pill.** ✓ one pill starts on the trigger, springs between controls (measured travel 146→256→283px over 300ms), lands on the record as a 59×44 capsule, fades 140ms after leaving.
+- [x] **Copy variants** (Ben: lines too lopsided; pauses only at line ends). DialKit "Copy" with 8 measured variants; default "…product designer currently / building AI for researchers at Consensus." (100/98).
+- [x] **Consensus tile** #27272A in dark mode.
+- [ ] **R21 Contact micro-interactions** — brainstorm only this round (mail → paper airplane w/ Paper shader texture; GitHub → code window; LinkedIn → TBD).
+- [x] **Staff review** (design craft first; eng polish later), findings fixed or reported — see history 2026-10-28 round 2.
+
+**Follow-ups from the staff review (not done this round):**
+- Rail at ≤600px tall still overruns the strip reserve (below the fit floors) — add a 4th lever (trigger/record smaller) or shrink the reserve.
+- Compact record off-state is a plain switch; give it its own design (tiny vinyl / label dot) so it reads as music before it's played.
+- Social icons don't scale with the fitted type (fixed 24px glyph / 44px box); consider em-sizing.
+- Easing curves aren't tokens (spring + smooth curves duplicated across proto.css/TS); frost recipe duplicated in proto.css + sidebar glide pill.
+- Work-account tooltip overrides real counts on prod's heatmap for 10/02–10/26 — fine while the data stops at 10/01; decide (only when count = 0? include the date?) before the next data refresh. No unit test yet.
+- Cursor glow repaints a full-viewport gradient per move; if it stays, move a 2r element with transform. Glow↔pill handoff (push-further) or cut.
+- Phone rail overlays prose; consider a bottom sheet on narrow viewports. Rail record hit area < 44px on touch.
+- Branch is 71 commits behind `main` — rebase before any PR.
+- Ideas (push-further): LinkedIn badge swing on hover; portrait-click accent wave across the strip; one rule for contact interactions — change the glyph or something already on the page, never new chrome.
+
 ## V2 home exploration — prose home + morphing preview transitions (active, 2026-08-19)
 
 Ben is prototyping a radically simplified home page, designed in Paper (`https://app.paper.design/file/01M01HV1S56YYN78DMKCGKTB59/1-0`, frames `F1-0` home / `AV-0` case study). The Paper mock is **inspiration**, the real implementation takes precedence — the prototype lives inside the site's theme-token system, fonts, and data conventions rather than transplanting the mock's hardcoded values.

@@ -13,12 +13,31 @@ export interface RecordDockSettings {
 export type RecordPlacement = 'strip' | 'inline'
 
 export interface ProtoSettings {
-  /** Prose size on wide screens; phones get 65% of it, fluid in between. */
+  /** Prose size on wide screens; phones get 65% of it, fluid in between.
+   *  (/new/simple's fluid mode uses it too.) */
   proseMax: number
   recordPlacement: RecordPlacement
   /** Strip stays at the viewport bottom while the page scrolls behind it. */
   stickyStrip: boolean
   record: RecordDockSettings
+  /** /new/simple text block. */
+  simpleLayout: {
+    align: 'left' | 'center'
+    maxWidth: number
+    wrap: 'balance' | 'pretty'
+    /** Size the block to its widest line and centre that, so ragged
+     *  left-aligned text still sits optically centred. */
+    shrinkWrap: boolean
+    /** 'fit': size so line 2 fills maxWidth (≈51ch); 'fluid': viewport clamp. */
+    sizeMode: 'fit' | 'fluid'
+    /** Fit-mode floor; below it the text wraps instead of shrinking. */
+    minText: number
+    maxText: number
+    /** Line-break variant (SimpleHome COPY_VARIANTS key). */
+    copy: string
+  }
+  /** /new/simple experiment: the glass pill's cursor light, page-wide. */
+  cursorGlow: { on: boolean; intensity: number; radius: number; falloff: number; tint: number }
 }
 
 // Calmer than the playground defaults: the record sits beside a reading page.
@@ -26,6 +45,9 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   proseMax: 40,
   recordPlacement: 'strip',
   stickyStrip: false,
+  simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even (no comma)' },
+  // Half the pill's own light: Ben found the 1:1 lift too strong on the page.
+  cursorGlow: { on: true, intensity: 0.6, radius: 72, falloff: 55, tint: 1 },
   record: {
     size: 0.6,
     trackId: 'martini',

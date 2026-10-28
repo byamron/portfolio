@@ -56,6 +56,15 @@ export function formatDate(dateStr: string): string {
  * explicitly — otherwise a session left open across a midnight boundary can
  * have the last square's date silently stop matching a re-computed "today".
  */
+// Ben's commits in this stretch went to his work GitHub account, so this
+// one's graph reads quiet. Inclusive ISO dates.
+const WORK_ACCOUNT_SPAN = { from: '2026-10-02', to: '2026-10-26' }
+export const WORK_ACCOUNT_TOOLTIP = 'Cooking on my work account'
+
+export function workAccountNote(date: string): string | null {
+  return date >= WORK_ACCOUNT_SPAN.from && date <= WORK_ACCOUNT_SPAN.to ? WORK_ACCOUNT_TOOLTIP : null
+}
+
 export function getTooltipText(date: string, count: number, today?: string): string {
   if (today === undefined) {
     const now = new Date()
@@ -63,6 +72,8 @@ export function getTooltipText(date: string, count: number, today?: string): str
   }
   if (date === today) return `Today, ${formatDate(date)} — contributions in progress`
   if (date > today) return 'No contributions (yet)'
+  const note = workAccountNote(date)
+  if (note) return note
   return `${count} contribution${count !== 1 ? 's' : ''} on ${formatDate(date)}`
 }
 

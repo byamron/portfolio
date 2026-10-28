@@ -343,12 +343,25 @@ function setupGlassHighlight(
 
   // -- Positioning --
 
+  // Optional per-card vertical nudge (CSS custom property, any length incl.
+  // em). An inline link's box is the font's content area, which sits higher
+  // than its cap height; shifting the pill down re-centres it on the text.
+  // Read on hover/scroll only (not per frame), so fluid font sizes stay exact.
+  function getCardShiftY(card: HTMLElement): number {
+    const cs = getComputedStyle(card)
+    const raw = cs.getPropertyValue('--glass-shift-y').trim()
+    if (!raw) return 0
+    const n = parseFloat(raw) || 0
+    if (raw.endsWith('rem')) return n * parseFloat(getComputedStyle(document.documentElement).fontSize)
+    return raw.endsWith('em') ? n * parseFloat(cs.fontSize) : n
+  }
+
   function getCardPosition(card: HTMLElement) {
     const cardRect = card.getBoundingClientRect()
     if (!cachedContainerRect) cachedContainerRect = container.getBoundingClientRect()
     return {
       x: cardRect.left - cachedContainerRect.left + container.scrollLeft,
-      y: cardRect.top - cachedContainerRect.top + container.scrollTop,
+      y: cardRect.top - cachedContainerRect.top + container.scrollTop + getCardShiftY(card),
       w: cardRect.width,
       h: cardRect.height,
     }

@@ -451,8 +451,10 @@ export interface RecordToggleProps {
   tuning?: Partial<Params>;
   trackId?: TrackId;
   size?: number;
-  /** "above" for a widget pinned to the bottom of the viewport. */
-  creditPlacement?: "below" | "above";
+  /** "above" for a widget pinned to the bottom of the viewport; "left" for
+   *  a narrow column (e.g. a sidebar rail): one line, vertically centred on
+   *  the switch, running out to the left. */
+  creditPlacement?: "below" | "above" | "left";
   /** Horizontal alignment of the credit relative to the switch. */
   creditAlign?: "center" | "start" | "end";
   /** Any CSS colour (var() is fine) for the record label and its rim. */
@@ -466,6 +468,8 @@ export interface RecordToggleProps {
   /** Off-state track colour; lets the switch sit in the page's own tone. */
   trackOffColor?: string;
   focusColor?: string;
+  /** Fires when the switch turns on/off (e.g. to show a playing state elsewhere). */
+  onChange?: (on: boolean) => void;
 }
 
 export function RecordToggle({
@@ -483,8 +487,16 @@ export function RecordToggle({
   artistColor,
   trackOffColor,
   focusColor,
+  onChange,
 }: RecordToggleProps = {}) {
   const [on, setOn] = useState(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const firstOn = useRef(true);
+  useEffect(() => {
+    if (firstOn.current) { firstOn.current = false; return; }
+    onChangeRef.current?.(on);
+  }, [on]);
   const params = useMemo<Params>(
     () => ({ ...DEFAULT_PARAMS, ...tuning, ...(appearance ? { appearance } : null) }),
     [tuning, appearance],
@@ -502,7 +514,7 @@ export function RecordToggle({
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const fitSize = Math.min(size, (vw - 64) / (96 * G.aspect));
-  const H = Math.round(96 * Math.max(0.6, fitSize));
+  const H = Math.round(96 * Math.max(0.25, fitSize));
   const W = Math.round(H * G.aspect);
   const pad = H * G.pad;
   const K = H - 2 * pad;
@@ -529,6 +541,14 @@ export function RecordToggle({
   // Credit + hint are centred under the switch, or right-aligned above it
   const creditTxRef = useRef("-50%");
   creditTxRef.current = creditAlign === "center" ? "-50%" : "0px";
+  // Entrance nudge: rises 4px into place, or slides in from the switch
+  // when the credit sits beside it.
+  const creditSideRef = useRef(false);
+  creditSideRef.current = creditPlacement === "left";
+  const creditTransform = (p: number) =>
+    creditSideRef.current
+      ? `translate(${(1 - p) * 4}px, -50%)`
+      : `translate(${creditTxRef.current}, ${(1 - p) * 4}px)`;
   // Host-supplied off-track colour (may be a var()): mixed in CSS, since the
   // loop can only mix literal hex.
   const trackOffRef = useRef(trackOffColor);
@@ -970,12 +990,12 @@ export function RecordToggle({
         // Credits arrive with the needle, leave with it
         const np = clamp01(nowPlaying.x);
         nowPlayingEl.current.style.opacity = String(np);
-        nowPlayingEl.current.style.transform = `translate(${creditTxRef.current}, ${(1 - np) * 4}px)`;
+        nowPlayingEl.current.style.transform = creditTransform(np);
       }
       if (hintEl.current) {
         const hv = clamp01(hint.x);
         hintEl.current.style.opacity = String(hv);
-        hintEl.current.style.transform = `translate(${creditTxRef.current}, ${(1 - hv) * 4}px)`;
+        hintEl.current.style.transform = creditTransform(hv);
       }
       if (armEl.current) {
         const vis = armOpacity;
@@ -1208,18 +1228,23 @@ export function RecordToggle({
   // Vinyl detail: one multiplier on every texture highlight (grooves, gaps,
   // edge, run-out, sheen). 1 = the high-contrast pass.
   const vd = params.appearance === "dark" ? params.vinylDark : params.vinylLight;
+  // Compact (a toolbar-sized switch, record ≲ 36px): sub-pixel detail turns
+  // to noise, so drop the printed label, groove texture and lathe rings, and
+  // let a slightly larger plain label carry the colour.
+  const compact = K < 36;
   const wa = (a: number) => `rgba(255,255,255,${(a * vd).toFixed(3)})`;
   const runOut = mixOklab(C.vinyl, "#ffffff", 0.045 * vd); // opaque: no grooves show through
   const grooves = `repeating-radial-gradient(circle at 50% 50%, ${wa(0.07)} 0 0.6px, transparent 0.6px ${Math.max(2, K * 0.022)}px)`;
-  const labelR = K * G.labelR;
-  const creditSize = Math.min(16, Math.max(12, 9 + H * 0.045));
+  const labelR = K * (compact ? 0.21 : G.labelR);
+  // Beside a small switch (rail), match the host's small type step (13px).
+  const creditSize = creditPlacement === "left" ? 13 : Math.min(16, Math.max(12, 9 + H * 0.045));
   // Label type is set in a 100-unit box; long names shrink to fit their line
   const track = TRACKS[trackId];
   const artistSize = Math.min(7.6, 90 / (track.artist.length * 0.86));
   const titleSize = Math.min(9.5, 56 / (track.fullTitle.length * 0.5));
-  const deadR = K * 0.215; // run-out ("dead wax") between label and grooves
+  const deadR = compact ? labelR + 1.5 : K * 0.215; // run-out ("dead wax") between label and grooves
   const gapW = Math.max(1, K * 0.006);
-  const gaps = [0.3, 0.39].map((f) => K * f);
+  const gaps = (compact ? [0.36] : [0.3, 0.39]).map((f) => K * f);
   const vinylArt = [
     // Lathe-cut edge catching the light
     `radial-gradient(circle at 50% 50%, transparent ${K / 2 - 2.2}px, ${wa(0.22)} ${K / 2 - 1.2}px, transparent ${K / 2 - 0.2}px)`,
@@ -1229,7 +1254,7 @@ export function RecordToggle({
       .join(", ")})`,
     // Smooth run-out with a single lighter locked groove at its edge
     `radial-gradient(circle at 50% 50%, transparent ${labelR}px, ${runOut} ${labelR}px, ${runOut} ${deadR - 1}px, ${wa(0.18)} ${deadR - 0.5}px, transparent ${deadR}px)`,
-    grooves,
+    ...(compact ? [] : [grooves]),
     C.vinyl,
   ].join(", ");
   const woodGrain = useMemo(() => woodGrainURI(W, H), [W, H]);
@@ -1358,7 +1383,7 @@ export function RecordToggle({
                       params.offStyle === "tactile"
                         ? // spindle dimple · lathe rings (the record, foreshadowed) · base
                           `radial-gradient(circle at 50% 50%, rgba(0,0,0,0.10) 0 ${K * 0.016}px, rgba(0,0,0,0.03) ${K * 0.03}px, transparent ${K * 0.045}px), ` +
-                          `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.022) 0 0.6px, transparent 0.6px ${Math.max(2, K * 0.03)}px), ` +
+                          (compact ? "" : `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.022) 0 0.6px, transparent 0.6px ${Math.max(2, K * 0.03)}px), `) +
                           "#f4f3f1"
                         : C.knob,
                   }}
@@ -1386,7 +1411,7 @@ export function RecordToggle({
                     }}
                   >
                     {/* Printed label: rule, curved caps, title — sized in a 100-unit box */}
-                    <svg
+                    {!compact && <svg
                       viewBox="0 0 100 100"
                       width="100%"
                       height="100%"
@@ -1428,7 +1453,7 @@ export function RecordToggle({
                           {`SIDE A · ${params.rpm === 45 ? "45" : "33⅓"} RPM`}
                         </textPath>
                       </text>
-                    </svg>
+                    </svg>}
                     {/* Spindle */}
                     <div
                       style={{
@@ -1513,10 +1538,10 @@ export function RecordToggle({
               </defs>
               <g ref={armEl} style={{ opacity: 0 }}>
                 <g ref={armShadowEl} filter={`url(#${labelId}-armshadow)`} style={{ opacity: 0.4 }}>
-                  <ArmShape pivot={pivot} len={armLen} H={H} />
+                  <ArmShape pivot={pivot} len={armLen} H={H} compact={compact} />
                 </g>
                 <g ref={armBodyEl}>
-                  <ArmShape pivot={pivot} len={armLen} H={H} ids={labelId} />
+                  <ArmShape pivot={pivot} len={armLen} H={H} ids={labelId} compact={compact} />
                 </g>
               </g>
             </svg>
@@ -1527,15 +1552,19 @@ export function RecordToggle({
               bottom of the viewport. The idle caption shares the slot. */}
           {(() => {
             const above = creditPlacement === "above";
-            const gap = Math.max(14, H * 0.22);
-            const slot = (offset: number): React.CSSProperties => ({
-              position: "absolute",
-              ...(above ? { bottom: H + gap + offset } : { top: H + gap + offset }),
-              ...(creditAlign === "center" ? { left: "50%", textAlign: "center" }
-                : creditAlign === "end" ? { right: 0, textAlign: "right" }
-                : { left: 0, textAlign: "left" }),
-            });
+            const side = creditPlacement === "left";
+            const gap = side ? Math.max(12, H * 0.35) : Math.max(14, H * 0.22);
+            const slot = (offset: number): React.CSSProperties => side
+              ? { position: "absolute", right: W + gap, top: H / 2 + offset, textAlign: "right", whiteSpace: "nowrap" }
+              : {
+                  position: "absolute",
+                  ...(above ? { bottom: H + gap + offset } : { top: H + gap + offset }),
+                  ...(creditAlign === "center" ? { left: "50%", textAlign: "center" }
+                    : creditAlign === "end" ? { right: 0, textAlign: "right" }
+                    : { left: 0, textAlign: "left" }),
+                };
             const tx = creditAlign === "center" ? "-50%" : "0px";
+            const rest = (p: number) => side ? `translate(${(1 - p) * 4}px, -50%)` : `translate(${tx}, ${(1 - p) * 4}px)`;
             const text: React.CSSProperties = {
               fontFamily: creditFont ?? FONT,
               fontSize: creditSize,
@@ -1551,7 +1580,7 @@ export function RecordToggle({
                   ref={nowPlayingEl}
                   id={`${labelId}-now-playing`}
                   aria-hidden={!on}
-                  style={{ ...slot(0), ...text, transform: `translate(${tx}, 4px)`, opacity: 0, textWrap: "balance" }}
+                  style={{ ...slot(0), ...text, transform: rest(0), opacity: 0, textWrap: side ? undefined : "balance" }}
                 >
                   {/* Always rendered so it can fade out; hidden from AT while off */}
                   <span style={{ color: titleColor ?? theme.title }}>{track.fullTitle}</span>
@@ -1565,7 +1594,7 @@ export function RecordToggle({
                       ...slot(0),
                       ...text,
                       color: artistColor ?? theme.artist,
-                      transform: `translate(${tx}, ${on ? 4 : 0}px)`,
+                      transform: rest(on ? 0 : 1),
                       opacity: on ? 0 : 1,
                       transition: "opacity 240ms ease, transform 240ms ease",
                       whiteSpace: "nowrap",
@@ -1583,7 +1612,7 @@ export function RecordToggle({
                   style={{
                     ...slot(creditSize * 1.9),
                     ...text,
-                    transform: `translate(${tx}, 4px)`,
+                    transform: rest(0),
                     opacity: 0,
                     display: "flex",
                     alignItems: "center",
@@ -1617,10 +1646,13 @@ function ArmShape({
   len,
   H,
   ids,
+  compact = false,
 }: {
   pivot: { x: number; y: number };
   len: number;
   H: number;
+  /** Small switch: floor the tube/headshell at a visible width, drop the finger lift. */
+  compact?: boolean;
   /** Gradient id prefix; omit to render the flat silhouette used for the shadow */
   ids?: string;
 }) {
@@ -1628,9 +1660,11 @@ function ArmShape({
   const flat = ids ? undefined : "#000";
   const { x, y } = pivot;
   const tipX = x + len;
-  const t = H * ARM.tube;
+  const t = compact ? Math.max(1.4, H * ARM.tube) : H * ARM.tube;
   // Headshell: tapers out from the tube to a wider, squared-off nose
-  const hs = { join: tipX - H * 0.075, nose: tipX + H * 0.03, narrow: H * 0.032, wide: H * 0.048 };
+  const hs = compact
+    ? { join: tipX - H * 0.075, nose: tipX + H * 0.03, narrow: t * 1.15, wide: t * 1.7 }
+    : { join: tipX - H * 0.075, nose: tipX + H * 0.03, narrow: H * 0.032, wide: H * 0.048 };
   const shell = `M ${hs.join} ${y - hs.narrow / 2} L ${hs.nose} ${y - hs.wide / 2} L ${hs.nose} ${y + hs.wide / 2} L ${hs.join} ${y + hs.narrow / 2} Z`;
   return (
     <>
@@ -1654,7 +1688,7 @@ function ArmShape({
       />
       {/* Headshell + finger lift */}
       <path d={shell} fill={flat ?? paint("tube", "")} stroke={flat ?? "#bdbdbd"} strokeWidth={H * 0.008} strokeLinejoin="round" />
-      <line
+      {!compact && <line
         x1={tipX + H * 0.005}
         y1={y - hs.wide / 2}
         x2={tipX + H * 0.022}
@@ -1662,10 +1696,10 @@ function ArmShape({
         stroke={flat ?? "#cfcfcf"}
         strokeWidth={H * 0.009}
         strokeLinecap="round"
-      />
+      />}
       {/* Pivot: bearing housing + cap */}
       <circle cx={x} cy={y} r={H * ARM.pivotR} fill={flat ?? paint("metal", "")} />
-      {!flat && (
+      {!flat && !compact && (
         <>
           <circle cx={x} cy={y} r={H * ARM.capR} fill={C.armDark} opacity={0.55} />
           <circle cx={x} cy={y} r={H * (ARM.capR - 0.008)} fill={paint("metal", "")} />

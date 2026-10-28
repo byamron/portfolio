@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, type ReactNode } from 'react'
+import { motion, AnimatePresence, useAnimationControls, useReducedMotion } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
@@ -318,6 +318,28 @@ const DIVIDER_3 = STRIP_IDX + 1                       // 7
 const MODE_BASE = DIVIDER_3 + 1                       // 8
 const DIVIDER_4 = MODE_BASE + modes.length             // 11
 const CURSOR_BASE = DIVIDER_4 + 1                      // 12
+const DIVIDER_5 = CURSOR_BASE + cursorOptions.length   // 14
+const EXTRA_IDX = DIVIDER_5 + 1                        // 15
+
+const TRIGGER_ICON_BOX = 44 // matches the page's icon buttons
+// What the glide pill lands on: the trigger, every button, the strip, the record.
+const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
+// Fit mode floors: intensity strip (before ×controlScale) and divider air.
+const STRIP_MIN = 42
+const DIVIDER_MIN = 10
+const DIVIDER_MAX = 18
+
+// Record-shaped extra control: its width tracks the icon buttons (a touch
+// wider so the record reads), its height follows the record's 236:144 plinth.
+const EXTRA_OVERHANG = 5
+const RECORD_ASPECT = 236 / 144
+
+export interface SidebarMetrics {
+  /** Icon-button size at the current compression. */
+  buttonSize: number
+  /** Width the extra control should take to sit flush with the rail. */
+  extraWidth: number
+}
 
 /** Dispatch on window (detail: { opener }) to open the sidebar pinned —
  *  it then stays open until a click outside, Escape, or another toggle. */
@@ -329,9 +351,34 @@ interface SidebarThemeControlsProps {
   /** Hide the trigger square until the sidebar is open (an external element,
    *  via THEME_SIDEBAR_TOGGLE, is the visible way in; edge hover still works). */
   hideTriggerAtRest?: boolean
+  /** Replaces the 16px accent square with an always-visible icon button.
+   *  Click pins the sidebar open (click again, click outside, or Escape closes). */
+  triggerIcon?: ReactNode
+  /** One more control at the foot of the sidebar, below the cursor group.
+   *  Right-aligned to the rail and kept out of its width, so wide controls
+   *  (the record toggle) don't shift the column. Stays mounted while closed. */
+  extraControl?: ReactNode | ((m: SidebarMetrics) => ReactNode)
+  /** Multiplies control sizes (swatches, icon buttons, intensity strip). */
+  controlScale?: number
+  /** 'click': only the trigger opens it; the right edge doesn't react to
+   *  hover (and passes pointer events through to the page). */
+  openOn?: 'hover' | 'click'
+  /** Names what the icon trigger opens, for its aria-label ("Open …"). */
+  triggerLabel?: string
+  /** Per-item open stagger (s). */
+  stagger?: number
+  /** Fit every control to the viewport height instead of scrolling, leaving
+   *  this much room at the bottom (px). Off (undefined) = prod behaviour. */
+  fitBottomReserve?: number
+  /** One frosted pill for the whole rail that glides between controls
+   *  (instead of a pill per group + the trigger's own glass). */
+  glidePill?: boolean
 }
 
-export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarThemeControlsProps = {}) {
+export function SidebarThemeControls({
+  hideTriggerAtRest = false, triggerIcon, extraControl, controlScale = 1,
+  openOn = 'hover', stagger = 0.04, fitBottomReserve, triggerLabel = 'settings', glidePill = false,
+}: SidebarThemeControlsProps = {}) {
   const [hovered, setHovered] = useState(false)
   // Opened by a click (external trigger): mouse-leave doesn't close it.
   const [pinned, setPinned] = useState(false)
@@ -389,17 +436,92 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
   // Compression: full-size at 740px+, linearly compressed down to 500px
   const FULL_VP = 740
   const MIN_VP = 500
-  const compressT = Math.min(1, Math.max(0, (viewportHeight - MIN_VP) / (FULL_VP - MIN_VP)))
-  const swatchSize = Math.round(lerp(18, 24, compressT))
+  const sc = controlScale
+  const triggerSize = triggerIcon ? (TRIGGER_ICON_BOX) : 16
+  // Fit mode — three levers, in order: (1) tighten the divider air (18 →
+  // 10px), (2) shorten the intensity strip (to STRIP_MIN), (3) compress every
+  // control (t). Heights come from a model of the stack, corrected by its
+  // measured error against the real layout.
+  const stripAt = (t: number) => Math.round(lerp(44, 72, t) * sc)
+  const stripMin = Math.round(STRIP_MIN * sc)
+  const dividerCount = (isTouch ? 3 : 4) + (extraControl ? 1 : 0)
+  // Stack height without the strip, at compression t and divider margin dm.
+  const stackWithoutStrip = (t: number, dm: number) => {
+    const btn = Math.round(lerp(30, 40, t) * sc)
+    const swatches = 5 * Math.round(lerp(18, 24, t) * sc) + 4 * Math.round(lerp(6, 14, t))
+    const modes = 3 * btn + 2 * Math.round(lerp(2, 6, t))
+    const cursors = isTouch ? 0 : 2 * btn + Math.round(lerp(2, 6, t))
+    const extra = extraControl ? Math.round((btn + EXTRA_OVERHANG) / RECORD_ASPECT) : 0
+    return triggerSize + dividerCount * (2 * dm + 1) + swatches + modes + cursors + extra
+  }
+  const [fitError, setFitError] = useState(0)
+  // Fit mode only — prod never pays for the style read.
+  const triggerTop = fitBottomReserve !== undefined
+    ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-trigger-top')) || 64
+    : 64
+  let compressT = Math.min(1, Math.max(0, (viewportHeight - MIN_VP) / (FULL_VP - MIN_VP)))
+  let fitStrip: number | null = null
+  let fitDivider: number | null = null
+  if (fitBottomReserve !== undefined) {
+    const room = viewportHeight - triggerTop - fitBottomReserve - fitError
+    compressT = 1
+    const spare = room - stackWithoutStrip(1, 0) - stripAt(1)
+    const dm = Math.floor(spare / (2 * dividerCount))
+    if (dm >= DIVIDER_MAX) {
+      fitDivider = null
+    } else if (dm >= DIVIDER_MIN) {
+      fitDivider = dm
+    } else {
+      fitDivider = DIVIDER_MIN
+      const strip = Math.floor(room - stackWithoutStrip(1, DIVIDER_MIN))
+      if (strip >= stripMin) {
+        fitStrip = strip
+      } else {
+        fitStrip = stripMin
+        let lo = 0, hi = 1
+        for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) / 2
+          if (stackWithoutStrip(mid, Math.min(DIVIDER_MIN, Math.round(lerp(8, 18, mid)))) + stripMin <= room) lo = mid
+          else hi = mid
+        }
+        compressT = lo
+        fitDivider = Math.min(DIVIDER_MIN, Math.round(lerp(8, 18, lo)))
+      }
+    }
+  }
+  const swatchSize = Math.round(lerp(18, 24, compressT) * sc)
   const swatchGap = Math.round(lerp(6, 14, compressT))
-  const dividerMargin = Math.round(lerp(8, 18, compressT))
-  const buttonSize = Math.round(lerp(30, 40, compressT))
+  const dividerMargin = fitDivider ?? Math.round(lerp(8, 18, compressT))
+  const buttonSize = Math.round(lerp(30, 40, compressT) * sc)
   const buttonGap = Math.round(lerp(2, 6, compressT))
-  const stripHeight = Math.round(lerp(44, 72, compressT))
+  const stripHeight = fitStrip ?? stripAt(compressT)
+  const iconSize = Math.round(18 * sc)
+  const iconBox = Math.round(24 * sc)
   const thumbTravel = stripHeight - THUMB_SIZE
 
   // Max height for the expandable toolbar: viewport - top offset - trigger - bottom padding
-  const toolbarMaxHeight = viewportHeight - 64 - 16 - 16
+  const extraWidth = buttonSize + EXTRA_OVERHANG
+  const extraHeight = extraControl ? 2 * dividerMargin + 1 + Math.round(extraWidth / RECORD_ASPECT) : 0
+  // Fit mode sizes the stack itself; the cap is only a last resort below the
+  // smallest stack, and may then eat into the bottom reserve rather than clip.
+  const toolbarMaxHeight = fitBottomReserve !== undefined
+    ? viewportHeight - triggerTop - triggerSize - extraHeight - 8
+    : viewportHeight - 64 - 16 - 16 - extraHeight
+
+  // Fit mode: measure the real column (inline buttons add a few px of line
+  // box each, etc.) and feed the model's error back in.
+  const columnRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (fitBottomReserve === undefined) return
+    const col = columnRef.current
+    const bar = toolbarRef.current
+    if (!col || !bar) return
+    const actual = col.getBoundingClientRect().height - bar.clientHeight + bar.scrollHeight
+    const model = stackWithoutStrip(compressT, dividerMargin) + stripHeight
+    const error = Math.round(actual - model)
+    if (Math.abs(error - fitError) > 1) setFitError(error)
+  })
 
   const handleEnter = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current)
@@ -411,8 +533,18 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
     closeTimeout.current = setTimeout(() => setHovered(false), 250)
   }
 
-  const triggerHidden = hideTriggerAtRest && !hovered
+  const triggerHidden = !triggerIcon && hideTriggerAtRest && !hovered
   const toggleFromTrigger = () => {
+    if (triggerIcon) {
+      // A visible button: hover may already have opened it, so a click pins
+      // rather than toggling it shut under the cursor.
+      if (hoveredRef.current && pinnedRef.current) { close(false); return }
+      if (closeTimeout.current) clearTimeout(closeTimeout.current)
+      openerRef.current = triggerRef.current
+      setHovered(true)
+      setPinned(true)
+      return
+    }
     if (hoveredRef.current) close(false)
     else setHovered(true)
   }
@@ -480,12 +612,12 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
     cleanupModePill.current = null
     cleanupCursorPill.current?.()
     cleanupCursorPill.current = null
-    if (hovered) {
+    if (hovered && !glidePill) {
       if (swatchesRef.current) cleanupSwatchPill.current = setupControlPill(swatchesRef.current)
       if (modesRef.current) cleanupModePill.current = setupControlPill(modesRef.current)
       if (cursorsRef.current) cleanupCursorPill.current = setupControlPill(cursorsRef.current)
     }
-  }, [hovered])
+  }, [hovered, glidePill])
 
   useEffect(() => {
     const timer = setTimeout(setupPills, 120)
@@ -499,6 +631,56 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
       cleanupCursorPill.current = null
     }
   }, [setupPills])
+
+  // ---- Glide pill (opt-in) ----
+  // One pill in the column, behind the controls (z -1 inside the column's
+  // filter stacking context). It springs from target to target; leaving the
+  // rail fades it after a short grace (crossing a gap between two controls
+  // shouldn't flicker), and it reappears in place on the next hover.
+  const glide = useAnimationControls()
+  const glideShown = useRef(false)
+  const glideHide = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const glideTo = useCallback((el: Element) => {
+    const col = columnRef.current
+    if (!col) return
+    if (glideHide.current) { clearTimeout(glideHide.current); glideHide.current = null }
+    const c = col.getBoundingClientRect()
+    const r = el.getBoundingClientRect()
+    // At least the trigger's square; wider/taller controls get a little air.
+    const w = Math.max(r.width + (r.width > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
+    const h = Math.max(r.height + (r.height > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
+    const target = { x: r.left - c.left + (r.width - w) / 2, y: r.top - c.top + (r.height - h) / 2, width: w, height: h }
+    if (!glideShown.current || prefersReducedMotion) {
+      glide.set(target)
+      glide.start({ opacity: 1, transition: { duration: 0.12 } })
+    } else {
+      glide.start({ ...target, opacity: 1, transition: { type: 'spring', stiffness: 560, damping: 40, mass: 0.7, opacity: { duration: 0.12 } } })
+    }
+    glideShown.current = true
+  }, [glide, prefersReducedMotion])
+  const glideOut = useCallback(() => {
+    if (glideHide.current) clearTimeout(glideHide.current)
+    glideHide.current = setTimeout(() => {
+      glideShown.current = false
+      glide.start({ opacity: 0, transition: { duration: 0.16 } })
+    }, 140)
+  }, [glide])
+  useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current) }, [])
+  const glideHandlers = glidePill ? {
+    onPointerOver: (e: React.PointerEvent) => {
+      const t = (e.target as Element).closest(GLIDE_TARGETS)
+      if (t && columnRef.current?.contains(t)) glideTo(t)
+    },
+    onPointerOut: (e: React.PointerEvent) => {
+      const to = e.relatedTarget as Element | null
+      if (!to || !columnRef.current?.contains(to) || !to.closest(GLIDE_TARGETS)) glideOut()
+    },
+    onFocus: (e: React.FocusEvent) => {
+      const t = (e.target as Element).closest(GLIDE_TARGETS)
+      if (t) glideTo(t)
+    },
+    onBlur: glideOut,
+  } : {}
 
   const activeSwatchVar = `var(--swatch-${accentColor})`
 
@@ -523,7 +705,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
       if (thumbRef.current) thumbRef.current.style.top = `${t * (h - THUMB_SIZE)}px`
       document.documentElement.style.setProperty('--bg', bg)
       // Sync trigger dot and meta theme-color in the same frame
-      if (triggerRef.current) {
+      if (triggerRef.current && !triggerIcon) {
         triggerRef.current.style.opacity = String(lerp(0.45, 1.0, t))
         triggerRef.current.style.boxShadow = t > 0.01
           ? `0 0 ${lerp(0, 14, t).toFixed(1)}px color-mix(in srgb, ${activeSwatchVar} ${Math.round(lerp(0, 0.5, t) * 100)}%, transparent)`
@@ -532,7 +714,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
       const meta = document.querySelector('meta[name="theme-color"]')
       if (meta) meta.setAttribute('content', bg)
     }
-  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatchVar])
+  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatchVar, triggerIcon])
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -565,8 +747,9 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
     <div
       ref={sidebarRef}
       data-sidebar
-      onMouseEnter={isTouch ? undefined : handleEnter}
-      onMouseLeave={isTouch ? undefined : handleLeave}
+      data-glide={glidePill || undefined}
+      onMouseEnter={isTouch || openOn === 'click' ? undefined : handleEnter}
+      onMouseLeave={isTouch || openOn === 'click' ? undefined : handleLeave}
       style={{
         position: 'fixed',
         top: 0,
@@ -574,8 +757,12 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
         width: 56,
         height: '100vh',
         zIndex: 100,
-        overflow: hovered || backdropExiting ? 'visible' : 'hidden',
-        pointerEvents: isTouch && !hovered ? 'none' : 'auto',
+        // Click-only rails never catch the pointer, so nothing needs clipping
+        // at rest — and the icon trigger's glass is wider than the strip.
+        overflow: hovered || backdropExiting || openOn === 'click' ? 'visible' : 'hidden',
+        // Click-only: the strip itself never catches the pointer; the trigger
+        // and (while open) each control opt back in.
+        pointerEvents: openOn === 'click' || (isTouch && !hovered) ? 'none' : 'auto',
         viewTransitionName: 'sidebar',
       }}
     >
@@ -611,6 +798,8 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
         initial={isEntrance && !prefersReducedMotion ? { opacity: 0 } : false}
         animate={{ opacity: 1 }}
         transition={isEntrance && !prefersReducedMotion ? { duration: 0.4, delay: entrancePreset.sidebarDelay, ease: 'easeOut' } : { duration: 0 }}
+        ref={columnRef}
+        {...glideHandlers}
         style={{
           position: 'absolute',
           right: 16,
@@ -621,21 +810,58 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
           filter: 'drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 90%, transparent))',
         }}
       >
+        {glidePill && (
+          <motion.div
+            aria-hidden="true"
+            animate={glide}
+            initial={{ opacity: 0 }}
+            style={{
+              position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none',
+              borderRadius: 12,
+              // Same frost as the page's glass pill (useGlassHighlight skinPill).
+              background: resolvedAppearance === 'dark'
+                ? 'hsla(var(--accent-hue), 20%, 55%, 0.12)'
+                : 'hsla(var(--accent-hue), 20%, 40%, 0.08)',
+              boxShadow: resolvedAppearance === 'dark'
+                ? 'inset 0 1px 0 0 rgba(255, 255, 255, 0.10)'
+                : 'inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)',
+              border: resolvedAppearance === 'dark'
+                ? '0.5px solid rgba(255, 255, 255, 0.12)'
+                : '0.5px solid rgba(0, 0, 0, 0.08)',
+              backdropFilter: 'blur(1px)',
+              WebkitBackdropFilter: 'blur(1px)',
+            }}
+          />
+        )}
         {/* Fixed trigger — 16×16 dot with 40×40 invisible touch target overlay */}
         <div
           ref={triggerRef}
           role="button"
           tabIndex={triggerHidden ? -1 : 0}
           aria-hidden={triggerHidden || undefined}
-          aria-label={hovered ? 'Close theme controls' : 'Open theme controls'}
+          aria-label={triggerIcon
+            ? `${hovered ? 'Close' : 'Open'} ${triggerLabel}`
+            : (hovered ? 'Close theme controls' : 'Open theme controls')}
           aria-expanded={hovered}
+          className={triggerIcon ? 'sidebar-icon-trigger' : undefined}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
               toggleFromTrigger()
             }
           }}
-          style={{
+          style={triggerIcon ? {
+            position: 'relative',
+            width: TRIGGER_ICON_BOX,
+            height: TRIGGER_ICON_BOX,
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-dark)',
+            opacity: hovered ? 1 : 0.6,
+            flexShrink: 0,
+          } : {
             position: 'relative',
             width: 16,
             height: 16,
@@ -650,6 +876,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
             flexShrink: 0,
           }}
         >
+          {triggerIcon}
           {/* Enlarged hit area for touch */}
           <div
             onClick={toggleFromTrigger}
@@ -668,6 +895,9 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
 
         {/* Expandable toolbar — scrollable when controls exceed viewport */}
         <div
+          ref={toolbarRef}
+          // Closed click-only rail: no stray tab stop on the (empty) toolbar.
+          inert={openOn === 'click' && !hovered}
           className="sidebar-scroll"
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -679,7 +909,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
           {/* Divider: trigger ↔ swatches */}
           <motion.div
             animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-            transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * 0.04 : 0, ease: motionEase }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * stagger : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
               margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -700,7 +930,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                 <motion.div
                   key={color}
                   animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                  transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * 0.04 : 0, ease: motionEase }}
+                  transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * stagger : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
                   <button
@@ -711,7 +941,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                     tabIndex={hovered ? 0 : -1}
                     onClick={() => setAccentColor(color)}
                     style={{
-                      width: swatchSize, height: swatchSize, borderRadius: 6,
+                      width: swatchSize, height: swatchSize, borderRadius: Math.round(6 * sc),
                       background: cssVar, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
                       outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : 'none',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
@@ -725,7 +955,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
           {/* Divider: swatches ↔ intensity */}
           <motion.div
             animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-            transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * 0.04 : 0, ease: motionEase }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * stagger : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
               margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -735,7 +965,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
           {/* Intensity gradient strip */}
               <motion.div
                 animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * 0.04 : 0, ease: motionEase }}
+                transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * stagger : 0, ease: motionEase }}
                 style={{ pointerEvents: hovered ? 'auto' : 'none' }}
               >
                 <div
@@ -761,7 +991,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                   onDragStart={(e) => e.preventDefault()}
                   style={{
                     position: 'relative',
-                    width: 24,
+                    width: iconBox,
                     height: stripHeight,
                     display: 'flex',
                     justifyContent: 'center',
@@ -773,9 +1003,9 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                   {/* The visual gradient strip */}
                   <div
                     style={{
-                      width: 8,
+                      width: Math.round(8 * sc),
                       height: stripHeight,
-                      borderRadius: 4,
+                      borderRadius: Math.round(4 * sc),
                       background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
                       transition: 'background 500ms ease-in-out',
                       pointerEvents: 'none',
@@ -804,7 +1034,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
               {/* Divider: intensity ↔ modes */}
               <motion.div
                 animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-                transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * 0.04 : 0, ease: motionEase }}
+                transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * stagger : 0, ease: motionEase }}
                 style={{
                   width: 20, height: 1, background: 'var(--text-dark)',
                   margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -824,7 +1054,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                 <motion.div
                   key={mode}
                   animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                  transition={{ duration: 0.22, delay: hovered ? (MODE_BASE + i) * 0.04 : 0, ease: motionEase }}
+                  transition={{ duration: 0.22, delay: hovered ? (MODE_BASE + i) * stagger : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
                   <button
@@ -844,12 +1074,12 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                     <span
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 24, height: 24, borderRadius: 6,
+                        width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
                         outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
                         outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                       }}
                     >
-                      <Icon size={18} />
+                      <Icon size={iconSize} />
                     </span>
                   </button>
                 </motion.div>
@@ -863,7 +1093,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
               {/* Divider: modes ↔ cursors */}
               <motion.div
                 animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-                transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
+                transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * stagger : 0, ease: motionEase }}
                 style={{
                   width: 20, height: 1, background: 'var(--text-dark)',
                   margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -883,7 +1113,7 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                     <motion.div
                       key={mode}
                       animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                      transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * 0.04 : 0, ease: motionEase }}
+                      transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * stagger : 0, ease: motionEase }}
                       style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                     >
                       <button
@@ -903,18 +1133,18 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
                         <span
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            width: 24, height: 24, borderRadius: 6,
+                            width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
                             outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
                             outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                           }}
                         >
-                          {icon === 'cursor' && <Cursor size={18} />}
-                          {icon === 'circle' && <Circle size={18} />}
+                          {icon === 'cursor' && <Cursor size={iconSize} />}
+                          {icon === 'circle' && <Circle size={iconSize} />}
                           {icon === 'figpal' && (
                             <img
                               src="/images/figpal.png"
                               alt=""
-                              style={{ height: 22, width: 'auto' }}
+                              style={{ height: Math.round(22 * sc), width: 'auto' }}
                             />
                           )}
                         </span>
@@ -926,6 +1156,35 @@ export function SidebarThemeControls({ hideTriggerAtRest = false }: SidebarTheme
             </>
           )}
         </div>
+
+        {extraControl && (
+          <>
+            <motion.div
+              animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
+              transition={{ duration: 0.22, delay: hovered ? DIVIDER_5 * stagger : 0, ease: motionEase }}
+              style={{
+                width: 20, height: 1, background: 'var(--text-dark)',
+                margin: `${dividerMargin}px 0`, pointerEvents: 'none', flexShrink: 0,
+              }}
+            />
+            <motion.div
+              inert={!hovered}
+              animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
+              transition={{ duration: 0.22, delay: hovered ? EXTRA_IDX * stagger : 0, ease: motionEase }}
+              style={{
+                alignSelf: 'stretch',
+                display: 'flex',
+                justifyContent: 'center',
+                // Zero intrinsic width: anything wider than the rail spills
+                // out evenly instead of widening (and re-centring) it.
+                contain: 'inline-size',
+                pointerEvents: hovered ? 'auto' : 'none',
+              }}
+            >
+              {typeof extraControl === 'function' ? extraControl({ buttonSize, extraWidth }) : extraControl}
+            </motion.div>
+          </>
+        )}
       </motion.div>
     </div>
   )

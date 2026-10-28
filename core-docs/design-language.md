@@ -197,6 +197,17 @@ The prose home deliberately departs from the project-link treatment above: one s
 
 So UW and Middlebury get black + logo with no underline (no destination), and GitHub/X get black + underline + `↗` with no logo (platforms, not places). Icons are sized in `em` (`0.975em`, ≈ line-height × 0.75) with asymmetric negative margins so they center on cap height without growing the line box; a logo stays glued only to the first word of a long name so it can still wrap on phones.
 
+#### Simple home (`/new/simple`) — prototype rules (2026-10-28)
+
+- **Measure drives size.** The intro is set in fixed line breaks (pauses only at line ends — no mid-line commas) and the type is sized so the longest line exactly fills the column (`clamp(min, 99cqi / longestLineEm, max)`), ≈50 characters a line. Inline icons are em-sized and follow. Below the floor (phones) the breaks drop and the browser balances.
+- **Optical centring.** Ragged left-aligned text is centred by its widest rendered line (shrink-wrap), not by its container.
+- **Icon-only buttons are allowed here** because each is a recognised brand mark (LinkedIn, GitHub, X) or a single-purpose verb with a visible result (envelope = copy, confirmed by a check + "Email address copied"). Accessible names say what happens ("Copy email address …", "… (opens in new tab)").
+- **Glass over small glyphs.** Icons and ≤13px labels sit *above* the pill (z 11) so the 1px frost never softens them; prose links stay frosted-over. Entrance animations must end with `filter: none` — any leftover filter is a stacking context that traps that z-index.
+- **Inline pill centring.** An inline link's box is the font's content area, which sits above the cap-height centre; `--glass-shift-y` (0.0875em for Literata) re-centres the pill. Horizontal padding matches the resulting vertical inset (0.25em).
+- **The portrait is a theme toy:** click cycles the accent (prod parity); any theme change pops it (snap to .82, spring back, tilt follows the direction of the change); swaps are same-frame (all crops mounted).
+- **Settings rail (click-only).** One frosted glide pill travels between the trigger and every control and fades when the pointer leaves. The record is the rail's last control, sized from the button size, with its caption on its left ("Smooth jazz" idle, track while playing); the trigger shows a breathing accent dot while music plays. The rail fits the viewport by tightening divider air, then the intensity strip, then every control.
+- **Cursor glow is an experiment** that breaks "glass doesn't exist at rest" — if it ships, record the exception in § The glass rules.
+
 ### What typography does NOT do
 
 - Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.

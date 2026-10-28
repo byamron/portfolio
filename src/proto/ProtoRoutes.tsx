@@ -1,33 +1,104 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import './proto.css'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
 import { SidebarThemeControls } from '@/components/SidebarThemeControls'
 import { ProtoHome } from './ProtoHome'
+import { CursorGlow } from './CursorGlow'
+import { RecordDock } from './RecordDock'
+import { SimpleHome } from './SimpleHome'
 
 // Dead-code-eliminated from production builds: the tuner (and DialKit) only
 // exist under `vite dev`.
+// /new/simple: the toolbar grows a little and the record shrinks to meet it,
+// so the record reads as one more control in the rail.
+const SIMPLE_CONTROL_SCALE = 1.15
+// RecordToggle's size unit: 96px of plinth height, 236:144 plinth.
+const RECORD_ASPECT = 236 / 144
+// The rail stops above the contribution strip (label + cells + breathing room).
+const STRIP_RESERVE = 104
+
 const ProtoTuner = import.meta.env.DEV ? lazy(() => import('./ProtoTuner')) : null
 
 // No AnimatePresence here: its `initial={false}` reaches every motion
 // component in the subtree and silently skipped the home page's entrance.
-function ProtoShell() {
+function ProtoShell({ children }: { children: ReactNode }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', color: 'var(--text-dark)' }}>
-      <ProtoHome />
+      {children}
       <CustomCursor />
       <CursorCompanion />
-      {/* The portrait is the visible way in; the right edge still opens it on hover. */}
-      <SidebarThemeControls hideTriggerAtRest />
     </div>
   )
 }
 
+/** Settings glyph whose knobs are real: they slide to opposite ends while
+ *  the rail is open (proto.css, keyed off the trigger's aria-expanded). */
+function SlidersGlyph({ playing }: { playing: boolean }) {
+  return (
+    <>
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden="true">
+      <line x1="4" y1="8" x2="20" y2="8" />
+      <line x1="4" y1="16" x2="20" y2="16" />
+      <circle className="sliders-knob sliders-knob-a" cx="15" cy="8" r="2.5" fill="var(--bg)" />
+      <circle className="sliders-knob sliders-knob-b" cx="9" cy="16" r="2.5" fill="var(--bg)" />
+    </svg>
+    {/* Music is on: the record keeps playing after the rail closes, so the
+        way back to it says so. */}
+    <span className={`sliders-playing${playing ? ' is-on' : ''}`} aria-hidden="true" />
+    </>
+  )
+}
+
+/** /new/simple: knows whether the rail's record is playing. */
+function SimpleShell() {
+  const [playing, setPlaying] = useState(false)
+  return (
+    <ProtoShell>
+      <CursorGlow />
+      <SimpleHome />
+      <SidebarThemeControls
+        triggerIcon={<SlidersGlyph playing={playing} />}
+        triggerLabel={playing ? 'settings (music playing)' : 'settings'}
+        controlScale={SIMPLE_CONTROL_SCALE}
+        openOn="click"
+        stagger={0.018}
+        glidePill
+        fitBottomReserve={STRIP_RESERVE}
+        extraControl={({ extraWidth }) => (
+          <RecordDock credit="left" size={extraWidth / RECORD_ASPECT / 96} idleCaption="Smooth jazz" onChange={setPlaying} />
+        )}
+      />
+    </ProtoShell>
+  )
+}
+
+function ProtoPages() {
+  return (
+    <Routes>
+      <Route
+        index
+        element={
+          <ProtoShell>
+            <ProtoHome />
+            {/* The portrait is the visible way in; the right edge still opens it on hover. */}
+            <SidebarThemeControls hideTriggerAtRest />
+          </ProtoShell>
+        }
+      />
+      {/* A settings button is the way in; the record lives in the sidebar
+          and keeps playing after it closes. */}
+      <Route path="simple" element={<SimpleShell />} />
+    </Routes>
+  )
+}
+
 export function ProtoRoutes() {
-  if (!ProtoTuner) return <ProtoShell />
+  if (!ProtoTuner) return <ProtoPages />
   return (
     <Suspense fallback={null}>
-      <ProtoTuner><ProtoShell /></ProtoTuner>
+      <ProtoTuner><ProtoPages /></ProtoTuner>
     </Suspense>
   )
 }

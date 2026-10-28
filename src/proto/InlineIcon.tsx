@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion'
-import { useTheme } from '@/contexts/ThemeContext'
+import { useTheme, VALID_ACCENTS } from '@/contexts/ThemeContext'
 import { THEME_SIDEBAR_STATE, THEME_SIDEBAR_TOGGLE } from '@/components/SidebarThemeControls'
 
 // Sized in em so icons track the prose size at every breakpoint:
@@ -33,6 +33,67 @@ export function InlineIcon({ src }: { src: string }) {
     <span style={wrapper} aria-hidden="true">
       <img src={src} alt="" style={image} />
     </span>
+  )
+}
+
+const ACCENTS = ['table', 'portrait', 'pizza', 'vineyard', 'sky'] as const
+const portraitSrc = (accent: string) => `/images/portrait-square-${accent}.jpg`
+
+/**
+ * Ben's portrait as the theme's face (/new/simple): click cycles the accent,
+ * as clicking the big portrait does on prod, and it pops whenever the theme
+ * changes (from here or from the sidebar).
+ */
+export function ThemePortrait() {
+  const { accentColor, cycleAccent } = useTheme()
+  const reducedMotion = useReducedMotion()
+  const pop = useAnimationControls()
+  const prevAccent = useRef(accentColor)
+
+  useEffect(() => {
+    if (prevAccent.current === accentColor) return
+    // Tilt with the direction the theme moved through the swatch order, so
+    // repeat clicks turn like cards in a stack rather than replaying one move.
+    // (Cycle order — what a portrait click steps through; wrap counts as forward.)
+    const n = VALID_ACCENTS.length
+    const step = (VALID_ACCENTS.indexOf(accentColor) - VALID_ACCENTS.indexOf(prevAccent.current) + n) % n
+    const forward = step <= n / 2
+    prevAccent.current = accentColor
+    if (reducedMotion) return
+    // Snap to a squash on the same frame as the swap, then spring past 1 and
+    // settle: reads as the new photo bouncing in.
+    pop.set({ scale: 0.82, rotate: forward ? -5 : 5 })
+    pop.start({ scale: 1, rotate: 0, transition: { type: 'spring', stiffness: 520, damping: 13, mass: 0.6 } })
+  }, [accentColor, pop, reducedMotion])
+
+  return (
+    <>
+    <button
+      type="button"
+      aria-label="Change theme color"
+      onClick={() => {
+        cycleAccent()
+        document.dispatchEvent(new CustomEvent('accent-cycled'))
+      }}
+      className="proto-portrait theme-portrait"
+      style={{ ...wrapper, padding: 0, border: 'none', background: 'none', font: 'inherit', cursor: 'pointer', borderRadius: '22%' }}
+    >
+      <motion.span animate={pop} style={{ position: 'relative', display: 'block', width: '100%', height: '100%' }}>
+        {/* All five crops stay mounted (already decoded), so a theme change
+            swaps the visible one on the same frame — no load or decode lag. */}
+        {ACCENTS.map(a => (
+          <img
+            key={a}
+            src={portraitSrc(a)}
+            alt=""
+            decoding="sync"
+            style={{ ...image, position: 'absolute', inset: 0, visibility: a === accentColor ? 'visible' : 'hidden' }}
+          />
+        ))}
+      </motion.span>
+    </button>
+    <span className="sr-only" role="status">{`Theme: ${accentColor}`}</span>
+    </>
   )
 }
 

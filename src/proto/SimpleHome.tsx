@@ -1,0 +1,347 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion'
+import { Check, EnvelopeSimple, GithubLogo, LinkedinLogo, XLogo, type Icon } from '@phosphor-icons/react'
+import { ContributionStrip } from '@/components/ContributionStrip'
+import { FlockX } from '@/components/FlockX'
+import { useGlassHighlight } from '@/hooks/useGlassHighlight'
+import { InlineIcon, ThemePortrait } from './InlineIcon'
+import { ProtoLink } from './ProtoLink'
+import { COPY_VARIANTS, protoBySlug, type Seg } from './data'
+import { fluidSize, useProtoSettings } from './protoSettings'
+
+// /new/simple — the sketch: one sentence, four ways to reach Ben, the
+// contribution strip. Theme + record live in the sidebar (ProtoRoutes).
+
+const LINE_HEIGHT = 1.3
+// The sidebar's settings button sits this far from the top (its rail is
+// right: 16), i.e. in the page's top-right corner.
+const TRIGGER_TOP = 24
+
+// Glass pill radius for prose links and the icon buttons (matches .simple-social).
+const SOCIAL_RADIUS = 12
+
+const CASCADE = { delay: 0.12, stagger: 0.08, duration: 0.45 } // prod's entrance beat
+const EASE_OUT = [0.22, 1, 0.36, 1] as const
+
+const SOCIALS: { id: string; label: string; Icon: Icon }[] = [
+  { id: 'linkedin', label: 'LinkedIn (opens in new tab)', Icon: LinkedinLogo },
+  { id: 'github', label: 'GitHub (opens in new tab)', Icon: GithubLogo },
+  { id: 'x', label: 'X, formerly Twitter (opens in new tab)', Icon: XLogo },
+  { id: 'email', label: 'Email', Icon: EnvelopeSimple },
+]
+
+function renderSeg(seg: Seg, i: number, measuring: boolean) {
+  if (seg === 'P') return measuring
+    ? <span key={i}><InlineIcon src="/images/portrait-square-table.jpg" />{' '}</span>
+    : <span key={i}><ThemePortrait />{' '}</span>
+  if (seg === 'N') return <span key={i} style={{ color: 'var(--text-dark)' }}>Ben Yamron</span>
+  if (seg === 'C') return <ProtoLink key={i} entry={protoBySlug.get('consensus')!} />
+  return <span key={i}>{seg}</span>
+}
+
+const EMAIL = 'ben.yamron@icloud.com'
+const COPIED_MS = 1800
+const ICON_SWAP = { type: 'spring', stiffness: 700, damping: 26 } as const
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Insecure context / permissions: the old selection route still works.
+    const ta = Object.assign(document.createElement('textarea'), { value: text })
+    ta.style.cssText = 'position:fixed;opacity:0'
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand('copy')
+    ta.remove()
+    return ok
+  }
+}
+
+/** Email: copies the address instead of opening a mail client. The envelope
+ *  springs into a check and a note slides out beside it, then both settle back. */
+function CopyEmailButton({ icon }: { icon: React.ReactNode }) {
+  const [copied, setCopied] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>(null)
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+  const reducedMotion = useReducedMotion()
+  const swap = reducedMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        initial: { opacity: 0, scale: 0.4, rotate: -30 },
+        animate: { opacity: 1, scale: 1, rotate: 0 },
+        exit: { opacity: 0, scale: 0.4, rotate: 30 },
+      }
+  return (
+    <span style={{ position: 'relative', display: 'flex' }}>
+      <button
+        type="button"
+        data-social
+        className="simple-social"
+        aria-label={`Copy email address (${EMAIL})`}
+        onClick={async () => {
+          // Couldn't copy: fall back to what an envelope usually means.
+          if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
+          if (timer.current) clearTimeout(timer.current)
+          // Off for a frame on a repeat click, so the note replays and the
+          // status region re-announces.
+          setCopied(false)
+          requestAnimationFrame(() => setCopied(true))
+          timer.current = setTimeout(() => setCopied(false), COPIED_MS)
+        }}
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={copied ? 'check' : 'mail'}
+            {...swap}
+            transition={ICON_SWAP}
+            style={{ display: 'flex' }}
+          >
+            {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : icon}
+          </motion.span>
+        </AnimatePresence>
+      </button>
+      {/* Out of flow, so the row never shifts; read out politely. */}
+      <span
+        role="status"
+        style={{
+          position: 'absolute', left: '100%', top: '50%', marginLeft: 6,
+          transform: 'translateY(-50%)', whiteSpace: 'nowrap', pointerEvents: 'none',
+        }}
+      >
+        <AnimatePresence>
+          {copied && (
+            <motion.span
+              key="toast"
+              className="simple-copied"
+              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -6, filter: 'blur(3px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -4, filter: 'blur(2px)' }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ display: 'inline-block' }}
+            >
+              Email address copied
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </span>
+    </span>
+  )
+}
+
+export function SimpleHome() {
+  const reducedMotion = useReducedMotion()
+  const { proseMax, simpleLayout: layout } = useProtoSettings()
+  const pageRef = useRef<HTMLElement>(null)
+  const blockRef = useRef<HTMLDivElement>(null)
+  const centred = layout.align === 'center'
+
+  const lines = COPY_VARIANTS[layout.copy] ?? Object.values(COPY_VARIANTS)[0]!
+
+  // Fit mode: the text size is whatever makes the longest line exactly fill
+  // the column (the measure). Each line's width in em is read from hidden
+  // nowrap copies at 100px; the size itself is pure CSS (container-query
+  // units), so it tracks resizes with no JS. Icons are em-sized and follow.
+  const measureRef = useRef<HTMLDivElement>(null)
+  const [lineEms, setLineEms] = useState<number[] | null>(null)
+  useLayoutEffect(() => {
+    const box = measureRef.current
+    if (!box) return
+    const measure = () => {
+      const ems = [...box.children].map(c => c.getBoundingClientRect().width / 100)
+      if (ems.every(e => e > 0)) setLineEms(ems)
+    }
+    measure()
+    // Literata loads lazily (after first use), so fonts.ready can resolve
+    // before it swaps in. Watching the copies' own size catches the swap.
+    const ro = new ResizeObserver(measure)
+    for (const c of box.children) ro.observe(c)
+    return () => ro.disconnect()
+  }, [layout.copy])
+  const longestEm = lineEms ? Math.max(...lineEms) : null
+  const fit = layout.sizeMode === 'fit' && longestEm !== null
+  const fontSize = fit
+    // 1% slack so rounding/hinting differences never wrap a line.
+    ? `clamp(${layout.minText}px, calc(99cqi / ${longestEm!.toFixed(4)}), ${layout.maxText}px)`
+    : fluidSize(proseMax)
+
+  // Shrink-wrap: a wrapped paragraph's box is as wide as its container, not
+  // its longest line, so ragged left-aligned text sits left of centre. Size
+  // the block to the widest rendered line and centre that instead.
+  const [fitWidth, setFitWidth] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    const block = blockRef.current
+    if (!block || !layout.shrinkWrap || centred) { setFitWidth(null); return }
+    const measure = () => {
+      const prev = block.style.width
+      block.style.width = '' // measure the natural wrap at full width
+      const range = document.createRange()
+      range.selectNodeContents(block.querySelector('p')!)
+      const rects = [...range.getClientRects()].filter(r => r.width > 0)
+      block.style.width = prev
+      if (!rects.length) return
+      const w = Math.ceil(Math.max(...rects.map(r => r.right)) - Math.min(...rects.map(r => r.left))) + 1
+      setFitWidth(cur => (cur === w ? cur : w))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(block.parentElement!)
+    document.fonts?.ready.then(measure)
+    return () => ro.disconnect()
+    // fontSize: a new size re-wraps the text, so the widest line moves too.
+  }, [layout.shrinkWrap, layout.maxWidth, layout.wrap, centred, fontSize, layout.copy])
+
+  // On the whole page, so the strip's GitHub link (data-link-card) shares the
+  // prose links' glass.
+  const glassApi = useGlassHighlight(pageRef, {
+    cardSelector: '[data-proto-link], [data-social], [data-contact-card], [data-link-card]',
+    borderRadius: SOCIAL_RADIUS,
+    clearDelay: 200,
+  })
+
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--sidebar-trigger-top', `${TRIGGER_TOP}px`)
+    return () => { root.style.removeProperty('--sidebar-trigger-top') }
+  }, [])
+
+  const item: Variants = reducedMotion
+    ? { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0 } } }
+    : {
+        hidden: { opacity: 0, y: 12, filter: 'blur(6px)' },
+        visible: (i: number) => ({
+          opacity: 1, y: 0, filter: 'blur(0px)',
+          // A leftover filter (even blur(0)) is a stacking context, which
+          // traps the icons' z-index under the glass pill. Clear it.
+          transitionEnd: { filter: 'none' },
+          transition: { delay: CASCADE.delay + i * CASCADE.stagger, duration: CASCADE.duration, ease: EASE_OUT },
+        }),
+      }
+
+  return (
+    <motion.main
+      ref={pageRef}
+      className="simple-home"
+      initial="hidden"
+      animate="visible"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <h1 className="sr-only">Ben Yamron, product designer</h1>
+
+      <div
+        style={{
+          maxWidth: layout.maxWidth,
+          width: '100%',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          // Symmetric, so the column's centre is the page's centre.
+          padding: '96px clamp(24px, 6vw, 72px) 64px',
+          containerType: 'inline-size',
+        }}
+      >
+      <div
+        ref={blockRef}
+        style={{
+          width: fitWidth ?? '100%',
+          maxWidth: '100%',
+          marginInline: 'auto',
+          textAlign: centred ? 'center' : 'left',
+        }}
+      >
+        <motion.p
+          className="simple-intro"
+          variants={item}
+          custom={0}
+          style={{
+            margin: 0,
+            fontFamily: '"Literata", Georgia, serif',
+            fontSize,
+            fontWeight: 300,
+            lineHeight: LINE_HEIGHT,
+            color: 'var(--text-grey)',
+            textWrap: layout.wrap,
+          }}
+        >
+          {lines.map((line, li) => (
+            <span key={li}>
+              {li > 0 && <br />}
+              {line.map((seg, i) => renderSeg(seg, i, false))}
+            </span>
+          ))}
+        </motion.p>
+        {/* Measuring copies (fit mode): one per line, 100px, never wrapping. */}
+        <div
+          ref={measureRef}
+          aria-hidden="true"
+          inert
+          style={{
+            position: 'absolute', visibility: 'hidden', pointerEvents: 'none', top: 0, left: 0,
+            fontFamily: '"Literata", Georgia, serif', fontSize: 100, fontWeight: 300,
+          }}
+        >
+          {lines.map((line, li) => (
+            <span key={li} style={{ display: 'block', width: 'max-content', whiteSpace: 'nowrap' }}>
+              {line.map((seg, i) => renderSeg(seg, i, true))}
+            </span>
+          ))}
+        </div>
+
+        <motion.ul
+          variants={item}
+          custom={1}
+          aria-label="Elsewhere"
+          // Left: pulled back so the first glyph lines up with the text edge.
+          style={{ listStyle: 'none', margin: centred ? '40px 0 0' : '40px 0 0 -10px', padding: 0, display: 'flex', gap: 4, justifyContent: centred ? 'center' : 'flex-start' }}
+        >
+          {SOCIALS.map(({ id, label, Icon }) => {
+            const { href } = protoBySlug.get(id)!
+            const isWeb = href.startsWith('http')
+            const icon = <Icon size={24} weight="regular" aria-hidden="true" />
+            return (
+              <li key={id}>
+                {id === 'email' ? (
+                  <CopyEmailButton icon={icon} />
+                ) : id === 'x' ? (
+                  // The flock easter egg: the glass cracks from behind the
+                  // logo, shatters, and birds fly out.
+                  <FlockX href={href} className="simple-social" ariaLabel={label} epicenter="center" glassRadius={SOCIAL_RADIUS} glassApi={glassApi}>
+                    {icon}
+                  </FlockX>
+                ) : (
+                  <a
+                    data-social
+                    className="simple-social"
+                    href={href}
+                    aria-label={label}
+                    target={isWeb ? '_blank' : undefined}
+                    rel={isWeb ? 'noopener noreferrer' : undefined}
+                  >
+                    {icon}
+                  </a>
+                )}
+              </li>
+            )
+          })}
+        </motion.ul>
+      </div>
+      </div>
+
+      {/* Contribution strip — full-bleed foot of the page (as on /new): at
+          the viewport bottom when the content fits, below it when it scrolls. */}
+      <motion.div variants={item} custom={2} style={{ alignSelf: 'stretch', flexShrink: 0, paddingBottom: 8 }}>
+        <ContributionStrip topGap={0} />
+      </motion.div>
+    </motion.main>
+  )
+}
