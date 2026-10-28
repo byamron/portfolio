@@ -54,8 +54,10 @@ export function SimpleHome() {
   const { proseMax, simpleLayout: tuned } = useProtoSettings()
   // A preset (DialKit, or ?preset=… so it works on phones/prod builds) sets
   // copy + target size and lets the column go wide; 'custom' uses the dials.
-  const urlPreset = new URLSearchParams(window.location.search).get('preset')
-  const preset = TEXT_PRESETS[urlPreset ?? ''] ?? (tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined)
+  // Own keys only, so ?preset=constructor etc. falls back instead of matching.
+  const asked = new URLSearchParams(window.location.search).get('preset')
+  const urlPreset = asked && Object.prototype.hasOwnProperty.call(TEXT_PRESETS, asked) ? asked : null
+  const preset = (urlPreset ? TEXT_PRESETS[urlPreset] : undefined) ?? (tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined)
   // The DialKit S→M slider sets the active preset's size (URL presets keep theirs).
   // (Only for the S presets — it's an S→M fine-tune — so M/L keep their size.)
   const presetName = urlPreset ?? tuned.preset

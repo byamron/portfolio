@@ -1223,8 +1223,10 @@ export function RecordToggle({
       // A tap toggles via the click handler — unless the press was carried off
       // the switch, which (like any button) cancels. Capture would otherwise
       // still deliver that click to us.
+      // "On the switch" includes the 44px touch target a host may give it.
       const r = e.currentTarget.getBoundingClientRect();
-      const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      const px = Math.max(0, (44 - r.width) / 2), py = Math.max(0, (44 - r.height) / 2);
+      const inside = e.clientX >= r.left - px && e.clientX <= r.right + px && e.clientY >= r.top - py && e.clientY <= r.bottom + py;
       if (!inside) suppressClick.current = true;
       return;
     }

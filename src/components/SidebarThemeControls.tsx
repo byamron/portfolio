@@ -380,7 +380,7 @@ interface SidebarThemeControlsProps {
 
 export function SidebarThemeControls({
   hideTriggerAtRest = false, triggerIcon, extraControl, controlScale = 1,
-  openOn = 'hover', stagger = 0.04, fitBottomReserve, triggerLabel = 'settings', glidePill = false, triggerTop: triggerTopProp,
+  openOn = 'hover', stagger = 0.04, fitBottomReserve, triggerLabel = 'Settings', glidePill = false, triggerTop: triggerTopProp,
 }: SidebarThemeControlsProps = {}) {
   const [hovered, setHovered] = useState(false)
   // Opened by a click (external trigger): mouse-leave doesn't close it.
@@ -842,11 +842,15 @@ export function SidebarThemeControls({
           role="button"
           tabIndex={triggerHidden ? -1 : 0}
           aria-hidden={triggerHidden || undefined}
+          // Icon trigger: a fixed name — aria-expanded carries open/closed.
           aria-label={triggerIcon
-            ? `${hovered ? 'Close' : 'Open'} ${triggerLabel}`
+            ? triggerLabel
             : (hovered ? 'Close theme controls' : 'Open theme controls')}
           aria-expanded={hovered}
           className={triggerIcon ? 'sidebar-icon-trigger' : undefined}
+          // On the role="button" element itself (the hit area below bubbles
+          // here), so assistive tech that "presses" the element activates it.
+          onClick={toggleFromTrigger}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
@@ -882,7 +886,6 @@ export function SidebarThemeControls({
           {triggerIcon}
           {/* Enlarged hit area for touch */}
           <div
-            onClick={toggleFromTrigger}
             style={{
               position: 'absolute',
               top: '50%',

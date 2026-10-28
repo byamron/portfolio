@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion'
 import { useTheme, VALID_ACCENTS } from '@/contexts/ThemeContext'
 import { THEME_SIDEBAR_STATE, THEME_SIDEBAR_TOGGLE } from '@/components/SidebarThemeControls'
@@ -92,7 +93,9 @@ export function ThemePortrait() {
         ))}
       </motion.span>
     </button>
-    <span className="sr-only" role="status">{`Theme: ${accentColor}`}</span>
+    {/* Announced from outside the sentence, so browse mode doesn't read it
+        as part of the intro. */}
+    {createPortal(<span className="sr-only" role="status">{`Theme: ${accentColor}`}</span>, document.body)}
     </>
   )
 }

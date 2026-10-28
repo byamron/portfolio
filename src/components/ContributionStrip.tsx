@@ -457,6 +457,7 @@ export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessor
           onFocus={() => setJumpActive(true)}
           onBlur={() => setJumpActive(false)}
           aria-label="Scroll back to today"
+          className="strip-jump"
           aria-hidden={!jumpVisible}
           tabIndex={jumpVisible ? 0 : -1}
           style={{

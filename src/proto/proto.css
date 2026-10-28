@@ -44,6 +44,11 @@
 :is([data-proto-link], .proto-portrait, .simple-social, .sidebar-icon-trigger, .simple-home a[data-link-card]):focus:not(:focus-visible) {
   outline: none;
 }
+/* The rail's controls (glide rail = /new/simple only) use the same
+   contrast-safe ring instead of the raw swatch. */
+[data-glide] [data-sidebar-control]:focus-visible {
+  outline-color: var(--focus-ring) !important;
+}
 /* The trigger rests at 0.6 opacity (inline), which would dim its ring
    below 3:1 on the light backgrounds. */
 .sidebar-icon-trigger:focus-visible {
@@ -273,6 +278,9 @@
   animation: term-blink 1s steps(1) infinite;
 }
 @keyframes term-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .term-caret { animation: none; }
+}
 
 /* LinkedIn business card — Ben's Consensus-style template: cream stock
    (Paper's paper-texture shader, barely there), a light-blue ruled grid,
@@ -355,12 +363,15 @@
 @media (pointer: coarse) {
   .theme-portrait,
   .simple-home section a[data-link-card],
+  .simple-home .strip-jump,
   [data-glide] [data-sidebar-control] {
     position: relative;
   }
   .theme-portrait::after,
   .simple-home section a[data-link-card]::after,
-  [data-glide] [data-sidebar-control]::after {
+  .simple-home .strip-jump::after,
+  [data-glide] [data-sidebar-control]::after,
+  [data-glide] .record-toggle::after /* already absolute */ {
     content: '';
     position: absolute;
     left: 50%;

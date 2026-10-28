@@ -43,7 +43,7 @@ export function RecordDock({ credit, align, size, idleCaption, onChange }: {
           titleColor="var(--text-dark)"
           artistColor="var(--text-grey)"
           trackOffColor="color-mix(in oklab, var(--bg), var(--text-dark) 12%)"
-          focusColor="var(--swatch)"
+          focusColor="var(--focus-ring)"
         />
       </Suspense>
     </div>

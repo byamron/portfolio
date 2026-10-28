@@ -35,12 +35,22 @@ function useHoverStage() {
     if (timer.current) clearTimeout(timer.current)
     setStage(0)
   }
+  // Opened by hover, focus may be anywhere: Escape dismisses from the page.
+  useEffect(() => {
+    if (!stage) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (timer.current) clearTimeout(timer.current)
+      setStage(0)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [stage])
   const handlers = {
     onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType !== 'touch') open(true) },
     onPointerLeave: close,
     onFocus: () => open(false),
     onBlur: close,
-    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Escape') close() },
   }
   return { stage, viaPointer, handlers }
 }
