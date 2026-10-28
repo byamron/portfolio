@@ -41,6 +41,7 @@ function renderSeg(seg: Seg, i: number, measuring: boolean) {
 }
 
 const PHONE_QUERY = '(max-width: 640px)'
+const STRIP_LABEL_INSET = 40 // ContributionStrip's label paddingLeft
 const PHONE_MAX_TEXT = 38
 const subscribePhone = (cb: () => void) => {
   const mq = window.matchMedia(PHONE_QUERY)
@@ -61,7 +62,9 @@ export function SimpleHome() {
   const urlPreset = new URLSearchParams(window.location.search).get('preset')
   const preset = TEXT_PRESETS[urlPreset ?? ''] ?? (tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined)
   // The DialKit S→M slider sets the active preset's size (URL presets keep theirs).
-  const presetSize = preset && !urlPreset && tuned.presetSize ? tuned.presetSize : preset?.size
+  // (Only for the S presets — it's an S→M fine-tune — so M/L keep their size.)
+  const presetName = urlPreset ?? tuned.preset
+  const presetSize = preset && !urlPreset && tuned.presetSize && presetName.endsWith('· S') ? tuned.presetSize : preset?.size
   const layout = preset ? { ...tuned, copy: preset.copy, maxText: presetSize!, maxWidth: PRESET_MAX_WIDTH } : tuned
   const pageRef = useRef<HTMLElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
@@ -179,8 +182,10 @@ export function SimpleHome() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          // Symmetric, so the column's centre is the page's centre.
-          padding: '96px clamp(24px, 6vw, 72px) 64px',
+          // Symmetric, so the column's centre is the page's centre. Phones:
+          // left edge on the strip label's 40px inset (centring a narrow
+          // block there reads as misalignment, not intent).
+          padding: phone ? `96px 24px 64px ${STRIP_LABEL_INSET}px` : '96px clamp(24px, 6vw, 72px) 64px',
           containerType: 'inline-size',
         }}
       >
@@ -189,7 +194,7 @@ export function SimpleHome() {
         style={{
           width: fitWidth ?? '100%',
           maxWidth: '100%',
-          marginInline: 'auto',
+          marginInline: phone && !centred ? 0 : 'auto',
           textAlign: centred ? 'center' : 'left',
         }}
       >

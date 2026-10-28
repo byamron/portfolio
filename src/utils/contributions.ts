@@ -82,15 +82,24 @@ export const ZERO_DAY_WEEKEND = [
   'Out of range',
 ]
 
-/** The line for a past zero-contribution day. Deterministic per date, and
- *  consecutive days never repeat (a step coprime to each list's length). */
+/** The line for a past zero-contribution day. Deterministic per date;
+ *  consecutive days never repeat, and adding the week number keeps a given
+ *  weekday from always drawing the same line (both lists are 7 long — a
+ *  week — so day × 3 alone locked each weekday to one line). */
 export function zeroDayNote(date: string): string {
   if (date >= WORK_ACCOUNT_SPAN.from && date <= WORK_ACCOUNT_SPAN.to) return WORK_ACCOUNT_TOOLTIP
   const d = new Date(date + 'T00:00:00')
   const day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000)
   const weekend = d.getDay() === 0 || d.getDay() === 6
   const list = weekend ? ZERO_DAY_WEEKEND : ZERO_DAY_WEEKDAY
-  return list[(day * 3) % list.length]!
+  return list[(day * 3 + Math.floor(day / 7)) % list.length]!
+}
+
+/** Screen-reader version: zero-day lines drop the date visually, so the
+ *  announcement puts it back ("Sketching on paper, March 10th"). */
+export function getTooltipLabel(date: string, count: number, today?: string): string {
+  const text = getTooltipText(date, count, today)
+  return count === 0 && text === zeroDayNote(date) ? `${text}, ${formatDate(date)}` : text
 }
 
 export function getTooltipText(date: string, count: number, today?: string): string {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { animate, AnimatePresence, motion, useAnimationControls, useMotionValue, useReducedMotion } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
@@ -16,14 +16,18 @@ const LINGER_MS = 1600
 
 const finePointer = () => typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches
 
-/** Hover/focus → stage 1 at once, stage 2 after LINGER_MS; leave → 0. */
+/** Hover/focus → stage 1 at once, stage 2 after LINGER_MS; leave, blur or
+ *  Escape → 0 (WCAG 1.4.13: dismissible). `viaPointer` tells callers whether
+ *  a real hover (vs. keyboard focus) opened it. */
 function useHoverStage() {
   const [stage, setStage] = useState<0 | 1 | 2>(0)
+  const [viaPointer, setViaPointer] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(null)
   const enabled = useMemo(finePointer, [])
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
-  const open = () => {
+  const open = (pointer: boolean) => {
     if (!enabled || stage) return
+    setViaPointer(pointer)
     setStage(1)
     timer.current = setTimeout(() => setStage(2), LINGER_MS)
   }
@@ -32,12 +36,13 @@ function useHoverStage() {
     setStage(0)
   }
   const handlers = {
-    onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType !== 'touch') open() },
+    onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType !== 'touch') open(true) },
     onPointerLeave: close,
-    onFocus: open,
+    onFocus: () => open(false),
     onBlur: close,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Escape') close() },
   }
-  return { stage, handlers }
+  return { stage, viaPointer, handlers }
 }
 
 /** Popover anchored under an icon button: springs out of the icon. */
@@ -102,7 +107,7 @@ function highlight(src: string) {
   )
 }
 
-function Terminal({ onRun }: { onRun: () => boolean }) {
+function Terminal({ onRun }: { onRun: () => 'launched' | 'flying' | 'standby' }) {
   const reducedMotion = useReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
@@ -110,8 +115,9 @@ function Terminal({ onRun }: { onRun: () => boolean }) {
   useEffect(() => {
     if (!typedRun) return
     const t = setTimeout(() => {
-      if (reducedMotion) { setResult('blimp grounded (reduced motion)'); return }
-      setResult(onRun() ? 'blimp launched' : 'blimp already in the air')
+      if (reducedMotion) { setResult('blimp grounded'); return }
+      const r = onRun()
+      setResult(r === 'launched' ? 'blimp launched' : r === 'flying' ? 'blimp already in the air' : 'blimp on standby')
     }, 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun, reducedMotion])
@@ -151,7 +157,6 @@ function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }
     if (n >= text.length) { const t = setTimeout(() => done.current(), 140); return () => clearTimeout(t) }
     // ~42 chars/s with a little human unevenness.
     const t = setTimeout(() => setN(v => v + 1), 1000 / 42 * (0.6 + Math.random() * 0.8))
-    return () => clearTimeout(t)
     return () => clearTimeout(t)
   }, [n, text])
   return <>{highlight(text.slice(0, n))}</>
@@ -195,7 +200,12 @@ function BlimpArt() {
         transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
         fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75"
       />
-      <text x="65" y="55" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500" fontSize="18" fill="#2b2620">Hi</text>
+      <motion.text
+        x="65" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500" fontSize="18" fill="#2b2620"
+        initial={{ y: 55 }} animate={{ y: [55, 57, 55] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        Hi
+      </motion.text>
 
       {/* Fins: short and stubby to match the round body */}
       <path d={`M ${tail + 22} 27 L ${tail + 4} 10 L ${tail - 6} 12 L ${tail + 8} 32 Z`} fill="url(#blimp-fin)" />
@@ -209,9 +219,9 @@ function BlimpArt() {
       {/* Envelope */}
       <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-body)" />
       <g clipPath="url(#blimp-clip)" fill="none" stroke="rgba(40,30,20,0.08)" strokeWidth="1">
-        <ellipse cx={cx} cy={cy} rx={rx * 0.6} ry={ry} />
-        <ellipse cx={cx} cy={cy} rx={rx * 0.25} ry={ry} />
+        {/* Panels run nose to tail, like an airship's (not a globe's). */}
         <ellipse cx={cx} cy={cy} rx={rx} ry={ry * 0.38} />
+        <ellipse cx={cx} cy={cy} rx={rx} ry={ry * 0.75} />
       </g>
       <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-rim)" />
       <ellipse cx={cx - 10} cy={cy - 20} rx={rx * 0.62} ry="7" fill="#fff" opacity="0.55" filter="url(#blimp-soft)" />
@@ -249,15 +259,20 @@ function BlimpFlight({ onDone }: { onDone: () => void }) {
 }
 
 export function GitHubLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
-  const { stage, handlers } = useHoverStage()
+  const { stage, viaPointer, handlers } = useHoverStage()
   const [flying, setFlying] = useState(false)
   const flyingRef = useRef(false)
   // Lives here (not in the popover), so the flight outlasts the hover.
-  const launch = useMemo(() => () => {
-    if (flyingRef.current) return false
+  // Only a real hover launches it: a long screen-crossing flight shouldn't
+  // start from keyboard focus passing through (WCAG 2.2.2).
+  const pointerRef = useRef(false)
+  pointerRef.current = viaPointer
+  const launch = useMemo(() => (): 'launched' | 'flying' | 'standby' => {
+    if (!pointerRef.current) return 'standby'
+    if (flyingRef.current) return 'flying'
     flyingRef.current = true
     setFlying(true)
-    return true
+    return 'launched'
   }, [])
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
@@ -371,6 +386,7 @@ const EMAIL = 'ben.yamron@icloud.com'
 const COPIED_MS = 1800
 // After a hover flight: the plane has folded and left; the envelope returns.
 const ENVELOPE_BACK_MS = 520
+const DWELL_MS = 150
 const ICON_SWAP = { type: 'spring', stiffness: 700, damping: 26 } as const
 
 async function copyText(text: string): Promise<boolean> {
@@ -435,127 +451,217 @@ function PaperPattern({ id, pxPerUnit }: { id: string; pxPerUnit: number }) {
   )
 }
 
-// Envelope-sized sheet halves (so it can grow out of the icon), then the
-// sheet, then the shapes after each fold. Left half; right half mirrors x.
-const L_ENVELOPE = 'M 0 -7 L -10 -7 L -10 7 L 0 7 Z'
-const L_SHEET = 'M 0 -22 L -17 -22 L -17 22 L 0 22 Z'
-const L_AFTER_CORNER = 'M 0 -22 L -17 -5 L -17 22 L 0 22 Z'
-const L_AFTER_EDGE = 'M 0 -22 L -17 19 L -17 22 L 0 22 Z'
-// Corner flap: hinge (0,-22)–(-17,-5); free corner (-17,-22) → (0,-5).
-const L_CORNER_OPEN = 'M 0 -22 L -17 -22 L -17 -5 Z'
-const L_CORNER_SHUT = 'M 0 -22 L 0 -5 L -17 -5 Z'
-// Edge flap: hinge from the nose at the 112.5° bisector to (-17,19); the
-// slanted edge's end (-17,-5) → (0, 2) on the crease.
-const L_EDGE_OPEN = 'M 0 -22 L -17 -5 L -17 19 Z'
-const L_EDGE_SHUT = 'M 0 -22 L 0 2 L -17 19 Z'
-// After folding in half (right onto left): keel (crease side) + wing, split
-// at x = -8.5; the wing folds down over that line so its edge meets the crease.
-const L_KEEL = 'M 0 -22 L -8.5 -1.5 L -8.5 22 L 0 22 Z'
-const L_WING_UP = 'M -8.5 -1.5 L -17 19 L -17 22 L -8.5 22 Z'
-const L_WING_DOWN = 'M -8.5 -1.5 L 0 19 L 0 22 L -8.5 22 Z'
-const mapPts = (d: string, f: (x: number, y: number) => [number, number]) =>
-  d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => f(parseFloat(x), parseFloat(y)).map(v => +v.toFixed(2)).join(' '))
-const mirror = (d: string) => mapPts(d, (x, y) => [-x, y])
+// ── Paper geometry ──────────────────────────────────────────────────────
+// Sheet units: portrait sheet, nose up, x ±17, y ±22, crease at x = 0. We
+// model the LEFT half; the right half is its mirror, turned about the crease.
+// Every face is a polygon; a fold moves its free corners straight across the
+// hinge (the true top-down projection), so paper never slides or stretches.
 
-// Flying sprite (3/4 view, nose right), in sprite units. Point order matches
-// the side-view fold shapes corner-for-corner (nose, fold line, tail…) so the
-// "open the wings" morph never cross-wires.
-const FLY_WING = 'M 14 0 L -5 1.5 L -5 1.5 L -13 -7 Z'
-const FLY_KEEL = 'M 14 0 L -5 1.5 L -8 6 L -8 8 Z'
+type P2 = [number, number]
+const lerp2 = (a: P2, b: P2, t: number): P2 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
+const pathOf = (pts: P2[]) => 'M ' + pts.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' L ') + ' Z'
 
-const FOLD_SCALE = 1.25 // px per sheet unit while folding (sheet ≈ 55px tall)
-// The folded dart is the sheet's full height long (44 × FOLD_SCALE ≈ 55px);
-// the flying sprite's nose-to-tail (−13…14) is scaled to match.
-const FLY_SCALE = (44 * FOLD_SCALE) / 27
-// The fold's last frame *is* the flight sprite: map sprite units into the
-// fold stage's local frame (stage turned 90° cw: screen (X,Y) = (−y, x)).
-const toStage = (d: string) => mapPts(d, (fx, fy) => [(FLY_SCALE / FOLD_SCALE) * fy, -(FLY_SCALE / FOLD_SCALE) * fx])
-const STAGE_WING = toStage(FLY_WING)
-const STAGE_KEEL = toStage(FLY_KEEL)
+const NOSE: P2 = [0, -22]
+// Envelope (icon-sized) → sheet.
+const ENVELOPE: P2[] = [[0, -7], [-10, -7], [-10, 7], [0, 7]]
+const SHEET: P2[] = [[0, -22], [-17, -22], [-17, 22], [0, 22]]
+// Step 2 · corner to crease: hinge NOSE–(-17,-5); (-17,-22) → (0,-5).
+const BASE_2: P2[] = [[0, -22], [-17, -5], [-17, 22], [0, 22]]
+const CORNER_FREE: [P2, P2] = [[-17, -22], [0, -5]]
+// Step 3 · slanted edge to crease: hinge NOSE–(-17,19) (the 112.5° bisector);
+// (-17,-5) → (0, 2.04). It cuts the corner flap at (-7.05,-5): the part
+// beyond the hinge rides along with the fold, the rest stays put.
+const BASE_3: P2[] = [[0, -22], [-17, 19], [-17, 22], [0, 22]]
+const EDGE_FREE: [P2, P2] = [[-17, -5], [0, 2.04]]
+const H3_AT_Y5: P2 = [-7.05, -5]
+// Step 5 · the dart's wing fold, from the nose to (-8.75, 22) — the bottom
+// edge's midpoint, so the folded wing's edge meets the crease.
+const HINGE_T: P2 = [-8.75, 22]
+const KEEL: P2[] = [[0, -22], [-8.75, 22], [0, 22]]
+const WING: P2[] = [[0, -22], [-17, 19], [-17, 22], [-8.75, 22]]
+// The wing's share of the step-3 flap (its outer line, seen once the wing turns
+// its inner face toward us): split where (0,2.04)–(-17,19) crosses the hinge.
+const WING_FLAP: P2[] = [[0, -22], [-5.96, 7.96], [-17, 19]]
+
+/** Orthographic view of a wing point turned ψ about the dart hinge (0 = flat,
+ *  in the sheet's plane; 180 = folded down onto the keel), with the whole plane
+ *  rolled `roll` about its length so an open wing reads. side: +1 near, −1 far. */
+function wingPoint(p: P2, psi: number, roll: number, side: 1 | -1): P2 {
+  const ux = HINGE_T[0] - NOSE[0], uy = HINGE_T[1] - NOSE[1]
+  const ul = Math.hypot(ux, uy)
+  const u: P2 = [ux / ul, uy / ul]
+  const dx = p[0] - NOSE[0], dy = p[1] - NOSE[1]
+  const a = dx * u[0] + dy * u[1]
+  const qx = dx - a * u[0], qy = dy - a * u[1]
+  const c = Math.cos(psi), sn = Math.sin(psi)
+  const x = NOSE[0] + a * u[0] + qx * c
+  const y = NOSE[1] + a * u[1] + qy * c
+  const z = side * Math.hypot(qx, qy) * sn
+  return [x * Math.cos(roll) + z * Math.sin(roll), y]
+}
+const keelPoint = (p: P2, roll: number): P2 => [p[0] * Math.cos(roll), p[1]]
+
+/** Side-view faces at a given wing angle and roll (shared by the fold's last
+ *  steps and the flying sprite, so the hand-off is exact). */
+function sideFaces(psi: number, roll: number) {
+  return {
+    far: pathOf(WING.map(p => wingPoint(p, psi, roll, -1))),
+    keel: pathOf(KEEL.map(p => keelPoint(p, roll))),
+    near: pathOf(WING.map(p => wingPoint(p, psi, roll, 1))),
+    nearFlap: pathOf(WING_FLAP.map(p => wingPoint(p, psi, roll, 1))),
+    hinge: `M ${keelPoint(NOSE, roll).join(' ')} L ${keelPoint(HINGE_T, roll).join(' ')}`,
+  }
+}
+const OPEN_PSI = (95 * Math.PI) / 180 // a touch of dihedral
+const OPEN_ROLL = (-55 * Math.PI) / 180 // rolled toward us so the wings read
+const FLY_FACES = sideFaces(OPEN_PSI, OPEN_ROLL)
+
+const FOLD_SCALE = 1.25 // px per sheet unit (sheet ≈ 55px tall)
+const PAPER_SHADOW = 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))'
 
 type Pt = { x: number; y: number }
 const RELEASE_S = 0.3
-interface Throw { v0: number; gamma0: number } // launch speed (px/s), angle (rad)
+interface Throw { v0: number; vTrim: number } // launch speed, trim speed (px/s)
 
 const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 
-/** The fold, beside the icon: one overlapping timeline — each fold begins
- *  as the last settles — ending on the exact flight pose. */
+/** The fold, beside the icon: a parameter per step, all faces derived from
+ *  them every frame, so the paper stays one continuous sheet. */
 function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => void }) {
+  const uid = useId().replace(/:/g, '')
   const stage = useAnimationControls()
-  // The right half's fold about the crease (x = 0), as scaleX. Written to the
-  // SVG transform *attribute* — CSS transforms on an SVG <g> didn't apply.
-  const rightFold = useMotionValue(1)
-  const rightRef = useRef<SVGGElement>(null)
-  useEffect(() => rightFold.on('change', v => rightRef.current?.setAttribute('transform', `scale(${v} 1)`)), [rightFold])
-  const baseL = useAnimationControls(), baseR = useAnimationControls()
-  const cornerL = useAnimationControls(), cornerR = useAnimationControls()
-  const edgeL = useAnimationControls(), edgeR = useAnimationControls()
-  const keel = useAnimationControls(), wing = useAnimationControls()
-  const crease = useAnimationControls()
-  const flap = useAnimationControls()
-  const [phase, setPhase] = useState<'top' | 'side'>('top')
   const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 }
-  // Fold in the empty space to the right of the icon row.
-  const at = { x: start.x + 78, y: start.y - 4 }
+  // Past the end of the icon row — clear of the "Email address copied" note.
+  const at = { x: start.x + 215, y: start.y - 4 }
+
+  // Step parameters (0…1 unless noted).
+  const open = useMotionValue(0)
+  const lift = useMotionValue(1) // right half's scaleX about the crease
+  const creased = useMotionValue(0)
+  const cornerL = useMotionValue(0), cornerR = useMotionValue(0)
+  const edgeL = useMotionValue(0), edgeR = useMotionValue(0)
+  const psi = useMotionValue(0) // wing angle (rad)
+  const roll = useMotionValue(0)
+  const [side, setSide] = useState(false)
+  const els = useRef<Record<string, SVGPathElement | null>>({})
+  const ref = (k: string) => (el: SVGPathElement | null) => { els.current[k] = el }
 
   useEffect(() => {
-    // Every motion is started at its own moment. (Queuing several delayed
-    // .start() calls on one control at once lets the later ones cancel the
-    // earlier — that's what used to skip the sheet opening and the crease.)
+    const set = (k: string, d: string | null, opacity = 1) => {
+      const el = els.current[k]
+      if (!el) return
+      if (d === null) { el.style.display = 'none'; return }
+      el.style.display = ''
+      el.setAttribute('d', d)
+      el.style.opacity = String(opacity)
+    }
+    // One half's faces, mapped by fx (identity for left; mirror+turn for right).
+    const half = (prefix: string, fx: (p: P2) => P2, c: number, e: number, plainBack: boolean) => {
+      const o = open.get()
+      const base = e > 0 ? BASE_3 : c > 0 ? BASE_2 : ENVELOPE.map((p, i) => lerp2(p, SHEET[i]!, o))
+      set(prefix + 'base', pathOf(base.map(fx)), o)
+      set(prefix + 'baseFill', pathOf(base.map(fx)), o)
+      if (plainBack) { // turned over: we see the plain back of this half
+        ;['cornerFull', 'cornerStatic', 'cornerMove', 'edge'].forEach(k => set(prefix + k, null))
+        return
+      }
+      if (c > 0 && e === 0) {
+        set(prefix + 'cornerFull', pathOf(([NOSE, lerp2(CORNER_FREE[0], CORNER_FREE[1], c), [-17, -5]] as P2[]).map(fx)))
+      } else set(prefix + 'cornerFull', null)
+      if (e > 0) {
+        set(prefix + 'cornerStatic', pathOf(([NOSE, [0, -5], H3_AT_Y5] as P2[]).map(fx)))
+        set(prefix + 'edge', pathOf(([NOSE, lerp2(EDGE_FREE[0], EDGE_FREE[1], e), [-17, 19]] as P2[]).map(fx)))
+        // The corner's outer part rides on the edge fold; past halfway the
+        // stack has turned and it's underneath, out of sight.
+        set(prefix + 'cornerMove', pathOf(([NOSE, H3_AT_Y5, lerp2(EDGE_FREE[0], EDGE_FREE[1], e)] as P2[]).map(fx)), clamp01(1 - e * 2))
+      } else {
+        ;['cornerStatic', 'edge', 'cornerMove'].forEach(k => set(prefix + k, null))
+      }
+    }
+    const render = () => {
+      if (!side) {
+        const s = lift.get()
+        half('L', p => p, cornerL.get(), edgeL.get(), false)
+        half('R', p => [-p[0] * s, p[1]], cornerR.get(), edgeR.get(), s < 0)
+        // Turned over, the right half lies on top of the left half's flaps.
+        const top = s < 0 ? pathOf(BASE_3.map(p => [-p[0] * s, p[1]] as P2)) : null
+        set('RtopFill', top); set('Rtop', top)
+        // Before the crease exists the two halves are one sheet: hide the seam.
+        const seam = els.current.seam
+        if (seam) {
+          // Spans the current sheet (it grows from the envelope), just inside its edges.
+          const hy = 7 + (22 - 7) * open.get() - 0.4
+          seam.setAttribute('d', `M 0 ${-hy} L 0 ${hy}`)
+          seam.style.opacity = String(open.get() * (1 - creased.get()))
+        }
+        const glyph = els.current.glyph
+        if (glyph) glyph.style.opacity = String(1 - open.get())
+      } else {
+        const f = sideFaces(psi.get(), roll.get())
+        set('far', f.far); set('keel', f.keel); set('near', f.near)
+        // The wing's inner face (with the flap line) shows once it's past
+        // edge-on (ψ > 90°) — the swap happens while it's a line, unseen.
+        set('nearFlap', psi.get() > Math.PI / 2 ? f.nearFlap : null)
+        // The hinge only becomes a fold line once the wing starts to turn.
+        set('hingeCover', f.hinge, 1 - clamp01(psi.get() / 0.35))
+      }
+    }
+    render()
+    const unsub = [open, lift, creased, cornerL, cornerR, edgeL, edgeR, psi, roll].map(mv => mv.on('change', render))
+    return () => unsub.forEach(u => u())
+  }, [side]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
     const at$ = (sec: number, fn: () => void) => timers.push(setTimeout(fn, sec * 1000))
     const tw = (duration: number) => ({ duration, ease: SMOOTH })
-
-    // 0 · The envelope slides out of the slot and opens into a flat sheet.
-    flap.start({ opacity: 0, transition: { duration: 0.35 } })
-    baseL.start({ d: L_SHEET, transition: tw(0.7) })
-    baseR.start({ d: mirror(L_SHEET), transition: tw(0.7) })
-    stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: tw(0.8) })
-    // 1 · Crease lengthwise: the right half lifts over and lays back down.
-    at$(0.8, () => {
-      crease.start({ pathLength: 1, opacity: 1, transition: tw(0.6) })
-      animate(rightFold, [1, 0.18, 1], tw(0.8))
-    })
+    // 0 · The envelope slides out of the slot and opens into a sheet.
+    animate(open, 1, tw(0.8))
+    stage.start({ x: at.x - start.x, y: at.y - start.y, scale: FOLD_SCALE, transition: tw(0.85) })
+    // 1 · Crease lengthwise: the right half lifts over and lays back down,
+    //     and the crease is there once it lands.
+    at$(0.85, () => animate(lift, [1, 0.18, 1], tw(0.8)))
+    at$(1.4, () => animate(creased, 1, tw(0.3)))
     // 2 · Top corners to the crease, left then right.
-    at$(1.55, () => {
-      cornerL.set({ opacity: 1 }); cornerR.set({ opacity: 1 })
-      baseL.start({ d: L_AFTER_CORNER, transition: tw(0.6) })
-      cornerL.start({ d: L_CORNER_SHUT, transition: tw(0.6) })
-    })
-    at$(1.75, () => {
-      baseR.start({ d: mirror(L_AFTER_CORNER), transition: tw(0.6) })
-      cornerR.start({ d: mirror(L_CORNER_SHUT), transition: tw(0.6) })
-    })
+    at$(1.65, () => animate(cornerL, 1, tw(0.6)))
+    at$(1.85, () => animate(cornerR, 1, tw(0.6)))
     // 3 · The new slanted edges to the crease.
-    at$(2.38, () => {
-      cornerL.set({ opacity: 0 }); cornerR.set({ opacity: 0 })
-      edgeL.set({ opacity: 1 }); edgeR.set({ opacity: 1 })
-      baseL.start({ d: L_AFTER_EDGE, transition: tw(0.6) })
-      edgeL.start({ d: L_EDGE_SHUT, transition: tw(0.6) })
-    })
-    at$(2.58, () => {
-      baseR.start({ d: mirror(L_AFTER_EDGE), transition: tw(0.6) })
-      edgeR.start({ d: mirror(L_EDGE_SHUT), transition: tw(0.6) })
-    })
+    at$(2.5, () => animate(edgeL, 1, tw(0.6)))
+    at$(2.7, () => animate(edgeR, 1, tw(0.6)))
     // 4 · Fold in half: the right half turns over onto the left.
-    at$(3.2, () => { animate(rightFold, -1, tw(0.7)) })
-    // 5 · Turn to the side (nose right), then the wing comes down.
-    at$(3.9, () => {
-      setPhase('side')
+    at$(3.35, () => animate(lift, -1, tw(0.7)))
+    // 5 · Turn to the side (nose right) and fold each wing down.
+    at$(4.05, () => {
+      setSide(true)
       stage.start({ rotate: 90, transition: tw(0.75) })
     })
-    at$(4.6, () => { wing.start({ d: L_WING_DOWN, transition: tw(0.6) }) })
-    // 6 · Open the wings into the flying pose — level, in place — and let go.
-    at$(5.15, () => {
-      wing.start({ d: STAGE_WING, transition: tw(0.55) })
-      keel.start({ d: STAGE_KEEL, transition: tw(0.55) })
+    at$(4.75, () => animate(psi, Math.PI, tw(0.7)))
+    // 6 · Open the wings (and roll a little so they read), then let go.
+    at$(5.5, () => {
+      animate(psi, OPEN_PSI, tw(0.6))
+      animate(roll, OPEN_ROLL, tw(0.6))
     })
-    at$(5.72, () => onFolded(at))
+    at$(6.12, () => onFolded(at))
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const paper = { fill: 'url(#paper-fold)', stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
+  const fill = `url(#${uid}-paper)`
+  const face = { fill, stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
+  const halfPaths = (p: string) => (
+    <>
+      <path ref={ref(p + 'baseFill')} fill={fill} stroke="none" />
+      <path ref={ref(p + 'base')} fill="none" stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
+    </>
+  )
+  const flapPaths = (p: string) => (
+    <>
+      <path ref={ref(p + 'cornerFull')} {...face} />
+      <path ref={ref(p + 'cornerStatic')} {...face} />
+      <path ref={ref(p + 'edge')} {...face} />
+      <path ref={ref(p + 'cornerMove')} {...face} />
+    </>
+  )
   return createPortal(
     <motion.svg
       aria-hidden="true"
@@ -564,32 +670,30 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
       animate={stage}
       style={{
         position: 'fixed', left: start.x - 40, top: start.y - 40, zIndex: 9999, pointerEvents: 'none',
-        overflow: 'visible', color: 'var(--text-dark)', willChange: 'transform',
-        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.16))',
+        overflow: 'visible', color: 'var(--text-dark)', willChange: 'transform', filter: PAPER_SHADOW,
       }}
     >
-      <defs><PaperPattern id="paper-fold" pxPerUnit={FOLD_SCALE} /></defs>
-      {phase === 'top' ? (
+      <defs><PaperPattern id={`${uid}-paper`} pxPerUnit={FOLD_SCALE} /></defs>
+      {!side ? (
         <>
-          <g>
-            <motion.path initial={{ d: L_ENVELOPE }} animate={baseL} {...paper} />
-            <motion.path initial={{ d: L_CORNER_OPEN, opacity: 0 }} animate={cornerL} {...paper} />
-            <motion.path initial={{ d: L_EDGE_OPEN, opacity: 0 }} animate={edgeL} {...paper} />
-          </g>
-          {/* Right half pivots on the crease (x = 0) for steps 1 and 4. */}
-          <g ref={rightRef}>
-            <motion.path initial={{ d: mirror(L_ENVELOPE) }} animate={baseR} {...paper} />
-            <motion.path initial={{ d: mirror(L_CORNER_OPEN), opacity: 0 }} animate={cornerR} {...paper} />
-            <motion.path initial={{ d: mirror(L_EDGE_OPEN), opacity: 0 }} animate={edgeR} {...paper} />
-          </g>
-          <motion.path d="M 0 -22 L 0 22" stroke={EDGE} strokeWidth={0.4} initial={{ pathLength: 0, opacity: 0 }} animate={crease} />
-          {/* The envelope's flap, fading as it opens into a sheet. */}
-          <motion.path d="M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.1} strokeLinejoin="round" initial={{ opacity: 0.8 }} animate={flap} />
+          {halfPaths('L')}
+          {halfPaths('R')}
+          {/* Seam cover: one sheet until the crease is made. */}
+          <path ref={ref('seam')} stroke="#fffdf9" strokeWidth={0.9} />
+          {flapPaths('L')}
+          {flapPaths('R')}
+          <path ref={ref('RtopFill')} fill={fill} stroke="none" />
+          <path ref={ref('Rtop')} fill="none" stroke={EDGE} strokeWidth={0.45} strokeLinejoin="round" />
+          {/* The icon's own outline, handing over to paper as the sheet fills in. */}
+          <path ref={ref('glyph')} d="M -10 -7 L 10 -7 L 10 7 L -10 7 Z M -10 -7 L 0 0.5 L 10 -7" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round" />
         </>
       ) : (
         <>
-          <motion.path initial={{ d: L_KEEL }} animate={keel} {...paper} />
-          <motion.path initial={{ d: L_WING_UP }} animate={wing} {...paper} />
+          <path ref={ref('far')} {...face} />
+          <path ref={ref('keel')} {...face} />
+          <path ref={ref('near')} {...face} />
+          <path ref={ref('nearFlap')} {...face} />
+          <path ref={ref('hingeCover')} stroke="#fffdf9" strokeWidth={0.9} />
         </>
       )}
     </motion.svg>,
@@ -598,30 +702,32 @@ function PaperFold({ from, onFolded }: { from: DOMRect; onFolded: (at: Pt) => vo
 }
 
 /** Point-mass glider, integrated at 240 Hz and written straight to the DOM.
- *  dv/dt = −D − g·sinγ, dγ/dt = (L − g·cosγ)/v, L = kL·v², D = L/LD. Launched
- *  faster than trim it climbs, slows, noses over and swoops — the phugoid.
- *  Turbulence nudges γ; now and then it banks into a turn and reverses. */
+ *  dv/dt = −D − g·sinγ; the path angle γ follows (L − g·cosγ)/v through a
+ *  little pitch inertia, which damps the phugoid to a couple of gentle waves.
+ *  Turbulence nudges it; now and then it banks into a turn and reverses. */
 function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone: () => void }) {
+  const uid = useId().replace(/:/g, '')
   const el = useRef<HTMLDivElement>(null)
   const sprite = useRef<SVGSVGElement>(null)
   useEffect(() => {
-    // Every throw is different: launch speed and angle, trim, glide ratio,
-    // the air's character, and whether / when it banks into turns.
+    // Every throw is different: speed, trim, glide ratio, the air's
+    // character, and whether / when it banks into turns.
     const r = (a: number, b: number) => a + Math.random() * (b - a)
-    const G = 240, V_TRIM = r(105, 135), LD = r(4, 6.5)
+    const G = 240, V_TRIM = launch.vTrim, LD = r(3, 4.5)
     const kL = G / (V_TRIM * V_TRIM), kD = kL / LD
     let x = from.x, y = from.y
-    let v = launch.v0, gamma = launch.gamma0 // a hard throw can loop
+    let v = launch.v0, gamma = 0, gdot = 0 // released level
     let dir = 1, bank = 0, turning = 0 // bank: 0 → π over a turn
     const seed = Math.random() * 100
-    const gustAmp = r(0.12, 0.38), gustRate = r(0.7, 1.4)
+    const gustAmp = r(0.1, 0.3), gustRate = r(0.7, 1.4)
     const turnCount = Math.floor(r(0, 3)) // 0, 1 or 2
-    const turns = [r(1.2, 3.2), r(4.2, 7.5)].slice(0, turnCount)
-    const turnSecs = r(0.8, 1.2)
-    let t = 0, last = performance.now(), raf = 0, fade = 1
+    const turns = [r(1.4, 3.2), r(4.2, 7.5)].slice(0, turnCount)
+    const turnSecs = r(0.9, 1.3)
+    let t = 0, last = performance.now(), raf = 0, fade = 1, leaving = false
     const vw = window.innerWidth, vh = window.innerHeight
     const frame = (now: number) => {
       let dt = Math.min(0.05, (now - last) / 1000)
+      const frameDt = dt
       last = now
       while (dt > 0) {
         const h = Math.min(dt, 1 / 240)
@@ -634,21 +740,25 @@ function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone
         }
         const lift = kL * v * v * (turning ? Math.abs(Math.cos(bank)) * 0.4 + 0.6 : 1)
         const drag = kD * v * v * (turning ? 1.5 : 1)
-        // Smooth turbulence: a few incommensurate sines (faded in after release).
         const tg = t * gustRate
-        const gust = Math.min(1, t / 0.6) * gustAmp * (Math.sin(tg * 1.7 + seed) + 0.6 * Math.sin(tg * 3.1 + seed * 2) + 0.3 * Math.sin(tg * 5.3 + seed * 3))
-        v = Math.max(35, v + (-drag - G * Math.sin(gamma)) * h)
-        gamma += ((lift - G * Math.cos(gamma)) / v + gust) * h
+        const gust = Math.min(1, t / 0.8) * gustAmp * (Math.sin(tg * 1.7 + seed) + 0.6 * Math.sin(tg * 3.1 + seed * 2) + 0.3 * Math.sin(tg * 5.3 + seed * 3))
+        // In the hand (release), speed and attitude are held.
+        if (t >= RELEASE_S) {
+          v = Math.max(45, v + (-drag - G * Math.sin(gamma)) * h)
+          const cmd = (lift - G * Math.cos(gamma)) / v + gust
+          gdot += (cmd - gdot) * h * 8 // pitch inertia
+          gamma += gdot * h
+        }
         const facing = turning ? dir * Math.cos(bank) : dir
-        // Release: the hand eases it up to speed over the first 0.3s.
         const k = t < RELEASE_S ? (t / RELEASE_S) * (t / RELEASE_S) * (3 - 2 * (t / RELEASE_S)) : 1
         x += facing * v * Math.cos(gamma) * h * k
         y -= v * Math.sin(gamma) * h * k
       }
-      const out = x < -90 || x > vw + 90 || y > vh + 90 || y < -160
-      if (out || t > 14) fade = Math.max(0, fade - 0.04)
-      const facing = turning ? dir * Math.cos(bank) : dir
-      const sx = Math.sign(facing || 1) * Math.max(0.12, Math.abs(facing))
+      // Paper doesn't vanish mid-air: it fades only after leaving the window.
+      if (x < -90 || x > vw + 90 || y > vh + 90 || y < -160 || t > 30) leaving = true
+      if (leaving) fade = Math.max(0, fade - frameDt * 2.5)
+      // Banking through a turn, the plane passes edge-on (scaleX through 0).
+      const sx = turning ? dir * Math.cos(bank) : dir
       if (el.current) {
         el.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
         el.current.style.opacity = String(fade)
@@ -660,21 +770,21 @@ function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone
     raf = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(raf)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const face = { fill: `url(#${uid}-paper)`, stroke: EDGE, strokeWidth: 0.45, strokeLinejoin: 'round' as const }
   return createPortal(
     <div ref={el} aria-hidden="true" style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', willChange: 'transform', transform: `translate3d(${from.x}px, ${from.y}px, 0)` }}>
       <svg
         ref={sprite}
-        width={64} height={64} viewBox="-32 -32 64 64"
-        style={{
-          position: 'absolute', left: -32, top: -32, overflow: 'visible', willChange: 'transform',
-          transform: `rotate(${(-launch.gamma0 * 180) / Math.PI}deg)`,
-          filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))',
-        }}
+        width={80} height={80} viewBox="-40 -40 80 80"
+        style={{ position: 'absolute', left: -40, top: -40, overflow: 'visible', willChange: 'transform', filter: PAPER_SHADOW }}
       >
-        <defs><PaperPattern id="paper-fly" pxPerUnit={FLY_SCALE} /></defs>
-        <g transform={`scale(${FLY_SCALE})`}>
-          <path d={FLY_KEEL} fill="url(#paper-fly)" stroke={EDGE} strokeWidth={0.3} strokeLinejoin="round" />
-          <path d={FLY_WING} fill="url(#paper-fly)" stroke={EDGE} strokeWidth={0.3} strokeLinejoin="round" />
+        {/* The fold's last frame exactly: same faces, same turn and scale. */}
+        <g transform={`rotate(90) scale(${FOLD_SCALE})`}>
+          <defs><PaperPattern id={`${uid}-paper`} pxPerUnit={FOLD_SCALE} /></defs>
+          <path d={FLY_FACES.far} {...face} />
+          <path d={FLY_FACES.keel} {...face} />
+          <path d={FLY_FACES.near} {...face} />
+          <path d={FLY_FACES.nearFlap} {...face} />
         </g>
       </svg>
     </div>,
@@ -683,9 +793,12 @@ function PaperFlight({ from, launch, onDone }: { from: Pt; launch: Throw; onDone
 }
 
 function PaperPlane({ from, onDone }: { from: DOMRect; onDone: () => void }) {
-  // Released level from the fold's pose (no tilt); thrown above trim speed,
-  // lift exceeds weight and it climbs on its own.
-  const launch = useMemo<Throw>(() => ({ v0: 175 + Math.random() * 85, gamma0: 0 }), [])
+  // Released level from the fold's pose; thrown a little above trim speed so
+  // it climbs gently on its own lift.
+  const launch = useMemo<Throw>(() => {
+    const vTrim = 105 + Math.random() * 30
+    return { vTrim, v0: vTrim * (1.15 + Math.random() * 0.25) }
+  }, [])
   const [flight, setFlight] = useState<Pt | null>(null)
   return flight
     ? <PaperFlight from={flight} launch={launch} onDone={onDone} />
@@ -705,6 +818,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const btn = useRef<HTMLButtonElement>(null)
   const canFly = useMemo(finePointer, [])
+  const dwell = useRef<ReturnType<typeof setTimeout>>(null)
+  useEffect(() => () => { if (dwell.current) clearTimeout(dwell.current) }, [])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
   const later = (ms: number, fn: () => void) => timers.current.push(setTimeout(fn, ms))
 
@@ -735,7 +850,13 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         data-social
         className="simple-social"
         aria-label="Copy email address"
-        onPointerEnter={e => { if (e.pointerType !== 'touch') fly() }}
+        // A short dwell: sweeping across the row shouldn't throw planes.
+        onPointerEnter={e => {
+          if (e.pointerType === 'touch') return
+          if (dwell.current) clearTimeout(dwell.current)
+          dwell.current = setTimeout(fly, DWELL_MS)
+        }}
+        onPointerLeave={() => { if (dwell.current) clearTimeout(dwell.current) }}
         onClick={async () => {
           // Couldn't copy: fall back to what an envelope usually means.
           if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
@@ -751,12 +872,22 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
-            key={copied ? 'check' : slotEmpty ? 'empty' : 'mail'}
+            key={copied ? 'check' : 'mail'}
             {...swap}
             transition={ICON_SWAP}
             style={{ display: 'flex', width: 24, height: 24 }}
           >
-            {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : slotEmpty ? null : icon}
+            {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : (
+              // The paper takes over the glyph's outline in the same frame it
+              // lifts off (no double outline), and a fresh envelope springs back.
+              <motion.span
+                animate={slotEmpty ? { opacity: 0, scale: 0.5 } : { opacity: 1, scale: 1 }}
+                transition={slotEmpty ? { duration: 0 } : ICON_SWAP}
+                style={{ display: 'flex' }}
+              >
+                {icon}
+              </motion.span>
+            )}
           </motion.span>
         </AnimatePresence>
       </button>

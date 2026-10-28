@@ -172,6 +172,17 @@ describe('zeroDayNote', () => {
     expect(ZERO_DAY_WEEKDAY).toContain(zeroDayNote('2026-09-28')) // Monday
   })
 
+  it('rotates through every line over time (not locked to the weekday)', () => {
+    const seen = new Set<string>()
+    const d = new Date('2026-01-01T00:00:00')
+    for (let i = 0; i < 400; i++) {
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (iso < '2026-10-11' || iso > '2026-10-26') seen.add(zeroDayNote(iso))
+      d.setDate(d.getDate() + 1)
+    }
+    for (const line of [...ZERO_DAY_WEEKDAY, ...ZERO_DAY_WEEKEND]) expect(seen).toContain(line)
+  })
+
   it('is stable per date and never repeats on consecutive days', () => {
     expect(zeroDayNote('2026-03-10')).toBe(zeroDayNote('2026-03-10'))
     const pairs: [string, string][] = [['2026-03-09', '2026-03-10'], ['2026-03-10', '2026-03-11'], ['2026-03-14', '2026-03-15']]

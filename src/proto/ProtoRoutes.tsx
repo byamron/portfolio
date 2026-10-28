@@ -53,7 +53,8 @@ function SlidersGlyph({ playing }: { playing: boolean }) {
     const onCycled = () => {
       if (railOpen || reducedMotion) return
       setTweak(t => t + 1)
-      wiggle.start({ rotate: [0, -14, 11, -6, 3, 0], transition: { duration: 0.5, ease: 'easeOut' } })
+      // A flick that decays on its own: spring from a sideways kick.
+      wiggle.start({ rotate: 0, transition: { type: 'spring', velocity: -320, stiffness: 600, damping: 12 } })
     }
     document.addEventListener('accent-cycled', onCycled)
     return () => document.removeEventListener('accent-cycled', onCycled)

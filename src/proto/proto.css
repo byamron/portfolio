@@ -244,7 +244,8 @@
   opacity: 1;
 }
 .cursor-glow[data-melt] {
-  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+  /* Opacity eases in late, so the slide-and-shrink reads before it's gone. */
+  transition: opacity 220ms cubic-bezier(0.4, 0, 1, 1),
     --gx 220ms cubic-bezier(0.22, 1, 0.36, 1),
     --gy 220ms cubic-bezier(0.22, 1, 0.36, 1),
     --glow-scale 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -261,9 +262,20 @@
   white-space: nowrap;
   pointer-events: none;
 }
+/* Phones: no room beside the last icon — the note sits under the row,
+   right-aligned to the button. */
+@media (max-width: 640px) {
+  .simple-copied-slot {
+    left: auto;
+    right: 0;
+    top: calc(100% + 6px);
+    margin-left: 0;
+    transform: none;
+  }
+}
 
 /* GitHub terminal: an inverted surface, so it reads as a window in either
-   mode; the sparkline wears the accent. */
+   mode; strings wear the accent. */
 .term-window {
   --term-bg: color-mix(in oklab, var(--text-dark) 94%, var(--bg));
   --term-fg: var(--bg);
@@ -304,18 +316,6 @@
 .term-body {
   padding: 8px 12px 10px;
   min-height: 46px;
-}
-.term-spark {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 12px;
-  vertical-align: -1px;
-}
-.term-spark i {
-  width: 3px;
-  border-radius: 1px;
-  background: var(--term-accent);
 }
 .term-ln {
   display: inline-block;
@@ -365,6 +365,7 @@
 .biz-grid {
   position: relative;
   z-index: 1;
+  mix-blend-mode: multiply; /* ink printed into the stock, not pasted on */
   height: 100%;
   display: grid;
   grid-template-columns: 1fr 46px;
@@ -376,7 +377,7 @@
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 8px; /* same inset as the rows, so text edges align */
   font-family: 'Onest', sans-serif;
   font-weight: 600;
   font-size: 22px;
@@ -404,7 +405,7 @@
   place-items: center;
 }
 .biz-logo-cell img { width: 34px; height: 34px; } /* bare mark, printed on the stock */
-/* Back: the mark large, the profile URL beneath. */
+/* Back: the mark large, "Consensus" beneath. */
 .biz-grid-back { grid-template-columns: 1fr; grid-template-rows: 1fr 23px; }
 .biz-grid-back .biz-logo-cell { grid-column: 1; grid-row: 1; }
 .biz-grid-back .biz-logo-cell img { width: 60px; height: 60px; }

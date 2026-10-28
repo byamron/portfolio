@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { useReducedMotion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useHover } from '@/contexts/HoverContext'
-import { buildContributionDays, contribFill, getTooltipText } from '@/utils/contributions'
+import { buildContributionDays, contribFill, getTooltipLabel, getTooltipText } from '@/utils/contributions'
 
 // Geometry — fixed values, see core-docs/contribution-strip-spec.md §4
 const CELL = 16
@@ -276,7 +276,7 @@ export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessor
       tipLast.current = 0
       if (tipRaf.current === null) tipRaf.current = requestAnimationFrame(tipLoop)
     }
-    if (liveRef.current) liveRef.current.textContent = text
+    if (liveRef.current) liveRef.current.textContent = getTooltipLabel(day.date, day.contributionCount, today)
   }, [days, layout, today, prefersReducedMotion, applyTip, tipLoop])
 
   const hideTooltip = useCallback(() => {

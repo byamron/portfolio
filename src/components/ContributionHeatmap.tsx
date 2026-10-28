@@ -154,6 +154,8 @@ function buildYearGrid(year: number): { grid: GridCell[][], totalContributions: 
 
 interface TooltipState {
   text: string
+  /** Screen-reader text (zero-day lines regain their date). */
+  label: string
   x: number
   y: number
   cellHeight: number
@@ -276,6 +278,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
     const cellRect = rectEl.getBoundingClientRect()
     setTooltip({
       text: getTooltipText(cell.date, cell.count),
+      label: cell.count === 0 && getTooltipText(cell.date, 0) === zeroDayNote(cell.date) ? `${zeroDayNote(cell.date)}, ${formatDate(cell.date)}` : getTooltipText(cell.date, cell.count),
       x: cellRect.left + cellRect.width / 2 - containerRect.left,
       y: cellRect.top - containerRect.top,
       cellHeight: cellRect.height,
@@ -596,7 +599,7 @@ export function ContributionHeatmap({ displayMode = 'default', vizGap = 16, spar
           border: 0,
         }}
       >
-        {focusedCell ? tooltip?.text ?? '' : ''}
+        {focusedCell ? tooltip?.label ?? '' : ''}
       </div>
       {tooltip && (() => {
         const containerWidth = containerRef.current?.offsetWidth ?? Infinity
