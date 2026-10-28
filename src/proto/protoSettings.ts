@@ -59,11 +59,14 @@ export const PROTO_DEFAULTS: ProtoSettings = {
     trackId: 'martini',
     labelAccent: 1,
     idleCaption: '',
+    // Ben's tuning (2026-10-28).
     tuning: {
-      crackle: 0.25,
-      vinylDark: 0.3,
-      vinylLight: 0.4,
-      grain: 0.12,
+      crackle: 0.15,
+      vinylDark: 0.45,
+      vinylLight: 0.6,
+      grain: 0.35,
+      spinUp: 0.8,
+      spinDown: 0.8,
       glowDark: 0.25,
       glowLight: 1.2,
       glowToneLight: 40,
