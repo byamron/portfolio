@@ -61,7 +61,7 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   record: {
     size: 0.6,
     trackId: 'martini',
-    labelAccent: 1,
+    labelAccent: 0.85, // Ben
     idleCaption: '',
     // Ben's tuning (2026-10-28).
     tuning: {
