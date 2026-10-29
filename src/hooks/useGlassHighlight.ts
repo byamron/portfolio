@@ -199,6 +199,7 @@ function setupGlassHighlight(
   let currentCard: HTMLElement | null = null
   let rafId: number | null = null
   let clearTimer: ReturnType<typeof setTimeout> | null = null
+  let leaving = false // off every card, fading; the card is kept until the fade ends
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
 
   const springs = {
@@ -431,7 +432,9 @@ function setupGlassHighlight(
 
   function computePullTargets(): void {
     if (!currentCard) return
-    if (prefersReducedMotion.matches) {
+    // Leaving (off every card): no pull toward the cursor — the pill relaxes
+    // to the card's own shape while it fades.
+    if (prefersReducedMotion.matches || leaving) {
       springs.x.target = state.baseX
       springs.y.target = state.baseY
       springs.w.target = state.baseW
@@ -746,6 +749,7 @@ function setupGlassHighlight(
       const breakEl = (e.target as HTMLElement).closest('[data-glass-break]')
       if (breakEl && container.contains(breakEl)) {
         if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+        leaving = false
         releaseCardLean()
         currentCard = null
         fadeOut()
@@ -754,21 +758,35 @@ function setupGlassHighlight(
         return
       }
 
-      // Cursor moved to a non-card area — start clear timer
-      if (currentCard && !clearTimer) {
+      // Off every card: let go at once — the pull relaxes and the fade starts
+      // now. The fade is the grace period: reach another card before it ends
+      // and the pill glides there and fades back in.
+      if (currentCard && !leaving) {
+        leaving = true
+        releaseCardLean()
+        cancelPendingFadeIn()
+        const d = prefersReducedMotion.matches ? 0 : cfg.fadeDuration
+        if (pill) { pill.style.transition = `opacity ${d}ms ease`; pill.style.opacity = '0' }
+        // Held for the configured grace (HoverContext's timing matches it),
+        // or the fade if that's longer — the fade itself starts now.
         clearTimer = setTimeout(() => {
           clearTimer = null
-          releaseCardLean()
+          leaving = false
           currentCard = null
-          fadeOut()
           stopLoop()
           removeScrollListeners()
-        }, cfg.clearDelay)
+        }, Math.max(d, cfg.clearDelay))
       }
       return
     }
 
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    if (leaving) {
+      // Back on a card within the fade: carry on from here.
+      leaving = false
+      fadeIn()
+      if (card === currentCard) engageCardLean(card)
+    }
     if (card === currentCard) return
 
     const prevCard = currentCard
@@ -834,6 +852,7 @@ function setupGlassHighlight(
   function handleMouseLeave(e: MouseEvent): void {
     if (container.contains(e.relatedTarget as Node)) return
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    leaving = false
     releaseCardLean()
     currentCard = null
     fadeOut()
@@ -849,6 +868,7 @@ function setupGlassHighlight(
   function handleWindowLeave(): void {
     if (!currentCard) return
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    leaving = false
     releaseCardLean()
     currentCard = null
     fadeOut()
