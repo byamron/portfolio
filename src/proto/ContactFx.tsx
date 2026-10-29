@@ -889,7 +889,11 @@ const FLY_BOUNDS = (() => {
   ]
   const xs = pts.map(p => p[0]), ys = pts.map(p => p[1])
   // Turned nose-right (rotate 90°): screen x = −y, screen y = x.
-  return { tail: Math.max(...ys), top: Math.min(...xs), bottom: Math.max(...xs) }
+  return {
+    tail: Math.max(...ys), top: Math.min(...xs), bottom: Math.max(...xs),
+    // Furthest point from its origin, at any pitch or bank.
+    reach: Math.max(...pts.map(p => Math.hypot(p[0], p[1]))),
+  }
 })()
 
 const PAPER_SHADOW = 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))'
@@ -1239,7 +1243,7 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
     const turns = [r(1.6, 3.2), r(4.2, 7.5)].slice(0, turnCount)
     const turnSecs = r(0.9, 1.3)
     let t = 0, last = performance.now(), raf = 0, fade = 1, leaving = false
-    const vw = window.innerWidth, vh = window.innerHeight, out = 44 * scale
+    const vw = window.innerWidth, vh = window.innerHeight, out = FLY_BOUNDS.reach * scale + 2
     const frame = (now: number) => {
       let dt = Math.min(0.05, (now - last) / 1000)
       const frameDt = dt
@@ -1270,9 +1274,10 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
         y -= v * Math.sin(gamma) * h * k
       }
       if (dir > 0 && !turning) onTail?.(x - tailLen * Math.cos(gamma))
-      // Paper doesn't vanish mid-air: it fades only once it's out of sight
-      // (a plane's length past any edge).
-      if (x < -out || x > vw + out || y > vh + out || y < -out || t > 30) leaving = true
+      // Paper doesn't vanish mid-air: once wholly out of sight it's gone (and
+      // "one at a time" with it); one still up after 30s fades.
+      if (x < -out || x > vw + out || y > vh + out || y < -out) fade = 0
+      else if (t > 30) leaving = true
       if (leaving) fade = Math.max(0, fade - frameDt * 2.5)
       // Banking through a turn, the plane passes edge-on (scaleX through 0).
       const sx = turning ? dir * Math.cos(bank) : dir
