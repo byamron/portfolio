@@ -449,6 +449,17 @@ function CardStock() {
   )
 }
 
+/** The Consensus mark, inline (it ships with the code: an <img> request
+ *  could fail or arrive late when the card mounts). */
+function ConsensusMark() {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <path d="M9.79869 15.2C10.824 14.8285 11.9988 14.8417 12.9976 15.2322L13.5972 15.4667C14.4812 15.8124 15.1111 16.4066 15.5467 17.0954C15.711 16.7986 15.9009 16.5146 16.1154 16.2471C16.9596 15.1941 18.1341 14.4565 19.4492 14.1533C20.7643 13.8502 22.1432 13.9993 23.3631 14.5765C23.6695 14.7215 23.9614 14.8914 24.2362 15.0836C25.5939 16.0334 27.3756 16.7378 28.86 16.0017C30.3443 15.2656 30.9749 13.4309 29.8945 12.1748C28.806 10.9093 27.4581 9.87632 25.9293 9.15299C23.4895 7.99854 20.7317 7.70037 18.1015 8.30664C15.4713 8.91292 13.1223 10.3882 11.434 12.4942C10.7675 13.3257 10.2193 14.2363 9.79869 15.2Z" fill="#3BCDAA" />
+      <path d="M30.5442 26.8816C31.5106 25.5358 30.7219 23.7634 29.1789 23.16L28.5793 22.9255C27.3673 22.4516 26.0249 23.1012 25.1233 24.0395C24.5773 24.6077 23.9249 25.0628 23.2031 25.3787C22.4813 25.6947 21.7043 25.8654 20.9165 25.8812C20.1288 25.8969 19.3457 25.7573 18.6118 25.4704C17.878 25.1834 17.2079 24.7547 16.6397 24.2088C16.0716 23.6629 15.6165 23.0104 15.3005 22.2886C14.9845 21.5668 14.8138 20.7898 14.7981 20.0021C14.7721 18.701 14.2264 17.3132 13.0145 16.8393L12.4149 16.6048C10.8718 16.0014 9.09002 16.7687 8.88716 18.4131C8.8174 18.9786 8.78785 19.5496 8.79926 20.1218C8.8307 21.6974 9.17216 23.2513 9.80415 24.6949C9.89379 24.8996 9.98903 25.1016 10.0897 25.3006L8.8784 29.9821C8.56987 31.1746 9.66787 32.2538 10.8548 31.9248L15.4832 30.6418C15.7911 30.7938 16.1059 30.9329 16.4268 31.0583C17.8944 31.6322 19.4607 31.9114 21.0363 31.88C22.6118 31.8486 24.1657 31.5071 25.6093 30.8751C27.0529 30.2431 28.3579 29.333 29.4497 28.1967C29.8463 27.784 30.2119 27.3444 30.5442 26.8816Z" fill="#068EF1" />
+    </svg>
+  )
+}
+
 export function LinkedInLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   const { stage, handlers } = useHoverStage()
   const reducedMotion = useReducedMotion()
@@ -511,13 +522,13 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
                   <div className="biz-name-cell">Ben<br />Yamron</div>
                   <div className="biz-row">Product designer</div>
                   <div className="biz-row">linkedin.com/in/benyamron</div>
-                  <div className="biz-logo-cell"><img src="/images/logo-consensus-mark.svg" alt="" /></div>
+                  <div className="biz-logo-cell"><ConsensusMark /></div>
                 </div>
               </div>
               <div className="biz-face biz-back">
                 <CardStock />
                 <div className="biz-grid biz-grid-back">
-                  <div className="biz-logo-cell"><img src="/images/logo-consensus-mark.svg" alt="" /></div>
+                  <div className="biz-logo-cell"><ConsensusMark /></div>
                   <div className="biz-row">consensus.app</div>
                 </div>
               </div>
@@ -885,6 +896,11 @@ const RELEASE_S = 0.3
 interface Throw { v0: number; vTrim: number } // launch speed, trim speed (px/s)
 
 const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
+// The sheet materialises under the note (it resolves out of a soft blur as
+// it fades in), and only then takes the words over — never mid-fade.
+const PAPER_IN_S = 0.6
+// The fold's own timeline, in seconds at pace 1 (first crease → release).
+const FOLD_STEPS_S = 5.72
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 
 // Side-view shading, shared by the fold's last steps and the flying sprite
@@ -1043,12 +1059,16 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
-    const at$ = (sec: number, fn: () => void) => timers.push(setTimeout(fn, (0.3 + sec * pace) * 1000))
+    const at$ = (sec: number, fn: () => void) => timers.push(setTimeout(fn, (PAPER_IN_S + 0.05 + sec * pace) * 1000))
     const tw = (duration: number) => ({ duration: duration * pace, ease: SMOOTH })
-    // 0 · The sheet appears under the note; the note is printed on it.
-    stage.start({ opacity: 1, scale: 1, transition: { duration: 0.26, ease: EASE_OUT } })
-    // The typed note hands its words to the sheet in one render.
-    timers.push(setTimeout(() => { setInked(true); onPaperIn() }, 300))
+    // 0 · The sheet materialises under the note.
+    stage.start({
+      opacity: 1, scale: 1, filter: 'blur(0px)',
+      transition: { duration: PAPER_IN_S, ease: [0.33, 0, 0.2, 1], filter: { duration: PAPER_IN_S * 0.85, ease: 'easeOut' } },
+      transitionEnd: { filter: 'none' },
+    })
+    // Fully there: the typed note hands its words to the sheet in one render.
+    timers.push(setTimeout(() => { setInked(true); onPaperIn() }, PAPER_IN_S * 1000 + 20))
     // 1 · Crease lengthwise: the right half lifts over and lays back down,
     //     pressing the crease in as it lands.
     at$(0.25, () => { split.set(1); animate(lift, [1, 0.18, 1], tw(0.8)) })
@@ -1112,7 +1132,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     <div aria-hidden="true" style={{ position: 'fixed', left: at.x - PAPER_W / 2, top: at.y - PAPER_H / 2, width: PAPER_W, height: PAPER_H, zIndex: 9999, pointerEvents: 'none', filter: PAPER_SHADOW }}>
       <motion.svg
         width={PAPER_W} height={PAPER_H} viewBox="-17 -22 34 44"
-        initial={{ opacity: 0, scale: 0.97, x: 0, y: 0, rotate: 0 }}
+        initial={{ opacity: 0, scale: 0.985, x: 0, y: 0, rotate: 0, filter: 'blur(3px)' }}
         animate={stage}
         style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', willChange: 'transform' }}
       >
@@ -1447,7 +1467,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       setThrowing({ text, lines, launch, noteLeft: r.right + 8 })
       // If the plane never clears the note (it turned back early, or the tab
       // was hidden), finish the reveal anyway.
-      later((5.72 * emailFx.foldPace + 0.3 + 2.6) * 1000, () => {
+      later((PAPER_IN_S + emailFx.foldSeconds + 2.6) * 1000, () => {
         if (revealed.current) return
         const right = noteEl.current?.getBoundingClientRect().right ?? revealX.get()
         animate(revealX, right + 24, { duration: 0.35, ease: EASE_OUT })
@@ -1509,7 +1529,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           lines={throwing.lines}
           launch={throwing.launch}
           kPlane={kPlane}
-          pace={emailFx.foldPace}
+          // The dial is the fold's length in seconds.
+          pace={emailFx.foldSeconds / FOLD_STEPS_S}
           speed={emailFx.throwSpeed}
           onPaperIn={() => setOnPaper(true)}
           onLaunch={() => setAirborne(true)}

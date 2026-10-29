@@ -241,6 +241,10 @@
 @keyframes email-letter-in { from { opacity: 0; } }
 .email-letter[data-on-paper] {
   color: #2b2620;
+  /* Darkens to ink in step with the paper materialising under it
+     (PAPER_IN_S and its ease in ContactFx). */
+  transition: opacity 160ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 600ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 /* The hold line ("One at a time…"): the page's voice, not the note's. */
 .email-letter[data-status] {
@@ -386,11 +390,11 @@
   display: grid;
   place-items: center;
 }
-.biz-logo-cell img { width: 34px; height: 34px; } /* bare mark, printed on the stock */
+.biz-logo-cell svg { width: 34px; height: 34px; } /* bare mark, printed on the stock */
 /* Back: the mark large, "Consensus" beneath. */
 .biz-grid-back { grid-template-columns: 1fr; grid-template-rows: 1fr 23px; }
 .biz-grid-back .biz-logo-cell { grid-column: 1; grid-row: 1; }
-.biz-grid-back .biz-logo-cell img { width: 60px; height: 60px; }
+.biz-grid-back .biz-logo-cell svg { width: 60px; height: 60px; }
 .biz-grid-back .biz-row { justify-content: center; }
 /* Sentence case (DialKit): the copy as written, a touch less tracking. */
 .biz-card--sentence .biz-name-cell { text-transform: none; letter-spacing: -0.005em; }
