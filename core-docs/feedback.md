@@ -2,6 +2,47 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-10-29 — My own probes missed rapid and mid-await input; a fresh adversarial verifier caught both
+
+**What happened:** The email button passed every regression probe I'd written: single presses, repeat presses about 1s apart, and hover/leave at human pace. A fresh-context verifier given only the criteria tried what I hadn't, and found two real bugs:
+- **Three presses ~60ms apart:** the check icon blew up from 24px to 685px. Each re-pop did `set(0.82)` and then started a new spring, which inherited the velocity the jump itself created.
+- **Leaving the button during the press:** if the pointer left in the same tick as the click, the note was counted twice and a level was skipped. `onClick` awaits the clipboard write, and `pointerleave` ran `closeLetter` (counting the note) in between. The fold path then read stale state and counted it again.
+
+**Lesson learned:**
+- **Re-triggerable spring pops:** start them from rest. Use explicit keyframes and `velocity: 0`, never `set()` then `start()`.
+- **Async event handlers:** capture the UI state they act on *before* the first `await`, and make the press itself the single place that records "this counted". Pointer and focus events can run in between.
+- **Verifying an interaction:** have something that didn't write the code generate the adversarial timings. Include 0ms and tens of ms between inputs, not only human-paced ones.
+
+---
+
+## 2026-10-29 — Creases drawn as lines read as separate elements, not paper
+
+**What happened:** To make the paper fold look "natural", I added stroked crease lines (dark valley + light shoulder) that faded in as each fold landed. Ben's frame-by-frame recording showed they still looked and moved like their own elements: one spanned the full hinge while its flap was mid-air (sticking out past the paper), another rode a flap and drifted off the paper, and the centre one read as a dashed vector line.
+
+**Lesson learned:** For physical materials, don't add decoration that isn't part of the surface. Real paper has no lines — a fold edge is visible because a layer of paper sits on another (shading + contact shadow, both part of that layer's geometry), and a reopened crease is a tonal step (a gradient painted into the sheet). Anything drawn as a separate element will eventually desync from the surface it's meant to belong to. Verify motion work frame by frame (dense captures through each transition), not from a few stills.
+
+---
+
+## 2026-10-28 — "It jumps the first time": interaction glitches need per-frame traces, and gaps between targets count
+
+**What happened:** Ben reported the rail's glide pill often jumped (instead of travelling) from the settings handle to the first option. Earlier checks of the pill only looked at end states. A per-frame trace showed two causes: (1) the air between handle and options belongs to the page, so crossing it triggered the pill's leave-grace — a slow first move faded it out and it reappeared on the option with no travel (a 56px one-frame jump); (2) Framer hands `opacity` animations to WAAPI, which ends one frame before Framer commits the final inline value — a one-frame blink to 0 at the end of every fade-in.
+
+**Lesson learned:** For any "moves between targets" interaction, treat the gaps between targets as part of the interaction (hold state until the pointer leaves the whole group's span), and verify with a per-frame trace of the moving element (max step per frame, opacity dips) at several pointer speeds — including slow, deliberate first moves on a fresh page. When a Framer opacity fade must never blink (e.g. a persistent pill), animate a CSS variable and read `opacity: var(--x)` — variables always run on the main thread. Also: `tsc -p .` on this repo checks nothing (the root tsconfig only has references) — use `tsc -b` (and ignore the uninitialized/checked-out `ui-playground` submodule errors per the 2026-07-22 entry).
+
+---
+
+## 2026-08-19 — A running dev server can serve a silently-empty `<div id="root">` after new deps are added mid-session
+
+**What happened:** After running `npm install` for new packages (dialkit, agentation, plus a new `@phosphor-icons/react` import) into an already-running `vite` dev server, the page started rendering a completely empty `<div id="root"></div>` — no error overlay, no console output, `vite build` and `tsc -b` both clean. Spent a long stretch chasing this as a React runtime bug (suspected infinite render loop, chased and fixed a real-but-unrelated DialKit config-memoization issue along the way) before finding the actual cause.
+
+**What went wrong:** Vite's dependency pre-bundle cache (`node_modules/.vite`) goes stale when new dependencies are added while the dev server is already running. The server *does* detect this and re-optimizes, but the re-optimization's forced reload can race the page's initial module load, leaving React never mounted — silently, with nothing in the console to flag it.
+
+**Lesson learned:** After `npm install`-ing new dependencies into a session with a dev server already running, don't just trust HMR to pick it up — restart with a forced clean re-optimization: `rm -rf node_modules/.vite && npm run dev -- --force` (or just delete `.vite` and let any next `vite` invocation rebuild). If a page renders blank right after adding deps and build/typecheck are clean, suspect this before suspecting your new code.
+
+**How to verify safely in a sandbox without a real browser:** `google-chrome --headless=new --dump-dom <url>` was reliable throughout a session where `--screenshot` was flaky (~50% blank captures even on pages that worked). Check for `<div id="root"></div>` (empty = not mounted) vs. real content — this diagnosed the bug in one command where screenshot attempts gave false negatives.
+
+---
+
 ## 2026-07-22 — The deploy gate is `vite build`, not `npm run build`; check submodule init before calling a build broken
 
 **What happened:** During release review, `npm run build` failed on a missing `ui-playground/.../SlideUnlock` import, which I flagged for several turns as a possible release blocker. Two things resolved it: (1) `ui-playground` is a **git submodule** not initialized in the Conductor worktree (so its files were absent locally); (2) the deploy workflow runs **`npx vite build`** (`.github/workflows/deploy.yml`), not `npm run build` — so `tsc -b` never runs in CI, and the submodule's TypeScript errors never gate the deploy (5 recent deploys all succeeded).

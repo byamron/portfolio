@@ -1,13 +1,12 @@
 /**
- * Generates public/sitemap.xml from project data + known routes.
+ * Generates public/sitemap.xml from the site's routes.
  * Run automatically before every build via `npm run build`.
  *
- * To add a page to the sitemap, either:
- *   - Add a project with `isLink: true` and a `caseStudySlug` in src/data/projects.ts
- *   - Add a static route to the `staticRoutes` array below
+ * To add a page to the sitemap, add its route to `staticRoutes` below.
+ * (Case studies aren't routed on the one-page site; the previous portfolio,
+ * which derived them from src/data/projects.ts, is at the `portfolio-v1` tag.)
  */
 
-import { sections } from '../src/data/projects.js'
 import { writeFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -15,20 +14,13 @@ import { fileURLToPath } from 'url'
 const SITE_URL = 'https://benyamron.com'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// Routes that aren't derived from project data
 const staticRoutes = [
   '/',
   '/havana/privacy',
   '/trio/privacy',
 ]
 
-// Derive project routes from the source of truth
-const projectRoutes = sections
-  .flatMap(s => s.projects)
-  .filter(p => p.isLink && p.caseStudySlug)
-  .map(p => `/project/${p.caseStudySlug}`)
-
-const allRoutes = [...staticRoutes, ...projectRoutes]
+const allRoutes = staticRoutes
 
 const today = new Date().toISOString().split('T')[0]
 

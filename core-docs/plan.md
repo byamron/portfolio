@@ -624,6 +624,174 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## Launch: one-page site (2026-10-29)
+
+- [x] `/` → simple home; privacy pages kept; all else → `/`. Old site at tag `portfolio-v1`, DialKit at `simple-home-dev`.
+- [x] Dev panels and dev-only deps stripped.
+- [ ] Ben approves the preview → PR to `main` (deploy runs on push to main).
+- [ ] Later: case studies (bring back, or link out); remove the old home's unrouted source + unused `public/` assets; the open a11y decisions (hoverable pop-outs, 200% zoom).
+
+## `/new/simple` — staff review round 3 (2026-10-29)
+
+Fixed: other pop-outs can't open over the folding sheet; typed note could show "undefined" when clicked mid-typing (clamped); one-frame level pose at the fold→flight hand-off; rail pill concentric on capsules (record, strip) too; the "one at a time" hold ends once the plane is out of sight; reduced-motion copy clears the hint note; "Settings (music playing)" name restored; glass pill keyboard focus within the leave fade carries on; QWERTY-neighbour typos; fading note keeps its level; fold cleanup stops every motion value; docs drift.
+
+**For Ben (taste calls, not changed):**
+- "Email address copied" shows ~4.3s after the click (the plane's reveal, by design); the check is immediate and screen readers hear it at once. Option: a faint "Copied" at once, full label on the wipe.
+- The "click to copy" p.s. is typed last (~4.5–5s in).
+- Any hover >600ms escalates the note — four rests reach LET'S CHAT ×6. Option: count only finished notes or sends.
+- Mid line set breaks "…building AI for / researchers at Consensus." — "…building AI / for researchers at Consensus." keeps the phrase.
+- Switching to the 3-line set grows the type ~25% (26 → 32.7px at 610px).
+- Voice read of notes 5–6 as a hiring manager; cream paper is the brightest thing on the dark page for ~3s.
+- The settings glyph is 32px to its box, ~36px to the drawn glyph (matches its 36.5px right inset).
+
+**Follow-ups:**
+- Escape can't stop the folding sheet / plane (flight runs ~8–12s).
+- The sheet covers the strip on ~720px-tall windows; below ~690px it runs off the bottom (open upward/sideways, or cap).
+- Fold craft: the wing fold pulses the whole plane grey (`nearShade` peaks at ψ=π); cast shadows are hard-edged copies and the half-turn casts none; the p.s. glyph tops peek out at the dart's centre; fold vs flight hairlines differ (fold svg rasterised before it shrinks).
+- Card's box-shadow turns with the card (move it to a non-rotating wrapper).
+- At slow fold dials (6s) the carry settle and the wing fold may merge into one beat.
+- A pointer resting on GitHub/LinkedIn from before the plane launches doesn't open it after launch (re-entering does); could re-arm the dwell when the sheet lifts.
+- The X blimp can't be stopped either (~18s at 1440px); fold it into the Escape-stops-flight item.
+- The terminal is clipped at 320px CSS width (decorative).
+- Consider exposing the address itself to AT/voice users (e.g. in the button's description).
+
+**Ship reviews (2026-10-29):** security clean (no dev panels in the prod bundle). Fixed: runaway check spring on quick presses, double-counted note when leaving during the press, plane flight ends when wholly out of view, light-mode terminal contrast, reduced-motion terminal slide, spaces across intro line breaks. **Decisions for Ben** (a11y): hover pop-outs aren't hoverable (WCAG 1.4.13); fit-to-column text reaches 158–175% at 200% zoom (1.4.4).
+
+## `/new/simple` — simplify pass follow-ups (2026-10-29)
+
+Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes only what changed, dead fields/comments. Left for a deliberate refactor (they'd re-architect tuned behaviour):
+- Email button lifecycle as one reducer (`phase`: idle → note → folding → paper → airborne → done) instead of `throwing`/`onPaper`/`airborne`/`held`/`copied` + refs and the `live` mirror.
+- One dismissible-layer stack (Escape closes the top; opening closes group siblings) replacing the capture-phase Escape convention + the `contact-egg-open` event bus.
+- One typewriter hook for `Typed` / `TypedHighlighted` / `TypedLetter`; a `usePopoutTriggers` shared by `useHoverStage` and the email button (dwell, keyboard gate, Escape, window leave).
+- An input-modality tracker instead of the window-focus timestamp in `keyboardFocus`.
+- Magic offsets as geometry: strip-jump `-9px`, `LABEL_TO_CELLS` `-5`, the `0.2em` baseline drop (share one helper).
+- SimpleHome: compute the line-set choice inside the ResizeObserver (re-render only when it changes); merge the two observers on the column.
+
+## `/new/simple` — email note → paper plane (2026-10-28)
+
+- [x] Hover types the note under the button; click lands it on paper, folds (text on the real flaps), lifts into the hand beside the check, throws; the tail reveals "Email address copied".
+- [x] Touch / phone / reduced motion: check + note only; keyboard focus types, Enter throws.
+
+**Open for Ben:** total click→throw ≈ 6s (fold pace dial); paper may overlap the strip on short windows (the sheet is 285px tall); the note's wording ("you seem really cool") taken from Ben's message — confirm against the prod video.
+
+## `/new/simple` round 8 — defaults, ATC queue, flow pipeline (2026-10-28)
+
+- [x] Ben's DialKit values are defaults (glow 0.15 / 224 / tint 1; record crackle, vinyl, grain, spin, glow tuning).
+- [x] One blimp and one paper plane at a time; a run while a blimp is up holds ("waiting for air traffic control" + live caret) and launches when the sky clears, with a fresh greeting.
+- [x] `/simplify` + `/flow:staff-review` (4 lenses) — fixes in history. Zero console errors on `/`, `/new`, `/new/simple` (desktop, 1024×600, 390 phone).
+
+**Follow-ups from this review:**
+- Dark-mode glow is ~1 level above the page at 0.15 (the light-mode peak is ~2× dark's) — Ben to judge it in dark; a separate dark intensity if it should read there.
+- Greeting list vs the voice rules: reviewers flag "Ahoy" (nautical pun on an airship), "Howdy" / "Hiya" / "Greetings" / "Good day" (character voices); suggest Hi / Hello / Hey / Hi there / Hey there (+ maybe `hello, world`). Ben's call.
+- Headless blending truncates at alpha 1–3, so the glow's on-screen falloff could only be verified in light mode here — eyeball dark on a real GPU.
+- Theme change still costs ~90ms of main thread on this sandbox (React re-render + portrait pop; the glow paint is now 11–21ms).
+- `npm run build` fails locally when the `ui-playground` submodule is checked out (its strict-mode errors + unused `@ts-expect-error` in PlaygroundDemo/Gallery) — pre-existing on main, CI unaffected.
+- Unused devDependencies `agentation` and `motion` (added on this branch) — remove unless planned; `@paper-design/shaders-react` is pre-1.0 (vet publisher before merge).
+- Hover popovers aren't "hoverable" (WCAG 1.4.13): `pointer-events: none`, so a magnifier user can't move onto the card to read it — decorative + `aria-hidden`; Ben's call.
+- Terminal line numbers (0.3 opacity) and the business card's 8.5px mono rows are low-contrast but `aria-hidden` decoration.
+- Email address is never shown or announced (copy-only by Ben's decision) — consider it in the accessible name.
+- Rail glide pill moves like the page pill (push-further): stretch along travel from `useVelocity(pillY)` (~1 + 0.04·|v|, clamped), breathe in from ~0.85 on first show, shrink to 0.96 on fade; skip under reduced motion. Ben's call — the rail is tool-like, the rigid glide may be right.
+- Strip dev panels (ProtoTuner/DialKit/protoSettings knobs) before any merge.
+
+## `/new/simple` round 7 — continuous paper + staff review (2026-10-28)
+
+- [x] Paper airplane is one continuous sheet: per-step parameters drive every face each frame (no cancelled animations, no layer swaps that show); corner flap splits on the next hinge; turned-over half shows a plain back; the dart's real wing fold (nose → bottom-edge midpoint) modelled in 3D (wing turns ψ about the hinge, orthographic view, roll to open); flight sprite = the fold's last frame. Level release, no tilt.
+- [x] Flight: launch 1.15–1.4× trim, L/D 3–4.5, pitch inertia → max ~14°/150ms (was ~100° in 0.4s at the stall); fades only after leaving the window.
+- [x] Staff review (4 lenses) fixes — see history.
+
+**Follow-ups from this review:**
+- Light the paper as it turns (half/flaps darken edge-on; card thickness edge-on; wing underside in turns) — no filters.
+- Angle of attack in flight (nose leads the path near the stall).
+- The plane "lands" on the contribution strip — try as a recorded variant (could read corny).
+- Bake drop-shadows into the SVGs (filter re-runs per frame on the morphing fold / blimp banner); profile first.
+- LinkedIn card: 2 WebGL contexts per hover — render the PaperTexture once to an image if it stutters; check the flip in Safari (canvas + backface-visibility).
+- [x] Prod heatmap's pre-existing negative-height `<rect>` console errors (spring overshoot) — clamped (round 8).
+- Easter-egg density on the contact row (all four perform) and the Consensus mark on a personal card — Ben's call.
+- Zero-day copy: reviewers flag "Designing, not committing" / "Cooking (actual food)" as puns and "Out of range" / "Somewhere without wifi" as near-duplicates; "Cooking on my work account" is Ben's wording. Ben's call.
+- Strip dev panels (ProtoTuner/DialKit/protoSettings knobs) before any merge.
+
+## `/new/simple` round 3 — Ben's decisions + micro-interactions (2026-10-28)
+
+- [x] **D1 Email copy only** — address never shown; accessible name "Copy email address".
+- [x] **D2 Zero-day tooltips** — "Cooking on my work account" only on zero days 10/02–10/26; other past zero days get a dry weekday/weekend line (stable per date, never repeated on consecutive days); contribution days keep counts. Tests: 76 pass.
+- [x] **D3 Portrait cycles theme + handle shake** — settings glyph wiggles and its knobs tweak (skipped when rail open / reduced motion).
+- [x] **D4 Glow melts into the pill** — @property-typed position/scale transition: glow slides to the pill centre, shrinks to 0.35, fades (~140ms); re-emerges to the cursor; no lag when tracking.
+- [x] **D5 Rebased onto origin/main** (next-update is stale since Aug). Only main's additions differ from the pre-rebase backup (`backup/simplified-home-prototype-pre-rebase`); contribution data taken from main.
+- [x] **T Text presets** — 9 presets (2-line S/M/L, 3-line byline S/M/L, 3-line stair S/M/L), DialKit "Text preset" or `?preset=`; measured desktop rag 100/98, 100/79/99, 36/72/100; designed 5-line phone breaks (91–100% even) at 27–38px.
+- [x] **M1 Email → paper airplane** on copy (envelope → paper w/ SVG grain → plane → flight ~1s; check lands at 330ms).
+- [x] **M2 GitHub terminal** — `gh graph --year 2026` → real 20-week bar sparkline + total (~0.5s); linger 1.6s → `git commit -m "say hi"` + result.
+- [x] **M3 LinkedIn business card** flips out; linger → turns over (monogram + URL).
+- [x] **MOB** — 390×844 touch: no sideways scroll, ≥44px hit areas (portrait, strip link, swatches), rail overlay, email plane + note fit, hover-only effects off on touch.
+
+**Follow-ups:** Paper.design shader for the plane's paper (SVG grain used — a WebGL context per 1s flight at 24px isn't worth it yet); popovers have no tap equivalent on phones (links navigate — by design for now); rail ≤600px tall still overruns the strip reserve.
+
+## `/new/simple` round 2 — Ben's feedback batch (active, 2026-10-28)
+
+Branch `simplified-home-prototype`. One sentence + four icon links + strip, theme/record in the sidebar (see history 2026-10-28). Ben's requests from this round, each with the check that proves it:
+
+- [x] **R1 Strip at the foot, full bleed** (as on `/new`). ✓ when the strip spans the full viewport width at the bottom when content fits, and stacks below content when it scrolls.
+- [x] **R2 Record sized to the toolbar.** Toolbar controls grow (×1.15), record shrinks to meet them. ✓ when the record is ≈ one icon button wide (±6px) and one swatch tall (±4px), still reads as a record/switch, and small-size detail is cleaned up (no sub-pixel label print, groove moiré or hairline tonearm).
+- [x] **R3 Portraits fit squares.** ✓ when all 5 square crops share one framing rule (head ≈ half the frame, centred, same headroom) and read clearly at 40px.
+- [x] **R4 Even pill padding.** ✓ when the Consensus pill's measured padding is equal top/bottom (±1px) and left/right (±1px).
+- [x] **R5 X birds on the X icon, cracks fitted.** ✓ when hovering X cracks the glass from the icon's centre, cracks end exactly on the rounded-square outline, shards tile the whole pill (corners included), then birds fly.
+- [x] **R6 Work-account tooltip.** ✓ when every day 2026-10-02 → 2026-10-26 (Ben's "yesterday", PT) reads "Cooking on my work account", other days unchanged.
+- [x] **R7 Record credit to the left.** ✓ when the now-playing line sits on the switch's centre line, right-aligned to its left edge, running out to the left, one line.
+- [x] **R8 Portrait = theme toy.** ✓ when clicking it cycles the accent like prod, and any theme change (portrait or sidebar) swaps the image the same frame (no load lag) with a crisp, springy pop.
+- [x] **R9 / R14 Cursor glow everywhere (experiment), tunable.** ✓ when the pill's cursor light follows the mouse page-wide, steps aside over links, is off for touch/reduced motion, and has its own DialKit panel (on, intensity, radius, falloff, tint); default softer.
+- [x] **R10 Strip GitHub link gets the glass pill.** ✓ when hovering it shows the same animated pill as the prose links.
+- [x] **R11 Motion is crisp, snappy, playful.** ✓ when the rail opens fast (whole stagger ≲ 350ms), presses give tactile feedback, the pop is a spring not a slow ease, and nothing waits on loading.
+- [x] **R12 = R8's no-lag swap.**
+- [x] **R13 Record fits the rail by design.** ✓ when at 900px and 700px viewport heights every control and the record are fully visible (no scroll, no clipping), all centred on one axis, with the record as the rail's last control.
+- [x] **R15 Toolbar opens on click only (this page).** ✓ when hovering today's square at the right edge shows its tooltip without opening the toolbar; the settings icon opens/closes; outside click and Escape close.
+- [x] **R16 Strip GitHub pill has room** (padding 3/6px, negative margins). ✓ measured 6.5/5.4 × 3.3/2.8.
+- [x] **R17 Settings trigger has a glass hover** (and keeps it while open); no clipping at rest.
+- [x] **R18 Text block feels centred.** ✓ shrink-wrapped block centred to ±1px at 1024–1512; DialKit: align left/centre (copy + icons), max width, wrap, shrink-wrap.
+- [x] **R19 Two lines, ~50ch.** "Ben Yamron is a product designer," / "currently building AI for researchers at Consensus." Text size fitted (container-query units) so line 2 fills the max width; icons scale with it; floor 26px wraps on phones. DialKit: size mode, max width, min/max text.
+- [x] **R20 Email copies.** ✓ clipboard = address, envelope springs to a check, "Email address copied" slides out (role=status), resets after 1.8s.
+- [x] **R22 Rail glide pill.** ✓ one pill starts on the trigger, springs between controls (measured travel 146→256→283px over 300ms), lands on the record as a 59×44 capsule, fades 140ms after leaving.
+- [x] **Copy variants** (Ben: lines too lopsided; pauses only at line ends). DialKit "Copy" with 8 measured variants; default "…product designer currently / building AI for researchers at Consensus." (100/98).
+- [x] **Consensus tile** #27272A in dark mode.
+- [ ] **R21 Contact micro-interactions** — brainstorm only this round (mail → paper airplane w/ Paper shader texture; GitHub → code window; LinkedIn → TBD).
+- [x] **Staff review** (design craft first; eng polish later), findings fixed or reported — see history 2026-10-28 round 2.
+
+**Follow-ups from the staff review (not done this round):**
+- Rail at ≤600px tall still overruns the strip reserve (below the fit floors) — add a 4th lever (trigger/record smaller) or shrink the reserve.
+- Compact record off-state is a plain switch; give it its own design (tiny vinyl / label dot) so it reads as music before it's played.
+- Social icons don't scale with the fitted type (fixed 24px glyph / 44px box); consider em-sizing.
+- Easing curves aren't tokens (spring + smooth curves duplicated across proto.css/TS); frost recipe duplicated in proto.css + sidebar glide pill.
+- Work-account tooltip overrides real counts on prod's heatmap for 10/02–10/26 — fine while the data stops at 10/01; decide (only when count = 0? include the date?) before the next data refresh. No unit test yet.
+- Cursor glow repaints a full-viewport gradient per move; if it stays, move a 2r element with transform. Glow↔pill handoff (push-further) or cut.
+- Phone rail overlays prose; consider a bottom sheet on narrow viewports. Rail record hit area < 44px on touch.
+- Branch is 71 commits behind `main` — rebase before any PR.
+- Ideas (push-further): LinkedIn badge swing on hover; portrait-click accent wave across the strip; one rule for contact interactions — change the glyph or something already on the page, never new chrome.
+
+## V2 home exploration — prose home + morphing preview transitions (active, 2026-08-19)
+
+Ben is prototyping a radically simplified home page, designed in Paper (`https://app.paper.design/file/01M01HV1S56YYN78DMKCGKTB59/1-0`, frames `F1-0` home / `AV-0` case study). The Paper mock is **inspiration**, the real implementation takes precedence — the prototype lives inside the site's theme-token system, fonts, and data conventions rather than transplanting the mock's hardcoded values.
+
+**Concept:** the home is a single centered prose column (528px) whose links are inline in the text, not a card list. Hovering an inline link shows a mini preview frame **anchored to the link element**, appearing/growing only in the direction of the link — never traveling in from elsewhere on screen. Clicking is a real route navigation choreographed as a transition: the background is anchored (token-driven, no flash), the mini preview is the shared element that morphs into the case study's 800×500 hero rect, and text crossfades around it. Back navigation crossfades the hero out (slight shrink + fade) and the home prose back in — no reverse morph. The hover preview is the *continuity anchor* that makes navigation read as transition rather than loading.
+
+**Status:** working prototype at `/new` and `/new/:slug` (branch `simplified-home-prototype`), self-contained in `src/proto/` (excluded from the standalone-route chrome — no persistent right column; does render `<CustomCursor />` now that the panel has a cursor-mode picker). State machine simplified to `hidden → hover → morph → hidden` in `PreviewContext` (no more `docked`/`return` phases). Morphing layer uses framer-motion motion values with a spring, now DialKit-tunable (see round 3).
+
+- [x] Prototype routes, data mapping to real preview assets, morph state machine
+- [x] Round 2: local hover entrances (appear/grow, no fly-in); exit crossfade instead of reverse-morph; inline-leading thumbnail that toggles a ThemeContext-wired customization panel (crossfade, not nav); inline ↗ on external links; UW/Sony/CIP case studies; shared ProtoMedia (video/image/lottie)
+- [x] Round 3: installed DialKit for live-tunable dials (type scale, hover-preview geometry/motion, page transitions — see `src/proto/tuning.ts`); settings-panel anchor fixed to never move on toggle (same `<button>`, content swaps not position); thumbnail now accent-reactive (`portrait-${accentColor}.jpeg`); cursor-mode row (standard/figpal) wired to real `CursorContext`; swatch colors sourced from `theme.css` vars (was hardcoded); installed Agentation for click-to-annotate review feedback; `/simplify` pass (dropped placement/entrance dev knobs entirely per Ben's steer toward one fixed "appear + subtle directional rise/scale" entrance, CSS-only hover underline, mounted-but-hidden media to fix video-restart-on-rehover + cache Lottie fetch)
+- [x] Round 4: face-centered square thumbnail crops per accent (`public/images/portrait-square-*.jpg`, replacing a mis-cropped `object-fit: cover` on the tall site portraits); thumbnail aura now tracks `bgIntensity` via the sidebar trigger dot's exact glow formula; close affordance moved from an X-icon dimming the photo to a dedicated back-arrow button (identical to the case-study back button); heading rewritten as one clause (no trailing period after the arrow glyph); two new inline case-study links ("patient experiences" → mochi-subscriptions, "internal tools" → mochi-ai-tooling); "I worked with" copy fix. Then `/flow:staff-review` (4 parallel lenses, weighted toward push-further per Ben's "make the customization panel a fun playground" brief) surfaced and this round fixed: **BLOCKER** — the back-button row reintroduced round 3's exact "thumbnail moves on toggle" bug (measured live: 32px shift) by sitting in normal flow; now absolutely positioned above the anchor so the anchor's box height never changes. **BLOCKER** — no keyboard path to the back button (wrong DOM order) and no focus restoration on close; fixed (DOM order + `thumbRef.focus()` on Escape/back-click), verified live via CDP (Tab from thumbnail → back button; back-button click → focus returns to thumbnail). **BLOCKER** — zero hover feedback on any panel control; added hover states to swatches/icon buttons plus the site's own Spring click-press curve (`cubic-bezier(0.34, 1.56, 0.64, 1)`, the one intentional overshoot in design-language.md) reused for every control, which also answers the "pop more" brief without inventing a new effect. NITs fixed: thumbnail glow's opacity channel (the sidebar formula's other half) redirected to the border's alpha instead of the photo itself, so intensity is legible without dimming Ben's face — code comment updated to disclose the deviation; settings panel now has a lightweight glass surface (fill + blur + border) and hairline dividers between control groups instead of reading as a bare form; `VideoFill` gained an `onError` fallback matching the existing Lottie pattern; Lottie fetch failures now `console.warn`; fixed a real bug where the Arcade link (an internal `/playground` route) was misclassified as external — forced a hard page reload and showed a misleading ↗ icon; `dialkit`/`agentation`/`motion` moved from `dependencies` to `devDependencies` (they're dev-only, stripped before merge, per the project's dev-panels policy).
+- [ ] **Open question for Ben:** Arcade's link target — currently `/playground` (the general demo gallery), but its preview video (`preview-font-guesser.mp4`) strongly implies the font-guessing game (`/font-guesser/`, matching the real site's actual Arcade card) was the intended destination. Confirm which.
+- [ ] Roadmap-concrete (push-further review): wire the real `useGlassHighlight` hook into the settings panel's three control-group rows (swatches / appearance / cursor), matching the sidebar's per-group glass-pill isolation (accent-tinted fill, RAF-lerp slide, cursor-as-light-source). The lightweight static glass surface added in round 4 is a placeholder for this — real assembly work (3 `cardSelector` groups + container refs), not new design.
+- [ ] Future-exploration (push-further review): collapse the accent-swatch row + intensity strip into a single scrubbable hue+intensity gesture. Not yet scoped — needs to reconcile with keyboard operability and the 5 named-accent `aria-pressed` states before it's clear this doesn't trade legibility for novelty. The deeper constraint: each of the 5 accents is tied to a specific portrait photo, so "in-between" hues have no associated image — a continuous hue space would need either (a) blending/cross-fading adjacent portraits, (b) a generic avatar that doesn't vary by accent (losing the environmental character the portraits provide), or (c) constraining the continuous slider to snap back to the nearest detent's photo while letting the hue itself be continuous. Option (c) is the most promising: the hue shifts freely, the portrait stays discrete — like a physical dial with detents. **Surfaces when:** `src/proto/ProtoSettingsPanel.tsx` gets picked up for a non-prototype design pass, or an accessibility review of this surface.
+- [ ] Future-exploration: **sound on accent/mode selection** — a tiny material-response click (not a UI chime, more like a well-made light switch) on swatch and mode-button press. Zero precedent on the site (no audio anywhere); needs to clear the "restraint is a signal" bar (design-language.md / guidelines.md). Ben expressed interest but deferred to a later pass. **Surfaces when:** the panel ships in non-prototype form, or when the site adds any audio for the first time.
+- [ ] Follow-up (staff-engineer review): no tests for `PreviewContext`'s state machine (hover→leave dedupe timing, morph/settle contract) — genuinely load-bearing async logic other components depend on.
+- [ ] Follow-up (staff-engineer review): settings panel is `position: absolute` with no height reservation — could overflow `overflowY: auto` on very short viewports. Needs a real-browser check at small viewport heights, not a blind fix.
+- [ ] Follow-up (staff-engineer review): a keyboard user who presses Enter very quickly after Tab-focusing a link can get the "no morph" fallback instead of the flight animation, because `wasVisible` is sampled from the hover-in opacity mid-animation. Needs a more robust "was showing" signal (e.g. a ref flag set synchronously in `hoverLink`) rather than reading an animated value.
+- [ ] Noted, not fixed (UX review): accent swatches are 24×24px, below the project's own 44×44 touch-target minimum (`.claude/rules/technical-context.md`) — inherited from the real sidebar's identical swatch size, not a new regression. Worth revisiting if/when this panel replaces the sidebar rather than duplicating it.
+- [ ] Ben's in-browser feel review — turn the DialKit dials live and report what feels right (values in `tuning.ts` are current defaults, not final): entrance rise/scale-from, hover-preview size, morph spring, page transition timing, hero-shrink-on-exit
+- [ ] Decide relationship to existing home (replace vs. coexist), mobile/touch treatment, whether previews preload
+- [ ] Open sub-questions: should external links show a hover preview at all (currently yes); real case-study body copy + heroVisual per study
+- [ ] If adopted: fold into design-language.md (new patterns: link-anchored preview + shared-element navigation + thumbnail-to-panel transition), strip DialKit + Agentation + `tuning.ts`/dev knobs before merge, bake the dialed-in values into the components directly
+
+---
+
 ## Reference
 
 The original Framer components have been removed. All visual and interaction specifications are now fully documented in:

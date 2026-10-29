@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, type ReactNode } from 'react'
+import { motion, AnimatePresence, animate, useMotionValue, useReducedMotion, useSpring, useTransform, type AnimationPlaybackControls, type MotionStyle } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
 import { useIsWide } from '@/hooks/useMediaQuery'
 import { isInitialEntrance, entrancePreset } from '@/utils/entranceState'
+import { useWindowLeave } from '@/hooks/useWindowLeave'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -318,13 +319,96 @@ const DIVIDER_3 = STRIP_IDX + 1                       // 7
 const MODE_BASE = DIVIDER_3 + 1                       // 8
 const DIVIDER_4 = MODE_BASE + modes.length             // 11
 const CURSOR_BASE = DIVIDER_4 + 1                      // 12
+const DIVIDER_5 = CURSOR_BASE + cursorOptions.length   // 14
+const EXTRA_IDX = DIVIDER_5 + 1                        // 15
 
-export function SidebarThemeControls() {
+const TRIGGER_ICON_BOX = 44 // matches the page's icon buttons
+// The glide pill fades through a CSS variable, not `opacity`: Framer hands an
+// opacity animation to WAAPI, which ends a frame before Framer commits the
+// final value — a one-frame blink to 0 at the end of every fade-in. Variables
+// always animate on the main thread.
+const PILL_FADE_IN = { duration: 0.12, ease: 'easeOut' } as const
+const PILL_FADE_OUT = { duration: 0.16, ease: 'easeOut' } as const
+// Persistent springs that are re-targeted (velocity carried over), not
+// restarted per control — a fast sweep across the rail is one smooth glide.
+const PILL_SPRING = { stiffness: 560, damping: 40, mass: 0.7 }
+
+// What the glide pill lands on: the trigger, every button, the strip, the record.
+export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
+// Fit mode floors: intensity strip (before ×controlScale) and divider air.
+const STRIP_MIN = 42
+const DIVIDER_MIN = 10
+const DIVIDER_MAX = 18
+
+// Record-shaped extra control: its width tracks the icon buttons (a touch
+// wider so the record reads), its height follows the record's 236:144 plinth.
+const EXTRA_OVERHANG = 5
+export const RECORD_ASPECT = 236 / 144 // RecordToggle's plinth (not imported: it's lazy-loaded)
+
+export interface SidebarMetrics {
+  /** Icon-button size at the current compression. */
+  buttonSize: number
+  /** Width the extra control should take to sit flush with the rail. */
+  extraWidth: number
+}
+
+/** Dispatch on window (detail: { opener }) to open the sidebar pinned —
+ *  it then stays open until a click outside, Escape, or another toggle. */
+export const THEME_SIDEBAR_TOGGLE = 'theme-sidebar:toggle'
+/** Broadcast on window with detail: { open } whenever the sidebar opens/closes. */
+export const THEME_SIDEBAR_STATE = 'theme-sidebar:state'
+
+interface SidebarThemeControlsProps {
+  /** Hide the trigger square until the sidebar is open (an external element,
+   *  via THEME_SIDEBAR_TOGGLE, is the visible way in; edge hover still works). */
+  hideTriggerAtRest?: boolean
+  /** Replaces the 16px accent square with an always-visible icon button.
+   *  Click pins the sidebar open (click again, click outside, or Escape closes). */
+  triggerIcon?: ReactNode
+  /** One more control at the foot of the sidebar, below the cursor group.
+   *  Right-aligned to the rail and kept out of its width, so wide controls
+   *  (the record toggle) don't shift the column. Stays mounted while closed. */
+  extraControl?: ReactNode | ((m: SidebarMetrics) => ReactNode)
+  /** Multiplies control sizes (swatches, icon buttons, intensity strip). */
+  controlScale?: number
+  /** 'click': only the trigger opens it; the right edge doesn't react to
+   *  hover (and passes pointer events through to the page). */
+  openOn?: 'hover' | 'click'
+  /** Names what the icon trigger opens, for its aria-label ("Open …"). */
+  triggerLabel?: string
+  /** Per-item open stagger (s). */
+  stagger?: number
+  /** Fit every control to the viewport height instead of scrolling, leaving
+   *  this much room at the bottom (px). Off (undefined) = prod behaviour. */
+  fitBottomReserve?: number
+  /** One frosted pill for the whole rail that glides between controls
+   *  (instead of a pill per group + the trigger's own glass). */
+  glidePill?: boolean
+  /** Column top (px). Default: the --sidebar-trigger-top CSS variable a page
+   *  may set (e.g. aligned to measured content), else 64. */
+  triggerTop?: number
+}
+
+export function SidebarThemeControls({
+  hideTriggerAtRest = false, triggerIcon, extraControl, controlScale = 1,
+  openOn = 'hover', stagger = 0.04, fitBottomReserve, triggerLabel = 'Settings', glidePill = false, triggerTop: triggerTopProp,
+}: SidebarThemeControlsProps = {}) {
   const [hovered, setHovered] = useState(false)
+  // Opened by a click (external trigger): mouse-leave doesn't close it.
+  const [pinned, setPinned] = useState(false)
+  const hoveredRef = useRef(hovered)
+  hoveredRef.current = hovered
+  const pinnedRef = useRef(pinned)
+  pinnedRef.current = pinned
+  const openerRef = useRef<HTMLElement | null>(null)
+  // Backdrop is 300px wide inside a 56px container; clipping it the instant
+  // hover ends slices its fade-out into a hard vertical edge.
+  const [backdropExiting, setBackdropExiting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const isEntrance = useRef(isInitialEntrance()).current
   const slideProps = useMemo(() => ({ x: hovered ? 0 : 20, y: 0 }), [hovered])
+  useEffect(() => { if (hovered) setBackdropExiting(true) }, [hovered])
   const { appearanceMode, setAppearanceMode, accentColor, setAccentColor,
           resolvedAppearance, bgIntensity, setBgIntensity } = useTheme()
   const { cursorMode, setCursorMode } = useCursor()
@@ -366,17 +450,95 @@ export function SidebarThemeControls() {
   // Compression: full-size at 740px+, linearly compressed down to 500px
   const FULL_VP = 740
   const MIN_VP = 500
-  const compressT = Math.min(1, Math.max(0, (viewportHeight - MIN_VP) / (FULL_VP - MIN_VP)))
-  const swatchSize = Math.round(lerp(18, 24, compressT))
+  const sc = controlScale
+  const triggerSize = triggerIcon ? (TRIGGER_ICON_BOX) : 16
+  // Fit mode — three levers, in order: (1) tighten the divider air (18 →
+  // 10px), (2) shorten the intensity strip (to STRIP_MIN), (3) compress every
+  // control (t). Heights come from a model of the stack, corrected by its
+  // measured error against the real layout.
+  const stripAt = (t: number) => Math.round(lerp(44, 72, t) * sc)
+  const stripMin = Math.round(STRIP_MIN * sc)
+  const dividerCount = (isTouch ? 3 : 4) + (extraControl ? 1 : 0)
+  // Stack height without the strip, at compression t and divider margin dm.
+  const stackWithoutStrip = (t: number, dm: number) => {
+    const btn = Math.round(lerp(30, 40, t) * sc)
+    const swatches = 5 * Math.round(lerp(18, 24, t) * sc) + 4 * Math.round(lerp(6, 14, t))
+    const modes = 3 * btn + 2 * Math.round(lerp(2, 6, t))
+    const cursors = isTouch ? 0 : 2 * btn + Math.round(lerp(2, 6, t))
+    const extra = extraControl ? Math.round((btn + EXTRA_OVERHANG) / RECORD_ASPECT) : 0
+    return triggerSize + dividerCount * (2 * dm + 1) + swatches + modes + cursors + extra
+  }
+  const [fitError, setFitError] = useState(0)
+  // Fit mode only needs it, and a prop avoids a style read on every render.
+  const triggerTop = triggerTopProp ?? 64
+  let compressT = Math.min(1, Math.max(0, (viewportHeight - MIN_VP) / (FULL_VP - MIN_VP)))
+  let fitStrip: number | null = null
+  let fitDivider: number | null = null
+  if (fitBottomReserve !== undefined) {
+    const room = viewportHeight - triggerTop - fitBottomReserve - fitError
+    compressT = 1
+    const spare = room - stackWithoutStrip(1, 0) - stripAt(1)
+    const dm = Math.floor(spare / (2 * dividerCount))
+    if (dm >= DIVIDER_MAX) {
+      fitDivider = null
+    } else if (dm >= DIVIDER_MIN) {
+      fitDivider = dm
+    } else {
+      fitDivider = DIVIDER_MIN
+      const strip = Math.floor(room - stackWithoutStrip(1, DIVIDER_MIN))
+      if (strip >= stripMin) {
+        fitStrip = strip
+      } else {
+        fitStrip = stripMin
+        let lo = 0, hi = 1
+        for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) / 2
+          if (stackWithoutStrip(mid, Math.min(DIVIDER_MIN, Math.round(lerp(8, 18, mid)))) + stripMin <= room) lo = mid
+          else hi = mid
+        }
+        compressT = lo
+        fitDivider = Math.min(DIVIDER_MIN, Math.round(lerp(8, 18, lo)))
+      }
+    }
+  }
+  const swatchSize = Math.round(lerp(18, 24, compressT) * sc)
   const swatchGap = Math.round(lerp(6, 14, compressT))
-  const dividerMargin = Math.round(lerp(8, 18, compressT))
-  const buttonSize = Math.round(lerp(30, 40, compressT))
+  const dividerMargin = fitDivider ?? Math.round(lerp(8, 18, compressT))
+  const buttonSize = Math.round(lerp(30, 40, compressT) * sc)
   const buttonGap = Math.round(lerp(2, 6, compressT))
-  const stripHeight = Math.round(lerp(44, 72, compressT))
+  const stripHeight = fitStrip ?? stripAt(compressT)
+  const iconSize = Math.round(18 * sc)
+  const iconBox = Math.round(24 * sc)
   const thumbTravel = stripHeight - THUMB_SIZE
 
   // Max height for the expandable toolbar: viewport - top offset - trigger - bottom padding
-  const toolbarMaxHeight = viewportHeight - 64 - 16 - 16
+  const extraWidth = buttonSize + EXTRA_OVERHANG
+  const extraHeight = extraControl ? 2 * dividerMargin + 1 + Math.round(extraWidth / RECORD_ASPECT) : 0
+  // Fit mode sizes the stack itself; the cap is only a last resort below the
+  // smallest stack, and may then eat into the bottom reserve rather than clip.
+  const toolbarMaxHeight = fitBottomReserve !== undefined
+    ? viewportHeight - triggerTop - triggerSize - extraHeight - 8
+    : viewportHeight - 64 - 16 - 16 - extraHeight
+
+  // Fit mode: measure the real column (inline buttons add a few px of line
+  // box each, etc.) and feed the model's error back in.
+  const columnRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- re-measures every render (see below)
+  useLayoutEffect(() => {
+    if (fitBottomReserve === undefined) return
+    const col = columnRef.current
+    const bar = toolbarRef.current
+    if (!col || !bar) return
+    const actual = col.getBoundingClientRect().height - bar.clientHeight + bar.scrollHeight
+    const model = stackWithoutStrip(compressT, dividerMargin) + stripHeight
+    const error = Math.round(actual - model)
+    if (Math.abs(error - fitError) > 1) setFitError(error)
+    // No deps on purpose: re-measuring after every render is what lets the fit
+    // settle once late-loading fonts/icons change the real stack height (fit
+    // mode only — returns at once otherwise; converges in ≤1 extra render;
+    // the >1px guard stops the loop).
+  })
 
   const handleEnter = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current)
@@ -384,15 +546,74 @@ export function SidebarThemeControls() {
   }
 
   const handleLeave = () => {
+    if (pinnedRef.current) return
     closeTimeout.current = setTimeout(() => setHovered(false), 250)
   }
+
+  const triggerHidden = !triggerIcon && hideTriggerAtRest && !hovered
+  const toggleFromTrigger = () => {
+    // A visible icon button: hover may already have opened it, so a click
+    // pins rather than toggling it shut under the cursor.
+    if (triggerIcon) { pinOpen(triggerRef.current); return }
+    if (hoveredRef.current) close(false)
+    else setHovered(true)
+  }
+
+  const close = useCallback((restoreFocus: boolean) => {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current)
+    setHovered(false)
+    setPinned(false)
+    if (restoreFocus) openerRef.current?.focus()
+  }, [])
+
+  /** Toggle a pinned open state (stays open until a click outside, Escape,
+   *  or another toggle). Focus returns to `opener` on Escape. */
+  const pinOpen = useCallback((opener: HTMLElement | null) => {
+    if (hoveredRef.current && pinnedRef.current) { close(false); return }
+    if (closeTimeout.current) clearTimeout(closeTimeout.current)
+    openerRef.current = opener
+    setHovered(true)
+    setPinned(true)
+  }, [close])
+
+  // External trigger (e.g. a portrait elsewhere on the page).
+  useEffect(() => {
+    const onToggle = (e: Event) => pinOpen((e as CustomEvent<{ opener?: HTMLElement }>).detail?.opener ?? null)
+    window.addEventListener(THEME_SIDEBAR_TOGGLE, onToggle)
+    return () => window.removeEventListener(THEME_SIDEBAR_TOGGLE, onToggle)
+  }, [pinOpen])
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(THEME_SIDEBAR_STATE, { detail: { open: hovered } }))
+  }, [hovered])
+
+  // Pinned: dismiss on a press outside (the trigger toggles itself) or Escape.
+  useEffect(() => {
+    if (!hovered) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!pinnedRef.current) return
+      const t = e.target as Element
+      if (sidebarRef.current?.contains(t) || t.closest?.('[data-theme-sidebar-trigger]')) return
+      close(false)
+    }
+    // A layer above (e.g. a pop-out) that handled Escape marks it handled.
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented) close(true) }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [hovered, close])
 
   // Close panel when tapping outside on touch devices
   useEffect(() => {
     if (!hovered) return
     const handler = (e: TouchEvent) => {
       if (sidebarRef.current?.contains(e.target as Node)) return
+      if ((e.target as Element).closest?.('[data-theme-sidebar-trigger]')) return
       setHovered(false)
+      setPinned(false)
     }
     document.addEventListener('touchstart', handler)
     return () => document.removeEventListener('touchstart', handler)
@@ -406,12 +627,12 @@ export function SidebarThemeControls() {
     cleanupModePill.current = null
     cleanupCursorPill.current?.()
     cleanupCursorPill.current = null
-    if (hovered) {
+    if (hovered && !glidePill) {
       if (swatchesRef.current) cleanupSwatchPill.current = setupControlPill(swatchesRef.current)
       if (modesRef.current) cleanupModePill.current = setupControlPill(modesRef.current)
       if (cursorsRef.current) cleanupCursorPill.current = setupControlPill(cursorsRef.current)
     }
-  }, [hovered])
+  }, [hovered, glidePill])
 
   useEffect(() => {
     const timer = setTimeout(setupPills, 120)
@@ -425,6 +646,122 @@ export function SidebarThemeControls() {
       cleanupCursorPill.current = null
     }
   }, [setupPills])
+
+  // ---- Glide pill (opt-in) ----
+  // One pill in the column, behind the controls (z -1 inside the column's
+  // filter stacking context). It springs from target to target; leaving the
+  // rail fades it after a short grace (crossing a gap between two controls
+  // shouldn't flicker), and it reappears in place on the next hover.
+  const pillX = useSpring(0, PILL_SPRING)
+  const pillY = useSpring(0, PILL_SPRING)
+  const pillW = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
+  const pillH = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
+  // Concentric with what it frames: 15px round a square control's selection
+  // ring (7px item + 3px offset + 1px ring = 11px, and the pill sits 4px
+  // outside it); a full capsule round a capsule (the record, the strip),
+  // eased between while it glides from one to the other.
+  const pillR = useTransform([pillW, pillH], ([w, h]: number[]) => {
+    const capsule = Math.min(w!, h!) / 2
+    return 15 + (capsule - 15) * Math.min(1, Math.abs(w! - h!) / 8)
+  })
+  const pillO = useMotionValue(0)
+  const pillFade = useRef<AnimationPlaybackControls | null>(null)
+  const fadePill = useCallback((to: 0 | 1) => {
+    if (pillO.get() === to && !pillFade.current) return
+    pillFade.current?.stop()
+    pillFade.current = animate(pillO, to, { ...(to ? PILL_FADE_IN : PILL_FADE_OUT), onComplete: () => { pillFade.current = null } })
+  }, [pillO])
+  const glideShown = useRef(false)
+  const glideTarget = useRef<Element | null>(null)
+  const glideHide = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const glideTo = useCallback((el: Element) => {
+    const col = columnRef.current
+    if (!col) return
+    if (glideHide.current) { clearTimeout(glideHide.current); glideHide.current = null }
+    const c = col.getBoundingClientRect()
+    const r = el.getBoundingClientRect()
+    // Compact controls (swatches, mode and cursor buttons — their hit boxes
+    // differ, the drawn items don't) all get the trigger's square, so the
+    // pill frames each the same way; only genuinely larger controls (the
+    // intensity strip, the record) get their own size plus a little air.
+    const COMPACT = TRIGGER_ICON_BOX + 4
+    const w = r.width <= COMPACT ? TRIGGER_ICON_BOX : r.width + 8
+    const h = r.height <= COMPACT ? TRIGGER_ICON_BOX : r.height + 8
+    const target = { x: r.left - c.left + (r.width - w) / 2, y: r.top - c.top + (r.height - h) / 2, width: w, height: h }
+    glideTarget.current = el
+    const place = !glideShown.current || prefersReducedMotion ? 'jump' : 'set'
+    pillX[place](target.x); pillY[place](target.y); pillW[place](target.width); pillH[place](target.height)
+    fadePill(1)
+    glideShown.current = true
+  }, [pillX, pillY, pillW, pillH, fadePill, prefersReducedMotion])
+  const glideOut = useCallback(() => {
+    if (glideHide.current) clearTimeout(glideHide.current)
+    glideHide.current = setTimeout(() => {
+      glideShown.current = false
+      fadePill(0)
+    }, 140)
+  }, [fadePill])
+  // The air between controls (e.g. handle → first option) is the page's, not
+  // the rail's, so leaving a control there doesn't mean leaving the rail.
+  // While the pointer stays within the rail's span (handle to last control)
+  // the pill holds on the last control — so the next one is always a glide,
+  // never a fade-out-and-jump — and it fades once the pointer leaves.
+  const railWatch = useRef<((e: PointerEvent) => void) | null>(null)
+  const railLeave = useRef<(() => void) | null>(null)
+  const stopRailWatch = useCallback(() => {
+    if (railWatch.current) window.removeEventListener('pointermove', railWatch.current)
+    if (railLeave.current) document.documentElement.removeEventListener('pointerleave', railLeave.current)
+    railWatch.current = railLeave.current = null
+  }, [])
+  /** Stop watching and let the pill fade. */
+  const releasePill = useCallback(() => { stopRailWatch(); glideOut() }, [stopRailWatch, glideOut])
+  /** The rail's span (handle to last control), measured as the pointer moves
+   *  (the controls may still be sliding in). */
+  const railSpan = useCallback(() => {
+    const col = columnRef.current
+    let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
+    // Closed, the controls are faded but still laid out: only the handle counts.
+    col?.querySelectorAll(hoveredRef.current ? GLIDE_TARGETS : '.sidebar-icon-trigger').forEach(el => {
+      const q = el.getBoundingClientRect()
+      if (!q.width) return
+      l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
+    })
+    return { l: l - 6, t: t - 6, r: r + 6, b: b + 6 }
+  }, [])
+  useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current); stopRailWatch() }, [stopRailWatch])
+  // Switching apps / Spaces sends no pointerleave: let the pill go.
+  useWindowLeave(releasePill, glidePill)
+  // Closing the rail (Escape, outside click, the handle) hides the controls:
+  // the pill stays only if it's on the handle.
+  useEffect(() => {
+    if (!glidePill || hovered) return
+    if (railWatch.current || (glideTarget.current && !glideTarget.current.matches('.sidebar-icon-trigger'))) releasePill()
+  }, [hovered, glidePill, releasePill])
+  const glideHandlers = glidePill ? {
+    onPointerOver: (e: React.PointerEvent) => {
+      const t = (e.target as Element).closest(GLIDE_TARGETS)
+      if (t && columnRef.current?.contains(t)) { stopRailWatch(); glideTo(t) }
+    },
+    onPointerOut: (e: React.PointerEvent) => {
+      const to = e.relatedTarget as Element | null
+      if (to && columnRef.current?.contains(to)) return
+      // A lifted finger has no "between controls".
+      if (e.pointerType === 'touch') { releasePill(); return }
+      const inSpan = (x: number, y: number) => { const span = railSpan(); return x >= span.l && x <= span.r && y >= span.t && y <= span.b }
+      if (!inSpan(e.clientX, e.clientY)) { releasePill(); return }
+      stopRailWatch()
+      railWatch.current = (m: PointerEvent) => { if (!inSpan(m.clientX, m.clientY)) releasePill() }
+      window.addEventListener('pointermove', railWatch.current, { passive: true })
+      // Leaving the window from the gap sends no further pointermove.
+      railLeave.current = releasePill
+      document.documentElement.addEventListener('pointerleave', railLeave.current)
+    },
+    onFocus: (e: React.FocusEvent) => {
+      const t = (e.target as Element).closest(GLIDE_TARGETS)
+      if (t) glideTo(t)
+    },
+    onBlur: glideOut,
+  } : {}
 
   const activeSwatchVar = `var(--swatch-${accentColor})`
 
@@ -449,7 +786,7 @@ export function SidebarThemeControls() {
       if (thumbRef.current) thumbRef.current.style.top = `${t * (h - THUMB_SIZE)}px`
       document.documentElement.style.setProperty('--bg', bg)
       // Sync trigger dot and meta theme-color in the same frame
-      if (triggerRef.current) {
+      if (triggerRef.current && !triggerIcon) {
         triggerRef.current.style.opacity = String(lerp(0.45, 1.0, t))
         triggerRef.current.style.boxShadow = t > 0.01
           ? `0 0 ${lerp(0, 14, t).toFixed(1)}px color-mix(in srgb, ${activeSwatchVar} ${Math.round(lerp(0, 0.5, t) * 100)}%, transparent)`
@@ -458,7 +795,7 @@ export function SidebarThemeControls() {
       const meta = document.querySelector('meta[name="theme-color"]')
       if (meta) meta.setAttribute('content', bg)
     }
-  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatchVar])
+  }, [setBgIntensity, accentColor, resolvedAppearance, activeSwatchVar, triggerIcon])
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -491,8 +828,9 @@ export function SidebarThemeControls() {
     <div
       ref={sidebarRef}
       data-sidebar
-      onMouseEnter={isTouch ? undefined : handleEnter}
-      onMouseLeave={isTouch ? undefined : handleLeave}
+      data-glide={glidePill || undefined}
+      onMouseEnter={isTouch || openOn === 'click' ? undefined : handleEnter}
+      onMouseLeave={isTouch || openOn === 'click' ? undefined : handleLeave}
       style={{
         position: 'fixed',
         top: 0,
@@ -500,13 +838,17 @@ export function SidebarThemeControls() {
         width: 56,
         height: '100vh',
         zIndex: 100,
-        overflow: hovered ? 'visible' : 'hidden',
-        pointerEvents: isTouch && !hovered ? 'none' : 'auto',
+        // Click-only rails never catch the pointer, so nothing needs clipping
+        // at rest — and the icon trigger's glass is wider than the strip.
+        overflow: hovered || backdropExiting || openOn === 'click' ? 'visible' : 'hidden',
+        // Click-only: the strip itself never catches the pointer; the trigger
+        // and (while open) each control opt back in.
+        pointerEvents: openOn === 'click' || (isTouch && !hovered) ? 'none' : 'auto',
         viewTransitionName: 'sidebar',
       }}
     >
       {/* Sidebar backdrop — mount/unmount to avoid compositing cost at rest */}
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => setBackdropExiting(false)}>
         {hovered && (
           <motion.div
             key="sidebar-backdrop"
@@ -537,36 +879,84 @@ export function SidebarThemeControls() {
         initial={isEntrance && !prefersReducedMotion ? { opacity: 0 } : false}
         animate={{ opacity: 1 }}
         transition={isEntrance && !prefersReducedMotion ? { duration: 0.4, delay: entrancePreset.sidebarDelay, ease: 'easeOut' } : { duration: 0 }}
+        ref={columnRef}
+        {...glideHandlers}
         style={{
           position: 'absolute',
           right: 16,
           display: 'flex',
           alignItems: 'center',
-          top: 'var(--sidebar-trigger-top, 64px)',
+          top: triggerTopProp ?? 'var(--sidebar-trigger-top, 64px)',
           flexDirection: 'column' as const,
           filter: 'drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 90%, transparent))',
         }}
       >
+        {glidePill && (
+          <motion.div
+            aria-hidden="true"
+            data-glide-pill
+            style={{
+              x: pillX, y: pillY, width: pillW, height: pillH,
+              // A CSS variable (see PILL_FADE_IN): MotionStyle doesn't type custom properties.
+              ...({ '--pill-o': pillO } as unknown as MotionStyle),
+              opacity: 'var(--pill-o)',
+              position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none',
+              borderRadius: pillR,
+              // Same frost as the page's glass pill (useGlassHighlight skinPill).
+              background: resolvedAppearance === 'dark'
+                ? 'hsla(var(--accent-hue), 20%, 55%, 0.12)'
+                : 'hsla(var(--accent-hue), 20%, 40%, 0.08)',
+              boxShadow: resolvedAppearance === 'dark'
+                ? 'inset 0 1px 0 0 rgba(255, 255, 255, 0.10)'
+                : 'inset 0 -1px 0 0 rgba(0, 0, 0, 0.06)',
+              border: resolvedAppearance === 'dark'
+                ? '0.5px solid rgba(255, 255, 255, 0.12)'
+                : '0.5px solid rgba(0, 0, 0, 0.08)',
+              backdropFilter: 'blur(1px)',
+              WebkitBackdropFilter: 'blur(1px)',
+            }}
+          />
+        )}
         {/* Fixed trigger — 16×16 dot with 40×40 invisible touch target overlay */}
         <div
           ref={triggerRef}
           role="button"
-          tabIndex={0}
-          aria-label={hovered ? 'Close theme controls' : 'Open theme controls'}
+          tabIndex={triggerHidden ? -1 : 0}
+          aria-hidden={triggerHidden || undefined}
+          // Icon trigger: a fixed name — aria-expanded carries open/closed.
+          aria-label={triggerIcon
+            ? triggerLabel
+            : (hovered ? 'Close theme controls' : 'Open theme controls')}
           aria-expanded={hovered}
+          className={triggerIcon ? 'sidebar-icon-trigger' : undefined}
+          // On the role="button" element itself (the hit area below bubbles
+          // here), so assistive tech that "presses" the element activates it.
+          onClick={toggleFromTrigger}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              setHovered(h => !h)
+              toggleFromTrigger()
             }
           }}
-          style={{
+          style={triggerIcon ? {
+            position: 'relative',
+            width: TRIGGER_ICON_BOX,
+            height: TRIGGER_ICON_BOX,
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-dark)',
+            opacity: hovered ? 1 : 0.6,
+            flexShrink: 0,
+          } : {
             position: 'relative',
             width: 16,
             height: 16,
             borderRadius: 5,
             background: activeSwatchVar,
-            opacity: lerp(0.45, 1.0, bgIntensity),
+            opacity: triggerHidden ? 0 : lerp(0.45, 1.0, bgIntensity),
+            pointerEvents: triggerHidden ? 'none' : undefined,
             boxShadow: bgIntensity > 0.01
               ? `0 0 ${lerp(0, 14, bgIntensity).toFixed(1)}px color-mix(in srgb, ${activeSwatchVar} ${Math.round(lerp(0, 0.5, bgIntensity) * 100)}%, transparent)`
               : 'none',
@@ -574,9 +964,9 @@ export function SidebarThemeControls() {
             flexShrink: 0,
           }}
         >
+          {triggerIcon}
           {/* Enlarged hit area for touch */}
           <div
-            onClick={() => setHovered(h => !h)}
             style={{
               position: 'absolute',
               top: '50%',
@@ -592,6 +982,9 @@ export function SidebarThemeControls() {
 
         {/* Expandable toolbar — scrollable when controls exceed viewport */}
         <div
+          ref={toolbarRef}
+          // Closed click-only rail: no stray tab stop on the (empty) toolbar.
+          inert={openOn === 'click' && !hovered}
           className="sidebar-scroll"
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -603,7 +996,7 @@ export function SidebarThemeControls() {
           {/* Divider: trigger ↔ swatches */}
           <motion.div
             animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-            transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * 0.04 : 0, ease: motionEase }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_1 * stagger : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
               margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -624,7 +1017,7 @@ export function SidebarThemeControls() {
                 <motion.div
                   key={color}
                   animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                  transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * 0.04 : 0, ease: motionEase }}
+                  transition={{ duration: 0.22, delay: hovered ? (SWATCH_BASE + i) * stagger : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
                   <button
@@ -635,7 +1028,7 @@ export function SidebarThemeControls() {
                     tabIndex={hovered ? 0 : -1}
                     onClick={() => setAccentColor(color)}
                     style={{
-                      width: swatchSize, height: swatchSize, borderRadius: 6,
+                      width: swatchSize, height: swatchSize, borderRadius: Math.round(6 * sc),
                       background: cssVar, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
                       outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : 'none',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
@@ -649,7 +1042,7 @@ export function SidebarThemeControls() {
           {/* Divider: swatches ↔ intensity */}
           <motion.div
             animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-            transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * 0.04 : 0, ease: motionEase }}
+            transition={{ duration: 0.22, delay: hovered ? DIVIDER_2 * stagger : 0, ease: motionEase }}
             style={{
               width: 20, height: 1, background: 'var(--text-dark)',
               margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -659,7 +1052,7 @@ export function SidebarThemeControls() {
           {/* Intensity gradient strip */}
               <motion.div
                 animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * 0.04 : 0, ease: motionEase }}
+                transition={{ duration: 0.22, delay: hovered ? STRIP_IDX * stagger : 0, ease: motionEase }}
                 style={{ pointerEvents: hovered ? 'auto' : 'none' }}
               >
                 <div
@@ -685,7 +1078,7 @@ export function SidebarThemeControls() {
                   onDragStart={(e) => e.preventDefault()}
                   style={{
                     position: 'relative',
-                    width: 24,
+                    width: iconBox,
                     height: stripHeight,
                     display: 'flex',
                     justifyContent: 'center',
@@ -697,9 +1090,9 @@ export function SidebarThemeControls() {
                   {/* The visual gradient strip */}
                   <div
                     style={{
-                      width: 8,
+                      width: Math.round(8 * sc),
                       height: stripHeight,
-                      borderRadius: 4,
+                      borderRadius: Math.round(4 * sc),
                       background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
                       transition: 'background 500ms ease-in-out',
                       pointerEvents: 'none',
@@ -728,7 +1121,7 @@ export function SidebarThemeControls() {
               {/* Divider: intensity ↔ modes */}
               <motion.div
                 animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-                transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * 0.04 : 0, ease: motionEase }}
+                transition={{ duration: 0.22, delay: hovered ? DIVIDER_3 * stagger : 0, ease: motionEase }}
                 style={{
                   width: 20, height: 1, background: 'var(--text-dark)',
                   margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -748,7 +1141,7 @@ export function SidebarThemeControls() {
                 <motion.div
                   key={mode}
                   animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                  transition={{ duration: 0.22, delay: hovered ? (MODE_BASE + i) * 0.04 : 0, ease: motionEase }}
+                  transition={{ duration: 0.22, delay: hovered ? (MODE_BASE + i) * stagger : 0, ease: motionEase }}
                   style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                 >
                   <button
@@ -768,12 +1161,12 @@ export function SidebarThemeControls() {
                     <span
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 24, height: 24, borderRadius: 6,
+                        width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
                         outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
                         outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                       }}
                     >
-                      <Icon size={18} />
+                      <Icon size={iconSize} />
                     </span>
                   </button>
                 </motion.div>
@@ -787,7 +1180,7 @@ export function SidebarThemeControls() {
               {/* Divider: modes ↔ cursors */}
               <motion.div
                 animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
-                transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * 0.04 : 0, ease: motionEase }}
+                transition={{ duration: 0.22, delay: hovered ? DIVIDER_4 * stagger : 0, ease: motionEase }}
                 style={{
                   width: 20, height: 1, background: 'var(--text-dark)',
                   margin: `${dividerMargin}px 0`, pointerEvents: 'none',
@@ -807,7 +1200,7 @@ export function SidebarThemeControls() {
                     <motion.div
                       key={mode}
                       animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
-                      transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * 0.04 : 0, ease: motionEase }}
+                      transition={{ duration: 0.22, delay: hovered ? (CURSOR_BASE + i) * stagger : 0, ease: motionEase }}
                       style={{ pointerEvents: hovered ? 'auto' : 'none' }}
                     >
                       <button
@@ -827,18 +1220,18 @@ export function SidebarThemeControls() {
                         <span
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            width: 24, height: 24, borderRadius: 6,
+                            width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
                             outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
                             outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                           }}
                         >
-                          {icon === 'cursor' && <Cursor size={18} />}
-                          {icon === 'circle' && <Circle size={18} />}
+                          {icon === 'cursor' && <Cursor size={iconSize} />}
+                          {icon === 'circle' && <Circle size={iconSize} />}
                           {icon === 'figpal' && (
                             <img
                               src="/images/figpal.png"
                               alt=""
-                              style={{ height: 22, width: 'auto' }}
+                              style={{ height: Math.round(22 * sc), width: 'auto' }}
                             />
                           )}
                         </span>
@@ -850,6 +1243,35 @@ export function SidebarThemeControls() {
             </>
           )}
         </div>
+
+        {extraControl && (
+          <>
+            <motion.div
+              animate={{ opacity: hovered ? 0.15 : 0, ...slideProps }}
+              transition={{ duration: 0.22, delay: hovered ? DIVIDER_5 * stagger : 0, ease: motionEase }}
+              style={{
+                width: 20, height: 1, background: 'var(--text-dark)',
+                margin: `${dividerMargin}px 0`, pointerEvents: 'none', flexShrink: 0,
+              }}
+            />
+            <motion.div
+              inert={!hovered}
+              animate={{ opacity: hovered ? 1 : 0, ...slideProps }}
+              transition={{ duration: 0.22, delay: hovered ? EXTRA_IDX * stagger : 0, ease: motionEase }}
+              style={{
+                alignSelf: 'stretch',
+                display: 'flex',
+                justifyContent: 'center',
+                // Zero intrinsic width: anything wider than the rail spills
+                // out evenly instead of widening (and re-centring) it.
+                contain: 'inline-size',
+                pointerEvents: hovered ? 'auto' : 'none',
+              }}
+            >
+              {typeof extraControl === 'function' ? extraControl({ buttonSize, extraWidth }) : extraControl}
+            </motion.div>
+          </>
+        )}
       </motion.div>
     </div>
   )

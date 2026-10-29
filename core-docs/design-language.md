@@ -187,6 +187,45 @@ The type scale adapts proportionally at narrower two-column viewports to maintai
 
 Project links use a subtle underline (`text-decoration-color: rgba(238, 238, 238, 0.2)`) — present enough to signal interactivity, transparent enough to not create visual clutter across 11 links. The arrow `→` is a Unicode character, not an SVG or icon, keeping it typographically integrated. A `4px` gap separates text from arrow.
 
+#### Prose home (`/new`) — naming vs. linking
+
+The prose home deliberately departs from the project-link treatment above: one serif voice (Literata 300, `clamp(26px, 20px + 1.4vw, 40px)`, line-height 1.3, paragraphs `1em` apart), grey prose (`--text-grey`) with black names. Three signals, one job each:
+
+- **Black text** — a named thing in the story (Ben, companies, schools, platforms). Never by itself a link.
+- **Leading app-icon logo** — a place Ben belonged (Consensus, Mochi Health, UW, Middlebury). Decorative (`alt=""`; the name follows). When the name is a link, the logo sits *inside* the anchor so logo + name are one target with one glass highlight; a logo is never its own link.
+- **Underline** — the only "this goes somewhere" signal. `↗` additionally marks "leaves for another website" (SVG glyph; Phosphor's `ArrowUpRight` broke inline line wrapping). `mailto:` gets the underline without `↗`.
+
+So UW and Middlebury get black + logo with no underline (no destination), and GitHub/X get black + underline + `↗` with no logo (platforms, not places). Icons are sized in `em` (`0.975em`, ≈ line-height × 0.75) with asymmetric negative margins so they center on cap height without growing the line box; a logo stays glued only to the first word of a long name so it can still wrap on phones.
+
+#### Simple home (`/new/simple`) — prototype rules (2026-10-28)
+
+- **Measure drives size.** The intro is set in fixed line breaks (pauses only at line ends — no mid-line commas) and the type is sized so the longest line exactly fills the column (`clamp(min, 99cqi / longestLineEm, max)`), ≈50 characters a line. Inline icons are em-sized and follow. Below the floor the text re-composes into the next line set that fits (desktop → mid 3-line → phone); every copy option needs all three sets, or it gets forced breaks on small screens.
+- **Optical centring.** Ragged left-aligned text is centred by its widest rendered line (shrink-wrap), not by its container.
+- **Icon-only buttons are allowed here** because each is a recognised brand mark (LinkedIn, GitHub, X) or a single-purpose verb with a visible result (envelope = copy, confirmed by a check + "Email address copied"). Accessible names say what happens ("Copy email address …", "… (opens in new tab)").
+- **Glass over small glyphs.** Icons and ≤13px labels sit *above* the pill (z 11) so the 1px frost never softens them; prose links stay frosted-over. Entrance animations must end with `filter: none` — any leftover filter is a stacking context that traps that z-index.
+- **Inline pill centring.** An inline link's box is the font's content area, which sits above the cap-height centre; `--glass-shift-y` (0.0875em for Literata) re-centres the pill. Horizontal padding matches the resulting vertical inset (0.25em).
+- **The portrait is a theme toy:** click cycles the accent (prod parity); any theme change pops it (snap to .82, spring back, tilt follows the direction of the change); swaps are same-frame (all crops mounted).
+- **Settings rail (click-only).** One frosted glide pill travels between the trigger and every control and fades when the pointer leaves. The record is the rail's last control, sized from the button size, with its caption on its left (a music-note icon when idle, the track while playing — the note returns only once the credit has faded); the trigger shows a breathing accent dot while music plays. The rail fits the viewport by tightening divider air, then the intensity strip, then every control.
+- **Contact easter eggs** change the icon or pop a small physical object out of it (glass breaks, paper folds and flies, a terminal window, a business card) — never new page chrome. Immediate payoff (<0.6s); a second beat only if you linger (1.6s). Hover-only effects (plane, terminal, card, flock) are off for touch; tap just copies / navigates. Escape dismisses the pop-outs; the blimp launches only from a real hover, never keyboard focus. **One object in the air at a time** (one plane, one blimp); a run while a blimp is up waits for air traffic control and launches when the sky clears.
+- **Email is the one easter egg driven by its click**, because copying is its action: hover types a note to Ben under the button (mono, like the terminal); the click lands the note on a sheet (the paper's own text takes over in the same frame — no double-up), folds it into a dart with the message inside (flaps are the real paper turned about their hinges: printed side up until edge-on, blank back after), lifts it into the hand beside the check, and throws it — its tail wipes in "Email address copied". Touch, phones, reduced motion: check + note, no paper.
+- **Zero-day tooltips** are dry and specific, never punny or emoji: what Ben was plausibly doing instead ("Choosing between two greys", "Running around SF").
+- **Phones get designed line breaks**, not browser wrapping, and the type is sized so the longest line fills the column (Ben: "it should extend the full width"): ~31px at 320, ~40px at 393, ~49px at 470 (ceiling 56). Text, icons and the strip label share one 24px margin.
+- **Cursor glow melts into the pill** over links (one light, not two): slides to the pill centre, shrinks, fades; re-emerges on leave. It's a few 8-bit levels above the page, so it's a dithered canvas (per premultiplied channel — plain RGBA rounds the hue away at alpha 1–3), never a CSS gradient (bands into a disc with a rim). Mouse/pen only; no canvas on touch or reduced motion.
+- **Spacing on /new/simple is an 8-grid measured optically** — to baselines, glyph edges and paper edges where the shape is known (text baseline→icon box 48, pop-outs/notes/plane 8 from the button, strip label baseline→cells 16, cells→window 24). Icon pitch (24) and the settings trigger (32 from the top) are measured to their 24px glyph boxes; the drawn glyphs sit a few px inside.
+- **Repeat attempts escalate in tone, not in story** (the email notes): never imply messages that weren't sent; the copy only gets more excited.
+- **Paper reads by light, not outlines:** folds shade as they turn and cast contact shadows; a crease appears only as its fold lands.
+- **Nested rounded shapes are concentric:** outer radius = inner radius + the gap between them (the rail pill: ring 11px + 4px gap = 15px round a square control; a full capsule round the record and the strip, eased between as it glides).
+- **Carried objects move as one physical motion:** a spring-driven progress drives every property together (shape the path with easing per property, not staggered start times — staggering reads as separate beats); a little overshoot reads as momentum.
+- **The glass pill commits to leaving:** off every card it lets go at once (no pull toward the cursor) and fades; the fade is the grace for gliding to the next card.
+- **Pop-outs develop on intent:** a short dwell, one at a time; keyboard focus opens them, restored focus doesn't.
+- **Terminal line numbers are decorative** (opacity 0.3, ~2:1): like an editor gutter, they carry no content; the prompt and file name (`--term-dim`, 0.6 light / 0.52 dark) clear 4.5:1 in every theme.
+- **Text re-composes only when it must:** the line set is chosen by what fits at the minimum size, not by a breakpoint.
+- **Drop-shadows go on a wrapper that doesn't rotate**, so light stays overhead while the object turns.
+- **Pop-out windows follow the page's mode** (the terminal is a light window in light mode; in dark mode a dark window lifted a step *above* the page — lighter reads as nearer, darker as recessed) — never an inverted chip. On a near-black page the shadow can't separate it; a 1px light edge does.
+- **Escape closes one layer at a time** (a pop-out before the rail beneath it).
+- **The rail's glide pill always travels.** Gaps between controls belong to the rail: the pill holds on the last control until the pointer leaves the rail's span, so the next control is a glide, never a fade-and-jump.
+- **Cursor glow** (kept by Ben, 2026-10-28) breaks "glass doesn't exist at rest" — if it ships, record the exception in § The glass rules.
+
 ### What typography does NOT do
 
 - Responsive scaling is proportional, not arbitrary — the full scale is the default, with gentle reductions only in the narrower two-column tiers (900–1199px). Single-column and wide layouts use full size.
@@ -258,6 +297,7 @@ Radii follow a descending scale that maps to element role:
 | 32px | Image container, placeholder visuals | Content showcase — the largest, most prominent shape |
 | 16px | Glass hover surface (project cards) | Interactive surface — half of image radius, creating visual kinship |
 | 12px | Sidebar glass pill (36px) | Control-level hover surface — concentric with swatches/icons |
+| 15px / capsule | /new/simple rail glide pill (44px) | Concentric with selection rings (15) or with capsule controls (h/2) |
 | 8px | Mode buttons (40px), inline link glass | Large controls and small interactive surfaces — rounded rectangles |
 | 6px | Accent swatches (24px) | Small controls — rounded squares |
 | 5px | Sidebar trigger (16px) | Indicator — smallest rounded square, distinct from swatches by both size and proportion |
@@ -422,7 +462,7 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
 2. Slight scale-down to 0.96 with `ease-in` — a gentle "receding" impression
-3. A 150ms delay before clearing softens the exit when cursor leaves a card
+3. The fade starts at once (no pull toward the cursor); the card is released after max(fade, 150ms), so the fade itself is the grace for gliding to the next card
 
 **Cursor-as-light-source**:
 - Accent-tinted radial gradient tracks the cursor position within the pill

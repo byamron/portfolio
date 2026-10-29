@@ -2,10 +2,13 @@ import { useRef, useEffect, useState } from 'react'
 import { useRive } from '@rive-app/react-canvas'
 import { useTheme } from '@/contexts/ThemeContext'
 
-export default function SignatureAnimationInner() {
+/** startDelayMs: earliest time after mount the signature may start, so it can
+ *  follow a page entrance instead of racing it. Still waits to be in view. */
+export default function SignatureAnimationInner({ startDelayMs = 0 }: { startDelayMs?: number }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasTriggered, setHasTriggered] = useState(false)
   const { resolvedAppearance } = useTheme()
+  const mountedAt = useRef(performance.now())
 
   const { rive, RiveComponent } = useRive({
     src: '/signature.riv',
@@ -16,22 +19,29 @@ export default function SignatureAnimationInner() {
 
   useEffect(() => {
     if (!containerRef.current || hasTriggered) return
+    let timer: ReturnType<typeof setTimeout> | undefined
 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
         if (entry?.isIntersecting && rive) {
-          rive.play()
-          setHasTriggered(true)
           observer.disconnect()
+          const wait = Math.max(0, startDelayMs - (performance.now() - mountedAt.current))
+          timer = setTimeout(() => {
+            rive.play()
+            setHasTriggered(true)
+          }, wait)
         }
       },
       { threshold: 0.5 }
     )
 
     observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [rive, hasTriggered])
+    return () => {
+      observer.disconnect()
+      if (timer) clearTimeout(timer)
+    }
+  }, [rive, hasTriggered, startDelayMs])
 
   return (
     <div

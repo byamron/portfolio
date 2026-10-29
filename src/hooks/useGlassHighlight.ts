@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react'
+import { onWindowLeave } from './useWindowLeave'
 
 /**
  * Glass Highlight — spring-physics driven glass pill hover effect.
@@ -199,6 +200,7 @@ function setupGlassHighlight(
   let currentCard: HTMLElement | null = null
   let rafId: number | null = null
   let clearTimer: ReturnType<typeof setTimeout> | null = null
+  let leaving = false // off every card, fading; the card is kept until the fade ends
   let resizeTimer: ReturnType<typeof setTimeout> | null = null
 
   const springs = {
@@ -343,12 +345,25 @@ function setupGlassHighlight(
 
   // -- Positioning --
 
+  // Optional per-card vertical nudge (CSS custom property, any length incl.
+  // em). An inline link's box is the font's content area, which sits higher
+  // than its cap height; shifting the pill down re-centres it on the text.
+  // Read on hover/scroll only (not per frame), so fluid font sizes stay exact.
+  function getCardShiftY(card: HTMLElement): number {
+    const cs = getComputedStyle(card)
+    const raw = cs.getPropertyValue('--glass-shift-y').trim()
+    if (!raw) return 0
+    const n = parseFloat(raw) || 0
+    if (raw.endsWith('rem')) return n * parseFloat(getComputedStyle(document.documentElement).fontSize)
+    return raw.endsWith('em') ? n * parseFloat(cs.fontSize) : n
+  }
+
   function getCardPosition(card: HTMLElement) {
     const cardRect = card.getBoundingClientRect()
     if (!cachedContainerRect) cachedContainerRect = container.getBoundingClientRect()
     return {
       x: cardRect.left - cachedContainerRect.left + container.scrollLeft,
-      y: cardRect.top - cachedContainerRect.top + container.scrollTop,
+      y: cardRect.top - cachedContainerRect.top + container.scrollTop + getCardShiftY(card),
       w: cardRect.width,
       h: cardRect.height,
     }
@@ -418,7 +433,9 @@ function setupGlassHighlight(
 
   function computePullTargets(): void {
     if (!currentCard) return
-    if (prefersReducedMotion.matches) {
+    // Leaving (off every card): no pull toward the cursor — the pill relaxes
+    // to the card's own shape while it fades.
+    if (prefersReducedMotion.matches || leaving) {
       springs.x.target = state.baseX
       springs.y.target = state.baseY
       springs.w.target = state.baseW
@@ -732,30 +749,39 @@ function setupGlassHighlight(
       // Glass-break zones force immediate clear
       const breakEl = (e.target as HTMLElement).closest('[data-glass-break]')
       if (breakEl && container.contains(breakEl)) {
-        if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
-        releaseCardLean()
-        currentCard = null
-        fadeOut()
-        stopLoop()
-        removeScrollListeners()
+        clearNow()
         return
       }
 
-      // Cursor moved to a non-card area — start clear timer
-      if (currentCard && !clearTimer) {
+      // Off every card: let go at once — the pull relaxes and the fade starts
+      // now. The fade is the grace period: reach another card before it ends
+      // and the pill glides there and fades back in.
+      if (currentCard && !leaving) {
+        leaving = true
+        releaseCardLean()
+        cancelPendingFadeIn()
+        const d = prefersReducedMotion.matches ? 0 : cfg.fadeDuration
+        if (pill) { pill.style.transition = `opacity ${d}ms ease`; pill.style.opacity = '0' }
+        // Held for the configured grace (HoverContext's timing matches it),
+        // or the fade if that's longer — the fade itself starts now.
         clearTimer = setTimeout(() => {
           clearTimer = null
-          releaseCardLean()
+          leaving = false
           currentCard = null
-          fadeOut()
           stopLoop()
           removeScrollListeners()
-        }, cfg.clearDelay)
+        }, Math.max(d, cfg.clearDelay))
       }
       return
     }
 
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    if (leaving) {
+      // Back on a card within the fade: carry on from here.
+      leaving = false
+      fadeIn()
+      if (card === currentCard) engageCardLean(card)
+    }
     if (card === currentCard) return
 
     const prevCard = currentCard
@@ -818,9 +844,11 @@ function setupGlassHighlight(
     startLoop()
   }
 
-  function handleMouseLeave(e: MouseEvent): void {
-    if (container.contains(e.relatedTarget as Node)) return
+  /** Clear the pill now (no grace): off the container, a glass-break zone,
+   *  or the window gone. */
+  function clearNow(): void {
     if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    leaving = false
     releaseCardLean()
     currentCard = null
     fadeOut()
@@ -828,7 +856,24 @@ function setupGlassHighlight(
     removeScrollListeners()
   }
 
+  function handleMouseLeave(e: MouseEvent): void {
+    if (container.contains(e.relatedTarget as Node)) return
+    clearNow()
+  }
+
+  // Switching apps or macOS Spaces never delivers a mouseleave, so the pill
+  // would stay lit over a card nobody is hovering. Clear it when the window
+  // loses focus or is hidden; the first mouse move back restores it (no
+  // mouseover follows — the browser thinks the pointer never left).
+  let leftWindow = false
+  function handleWindowLeave(): void {
+    if (!currentCard) return
+    clearNow()
+    leftWindow = true
+  }
+
   function handleMouseMove(e: MouseEvent): void {
+    if (leftWindow) { leftWindow = false; handleMouseOver(e) }
     state.mouseX = e.clientX
     state.mouseY = e.clientY
     if (!mouseActive) {
@@ -845,6 +890,10 @@ function setupGlassHighlight(
     const cfg = configRef.current
     const card = (e.target as HTMLElement).closest<HTMLElement>(cfg.cardSelector)
     if (!card || card.closest('[data-glass-highlight-active]') !== container) return
+    // Focus landing within the leave fade carries on from here (as a mouse
+    // reaching another card does).
+    if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    if (leaving) { leaving = false; fadeIn() }
 
     const prevCard = currentCard
     currentCard = card
@@ -939,6 +988,7 @@ function setupGlassHighlight(
   container.addEventListener('focusin', handleFocusIn, true)
   container.addEventListener('focusout', handleFocusOut, true)
   document.addEventListener('theme-changed', skinPillBase)
+  const offWindowLeave = onWindowLeave(handleWindowLeave)
 
   // -- Navigation fade-out --
 
@@ -968,6 +1018,7 @@ function setupGlassHighlight(
     container.removeEventListener('focusin', handleFocusIn, true)
     container.removeEventListener('focusout', handleFocusOut, true)
     document.removeEventListener('theme-changed', skinPillBase)
+    offWindowLeave()
     pill?.remove()
     pill = null
     container.removeAttribute('data-glass-highlight-active')

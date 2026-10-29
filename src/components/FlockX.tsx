@@ -59,6 +59,14 @@ interface FlockXProps {
   onLinkEnter?: () => void
   onLinkLeave?: () => void
   glassApi: GlassHighlightHandle
+  className?: string
+  /** For icon-only links. */
+  ariaLabel?: string
+  /** Where the cracks radiate from: the cursor's height on the right edge
+   *  (text links, default) or the middle of the pill (square icon buttons). */
+  epicenter?: 'cursor' | 'center'
+  /** Must match the glass pill's radius so cracks and shards fit its outline. */
+  glassRadius?: number
 }
 
 /**
@@ -67,7 +75,7 @@ interface FlockXProps {
  * document.body so they sit above all page chrome. Skips on coarse pointers
  * and `prefers-reduced-motion`.
  */
-export function FlockX({ href, children, style, onLinkEnter, onLinkLeave, glassApi }: FlockXProps) {
+export function FlockX({ href, children, style, onLinkEnter, onLinkLeave, glassApi, className, ariaLabel, epicenter: epicenterMode = 'cursor', glassRadius }: FlockXProps) {
   const xLinkRef = useRef<HTMLAnchorElement>(null)
   const birdLayerRef = useRef<HTMLDivElement>(null)
   const shatterLayerRef = useRef<SVGSVGElement>(null)
@@ -173,7 +181,9 @@ export function FlockX({ href, children, style, onLinkEnter, onLinkLeave, glassA
       const xRect = liveXEl.getBoundingClientRect()
       if (xRect.width < 4) return
 
-      const epicenter = resolveEpicenter(ORIGIN_MODE, xRect, cursorRef.current)
+      const epicenter = epicenterMode === 'center'
+        ? { x: xRect.left + xRect.width / 2, y: xRect.top + xRect.height / 2 }
+        : resolveEpicenter(ORIGIN_MODE, xRect, cursorRef.current)
       const colors = readShatterColors()
 
       glassApi.shakeFor(FRACTURE_CRACK_DRAW_MS)
@@ -183,6 +193,7 @@ export function FlockX({ href, children, style, onLinkEnter, onLinkLeave, glassA
         colors,
         {
           previewMs: FRACTURE_PREVIEW_MS,
+          borderRadius: glassRadius,
           onBreak: () => {
             pendingFractureCancelRef.current = null
             glassApi.setPillVisible(false)
@@ -197,7 +208,7 @@ export function FlockX({ href, children, style, onLinkEnter, onLinkLeave, glassA
     }, FRACTURE_START_DELAY_MS)
 
     pendingFractureCancelRef.current = () => clearTimeout(startTimerId)
-  }, [spawnWave, clearStragglerTimers, glassApi])
+  }, [spawnWave, clearStragglerTimers, glassApi, epicenterMode, glassRadius])
 
   const endHover = useCallback(() => {
     isHoveringRef.current = false
@@ -251,6 +262,8 @@ export function FlockX({ href, children, style, onLinkEnter, onLinkLeave, glassA
         target="_blank"
         rel="noopener noreferrer"
         data-contact-card
+        className={className}
+        aria-label={ariaLabel}
         style={style}
         onMouseEnter={onMouseEnter}
         onMouseMove={onMouseMove}

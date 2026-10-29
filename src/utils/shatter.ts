@@ -30,6 +30,8 @@ export interface ShatterColors {
 export interface FractureOptions {
   previewMs: number
   onBreak: () => void
+  /** Pill corner radius; defaults to the prose X link's 8px. */
+  borderRadius?: number
 }
 
 export interface ShatterAPI {
@@ -111,6 +113,41 @@ function polylineLength(points: { x: number; y: number }[]): number {
   return total
 }
 
+// Arc-length walk around a W×H rounded rect, clockwise from the top-left
+// corner's end. Used so crack ends and shard edges sit on the pill's real
+// outline (incl. its corners) rather than on the sharp bounding box.
+function roundedRectPerimeter(W: number, H: number, radius: number) {
+  const r = Math.max(0, Math.min(radius, W / 2, H / 2))
+  const sw = W - 2 * r
+  const sh = H - 2 * r
+  const arc = (Math.PI / 2) * r
+  const total = 2 * (sw + sh) + 4 * arc
+  // [length, point(t in 0..1)] per piece: top, TR arc, right, BR arc, bottom, BL arc, left, TL arc
+  const corner = (cx: number, cy: number, a0: number) => (t: number) => {
+    const a = a0 + t * (Math.PI / 2)
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
+  }
+  const pieces: [number, (t: number) => { x: number; y: number }][] = [
+    [sw, t => ({ x: r + t * sw, y: 0 })],
+    [arc, corner(W - r, r, -Math.PI / 2)],
+    [sh, t => ({ x: W, y: r + t * sh })],
+    [arc, corner(W - r, H - r, 0)],
+    [sw, t => ({ x: W - r - t * sw, y: H })],
+    [arc, corner(r, H - r, Math.PI / 2)],
+    [sh, t => ({ x: 0, y: H - r - t * sh })],
+    [arc, corner(r, r, Math.PI)],
+  ]
+  function at(d: number) {
+    d = ((d % total) + total) % total
+    for (const [len, fn] of pieces) {
+      if (d <= len && len > 0) return fn(d / len)
+      d -= len
+    }
+    return { x: r, y: 0 }
+  }
+  return { total, at }
+}
+
 export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
   const shards: Shard[] = []
   let rafId: number | null = null
@@ -134,6 +171,7 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
   function generateGeometry(
     pillRect: { left: number; top: number; width: number; height: number },
     epicenter: { x: number; y: number },
+    radius: number,
   ) {
     const W = pillRect.width
     const H = pillRect.height
@@ -141,20 +179,27 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
     const eyLocal = epicenter.y - pillRect.top
     const ep = { x: exLocal, y: eyLocal }
 
+    const outline = roundedRectPerimeter(W, H, radius)
     const perimPointCount = randInt(SHATTER_PERIM_POINTS_MIN, SHATTER_PERIM_POINTS_MAX)
     const perim: { x: number; y: number }[] = []
-    const perimeter = 2 * (W + H)
-    const stride = perimeter / perimPointCount
+    // Outline points between consecutive crack ends (corners, mostly), so
+    // the shards tile the whole pill instead of cutting its corners off.
+    const between: { x: number; y: number }[][] = []
+    const stride = outline.total / perimPointCount
+    const offset = rand(0, outline.total)
+    const dists: number[] = []
     for (let i = 0; i < perimPointCount; i++) {
-      let d = i * stride + rand(-stride * 0.15, stride * 0.15)
-      d = ((d % perimeter) + perimeter) % perimeter
-      let x: number
-      let y: number
-      if (d < W) { x = d; y = 0 }
-      else if (d < W + H) { x = W; y = d - W }
-      else if (d < 2 * W + H) { x = W - (d - W - H); y = H }
-      else { x = 0; y = H - (d - 2 * W - H) }
-      perim.push({ x, y })
+      const d = offset + i * stride + rand(-stride * 0.15, stride * 0.15)
+      dists.push(d)
+      perim.push(outline.at(d))
+    }
+    for (let i = 0; i < perimPointCount; i++) {
+      const from = dists[i]!
+      const to = i + 1 < perimPointCount ? dists[i + 1]! : dists[0]! + outline.total
+      const pts: { x: number; y: number }[] = []
+      const steps = Math.max(1, Math.ceil((to - from) / 3))
+      for (let k = 1; k < steps; k++) pts.push(outline.at(from + ((to - from) * k) / steps))
+      between.push(pts)
     }
 
     const spokes = perim.map(p => {
@@ -164,7 +209,7 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
       return buildJaggedSpoke(ep, p, segments, maxJitter)
     })
 
-    return { perim, exLocal, eyLocal, spokes }
+    return { perim, between, exLocal, eyLocal, spokes }
   }
 
   function spawnShards(
@@ -172,12 +217,13 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
     colors: ShatterColors,
     geometry: {
       perim: { x: number; y: number }[]
+      between: { x: number; y: number }[][]
       exLocal: number
       eyLocal: number
       spokes: { x: number; y: number }[][]
     },
   ): void {
-    const { perim, exLocal, eyLocal, spokes } = geometry
+    const { perim, between, exLocal, eyLocal, spokes } = geometry
     const fragment = document.createDocumentFragment()
     for (let i = 0; i < perim.length; i++) {
       const j = (i + 1) % perim.length
@@ -186,6 +232,7 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
 
       const polyPoints: { x: number; y: number }[] = [
         ...spokeA,
+        ...between[i]!,
         perim[j]!,
         ...spokeB.slice(1, -1).reverse(),
       ]
@@ -260,7 +307,8 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
       for (const el of activeJob.crackEls) el.remove()
     }
 
-    const geometry = generateGeometry(pillRect, epicenter)
+    const radius = opts.borderRadius ?? SHATTER_PILL_BORDER_RADIUS
+    const geometry = generateGeometry(pillRect, epicenter, radius)
 
     const clipId = `flock-clip-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`
     const defsEl = document.createElementNS(SVG_NS, 'defs')
@@ -271,8 +319,8 @@ export function setupShatter(svgLayer: SVGSVGElement): ShatterAPI {
     clipRect.setAttribute('y', pillRect.top.toFixed(1))
     clipRect.setAttribute('width', pillRect.width.toFixed(1))
     clipRect.setAttribute('height', pillRect.height.toFixed(1))
-    clipRect.setAttribute('rx', String(SHATTER_PILL_BORDER_RADIUS))
-    clipRect.setAttribute('ry', String(SHATTER_PILL_BORDER_RADIUS))
+    clipRect.setAttribute('rx', String(radius))
+    clipRect.setAttribute('ry', String(radius))
     clipPathEl.appendChild(clipRect)
     defsEl.appendChild(clipPathEl)
     svgLayer.appendChild(defsEl)
