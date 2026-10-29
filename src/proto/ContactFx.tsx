@@ -905,7 +905,7 @@ const FOLD_STEPS_S = 6.1
 // a beat, let go.
 const WIND_UP_S = 0.3
 const WIND_UP_HOLD_S = 0.1
-const WIND_UP_PX = 9
+const WIND_UP_PX = 4 // mostly the nose tipping up; the tail stays clear of the button
 const WIND_UP_DEG = 7
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 
@@ -1083,19 +1083,20 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     at$(2.45, () => animate(edgeR, 1, tw(0.6)))
     // 4 · Fold in half: the right half turns over onto the left.
     at$(3.1, () => animate(lift, -1, tw(0.7)))
-    // 5 · Picked up: turned onto its side where it lies (a little lifted off
-    //     the table), then carried to the hand — drawn back to a throwable
-    //     size early, across first (below the row, so it never passes over
-    //     the button), then up into place beside it. Then each wing down.
+    // 5 · Picked up and carried to the hand in one compound motion: it turns
+    //     onto its side and recedes to a throwable size while it moves —
+    //     across first, then up into place beside the button (the rise starts
+    //     later than the slide, so the path curves and never crosses the
+    //     button). Each property has its own eased stretch of one timeline;
+    //     none stops mid-way.
     const dx = launch.x - at.x, dy = launch.y - at.y
+    const CARRY = 1.3
     at$(3.8, () => {
       setSide(true)
-      stage.start({ rotate: 90, scale: 0.9, y: -6, transition: tw(0.5) })
-    })
-    at$(4.3, () => {
+      const part = (from: number, to: number) => ({ delay: from * CARRY * pace, duration: (to - from) * CARRY * pace, ease: SMOOTH })
       stage.start({
-        x: [0, dx, dx], y: [-6, dy * 0.35, dy], scale: [0.9, (kPlane / PAPER_K) * 1.06, kPlane / PAPER_K],
-        transition: { ...tw(0.8), times: [0, 0.5, 1] },
+        rotate: 90, scale: kPlane / PAPER_K, x: dx, y: dy,
+        transition: { rotate: part(0.05, 0.6), scale: part(0, 0.5), x: part(0.05, 0.75), y: part(0.3, 1) },
       })
     })
     at$(5.1, () => animate(psi, Math.PI, tw(0.5)))
