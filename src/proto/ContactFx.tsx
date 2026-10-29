@@ -1471,22 +1471,32 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   }
 
   const onClick = async () => {
+    // A press settles it: no note starts typing afterwards from the hover
+    // dwell (it would replace the toast this press shows).
+    if (dwell.current) clearTimeout(dwell.current)
     // Couldn't copy: fall back to what an envelope usually means.
     if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
     // Announced at once, every time (the visible note may wait for a plane).
     setStatus('')
     requestAnimationFrame(() => setStatus('Email address copied'))
-    // A note already folding / in the air: copied again, but the note still
-    // appears only as that plane flies off — nothing visible changes.
-    if (live.current.throwing) return
+    // Every press is confirmed on the spot: a repeat press re-pops the check.
+    if (live.current.copied) popCheck()
+    // A note already folding / in the air: copied again. The toast stays the
+    // plane's reveal — not shown early; kept up if it's already out — and
+    // "one at a time" steps aside (this press worked).
+    if (live.current.throwing) {
+      setHeld(null)
+      if (revealed.current) { clearTimers(); later(COPIED_MS, () => setCopied(false)) }
+      return
+    }
     clearTimers()
-    // Off for a frame on a repeat click, so the check replays and the status
-    // region re-announces (at once — the visual note may wait for the plane).
-    setCopied(false)
-    requestAnimationFrame(() => setCopied(true))
     const r = btn.current?.getBoundingClientRect()
-    const fold = canFold && !reducedMotion && !live.current.throwing && r && !window.matchMedia(PHONE_QUERY).matches
+    // The plane carries the note you can see: no note on screen (a press
+    // quicker than the hover dwell, or the last toast still up) → just the
+    // check and the toast.
+    const fold = canFold && !reducedMotion && live.current.letterAt && r && !window.matchMedia(PHONE_QUERY).matches
     if (fold) {
+      setCopied(true)
       const text = live.current.letterAt ?? { x: r.left, y: r.bottom + LETTER_GAP }
       const lines = NOTES[level]!.split('\n')
       // The note now belongs to the throw (and the next will be keener);
@@ -1518,10 +1528,16 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       })
       return
     }
+    setCopied(true)
     placeNote()
     revealed.current = true
     revealX.set(1e6)
     later(COPIED_MS, () => setCopied(false))
+  }
+  const popCheck = () => {
+    if (reducedMotion) return
+    shake.set({ scale: 0.82 })
+    shake.start({ scale: 1, transition: { type: 'spring', stiffness: 520, damping: 13, mass: 0.6 } })
   }
 
   const kPlane = emailFx.planeLength / 44
