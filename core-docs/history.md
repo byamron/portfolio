@@ -26,6 +26,12 @@ Branch `simplified-home-prototype` (commits b1fc993 → aa56ac0). After Ben's la
   - Quiet terminal text is 4.5:1 in light mode.
   - The terminal result slide respects reduced motion.
   - Intro lines keep a space before each `<br>`, so find, copy and reader view don't read "designercurrently".
+- **Staff re-review of the ship fixes** (4 lenses on the delta, no blockers):
+  - The theme portrait's pop also starts from rest. Repeat theme changes had dipped to 0.755 and overshot to 1.07, against the designed 0.82 → 1.05.
+  - Quiet terminal text sits level with keywords (light 0.6, dark 0.52) and is at least 4.7:1 in every accent and intensity. Dark "table" at max intensity had been 4.49.
+  - A failed copy (the mailto fallback) still counts its note.
+  - "Ben Yamron" on the card keeps its space for find and copy.
+  - Push-further found nothing to add.
 - **Security:** clean. The production bundle contains no dev panels (dialkit/agentation: 0 hits after `vite build`).
 - **Left for Ben** (plan.md § staff review round 3):
   - Two accessibility design calls: hover pop-outs aren't hoverable (1.4.13), and fit-to-column text reaches 158–175% at 200% zoom (1.4.4).
