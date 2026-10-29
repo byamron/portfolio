@@ -39,7 +39,8 @@ function renderSeg(seg: Seg, i: number, measuring: boolean) {
 const STRIP_LABEL_INSET = 40 // ContributionStrip's label paddingLeft
 // Spacing is an 8-grid measured to what you see (baselines, glyph edges),
 // not to boxes: 24px between glyphs, 48px from text to icons.
-const ICON_INSET = 10 // (44px button − 24px glyph) / 2
+const ICON_BOX = 44, ICON_GLYPH = 24
+const ICON_INSET = (ICON_BOX - ICON_GLYPH) / 2
 const SPACE_TEXT_TO_ICONS = 48
 const PHONE_MAX_TEXT = 38
 const subscribePhone = (cb: () => void) => {
@@ -118,9 +119,9 @@ export function SimpleHome() {
     chosen = sets.length - 1
   }
   const lines = sets[chosen]!
-  const phoneLines = chosen > 0 && chosen === sets.length - 1 && PHONE_BREAKS[layout.copy] ? lines : undefined
+  const onPhoneBreaks = chosen > 0 && chosen === sets.length - 1 && !!PHONE_BREAKS[layout.copy]
   // Phones keep the preset's relative size (S < M < L), capped for the measure.
-  const maxText = phoneLines ? Math.min(PHONE_MAX_TEXT, Math.round((presetSize ?? 48) * 0.8)) : layout.maxText
+  const maxText = onPhoneBreaks ? Math.min(PHONE_MAX_TEXT, Math.round((presetSize ?? 48) * 0.8)) : layout.maxText
   const longestEm = setEms?.[chosen] ?? null
   const fit = layout.sizeMode === 'fit' && longestEm !== null
   const fontSize = fit

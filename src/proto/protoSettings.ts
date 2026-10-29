@@ -44,8 +44,8 @@ export interface ProtoSettings {
   }
   /** /new/simple experiment: the glass pill's cursor light, page-wide. */
   cursorGlow: { on: boolean; intensity: number; radius: number; tint: number }
-  /** Email note → paper plane. foldSeconds: the fold, first crease to
-   *  release; planeLength: the thrown plane's length in px. */
+  /** Email note → paper plane. foldSeconds: the fold's timeline (sheet in
+   *  place → wind-up); planeLength: the thrown plane's length in px. */
   emailFx: { typeCps: number; foldSeconds: number; planeLength: number; throwSpeed: number }
 }
 
@@ -100,6 +100,8 @@ export const SIDEBAR_GUTTER = 56
 // Shared across the /new pages.
 export const EASE_OUT = [0.22, 1, 0.36, 1] as const
 export const PHONE_QUERY = '(max-width: 640px)'
+/** The squash-and-spring pop (portrait on a theme change, the email check on a repeat press). */
+export const SQUASH_POP = { type: 'spring', stiffness: 520, damping: 13, mass: 0.6 } as const
 /** Everything the page's glass pill lands on (SimpleHome's glass container);
  *  the cursor glow steps aside over these and the sidebar's glide targets. */
 export const PAGE_GLASS_CARDS = '[data-proto-link], [data-social], [data-contact-card], [data-link-card]'

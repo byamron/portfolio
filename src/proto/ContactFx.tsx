@@ -4,7 +4,8 @@ import { animate, AnimatePresence, cancelFrame, frame, motion, useAnimationContr
 import { Check } from '@phosphor-icons/react'
 import { PaperTexture } from '@paper-design/shaders-react'
 import { protoBySlug } from './data'
-import { EASE_OUT, PHONE_QUERY, useProtoSettings } from './protoSettings'
+import { EASE_OUT, PHONE_QUERY, SQUASH_POP, useProtoSettings } from './protoSettings'
+import { useWindowLeave } from '@/hooks/useWindowLeave'
 
 // Contact-row easter eggs for /new/simple, in the X flock's spirit: an
 // immediate payoff, plus a little more if you stay. Each one changes the
@@ -39,24 +40,6 @@ const keyboardFocus = (e: React.FocusEvent) =>
 
 const finePointer = () => typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches
 
-/** Leaving the window (another app or macOS Space) never sends a
- *  pointerleave: run `onLeave` when the window blurs or is hidden. */
-function useWindowLeave(onLeave: () => void, active: boolean) {
-  const cb = useRef(onLeave)
-  cb.current = onLeave
-  useEffect(() => {
-    if (!active) return
-    const run = () => cb.current()
-    const onVis = () => { if (document.hidden) run() }
-    window.addEventListener('blur', run)
-    document.addEventListener('visibilitychange', onVis)
-    return () => {
-      window.removeEventListener('blur', run)
-      document.removeEventListener('visibilitychange', onVis)
-    }
-  }, [active])
-}
-
 /** Hover (after a short dwell) or keyboard focus → stage 1, stage 2 after
  *  LINGER_MS; leave, blur, Escape or another pop-out opening → 0 (WCAG
  *  1.4.13: dismissible). `viaPointer` tells callers whether a real hover
@@ -90,8 +73,7 @@ function useHoverStage() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return
       e.preventDefault()
-      if (timer.current) clearTimeout(timer.current)
-      setStage(0)
+      close()
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
@@ -290,8 +272,8 @@ function BlimpArt({ greeting }: { greeting: string }) {
         fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75"
       />
       <motion.text
-        x="65" textAnchor="middle" fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontWeight="500"
-        fontSize={bannerSize} fill="#2b2620"
+        x="65" textAnchor="middle" fontFamily={LETTER_FONT} fontWeight="500"
+        fontSize={bannerSize} fill={INK}
         // Rides the cloth, not across it: the banner's centre moves ~0.7 units
         // between its two ripple shapes (cubic midpoints of BANNER_A/B).
         initial={{ y: bannerY }} animate={{ y: [bannerY, bannerY + 0.65, bannerY] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
@@ -471,16 +453,23 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
   const tiltY = useSpring(0, { stiffness: 90, damping: 20 })
   useEffect(() => {
     if (!stage || reducedMotion) { tiltX.set(0); tiltY.set(0); return }
-    const onMove = (e: PointerEvent) => {
+    // One layout read per frame, however fast the pointer reports.
+    let raf = 0, px = 0, py = 0
+    const apply = () => {
+      raf = 0
       const r = tiltEl.current?.getBoundingClientRect()
       if (!r) return
-      const nx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / 180))
-      const ny = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / 180))
+      const nx = Math.max(-1, Math.min(1, (px - (r.left + r.width / 2)) / 180))
+      const ny = Math.max(-1, Math.min(1, (py - (r.top + r.height / 2)) / 180))
       tiltY.set(nx * CARD_TILT)
       tiltX.set(-ny * CARD_TILT)
     }
+    const onMove = (e: PointerEvent) => {
+      px = e.clientX; py = e.clientY
+      if (!raf) raf = requestAnimationFrame(apply)
+    }
     window.addEventListener('pointermove', onMove, { passive: true })
-    return () => window.removeEventListener('pointermove', onMove)
+    return () => { window.removeEventListener('pointermove', onMove); cancelAnimationFrame(raf) }
   }, [stage > 0, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!stage || reducedMotion) { setTurns(0); return }
@@ -626,19 +615,19 @@ const LETTER_GAP = 8 + PAD_TOP
  *  DOM note's CSS line boxes (half-leading around the font's ascent+descent),
  *  so the text doesn't shift when the paper takes it over. */
 let letterMetrics: { asc: number; desc: number } | null = null
+let measureCtx: CanvasRenderingContext2D | null = null
 function letterBaseline(i: number) {
-  if (!letterMetrics) {
+  let metrics = letterMetrics
+  if (!metrics) {
     const font = `400 ${LETTER_PX}px ${LETTER_FONT}`
-    const ctx = document.createElement('canvas').getContext('2d')!
-    ctx.font = font
-    const m = ctx.measureText('Hg')
-    const metrics = { asc: m.fontBoundingBoxAscent || LETTER_PX * 1.025, desc: m.fontBoundingBoxDescent || LETTER_PX * 0.275 }
+    measureCtx ??= document.createElement('canvas').getContext('2d')!
+    measureCtx.font = font
+    const m = measureCtx.measureText('Hg')
+    metrics = { asc: m.fontBoundingBoxAscent || LETTER_PX * 1.025, desc: m.fontBoundingBoxDescent || LETTER_PX * 0.275 }
     // Only cache once the real face is in (the fallback's metrics differ).
     if (document.fonts?.check(font)) letterMetrics = metrics
-    return PAD_TOP + i * LETTER_LH + (LETTER_LH - metrics.asc - metrics.desc) / 2 + metrics.asc
   }
-  const { asc, desc } = letterMetrics
-  return PAD_TOP + i * LETTER_LH + (LETTER_LH - asc - desc) / 2 + asc
+  return PAD_TOP + i * LETTER_LH + (LETTER_LH - metrics.asc - metrics.desc) / 2 + metrics.asc
 }
 
 /** Types a note out, a keystroke at a time with a little human unevenness
@@ -825,6 +814,8 @@ const HINGE_3: P2 = [-17, 19]
 const EDGE_FLAP: P2[] = [NOSE, [-17, -5], [-17, 19]]
 const BASE_3: P2[] = [[0, -22], [-17, 19], [-17, 22], [0, 22]]
 const H3_AT_Y5: P2 = [-7.05, -5]
+/** A half's base (what's left lying flat) after its corner (c) / edge (e) folds. */
+const baseOf = (c: number, e: number) => (e > 0 ? BASE_3 : c > 0 ? BASE_2 : SHEET)
 const CORNER_STATIC: P2[] = [NOSE, [0, -5], H3_AT_Y5] // folded corner, crease side of hinge 3
 const CORNER_MOVE: P2[] = [NOSE, H3_AT_Y5, [-17, -5]] // folded corner, riding the edge flap
 // Step 5 · the dart's wing fold, from the nose to (-8.75, 22) — the bottom
@@ -836,15 +827,15 @@ const WING: P2[] = [[0, -22], [-17, 19], [-17, 22], [-8.75, 22]]
 // its inner face toward us): split where (0,2.04)–(-17,19) crosses the hinge.
 const WING_FLAP: P2[] = [[0, -22], [-5.96, 7.96], [-17, 19]]
 
-/** Orthographic view of a wing point turned ψ about the dart hinge (0 = flat,
- *  in the sheet's plane; 180 = folded down onto the keel), with the whole plane
- *  rolled `roll` about its length so an open wing reads. side: +1 near, −1 far. */
 // The hinge's unit direction (constant).
 const HINGE_U: P2 = (() => {
   const ux = HINGE_T[0] - NOSE[0], uy = HINGE_T[1] - NOSE[1]
   const ul = Math.hypot(ux, uy)
   return [ux / ul, uy / ul]
 })()
+/** Orthographic view of a wing point turned ψ about the dart hinge (0 = flat,
+ *  in the sheet's plane; 180 = folded down onto the keel), with the whole plane
+ *  rolled `roll` about its length so an open wing reads. side: +1 near, −1 far. */
 function wingPoint(p: P2, psi: number, roll: number, side: 1 | -1): P2 {
   const u = HINGE_U
   const dx = p[0] - NOSE[0], dy = p[1] - NOSE[1]
@@ -887,19 +878,18 @@ const FLY_BOUNDS = (() => {
 })()
 
 const PAPER_SHADOW = 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))'
-// Hairline paper edges, the same on screen at every scale and fold.
 
 type Pt = { x: number; y: number }
 // After the wind-up the hand only follows through briefly before letting go.
 const RELEASE_S = 0.1
 // Launch speed, trim speed (px/s), and the nose-up angle it leaves the hand at.
-interface Throw { v0: number; vTrim: number; gamma0?: number }
+interface Throw { v0: number; vTrim: number; gamma0: number }
 
 const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
 // The sheet materialises under the note (it resolves out of a soft blur as
 // it fades in), and only then takes the words over — never mid-fade.
 const PAPER_IN_S = 0.6
-// The fold's own timeline, in seconds at pace 1 (first crease → wings open).
+// The fold's timeline at pace 1, in seconds: sheet in place → wind-up starts.
 const FOLD_STEPS_S = 6.1
 // The throw, at its own (unscaled) tempo: draw back and tip the nose up,
 // a beat, let go.
@@ -914,6 +904,7 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 // near wing darkens as it turns edge-on.
 const farShade = 0.1
 const nearShade = (psi: number) => 0.04 + 0.12 * Math.abs(Math.cos(psi))
+// Hairline paper edges (side view), the same on screen at every scale.
 const sideStroke = { stroke: EDGE, strokeWidth: 0.5, strokeLinejoin: 'round' as const, vectorEffect: 'non-scaling-stroke' as const }
 // Paper has no lines: a folded edge reads only by the flap's own shading
 // and the contact shadow it casts; a pressed-and-reopened crease is a tonal
@@ -945,21 +936,25 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
   const [side, setSide] = useState(false)
   const [inked, setInked] = useState(false)
   const els = useRef<Record<string, SVGElement | null>>({})
-  const ref = (k: string) => (el: SVGElement | null) => { els.current[k] = el }
+  // One stable callback per key, so re-renders don't detach and re-attach them.
+  const refs = useRef<Record<string, (el: SVGElement | null) => void>>({})
+  const ref = (k: string) => (refs.current[k] ??= (el: SVGElement | null) => { els.current[k] = el })
 
   // A layout effect: when the fold turns to the side view, the new faces get
   // their paths before that frame paints (an effect would leave one frame
   // with no paper).
   useLayoutEffect(() => {
     const FRONT = `url(#${uid}-front)`, BACK = `url(#${uid}-back)`
-    const hide = (k: string) => { const el = els.current[k]; if (el) el.style.display = 'none' }
-    const put = (k: string, d: string, m: M6, opacity?: number) => {
+    // Writes only what changed: most faces sit still while one flap moves.
+    const hide = (k: string) => { const el = els.current[k]; if (el && el.style.display !== 'none') el.style.display = 'none' }
+    const put = (k: string, d: string, m: M6 = IDENTITY, opacity?: number) => {
       const el = els.current[k]
       if (!el) return
-      el.style.display = ''
-      el.setAttribute('d', d)
-      el.setAttribute('transform', matrixOf(m))
-      if (opacity !== undefined) el.style.opacity = String(opacity)
+      if (el.style.display) el.style.display = ''
+      if (el.getAttribute('d') !== d) el.setAttribute('d', d)
+      const tf = matrixOf(m)
+      if (el.getAttribute('transform') !== tf) el.setAttribute('transform', tf)
+      if (opacity !== undefined && el.style.opacity !== String(opacity)) el.style.opacity = String(opacity)
     }
     /** A face: paper fill, its shade (turning from the light), and — for a
      *  lifted flap — the shadow it casts, offset downward by its height. */
@@ -990,7 +985,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
       // across the centre crease (no seam between them); once the other half
       // lifts, that sliver would show its printing, so it doesn't.
       const reach = flat ? SEAM : 0
-      const base = (e > 0 ? BASE_3 : c > 0 ? BASE_2 : SHEET).map(q => (q[0] === 0 ? [reach, q[1]] as P2 : q))
+      const base = baseOf(c, e).map(q => (q[0] === 0 ? [reach, q[1]] as P2 : q))
       face(p + 'base', P(base), IDENTITY, FRONT, mix(0))
       if (e === 0) {
         const th = Math.PI * c
@@ -1026,18 +1021,11 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         // Reaching a hair past the crease, over the left half's seam allowance.
         // (Its outline is whatever the right half is at this step — the whole
         // half on the first crease, the folded dart on the fold in half.)
-        const rShape = edgeR.get() > 0 ? BASE_3 : cornerR.get() > 0 ? BASE_2 : SHEET
+        const rShape = baseOf(cornerR.get(), edgeR.get())
         face('Rback', !whole && s < 0 ? rShape.map(q => (q[0] === 0 ? [-SEAM, q[1]] as P2 : mirrorP(q))) : null, IDENTITY, BACK, shadeOf(tilt))
       } else {
         const f = sideFaces(psi.get(), roll.get())
-        const setD = (k: string, d: string | null, opacity = 1) => {
-          const el = els.current[k]
-          if (!el) return
-          if (d === null) { el.style.display = 'none'; return }
-          el.style.display = ''
-          el.setAttribute('d', d)
-          el.style.opacity = String(opacity)
-        }
+        const setD = (k: string, d: string | null, opacity = 1) => (d === null ? hide(k) : put(k, d, IDENTITY, opacity))
         const near = nearShade(psi.get())
         setD('far', f.far); setD('farShade', f.far, farShade)
         setD('keel', f.keel)
@@ -1103,7 +1091,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
       animate(0, 1, {
         type: 'spring', visualDuration: Math.max(0.7, CARRY * pace), bounce: 0.15,
         onUpdate: p => {
-          const t = Math.min(1, Math.max(0, p)), over = p - t
+          const t = clamp01(p), over = p - t
           stage.set({
             rotate: 90 * p,
             scale: k0 + (k1 - k0) * shrink(t),
@@ -1221,7 +1209,7 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
     const kL = G / (V_TRIM * V_TRIM), kD = kL / LD
     const tailLen = FLY_BOUNDS.tail * scale
     let x = from.x, y = from.y
-    let v = launch.v0, gamma = launch.gamma0 ?? 0, gdot = 0 // released nose-up, as wound up
+    let v = launch.v0, gamma = launch.gamma0, gdot = 0 // released nose-up, as wound up
     let dir = 1, bank = 0, turning = 0 // bank: 0 → π over a turn
     const seed = Math.random() * 100
     const gustAmp = r(0.1, 0.3), gustRate = r(0.7, 1.4)
@@ -1307,7 +1295,7 @@ function LetterPlane({ text, lines, launch, kPlane, pace, speed, onPaperIn, onLa
   text: Pt; lines: string[]; launch: Pt; kPlane: number; pace: number; speed: number
   onPaperIn: () => void; onLaunch: () => void; onTail: (x: number) => void; onDone: () => void
 }) {
-  // Released level from the fold's pose; thrown well above trim speed so it
+  // Released nose-up from the wind-up, thrown well above trim speed so it
   // shoots out, then climbs gently on its own lift.
   const toss = useMemo<Throw>(() => {
     const vTrim = (130 + Math.random() * 35) * speed
@@ -1321,7 +1309,7 @@ function LetterPlane({ text, lines, launch, kPlane, pace, speed, onPaperIn, onLa
     : <LetterFold at={at} launch={launch} kPlane={kPlane} pace={pace} lines={lines} onPaperIn={onPaperIn} onFolded={p => { setFlight(p); onLaunch() }} />
 }
 
-type Throwing = { text: Pt; lines: string[]; launch: Pt; noteLeft: number }
+type Throwing = { text: Pt; lines: string[]; launch: Pt }
 
 /** Email. Hover: a note to Ben types out under the button. Click: copies
  *  the address (never shown) — the icon turns to a check; the note lands on
@@ -1431,6 +1419,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     }
     openedAt.current = performance.now()
     announceOpen(eggId)
+    // Build the paper tile now, at idle, not on the click's frame.
+    if (!paperTile) ('requestIdleCallback' in window ? requestIdleCallback : (cb: () => void) => setTimeout(cb, 50))(() => paperTexture())
     // A new note means the last one's done: its check and note step aside.
     if (live.current.copied) { clearTimers(); setCopied(false) }
     setLetterAt(at)
@@ -1464,11 +1454,28 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     revealed.current = true
     later(COPIED_MS, () => setCopied(false))
   }
+  // The note doesn't move during a throw: its right edge is read once.
+  const noteRight = useRef<number | null>(null)
   const onTail = (x: number) => {
+    if (revealed.current) return
     if (x > revealX.get()) revealX.set(x)
-    const right = noteEl.current?.getBoundingClientRect().right
-    if (right !== undefined && x > right + 16) finishReveal()
+    noteRight.current ??= noteEl.current?.getBoundingClientRect().right ?? null
+    if (noteRight.current !== null && x > noteRight.current + 16) finishReveal()
   }
+  // If the plane never clears the note (it turned back early, or the tab was
+  // hidden), finish the reveal anyway, a little after it's airborne.
+  useEffect(() => {
+    if (!airborne || revealed.current) return
+    const t = setTimeout(() => {
+      if (revealed.current) return
+      const right = noteEl.current?.getBoundingClientRect().right ?? revealX.get()
+      animate(revealX, right + 24, { duration: 0.35, ease: EASE_OUT })
+      finishReveal()
+    }, 2600)
+    return () => clearTimeout(t)
+  }, [airborne]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const kPlane = emailFx.planeLength / 44 // px per sheet unit (the sheet is 44 long)
 
   const onClick = async () => {
     // A press settles it: no note starts typing afterwards from the hover
@@ -1504,12 +1511,10 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       openedAt.current = null
       bumpLevel()
       setLetterAt(null)
-      setAirborne(false)
       placeNote()
       // Held in the hand just right of the button — its real outline clear of
       // the button and its focus ring (+4px) — over where the note will be,
       // so its tail uncovers the note as it goes. Centred on the row.
-      const kPlane = emailFx.planeLength / 44
       const launch = {
         // 16px from the button at rest, so that cocked back (4px pull + the
         // nose-up tilt) it still clears it by 8px.
@@ -1517,17 +1522,9 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         y: r.top + r.height / 2 - ((FLY_BOUNDS.top + FLY_BOUNDS.bottom) / 2) * kPlane,
       }
       revealed.current = false
+      noteRight.current = null
       revealX.set(-1e6)
-      setOnPaper(false)
-      setThrowing({ text, lines, launch, noteLeft: r.right + 8 })
-      // If the plane never clears the note (it turned back early, or the tab
-      // was hidden), finish the reveal anyway.
-      later((PAPER_IN_S + emailFx.foldSeconds + WIND_UP_S + WIND_UP_HOLD_S + 2.6) * 1000, () => {
-        if (revealed.current) return
-        const right = noteEl.current?.getBoundingClientRect().right ?? revealX.get()
-        animate(revealX, right + 24, { duration: 0.35, ease: EASE_OUT })
-        finishReveal()
-      })
+      setThrowing({ text, lines, launch })
       return
     }
     setCopied(true)
@@ -1539,13 +1536,12 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const popCheck = () => {
     if (reducedMotion) return
     shake.set({ scale: 0.82 })
-    shake.start({ scale: 1, transition: { type: 'spring', stiffness: 520, damping: 13, mass: 0.6 } })
+    shake.start({ scale: 1, transition: SQUASH_POP })
   }
 
-  const kPlane = emailFx.planeLength / 44
   const letterPos = throwing ? (onPaper ? null : throwing.text) : letterAt
   const letterMount = useFadeMount(letterPos, letterKey)
-  const handedOver = !!throwing && onPaper
+  const handedOver = onPaper // (only ever set during a throw)
   const tempo = NOTE_TEMPO[level]!
   // The hold line shows once the plane is in the air (the sheet was there).
   const heldPos = held && airborne ? held : null

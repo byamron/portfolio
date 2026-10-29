@@ -5,6 +5,7 @@ import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/co
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
 import { useIsWide } from '@/hooks/useMediaQuery'
 import { isInitialEntrance, entrancePreset } from '@/utils/entranceState'
+import { useWindowLeave } from '@/hooks/useWindowLeave'
 
 const modes: { mode: AppearanceMode; Icon: typeof Monitor; label: string }[] = [
   { mode: 'system', Icon: Monitor, label: 'System theme' },
@@ -704,41 +705,30 @@ export function SidebarThemeControls({
     if (railLeave.current) document.documentElement.removeEventListener('pointerleave', railLeave.current)
     railWatch.current = railLeave.current = null
   }, [])
-  const inRail = useCallback((x: number, y: number) => {
+  /** Stop watching and let the pill fade. */
+  const releasePill = useCallback(() => { stopRailWatch(); glideOut() }, [stopRailWatch, glideOut])
+  /** The rail's span (handle to last control), measured as the pointer moves
+   *  (the controls may still be sliding in). */
+  const railSpan = useCallback(() => {
     const col = columnRef.current
-    if (!col) return false
     let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
     // Closed, the controls are faded but still laid out: only the handle counts.
-    const targets = hoveredRef.current ? col.querySelectorAll(GLIDE_TARGETS) : col.querySelectorAll('.sidebar-icon-trigger')
-    targets.forEach(el => {
+    col?.querySelectorAll(hoveredRef.current ? GLIDE_TARGETS : '.sidebar-icon-trigger').forEach(el => {
       const q = el.getBoundingClientRect()
       if (!q.width) return
       l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
     })
-    return x >= l - 6 && x <= r + 6 && y >= t - 6 && y <= b + 6
+    return { l: l - 6, t: t - 6, r: r + 6, b: b + 6 }
   }, [])
   useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current); stopRailWatch() }, [stopRailWatch])
   // Switching apps / Spaces sends no pointerleave: let the pill go.
-  useEffect(() => {
-    if (!glidePill) return
-    const leave = () => { stopRailWatch(); glideOut() }
-    const onVis = () => { if (document.hidden) leave() }
-    window.addEventListener('blur', leave)
-    document.addEventListener('visibilitychange', onVis)
-    return () => {
-      window.removeEventListener('blur', leave)
-      document.removeEventListener('visibilitychange', onVis)
-    }
-  }, [glidePill, stopRailWatch, glideOut])
+  useWindowLeave(releasePill, glidePill)
   // Closing the rail (Escape, outside click, the handle) hides the controls:
   // the pill stays only if it's on the handle.
   useEffect(() => {
     if (!glidePill || hovered) return
-    if (railWatch.current || (glideTarget.current && !glideTarget.current.matches('.sidebar-icon-trigger'))) {
-      stopRailWatch()
-      glideOut()
-    }
-  }, [hovered, glidePill, stopRailWatch, glideOut])
+    if (railWatch.current || (glideTarget.current && !glideTarget.current.matches('.sidebar-icon-trigger'))) releasePill()
+  }, [hovered, glidePill, releasePill])
   const glideHandlers = glidePill ? {
     onPointerOver: (e: React.PointerEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
@@ -748,17 +738,14 @@ export function SidebarThemeControls({
       const to = e.relatedTarget as Element | null
       if (to && columnRef.current?.contains(to)) return
       // A lifted finger has no "between controls".
-      if (e.pointerType === 'touch') { stopRailWatch(); glideOut(); return }
-      if (!inRail(e.clientX, e.clientY)) { glideOut(); return }
+      if (e.pointerType === 'touch') { releasePill(); return }
+      const inSpan = (x: number, y: number) => { const span = railSpan(); return x >= span.l && x <= span.r && y >= span.t && y <= span.b }
+      if (!inSpan(e.clientX, e.clientY)) { glideOut(); return }
       stopRailWatch()
-      railWatch.current = (m: PointerEvent) => {
-        if (inRail(m.clientX, m.clientY)) return
-        stopRailWatch()
-        glideOut()
-      }
+      railWatch.current = (m: PointerEvent) => { if (!inSpan(m.clientX, m.clientY)) releasePill() }
       window.addEventListener('pointermove', railWatch.current, { passive: true })
       // Leaving the window from the gap sends no further pointermove.
-      railLeave.current = () => { stopRailWatch(); glideOut() }
+      railLeave.current = releasePill
       document.documentElement.addEventListener('pointerleave', railLeave.current)
     },
     onFocus: (e: React.FocusEvent) => {

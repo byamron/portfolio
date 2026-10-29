@@ -123,8 +123,6 @@
   }
 }
 
-
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -391,7 +389,7 @@
   place-items: center;
 }
 .biz-logo-cell svg { width: 34px; height: 34px; } /* bare mark, printed on the stock */
-/* Back: the mark large, "Consensus" beneath. */
+/* Back: the mark large, "consensus.app" beneath. */
 .biz-grid-back { grid-template-columns: 1fr; grid-template-rows: 1fr 23px; }
 .biz-grid-back .biz-logo-cell { grid-column: 1; grid-row: 1; }
 .biz-grid-back .biz-logo-cell svg { width: 60px; height: 60px; }

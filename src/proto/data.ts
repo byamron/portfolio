@@ -33,9 +33,6 @@ export const COPY_VARIANTS: Record<string, Seg[][]> = {
   'four · stacked': [['P', 'N'], ['is a product designer'], ['currently building AI for research'], ['at ', 'C', '.']],
 }
 
-/** Phone breaks (≤640px) per copy variant — designed, not left to the
- *  browser: five even lines at a larger size instead of a ragged 26px wrap.
- *  Variants without one fall back to browser-balanced wrapping. */
 /** Between the desktop lines and the phone breaks: used when the desktop
  *  lines would fall below the minimum type size but these still fit —
  *  chosen by what fits, not by a breakpoint. */
@@ -43,6 +40,9 @@ export const MID_BREAKS: Record<string, Seg[][]> = {
   'two · even': [['P', 'N', ' is a product designer'], ['currently building AI for'], ['researchers at ', 'C', '.']],
 }
 
+/** Phone breaks per copy variant — designed, not left to the browser: five
+ *  even lines at a larger size instead of a ragged wrap. The last resort,
+ *  when neither the desktop nor the middle lines fit at the minimum size. */
 export const PHONE_BREAKS: Record<string, Seg[][]> = {
   'two · even': [['P', 'N', ' is'], ['a product designer'], ['currently building'], ['AI for researchers'], ['at ', 'C', '.']], // 91/100/99/95/95
   'four · stacked': [['P', 'N'], ['is a product designer'], ['currently building'], ['AI for research'], ['at ', 'C', '.']],

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { GLIDE_TARGETS } from '@/components/SidebarThemeControls'
 import { GLASS_DEFAULTS } from '@/hooks/useGlassHighlight'
+import { onWindowLeave } from '@/hooks/useWindowLeave'
 import { PAGE_GLASS_CARDS, useProtoSettings } from './protoSettings'
 
 const MELT_MS = 220
@@ -199,17 +200,14 @@ export function CursorGlow() {
       if (!raf) raf = requestAnimationFrame(step)
     }
     const onLeave = () => el.removeAttribute('data-on')
-    // Switching apps / Spaces sends no pointerleave.
-    const onVis = () => { if (document.hidden) onLeave() }
     window.addEventListener('pointermove', onMove, { passive: true })
     document.documentElement.addEventListener('pointerleave', onLeave)
-    window.addEventListener('blur', onLeave)
-    document.addEventListener('visibilitychange', onVis)
+    // Switching apps / Spaces sends no pointerleave.
+    const offWindow = onWindowLeave(onLeave)
     return () => {
       window.removeEventListener('pointermove', onMove)
       document.documentElement.removeEventListener('pointerleave', onLeave)
-      window.removeEventListener('blur', onLeave)
-      document.removeEventListener('visibilitychange', onVis)
+      offWindow()
       cancelAnimationFrame(raf)
       window.clearTimeout(meltTimer)
       el.removeAttribute('data-on')

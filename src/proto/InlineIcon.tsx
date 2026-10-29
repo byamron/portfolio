@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion'
 import { useTheme, VALID_ACCENTS } from '@/contexts/ThemeContext'
 import { THEME_SIDEBAR_STATE, THEME_SIDEBAR_TOGGLE } from '@/components/SidebarThemeControls'
+import { SQUASH_POP } from './protoSettings'
 
 // Sized in em so icons track the prose size at every breakpoint:
 // line-height (1.3) × 0.75 ≈ the largest square that sits inside the line box.
@@ -67,7 +68,7 @@ export function ThemePortrait() {
     // Snap to a squash on the same frame as the swap, then spring past 1 and
     // settle: reads as the new photo bouncing in.
     pop.set({ scale: 0.82, rotate: forward ? -5 : 5 })
-    pop.start({ scale: 1, rotate: 0, transition: { type: 'spring', stiffness: 520, damping: 13, mass: 0.6 } })
+    pop.start({ scale: 1, rotate: 0, transition: SQUASH_POP })
   }, [accentColor, pop, reducedMotion])
 
   return (
