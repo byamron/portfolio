@@ -1,4 +1,3 @@
-import { createContext, useContext } from 'react'
 import type { RecordToggleParams, RecordTrackId } from '@/components/RecordToggle'
 
 export interface RecordDockSettings {
@@ -81,9 +80,9 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   },
 }
 
-/** Overridden only by the dev-only tuner; production reads the defaults. */
-export const ProtoSettingsContext = createContext<ProtoSettings>(PROTO_DEFAULTS)
-export const useProtoSettings = () => useContext(ProtoSettingsContext)
+/** The tuned values. (A DialKit tuner overrode these through a context while
+ *  the page was dialled in; it lives at the `simple-home-dev` tag.) */
+export const useProtoSettings = (): ProtoSettings => PROTO_DEFAULTS
 
 /** Fluid size: `max` at ≥1440px wide, 65% of it at ≤390px. */
 export function fluidSize(max: number) {

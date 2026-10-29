@@ -37,6 +37,14 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 
 For detailed technical context (Tailwind, theme system, typography, architecture, accessibility, visual reference), see `.claude/rules/technical-context.md` — auto-loaded when editing `src/` files.
 
+### The site is one page (since 2026-10-29)
+
+`benyamron.com/` is the simple home: `src/proto/SimpleSite.tsx` (shell, settings rail, record) → `SimpleHome.tsx` + `ContactFx.tsx`. `src/App.tsx` routes only `/` and the Havana/Trio privacy pages; every other path redirects to `/`. The tuned values are constants in `src/proto/protoSettings.ts` (`PROTO_DEFAULTS`).
+
+- **Previous portfolio** (two-column home, case studies, playground, demos): tag **`portfolio-v1`**. Pull pieces back with `git show portfolio-v1:<path>` or `git checkout portfolio-v1 -- <path>`. Its source files are still in `src/` but unrouted (not in the bundle) until a cleanup pass.
+- **DialKit tuning panel** (`ProtoTuner`, settings context, `dialkit`/`agentation` dev deps): tag **`simple-home-dev`**. For more tuning, branch from `main`, restore `src/proto/ProtoTuner.tsx` from that tag, re-add the context + dev deps, and strip them again before merging (dev-panel policy).
+- Tags are git-only; nothing about them appears on the site.
+
 ### Font-guesser game (`apps/fontguesser/`)
 
 The font-guessing game is a **self-contained sub-app** with its own `package.json`, toolchain (Vite + `oxlint`), and `node_modules`/`dist` (both gitignored). It is deliberately **decoupled** from the portfolio: it is not imported into the SPA, and it is excluded from the portfolio's `eslint`/`tsc`/`vitest` — so a game issue can never break the portfolio build or deploy.

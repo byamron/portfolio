@@ -1,64 +1,24 @@
-import { useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { HoverProvider } from '@/contexts/HoverContext'
 import { CursorProvider } from '@/contexts/CursorContext'
 import { TypographyProvider } from '@/contexts/TypographyContext'
 
-import { CustomCursor } from '@/components/CustomCursor'
-import { CursorCompanion } from '@/components/CursorCompanion'
-import { SidebarThemeControls } from '@/components/SidebarThemeControls'
-import { RightColumn } from '@/components/RightColumn'
-import { Layout } from '@/components/Layout'
-import { CaseStudyPage } from '@/components/CaseStudyPage'
 import { HavanaPrivacyPolicy } from '@/components/HavanaPrivacyPolicy'
 import { TrioPrivacyPolicy } from '@/components/TrioPrivacyPolicy'
-import { NotFound } from '@/components/NotFound'
-const PlaygroundRoutes = lazy(() => import('@/components/PlaygroundRoutes').then(m => ({ default: m.PlaygroundRoutes })))
-const PlaygroundDemo = lazy(() => import('@/components/PlaygroundDemo').then(m => ({ default: m.PlaygroundDemo })))
-const ProtoRoutes = lazy(() => import('@/proto/ProtoRoutes').then(m => ({ default: m.ProtoRoutes })))
-import { preloadPortraitImages, preloadPreviewImages } from '@/utils/preloadImages'
-import { useIsWide } from '@/hooks/useMediaQuery'
+import { SimpleSite } from '@/proto/SimpleSite'
 
+// The site is one page. The previous portfolio (case studies, playground,
+// demos) is kept at the `portfolio-v1` tag; its old URLs land on the home page.
 function AppContent() {
-  const { pathname } = useLocation()
-  const demoRoutes = ['/slide-to-unlock', '/dvd', '/high-five']
-  const isStandalone = pathname.startsWith('/havana/') || pathname.startsWith('/trio/') || pathname === '/playground' || pathname.startsWith('/playground/') || pathname === '/new' || pathname.startsWith('/new/') || demoRoutes.includes(pathname)
-  const isWide = useIsWide()
-
-  useEffect(() => { if (isStandalone) return; preloadPortraitImages(); preloadPreviewImages() }, [isStandalone])
-
   return (
-    <>
-      {!isStandalone && (
-        <>
-          <CustomCursor />
-          <CursorCompanion />
-          <SidebarThemeControls />
-        </>
-      )}
-      <Routes>
-        <Route path="/" element={<Layout />} />
-        <Route path="/project/:slug" element={<CaseStudyPage />} />
-        <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
-        <Route path="/trio/privacy" element={<TrioPrivacyPolicy />} />
-        <Route path="/playground/*" element={<Suspense fallback={null}><PlaygroundRoutes /></Suspense>} />
-        <Route path="/new/*" element={<Suspense fallback={null}><ProtoRoutes /></Suspense>} />
-        <Route path="/slide-to-unlock" element={<Suspense fallback={null}><PlaygroundDemo slug="slide-unlock" /></Suspense>} />
-        <Route path="/dvd" element={<Suspense fallback={null}><PlaygroundDemo slug="dvd-bounce" /></Suspense>} />
-        <Route path="/high-five" element={<Suspense fallback={null}><PlaygroundDemo slug="figma-highfive" /></Suspense>} />
-        {/* Redirect old portfolio URLs to current routes */}
-        <Route path="/eat-local-vt" element={<Navigate to="/project/eat-local-vt" replace />} />
-        <Route path="/project/forge" element={<Navigate to="/project/optimizing-my-workflow" replace />} />
-        <Route path="/about" element={<Navigate to="/" replace />} />
-        <Route path="/rivet" element={<Navigate to="/" replace />} />
-        {/* Catch-all: genuinely-unknown paths (deep-linkable routes are restored by the
-            404.html → index.html SPA redirect before this point). */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      {/* Persistent right column — never unmounts during route transitions */}
-      {isWide && !isStandalone && <RightColumn />}
-    </>
+    <Routes>
+      <Route path="/" element={<SimpleSite />} />
+      {/* The Havana and Trio apps' privacy policies stay at their URLs. */}
+      <Route path="/havana/privacy" element={<HavanaPrivacyPolicy />} />
+      <Route path="/trio/privacy" element={<TrioPrivacyPolicy />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

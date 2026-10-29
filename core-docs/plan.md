@@ -624,6 +624,13 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## Launch: one-page site (2026-10-29)
+
+- [x] `/` → simple home; privacy pages kept; all else → `/`. Old site at tag `portfolio-v1`, DialKit at `simple-home-dev`.
+- [x] Dev panels and dev-only deps stripped.
+- [ ] Ben approves the preview → PR to `main` (deploy runs on push to main).
+- [ ] Later: case studies (bring back, or link out); remove the old home's unrouted source + unused `public/` assets; the open a11y decisions (hoverable pop-outs, 200% zoom).
+
 ## `/new/simple` — staff review round 3 (2026-10-29)
 
 Fixed: other pop-outs can't open over the folding sheet; typed note could show "undefined" when clicked mid-typing (clamped); one-frame level pose at the fold→flight hand-off; rail pill concentric on capsules (record, strip) too; the "one at a time" hold ends once the plane is out of sight; reduced-motion copy clears the hint note; "Settings (music playing)" name restored; glass pill keyboard focus within the leave fade carries on; QWERTY-neighbour typos; fading note keeps its level; fold cleanup stops every motion value; docs drift.

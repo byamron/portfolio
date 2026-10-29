@@ -2,6 +2,36 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-29 — Launch: the simple home becomes benyamron.com
+
+Branch `launch-simple-home`, cut from `simplified-home-prototype`.
+
+- **Tags (git-only, never shown on the site):**
+  - `portfolio-v1` is the production site as it was (main `0b45233`).
+  - `simple-home-dev` is the prototype with its DialKit tuner (`752dc69`).
+- **Routes:**
+  - `/` is `SimpleSite`.
+  - The Havana and Trio privacy policies keep their URLs.
+  - Every other path redirects to `/`. That covers case studies, playground, demos and `/new/*`. Ben: "i don't need the case studies reachable (we'll come back to this)".
+- **Dev panels stripped:**
+  - `ProtoTuner` (DialKit) is deleted.
+  - The settings context is gone: `useProtoSettings()` returns the tuned constants.
+  - The `?preset=` URL override is removed.
+  - The `dialkit`, `agentation` and (unused) `motion` dev dependencies are uninstalled.
+- **Site files:**
+  - The sitemap lists `/` plus the two privacy pages.
+  - The `index.html` preload now points at the new home's portrait.
+  - Title, description and share image are unchanged.
+- **Kept on purpose:**
+  - The old home's source stays in `src/`. It is unrouted, so it's tree-shaken out of the bundle.
+  - Old `public/` assets stay, so pieces can still be pulled from them.
+  - A cleanup pass comes later.
+- **Verified:**
+  - Every route returns zero console errors at 1440 and 390 wide.
+  - All the regression probes (press, toast, esc, carry, gap, glide, closed, blur, line-set sweep) pass against `/`.
+  - The production bundle has 0 hits for dialkit, agentation or old-page code.
+  - 77 tests pass.
+
 ## 2026-10-29 — `/new/simple`: flow pipeline round 3 (simplify → staff review → ship reviews)
 
 Branch `simplified-home-prototype` (commits b1fc993 → aa56ac0). After Ben's last copy fix ("you seem cool. Let's chat!" on one line), the whole round went back through `/simplify`, the four staff-review lenses, and the ship reviews (security, accessibility, behaviour verification).

@@ -11,7 +11,7 @@ import { COPY_VARIANTS, MID_BREAKS, PHONE_BREAKS, protoBySlug, TEXT_PRESETS, typ
 import { EASE_OUT, fluidSize, PAGE_GLASS_CARDS, PHONE_QUERY, useProtoSettings } from './protoSettings'
 
 // /new/simple — the sketch: one sentence, four ways to reach Ben, the
-// contribution strip. Theme + record live in the sidebar (ProtoRoutes).
+// contribution strip. Theme + record live in the sidebar (SimpleSite).
 
 const LINE_HEIGHT = 1.3
 
@@ -57,16 +57,11 @@ const PRESET_MAX_WIDTH = 1440
 export function SimpleHome() {
   const reducedMotion = useReducedMotion()
   const { proseMax, simpleLayout: tuned } = useProtoSettings()
-  // A preset (DialKit, or ?preset=… so it works on phones/prod builds) sets
-  // copy + target size and lets the column go wide; 'custom' uses the dials.
-  // Own keys only, so ?preset=constructor etc. falls back instead of matching.
-  const asked = new URLSearchParams(window.location.search).get('preset')
-  const urlPreset = asked && Object.prototype.hasOwnProperty.call(TEXT_PRESETS, asked) ? asked : null
-  const preset = (urlPreset ? TEXT_PRESETS[urlPreset] : undefined) ?? (tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined)
-  // The DialKit S→M slider sets the active preset's size (URL presets keep theirs).
-  // (Only for the S presets — it's an S→M fine-tune — so M/L keep their size.)
-  const presetName = urlPreset ?? tuned.preset
-  const presetSize = preset && !urlPreset && tuned.presetSize && presetName.endsWith('· S') ? tuned.presetSize : preset?.size
+  // A preset sets copy + target size and lets the column go wide; 'custom'
+  // uses the layout values as they are.
+  const preset = tuned.preset !== 'custom' ? TEXT_PRESETS[tuned.preset] : undefined
+  // An optional S→M fine-tune of the active preset's size (S presets only).
+  const presetSize = preset && tuned.presetSize && tuned.preset.endsWith('· S') ? tuned.presetSize : preset?.size
   const layout = preset ? { ...tuned, copy: preset.copy, maxText: presetSize!, maxWidth: PRESET_MAX_WIDTH } : tuned
   const pageRef = useRef<HTMLElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)

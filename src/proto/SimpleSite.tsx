@@ -1,17 +1,15 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion'
-import { Route, Routes } from 'react-router-dom'
 import { MusicNotesSimple } from '@phosphor-icons/react'
 import './proto.css'
 import { CustomCursor } from '@/components/CustomCursor'
 import { CursorCompanion } from '@/components/CursorCompanion'
 import { RECORD_ASPECT, SidebarThemeControls, THEME_SIDEBAR_STATE } from '@/components/SidebarThemeControls'
-import { ProtoHome } from './ProtoHome'
 import { CursorGlow } from './CursorGlow'
 import { RecordDock } from './RecordDock'
 import { SimpleHome } from './SimpleHome'
 
-// /new/simple: the toolbar grows a little and the record shrinks to meet it,
+// The toolbar grows a little and the record shrinks to meet it,
 // so the record reads as one more control in the rail.
 const SIMPLE_CONTROL_SCALE = 1.15
 // RecordToggle's size unit is 96px of plinth height.
@@ -19,10 +17,6 @@ const SIMPLE_CONTROL_SCALE = 1.15
 const SIMPLE_TRIGGER_TOP = 21 // glyph 32px from the top (8-grid), square with its 32–33px from the right
 // The rail stops above the contribution strip (label + cells + breathing room).
 const STRIP_RESERVE = 104
-
-// Dead-code-eliminated from production builds: the tuner (and DialKit) only
-// exist under `vite dev`.
-const ProtoTuner = import.meta.env.DEV ? lazy(() => import('./ProtoTuner')) : null
 
 // No AnimatePresence here: its `initial={false}` reaches every motion
 // component in the subtree and silently skipped the home page's entrance.
@@ -81,8 +75,10 @@ function SlidersGlyph({ playing }: { playing: boolean }) {
   )
 }
 
-/** /new/simple: knows whether the rail's record is playing. */
-function SimpleShell() {
+/** The site (benyamron.com/): the simple home, its settings rail and the
+ *  record. Knows whether the record is playing. (The DialKit tuner that
+ *  dialled it in lives at the `simple-home-dev` tag.) */
+export function SimpleSite() {
   const [playing, setPlaying] = useState(false)
   return (
     <ProtoShell>
@@ -102,34 +98,5 @@ function SimpleShell() {
         )}
       />
     </ProtoShell>
-  )
-}
-
-function ProtoPages() {
-  return (
-    <Routes>
-      <Route
-        index
-        element={
-          <ProtoShell>
-            <ProtoHome />
-            {/* The portrait is the visible way in; the right edge still opens it on hover. */}
-            <SidebarThemeControls hideTriggerAtRest />
-          </ProtoShell>
-        }
-      />
-      {/* A settings button is the way in; the record lives in the sidebar
-          and keeps playing after it closes. */}
-      <Route path="simple" element={<SimpleShell />} />
-    </Routes>
-  )
-}
-
-export function ProtoRoutes() {
-  if (!ProtoTuner) return <ProtoPages />
-  return (
-    <Suspense fallback={null}>
-      <ProtoTuner><ProtoPages /></ProtoTuner>
-    </Suspense>
   )
 }
