@@ -498,11 +498,11 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
       </a>
       <IconPopover show={stage > 0} width={248}>
         <div style={{ perspective: 800 }}>
-          {/* A barely-there drift — held, not pinned; you'd only see it if
-              you looked for it — with a faint 3D sway (out of step, so it
-              never repeats exactly) and the pointer tilt on top. */}
+          {/* A gentle drift — held, not pinned — with a faint 3D sway (out
+              of step, so it never repeats exactly) and the pointer tilt on
+              top. */}
           <motion.div
-            animate={reducedMotion ? {} : { y: [0, -1, 0], rotateZ: [-0.25, 0.2, -0.25], rotateX: [0.8, -0.8, 0.8], rotateY: [-1, 1, -1] }}
+            animate={reducedMotion ? {} : { y: [0, -2, 0], rotateZ: [-0.4, 0.35, -0.4], rotateX: [1.2, -1.2, 1.2], rotateY: [-1.6, 1.6, -1.6] }}
             transition={{
               duration: 7, repeat: Infinity, ease: 'easeInOut',
               rotateX: { duration: 8.3, repeat: Infinity, ease: 'easeInOut' },
