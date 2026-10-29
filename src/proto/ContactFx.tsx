@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { animate, AnimatePresence, cancelFrame, frame, motion, useAnimationControls, useMotionValue, useReducedMotion, useTransform, type MotionStyle } from 'framer-motion'
+import { animate, AnimatePresence, cancelFrame, frame, motion, useAnimationControls, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionStyle } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
 import { PaperTexture } from '@paper-design/shaders-react'
 import { protoBySlug } from './data'
@@ -13,6 +13,29 @@ import { EASE_OUT, PHONE_QUERY, useProtoSettings } from './protoSettings'
 const POP = { type: 'spring', stiffness: 520, damping: 30, mass: 0.7 } as const
 // Hover longer than a glance and the second beat plays.
 const LINGER_MS = 1600
+// A pop-out develops only once the pointer has stayed this long (the glass
+// pill answers at once) — sweeping along the row doesn't set them all off.
+const DWELL_OPEN_MS = 220
+// One pop-out at a time: opening one tells the others to close.
+const EGG_OPEN = 'contact-egg-open'
+const announceOpen = (id: string) => document.dispatchEvent(new CustomEvent(EGG_OPEN, { detail: id }))
+function useOthersOpening(id: string, onOther: () => void) {
+  const cb = useRef(onOther)
+  cb.current = onOther
+  useEffect(() => {
+    const on = (e: Event) => { if ((e as CustomEvent<string>).detail !== id) cb.current() }
+    document.addEventListener(EGG_OPEN, on)
+    return () => document.removeEventListener(EGG_OPEN, on)
+  }, [id])
+}
+/** Focus opens a pop-out only when it's keyboard focus — not the browser
+ *  restoring focus to the last-clicked button when the window comes back
+ *  (which can arrive as :focus-visible, so the window's own return is
+ *  checked too). */
+let windowFocusedAt = -Infinity
+if (typeof window !== 'undefined') window.addEventListener('focus', () => { windowFocusedAt = performance.now() })
+const keyboardFocus = (e: React.FocusEvent) =>
+  performance.now() - windowFocusedAt > 120 && ((e.target as Element).matches?.(':focus-visible') ?? false)
 
 const finePointer = () => typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches
 
@@ -34,25 +57,31 @@ function useWindowLeave(onLeave: () => void, active: boolean) {
   }, [active])
 }
 
-/** Hover/focus → stage 1 at once, stage 2 after LINGER_MS; leave, blur or
- *  Escape → 0 (WCAG 1.4.13: dismissible). `viaPointer` tells callers whether
- *  a real hover (vs. keyboard focus) opened it. */
+/** Hover (after a short dwell) or keyboard focus → stage 1, stage 2 after
+ *  LINGER_MS; leave, blur, Escape or another pop-out opening → 0 (WCAG
+ *  1.4.13: dismissible). `viaPointer` tells callers whether a real hover
+ *  (vs. keyboard focus) opened it. */
 function useHoverStage() {
+  const id = useId()
   const [stage, setStage] = useState<0 | 1 | 2>(0)
   const [viaPointer, setViaPointer] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(null)
+  const dwell = useRef<ReturnType<typeof setTimeout>>(null)
   const enabled = useMemo(finePointer, [])
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); if (dwell.current) clearTimeout(dwell.current) }, [])
   const open = (pointer: boolean) => {
     if (!enabled || stage) return
     setViaPointer(pointer)
     setStage(1)
+    announceOpen(id)
     timer.current = setTimeout(() => setStage(2), LINGER_MS)
   }
   const close = () => {
     if (timer.current) clearTimeout(timer.current)
+    if (dwell.current) clearTimeout(dwell.current)
     setStage(0)
   }
+  useOthersOpening(id, close)
   // Opened by hover, focus may be anywhere: Escape dismisses from the page.
   useEffect(() => {
     if (!stage) return
@@ -69,9 +98,13 @@ function useHoverStage() {
   }, [stage])
   useWindowLeave(close, stage > 0)
   const handlers = {
-    onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType !== 'touch') open(true) },
+    onPointerEnter: (e: React.PointerEvent) => {
+      if (e.pointerType === 'touch') return
+      if (dwell.current) clearTimeout(dwell.current)
+      dwell.current = setTimeout(() => open(true), DWELL_OPEN_MS)
+    },
     onPointerLeave: close,
-    onFocus: () => open(false),
+    onFocus: (e: React.FocusEvent) => { if (keyboardFocus(e)) open(false) },
     onBlur: close,
   }
   return { stage, viaPointer, handlers }
@@ -390,6 +423,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
 // Long enough between turns to read each side.
 const FLIP_FIRST_MS = 1800
 const FLIP_EVERY_MS = 4000
+const CARD_TILT = 4 // degrees at most, toward the pointer
 
 /** Card stock: Paper's paper-texture shader, static and barely there. */
 function CardStock() {
@@ -420,6 +454,23 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
   const reducedMotion = useReducedMotion()
   const { cardCase } = useProtoSettings()
   const [turns, setTurns] = useState(0)
+  // A very slight tilt toward the pointer (soft spring), for character.
+  const tiltEl = useRef<HTMLDivElement>(null)
+  const tiltX = useSpring(0, { stiffness: 90, damping: 20 })
+  const tiltY = useSpring(0, { stiffness: 90, damping: 20 })
+  useEffect(() => {
+    if (!stage || reducedMotion) { tiltX.set(0); tiltY.set(0); return }
+    const onMove = (e: PointerEvent) => {
+      const r = tiltEl.current?.getBoundingClientRect()
+      if (!r) return
+      const nx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / 180))
+      const ny = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / 180))
+      tiltY.set(nx * CARD_TILT)
+      tiltX.set(-ny * CARD_TILT)
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [stage > 0, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!stage || reducedMotion) { setTurns(0); return }
     let iv: ReturnType<typeof setInterval>
@@ -437,11 +488,17 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
       <IconPopover show={stage > 0} width={248}>
         <div style={{ perspective: 800 }}>
           {/* A barely-there drift — held, not pinned; you'd only see it if
-              you looked for it. */}
+              you looked for it — with a faint 3D sway (out of step, so it
+              never repeats exactly) and the pointer tilt on top. */}
           <motion.div
-            animate={reducedMotion ? {} : { y: [0, -1, 0], rotateZ: [-0.25, 0.2, -0.25] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            animate={reducedMotion ? {} : { y: [0, -1, 0], rotateZ: [-0.25, 0.2, -0.25], rotateX: [0.8, -0.8, 0.8], rotateY: [-1, 1, -1] }}
+            transition={{
+              duration: 7, repeat: Infinity, ease: 'easeInOut',
+              rotateX: { duration: 8.3, repeat: Infinity, ease: 'easeInOut' },
+              rotateY: { duration: 9.7, repeat: Infinity, ease: 'easeInOut' },
+            }}
           >
+          <motion.div ref={tiltEl} style={{ rotateX: tiltX, rotateY: tiltY }}>
             <motion.div
               className={`biz-card biz-card--${cardCase}`}
               initial={reducedMotion ? false : { rotateY: -70 }}
@@ -465,6 +522,7 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
                 </div>
               </div>
             </motion.div>
+          </motion.div>
           </motion.div>
         </div>
       </IconPopover>
@@ -526,11 +584,11 @@ const NOTE_MAX_CHARS = Math.max(...NOTES.flatMap(n => n.split('\n').map(l => l.l
 // typos, noticed and backspaced.
 const NOTE_TEMPO = [
   { speed: 1, beat: 3.5, typo: 0 },
-  { speed: 1.15, beat: 3, typo: 0 },
-  { speed: 1.35, beat: 2.5, typo: 0 },
-  { speed: 1.6, beat: 2, typo: 0.04 },
-  { speed: 1.9, beat: 1.6, typo: 0.07 },
-  { speed: 2.3, beat: 1.25, typo: 0.1 },
+  { speed: 1.2, beat: 3, typo: 0 },
+  { speed: 1.45, beat: 2.5, typo: 0 },
+  { speed: 1.75, beat: 2, typo: 0.04 },
+  { speed: 2.1, beat: 1.6, typo: 0.07 },
+  { speed: 2.6, beat: 1.25, typo: 0.1 },
 ]
 // While the last note is still folding / flying: the system's voice, not the note's.
 const HELD_NOTE = 'One at a time \u2014 the last\none is still in the air.'
@@ -636,32 +694,56 @@ function useFadeMount(pos: Pt | null, key: number) {
 // Then a point-mass glider (lift ∝ v², drag ∝ v², gravity) takes over — the
 // phugoid it produces is the swoop-climb-stall-dip of a real paper plane.
 
-const EDGE = 'rgba(40,30,20,0.3)'
+// The plane's paper edges (side view only — the flat folds read by light).
+const EDGE = 'rgba(40,30,20,0.2)'
+// Paper's shade when it turns from the light.
+const SHADE = 'rgb(62,46,30)'
 
-// Grain as a pattern fill, not a filter: rasterised once from a small noise
-// tile, so animating the paper never re-runs a filter (that was the jank).
+// Paper as a pattern fill, not a filter: rasterised once into a tile, so
+// animating the paper never re-runs a filter (that was the jank). Fine,
+// quiet grain; a faint, slow mottle; a few soft fibres — paper, not noise.
+const TILE = 256
 let paperTile: string | null = null
 function paperTexture() {
   if (paperTile) return paperTile
   const c = document.createElement('canvas')
-  c.width = c.height = 96
+  c.width = c.height = TILE
   const g = c.getContext('2d')!
-  const img = g.createImageData(96, 96)
-  for (let i = 0; i < img.data.length; i += 4) {
-    // Paper white with fine luminance grain and a few darker fibres.
-    const n = Math.random()
-    const d = n * 10 + (n > 0.985 ? 18 : 0)
-    img.data[i] = 255 - d
-    img.data[i + 1] = 253 - d * 1.05
-    img.data[i + 2] = 249 - d * 1.15
-    img.data[i + 3] = 255
+  const img = g.createImageData(TILE, TILE)
+  // Slow mottle: smooth value noise on a tileable 8×8 lattice.
+  const N = 8, lattice = Array.from({ length: N * N }, () => Math.random())
+  const at = (x: number, y: number) => lattice[((y % N) + N) % N * N + ((x % N) + N) % N]!
+  const smooth = (t: number) => t * t * (3 - 2 * t)
+  for (let y = 0; y < TILE; y++) {
+    for (let x = 0; x < TILE; x++) {
+      const fx = (x / TILE) * N, fy = (y / TILE) * N
+      const ix = Math.floor(fx), iy = Math.floor(fy), tx = smooth(fx - ix), ty = smooth(fy - iy)
+      const m = (at(ix, iy) * (1 - tx) + at(ix + 1, iy) * tx) * (1 - ty) + (at(ix, iy + 1) * (1 - tx) + at(ix + 1, iy + 1) * tx) * ty
+      const d = Math.random() * 6 + (m - 0.5) * 7
+      const i = (y * TILE + x) * 4
+      img.data[i] = 253 - d
+      img.data[i + 1] = 251 - d * 1.05
+      img.data[i + 2] = 246 - d * 1.15
+      img.data[i + 3] = 255
+    }
   }
   g.putImageData(img, 0, 0)
+  // Fibres: short, soft, slightly curved.
+  g.lineCap = 'round'
+  for (let k = 0; k < 46; k++) {
+    const x = Math.random() * TILE, y = Math.random() * TILE, len = 6 + Math.random() * 16, ang = Math.random() * Math.PI
+    g.strokeStyle = `rgba(120,95,70,${0.04 + Math.random() * 0.05})`
+    g.lineWidth = 0.4 + Math.random() * 0.5
+    g.beginPath()
+    g.moveTo(x, y)
+    g.quadraticCurveTo(x + Math.cos(ang + 0.5) * len * 0.5, y + Math.sin(ang + 0.5) * len * 0.5, x + Math.cos(ang) * len, y + Math.sin(ang) * len)
+    g.stroke()
+  }
   return (paperTile = c.toDataURL())
 }
 /** <pattern> sized so one tile pixel ≈ one screen pixel at `pxPerUnit`. */
 function PaperPattern({ id, pxPerUnit }: { id: string; pxPerUnit: number }) {
-  const w = 96 / pxPerUnit
+  const w = TILE / pxPerUnit
   return (
     <pattern id={id} patternUnits="userSpaceOnUse" width={w} height={w}>
       <image href={paperTexture()} width={w} height={w} />
@@ -705,6 +787,20 @@ function foldMatrix(a: P2, b: P2, c: number): M6 {
   const l00 = k + 2 * c * ux * ux, l01 = 2 * c * ux * uy, l11 = k + 2 * c * uy * uy
   return [l00, l01, l01, l11, a[0] - (l00 * a[0] + l01 * a[1]), a[1] - (l01 * a[0] + l11 * a[1])]
 }
+
+/** The polygon with its hinge-side vertices pushed `eps` across the hinge
+ *  a–b, so adjoining faces overlap a hair instead of leaving an
+ *  antialiased seam (the paper is one piece there). */
+function acrossHinge(poly: P2[], a: P2, b: P2, eps: number): P2[] {
+  const l = Math.hypot(b[0] - a[0], b[1] - a[1])
+  let nx = -(b[1] - a[1]) / l, ny = (b[0] - a[0]) / l
+  const cx = poly.reduce((t, p) => t + p[0], 0) / poly.length, cy = poly.reduce((t, p) => t + p[1], 0) / poly.length
+  if ((cx - a[0]) * nx + (cy - a[1]) * ny > 0) { nx = -nx; ny = -ny } // away from the polygon
+  return poly.map(p => (Math.abs((p[0] - a[0]) * nx + (p[1] - a[1]) * ny) < 1e-6 ? [p[0] + nx * eps, p[1] + ny * eps] as P2 : p))
+}
+const smoothstep = (a: number, b: number, v: number) => { const t = clamp01((v - a) / (b - a)); return t * t * (3 - 2 * t) }
+/** How dark paper reads when turned θ from lying flat in the light. */
+const shadeOf = (theta: number) => 0.17 * Math.pow(Math.abs(Math.sin(theta)), 1.4)
 
 const NOSE: P2 = [0, -22]
 const FULL_SHEET: P2[] = [[-17, -22], [17, -22], [17, 22], [-17, 22]]
@@ -783,7 +879,6 @@ const FLY_BOUNDS = (() => {
 
 const PAPER_SHADOW = 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))'
 // Hairline paper edges, the same on screen at every scale and fold.
-const edgeStroke = { stroke: EDGE, strokeWidth: 0.6, strokeLinejoin: 'round' as const, vectorEffect: 'non-scaling-stroke' as const }
 
 type Pt = { x: number; y: number }
 const RELEASE_S = 0.3
@@ -792,9 +887,23 @@ interface Throw { v0: number; vTrim: number } // launch speed, trim speed (px/s)
 const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 
+// Side-view shading, shared by the fold's last steps and the flying sprite
+// so the hand-off is exact: the far wing sits in the plane's own shade; the
+// near wing darkens as it turns edge-on.
+const farShade = 0.1
+const nearShade = (psi: number) => 0.04 + 0.12 * Math.abs(Math.cos(psi))
+const sideStroke = { stroke: EDGE, strokeWidth: 0.5, strokeLinejoin: 'round' as const, vectorEffect: 'non-scaling-stroke' as const }
+// A crease: a soft valley (shadow) with a lit shoulder beside it.
+const CREASE_DARK = { stroke: 'rgba(70,52,34,0.16)', strokeWidth: 1.1, strokeLinecap: 'round' as const, vectorEffect: 'non-scaling-stroke' as const, fill: 'none' }
+const CREASE_LIGHT = { stroke: 'rgba(255,255,255,0.7)', strokeWidth: 0.8, strokeLinecap: 'round' as const, vectorEffect: 'non-scaling-stroke' as const, fill: 'none' }
+const SEAM = 0.12 // sheet units each face reaches across its hinge (no seams)
+
 /** The note's sheet: fades in under the typed note, folds (a parameter per
  *  step, every face derived from them each frame, so the paper stays one
- *  continuous sheet), then is lifted into the throwing hand at `launch`. */
+ *  continuous sheet), then is lifted into the throwing hand at `launch`.
+ *  Folds read by light, not outlines: a flap darkens as it turns edge-on and
+ *  casts a contact shadow that tightens as it's pressed flat; a crease (a
+ *  soft valley and its lit shoulder) only forms as the fold lands. */
 function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
   at: Pt; launch: Pt; kPlane: number; pace: number; lines: string[]; onPaperIn: () => void; onFolded: (at: Pt) => void
 }) {
@@ -804,6 +913,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
   // Step parameters (0…1 unless noted).
   const split = useMotionValue(0) // 0: one flat sheet; 1: two halves about the crease
   const lift = useMotionValue(1) // right half's scaleX about the crease
+  const creased = useMotionValue(0) // the centre crease, pressed in as the half lands
   const cornerL = useMotionValue(0), cornerR = useMotionValue(0)
   const edgeL = useMotionValue(0), edgeR = useMotionValue(0)
   const psi = useMotionValue(0) // wing angle (rad)
@@ -818,45 +928,89 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
   // with no paper).
   useLayoutEffect(() => {
     const FRONT = `url(#${uid}-front)`, BACK = `url(#${uid}-back)`
-    const set = (k: string, poly: P2[] | null, m: M6 = IDENTITY, fill = BACK) => {
+    const hide = (k: string) => { const el = els.current[k]; if (el) el.style.display = 'none' }
+    const put = (k: string, d: string, m: M6, opacity?: number) => {
       const el = els.current[k]
       if (!el) return
-      if (!poly) { el.style.display = 'none'; return }
       el.style.display = ''
-      el.setAttribute('d', pathOf(poly))
+      el.setAttribute('d', d)
       el.setAttribute('transform', matrixOf(m))
-      if (el.getAttribute('fill') !== fill) el.setAttribute('fill', fill)
+      if (opacity !== undefined) el.style.opacity = String(opacity)
+    }
+    /** A face: paper fill, its shade (turning from the light), and — for a
+     *  lifted flap — the shadow it casts, offset downward by its height. */
+    const face = (k: string, poly: P2[] | null, m: M6 = IDENTITY, fill = BACK, shade = 0, lifted = -1) => {
+      if (!poly) { hide(k); hide(k + 'Shade'); hide(k + 'Cast'); return }
+      const d = pathOf(poly)
+      put(k, d, m)
+      const el = els.current[k]
+      if (el && el.getAttribute('fill') !== fill) el.setAttribute('fill', fill)
+      if (shade > 0.004) put(k + 'Shade', d, m, shade); else hide(k + 'Shade')
+      if (lifted >= 0) {
+        // Down only, so it reads the same in the mirrored half.
+        const dy = 0.18 + 1.5 * lifted
+        put(k + 'Cast', d, [m[0], m[1], m[2], m[3], m[4], m[5] + dy], 0.07 + 0.07 * lifted)
+      } else hide(k + 'Cast')
+    }
+    const line = (k: string, a: P2, b: P2, m: M6, opacity: number) => {
+      if (opacity < 0.01) { hide(k + 'D'); hide(k + 'L'); return }
+      const d = `M ${a[0]} ${a[1]} L ${b[0]} ${b[1]}`
+      put(k + 'D', d, m, opacity)
+      // The lit shoulder, a hair to the side.
+      put(k + 'L', d, [m[0], m[1], m[2], m[3], m[4] + 0.14, m[5] + 0.1], opacity)
     }
     const FACES = ['base', 'cornerFlap', 'cornerStatic', 'edgeFlap', 'cornerMove']
+    const CREASES = ['c2s', 'c2m', 'c3']
     // One half's faces; the right half is drawn mirrored (and its group is
-    // turned about the crease by `lift`).
-    const half = (p: string, mirror: boolean, c: number, e: number, hidden: boolean) => {
-      if (hidden) { FACES.forEach(k => set(p + k, null)); return }
+    // turned about the crease by `lift`, which also shades it).
+    const half = (p: string, mirror: boolean, c: number, e: number, hidden: boolean, tilt: number) => {
+      if (hidden) { FACES.forEach(k => face(p + k, null)); CREASES.forEach(k => line(p + k, NOSE, NOSE, IDENTITY, 0)); return }
       const P = (pts: P2[]) => (mirror ? pts.map(mirrorP) : pts)
       const M = (m: M6) => (mirror ? mirrorM(m) : m)
-      set(p + 'base', P(e > 0 ? BASE_3 : c > 0 ? BASE_2 : SHEET), IDENTITY, FRONT)
+      const tiltShade = shadeOf(tilt)
+      const mix = (a: number) => 1 - (1 - a) * (1 - tiltShade)
+      // The base reaches a hair across the centre crease (no seam between halves).
+      const base = (e > 0 ? BASE_3 : c > 0 ? BASE_2 : SHEET).map(q => (q[0] === 0 ? [SEAM, q[1]] as P2 : q))
+      face(p + 'base', P(base), IDENTITY, FRONT, mix(0))
       if (e === 0) {
-        set(p + 'cornerFlap', c > 0 ? P(CORNER) : null, M(foldMatrix(NOSE, HINGE_2, c)), c < 0.5 ? FRONT : BACK)
-        ;['cornerStatic', 'edgeFlap', 'cornerMove'].forEach(k => set(p + k, null))
+        const th = Math.PI * c
+        face(p + 'cornerFlap', c > 0 ? P(acrossHinge(CORNER, NOSE, HINGE_2, SEAM)) : null, M(foldMatrix(NOSE, HINGE_2, c)), c < 0.5 ? FRONT : BACK, mix(shadeOf(th)), Math.sin(th))
+        ;['cornerStatic', 'edgeFlap', 'cornerMove'].forEach(k => face(p + k, null))
+        // The corner's crease forms as it presses flat (its folded edge).
+        line(p + 'c2s', NOSE, HINGE_2, M(IDENTITY), smoothstep(0.75, 1, c))
+        line(p + 'c2m', NOSE, NOSE, IDENTITY, 0)
+        line(p + 'c3', NOSE, NOSE, IDENTITY, 0)
       } else {
+        const th = Math.PI * e
         const m3 = M(foldMatrix(NOSE, HINGE_3, e))
-        set(p + 'cornerFlap', null)
-        set(p + 'cornerStatic', P(CORNER_STATIC))
-        set(p + 'edgeFlap', P(EDGE_FLAP), m3, e < 0.5 ? FRONT : BACK)
+        face(p + 'cornerFlap', null)
+        face(p + 'cornerStatic', P(CORNER_STATIC), IDENTITY, BACK, mix(0), 0)
+        face(p + 'edgeFlap', P(acrossHinge(EDGE_FLAP, NOSE, HINGE_3, SEAM)), m3, e < 0.5 ? FRONT : BACK, mix(shadeOf(th)), Math.sin(th))
         // Rides on the edge flap's face; past edge-on it's underneath.
-        set(p + 'cornerMove', e < 0.5 ? P(CORNER_MOVE) : null, m3)
+        face(p + 'cornerMove', e < 0.5 ? P(acrossHinge(CORNER_MOVE, NOSE, H3_AT_Y5, SEAM)) : null, m3, BACK, mix(shadeOf(th)))
+        // The corner's crease: the part on the static piece stays; the part
+        // riding the edge flap goes with it, then under.
+        line(p + 'c2s', NOSE, H3_AT_Y5, IDENTITY, 1)
+        line(p + 'c2m', H3_AT_Y5, HINGE_2, m3, e < 0.5 ? 1 : 0)
+        line(p + 'c3', NOSE, HINGE_3, IDENTITY, smoothstep(0.75, 1, e))
       }
     }
     const render = () => {
       if (!side) {
         const whole = split.get() === 0
         const s = lift.get()
-        set('whole', whole ? FULL_SHEET : null, IDENTITY, FRONT)
-        els.current.right?.setAttribute('transform', `scale(${s} 1)`)
-        half('L', false, cornerL.get(), edgeL.get(), whole)
+        // The right half's tilt off the table (s = cos θ).
+        const tilt = Math.acos(Math.max(-1, Math.min(1, s)))
+        face('whole', whole ? FULL_SHEET : null, IDENTITY, FRONT)
+        els.current.rightBase?.setAttribute('transform', `scale(${s} 1)`)
+        els.current.rightFlaps?.setAttribute('transform', `scale(${s} 1)`)
+        half('L', false, cornerL.get(), edgeL.get(), whole, 0)
+        // Folded over, the crease is the paper's edge now (and under it).
+        line('centre', NOSE, [0, 22], IDENTITY, whole || s < 0 ? 0 : creased.get())
         // Past edge-on, the right half shows its plain back, on top.
-        half('R', true, cornerR.get(), edgeR.get(), whole || s < 0)
-        set('Rback', !whole && s < 0 ? BASE_3.map(mirrorP) : null)
+        half('R', true, cornerR.get(), edgeR.get(), whole || s < 0, tilt)
+        // Reaching a hair past the crease, over the left half's seam allowance.
+        face('Rback', !whole && s < 0 ? BASE_3.map(q => (q[0] === 0 ? [-SEAM, q[1]] as P2 : mirrorP(q))) : null, IDENTITY, BACK, shadeOf(tilt))
       } else {
         const f = sideFaces(psi.get(), roll.get())
         const setD = (k: string, d: string | null, opacity = 1) => {
@@ -867,10 +1021,14 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
           el.setAttribute('d', d)
           el.style.opacity = String(opacity)
         }
-        setD('far', f.far); setD('keel', f.keel); setD('near', f.near)
+        const near = nearShade(psi.get())
+        setD('far', f.far); setD('farShade', f.far, farShade)
+        setD('keel', f.keel)
+        setD('near', f.near); setD('nearShade', f.near, near)
         // The wing's inner face (with the flap line) shows once it's past
         // edge-on (ψ > 90°) — the swap happens while it's a line, unseen.
-        setD('nearFlap', psi.get() > Math.PI / 2 ? f.nearFlap : null)
+        const inner = psi.get() > Math.PI / 2
+        setD('nearFlap', inner ? f.nearFlap : null); setD('nearFlapShade', inner ? f.nearFlap : null, near)
         // The hinge only becomes a fold line once the wing starts to turn.
         setD('hingeCover', f.hinge, 1 - clamp01(psi.get() / 0.35))
       }
@@ -879,7 +1037,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     // Several values often move in the same frame: render once, in Framer's
     // own render step (same frame as the stage transform; deduped per frame).
     const schedule = () => frame.render(render)
-    const unsub = [split, lift, cornerL, cornerR, edgeL, edgeR, psi, roll].map(mv => mv.on('change', schedule))
+    const unsub = [split, lift, creased, cornerL, cornerR, edgeL, edgeR, psi, roll].map(mv => mv.on('change', schedule))
     return () => { unsub.forEach(u => u()); cancelFrame(render) }
   }, [side]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -891,8 +1049,10 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     stage.start({ opacity: 1, scale: 1, transition: { duration: 0.26, ease: EASE_OUT } })
     // The typed note hands its words to the sheet in one render.
     timers.push(setTimeout(() => { setInked(true); onPaperIn() }, 300))
-    // 1 · Crease lengthwise: the right half lifts over and lays back down.
+    // 1 · Crease lengthwise: the right half lifts over and lays back down,
+    //     pressing the crease in as it lands.
     at$(0.25, () => { split.set(1); animate(lift, [1, 0.18, 1], tw(0.8)) })
+    at$(0.75, () => animate(creased, 1, tw(0.35)))
     // 2 · Top corners to the crease, left then right.
     at$(1.05, () => animate(cornerL, 1, tw(0.6)))
     at$(1.25, () => animate(cornerR, 1, tw(0.6)))
@@ -917,14 +1077,32 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const face = (k: string) => <path ref={ref(k)} {...edgeStroke} />
-  const halfFaces = (p: string) => (
+  // Draw order per face: cast shadow, paper, shade.
+  const faceEls = (k: string) => (
     <>
-      {face(p + 'base')}
-      {face(p + 'cornerFlap')}
-      {face(p + 'cornerStatic')}
-      {face(p + 'edgeFlap')}
-      {face(p + 'cornerMove')}
+      <path ref={ref(k + 'Cast')} fill={SHADE} style={{ display: 'none' }} />
+      <path ref={ref(k)} style={{ display: 'none' }} />
+      <path ref={ref(k + 'Shade')} fill={SHADE} style={{ display: 'none' }} />
+    </>
+  )
+  const creaseEls = (k: string) => (
+    <>
+      <path ref={ref(k + 'D')} {...CREASE_DARK} style={{ display: 'none' }} />
+      <path ref={ref(k + 'L')} {...CREASE_LIGHT} style={{ display: 'none' }} />
+    </>
+  )
+  // Bottom to top: both halves' bases, the centre crease, then each half's
+  // corner piece and its crease, the edge flap, what rides on it, and the
+  // fold lines that land on top.
+  const flapEls = (p: string) => (
+    <>
+      {faceEls(p + 'cornerStatic')}
+      {faceEls(p + 'cornerFlap')}
+      {creaseEls(p + 'c2s')}
+      {faceEls(p + 'edgeFlap')}
+      {faceEls(p + 'cornerMove')}
+      {creaseEls(p + 'c2m')}
+      {creaseEls(p + 'c3')}
     </>
   )
   const back = `url(#${uid}-back)`
@@ -945,19 +1123,26 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         {/* Keyed, so the side view never inherits a front-view node. */}
         {!side ? (
           <g key="front">
-            {face('whole')}
-            {halfFaces('L')}
-            <g ref={ref('right')}>
-              {halfFaces('R')}
-              {face('Rback')}
+            {faceEls('whole')}
+            {faceEls('Lbase')}
+            {/* The right half's two layers share its turn about the crease. */}
+            <g ref={ref('rightBase')}>{faceEls('Rbase')}</g>
+            {creaseEls('centre')}
+            {flapEls('L')}
+            <g ref={ref('rightFlaps')}>
+              {flapEls('R')}
+              {faceEls('Rback')}
             </g>
           </g>
         ) : (
           <g key="side">
-            <path ref={ref('far')} fill={back} {...edgeStroke} />
-            <path ref={ref('keel')} fill={back} {...edgeStroke} />
-            <path ref={ref('near')} fill={back} {...edgeStroke} />
-            <path ref={ref('nearFlap')} fill={back} {...edgeStroke} />
+            <path ref={ref('far')} fill={back} {...sideStroke} />
+            <path ref={ref('farShade')} fill={SHADE} />
+            <path ref={ref('keel')} fill={back} {...sideStroke} />
+            <path ref={ref('near')} fill={back} {...sideStroke} />
+            <path ref={ref('nearShade')} fill={SHADE} />
+            <path ref={ref('nearFlap')} fill={back} {...sideStroke} />
+            <path ref={ref('nearFlapShade')} fill={SHADE} />
             <path ref={ref('hingeCover')} stroke="#fffdf9" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
           </g>
         )}
@@ -1054,10 +1239,13 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
         {/* The fold's last frame exactly: same faces, same turn and scale. */}
         <g transform={`rotate(90) scale(${scale})`}>
           <defs><PaperPattern id={`${uid}-paper`} pxPerUnit={PAPER_K} /></defs>
-          <path d={FLY_FACES.far} fill={fill} {...edgeStroke} />
-          <path d={FLY_FACES.keel} fill={fill} {...edgeStroke} />
-          <path d={FLY_FACES.near} fill={fill} {...edgeStroke} />
-          <path d={FLY_FACES.nearFlap} fill={fill} {...edgeStroke} />
+          <path d={FLY_FACES.far} fill={fill} {...sideStroke} />
+          <path d={FLY_FACES.far} fill={SHADE} opacity={farShade} />
+          <path d={FLY_FACES.keel} fill={fill} {...sideStroke} />
+          <path d={FLY_FACES.near} fill={fill} {...sideStroke} />
+          <path d={FLY_FACES.near} fill={SHADE} opacity={nearShade(OPEN_PSI)} />
+          <path d={FLY_FACES.nearFlap} fill={fill} {...sideStroke} />
+          <path d={FLY_FACES.nearFlap} fill={SHADE} opacity={nearShade(OPEN_PSI)} />
         </g>
       </svg>
     </div>,
@@ -1113,6 +1301,9 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   // Hovered while the last note is still folding / flying.
   const [held, setHeld] = useState<Pt | null>(null)
   const shake = useAnimationControls()
+  const eggId = useId()
+  const dwell = useRef<ReturnType<typeof setTimeout>>(null)
+  useEffect(() => () => { if (dwell.current) clearTimeout(dwell.current) }, [])
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const btn = useRef<HTMLButtonElement>(null)
   const noteEl = useRef<HTMLSpanElement>(null)
@@ -1179,15 +1370,17 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       // Not another one yet: the icon shakes its head and — once the sheet
       // has left the space under the button — says why. When the plane has
       // gone, the next note starts by itself.
-      if (!reducedMotion) shake.start({ x: [0, -3, 3, -2, 1.5, 0], transition: { duration: 0.36, ease: 'easeOut' } })
+      if (!reducedMotion) shake.start({ x: [0, -2, 2, -1.2, 0.6, 0], transition: { duration: 0.32, ease: 'easeOut' } })
       setHeld(at)
       return
     }
     openedAt.current = performance.now()
+    announceOpen(eggId)
     setLetterAt(at)
     setLetterKey(k => k + 1)
   }
   const closeLetter = () => {
+    if (dwell.current) clearTimeout(dwell.current)
     // A note someone stayed to read counts as an attempt to get in touch.
     if (openedAt.current !== null && performance.now() - openedAt.current > 600) bumpLevel()
     openedAt.current = null
@@ -1195,6 +1388,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     setHeld(null)
   }
   useWindowLeave(closeLetter, !!letterAt || !!held)
+  useOthersOpening(eggId, () => { if (live.current.letterAt || live.current.held) closeLetter() })
   // Escape dismisses the note (or the hold) wherever focus is (capture:
   // before a rail underneath, which then ignores the handled key).
   useEffect(() => {
@@ -1279,7 +1473,11 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   return (
     <span
       style={{ position: 'relative', display: 'flex' }}
-      onPointerEnter={e => { if (e.pointerType !== 'touch') openLetter() }}
+      onPointerEnter={e => {
+        if (e.pointerType === 'touch') return
+        if (dwell.current) clearTimeout(dwell.current)
+        dwell.current = setTimeout(openLetter, DWELL_OPEN_MS)
+      }}
       onPointerLeave={closeLetter}
     >
       <button
@@ -1288,7 +1486,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         data-social
         className="simple-social"
         aria-label="Copy email address"
-        onFocus={openLetter}
+        onFocus={e => { if (keyboardFocus(e)) openLetter() }}
         onBlur={closeLetter}
         onClick={onClick}
       >

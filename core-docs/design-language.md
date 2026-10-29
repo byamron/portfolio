@@ -213,6 +213,9 @@ So UW and Middlebury get black + logo with no underline (no destination), and Gi
 - **Cursor glow melts into the pill** over links (one light, not two): slides to the pill centre, shrinks, fades; re-emerges on leave. It's a few 8-bit levels above the page, so it's a dithered canvas (per premultiplied channel — plain RGBA rounds the hue away at alpha 1–3), never a CSS gradient (bands into a disc with a rim). Mouse/pen only; no canvas on touch or reduced motion.
 - **Spacing on /new/simple is an 8-grid measured optically** — to baselines, glyph edges and paper edges, not to boxes with invisible padding (text→icons 48, glyph pitch 24, pop-outs/notes/plane 8 from the button, strip label→cells 16, cells→window 24).
 - **Repeat attempts escalate in tone, not in story** (the email notes): never imply messages that weren't sent; the copy only gets more excited.
+- **Paper reads by light, not outlines:** folds shade as they turn and cast contact shadows; a crease appears only as its fold lands.
+- **Pop-outs develop on intent:** a short dwell, one at a time; keyboard focus opens them, restored focus doesn't.
+- **Text re-composes only when it must:** the line set is chosen by what fits at the minimum size, not by a breakpoint.
 - **Drop-shadows go on a wrapper that doesn't rotate**, so light stays overhead while the object turns.
 - **Pop-out windows follow the page's mode** (the terminal is a light window in light mode; in dark mode a dark window lifted a step *above* the page — lighter reads as nearer, darker as recessed) — never an inverted chip. On a near-black page the shadow can't separate it; a 1px light edge does.
 - **Escape closes one layer at a time** (a pop-out before the rail beneath it).

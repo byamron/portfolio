@@ -7,7 +7,7 @@ import { useGlassHighlight } from '@/hooks/useGlassHighlight'
 import { CopyEmailButton, GitHubLink, LinkedInLink } from './ContactFx'
 import { InlineIcon, ThemePortrait } from './InlineIcon'
 import { ProtoLink } from './ProtoLink'
-import { COPY_VARIANTS, PHONE_BREAKS, protoBySlug, TEXT_PRESETS, type Seg } from './data'
+import { COPY_VARIANTS, MID_BREAKS, PHONE_BREAKS, protoBySlug, TEXT_PRESETS, type Seg } from './data'
 import { EASE_OUT, fluidSize, PAGE_GLASS_CARDS, PHONE_QUERY, useProtoSettings } from './protoSettings'
 
 // /new/simple — the sketch: one sentence, four ways to reach Ben, the
@@ -72,32 +72,56 @@ export function SimpleHome() {
   const centred = layout.align === 'center'
 
   const phone = usePhone()
-  const phoneLines = phone ? PHONE_BREAKS[layout.copy] : undefined
-  const lines = phoneLines ?? COPY_VARIANTS[layout.copy] ?? Object.values(COPY_VARIANTS)[0]!
-  // Phones keep the preset's relative size (S < M < L), capped for the measure.
-  const maxText = phoneLines ? Math.min(PHONE_MAX_TEXT, Math.round((presetSize ?? 48) * 0.8)) : layout.maxText
+  // Line sets, widest first: the desktop lines, a three-line middle, the
+  // phone breaks. Fit mode uses the first that fits the column at the
+  // minimum type size — by content, not breakpoint — so the text never
+  // re-composes before it has to (or overflows while a window is dragged).
+  const desktopLines = COPY_VARIANTS[layout.copy] ?? Object.values(COPY_VARIANTS)[0]!
+  const sets = [desktopLines, MID_BREAKS[layout.copy], PHONE_BREAKS[layout.copy]].filter((x): x is Seg[][] => !!x)
+  const colRef = useRef<HTMLDivElement>(null)
+  const [colWidth, setColWidth] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    const col = colRef.current
+    if (!col) return
+    const ro = new ResizeObserver(([e]) => setColWidth(e!.contentRect.width))
+    ro.observe(col)
+    return () => ro.disconnect()
+  }, [])
 
   // Fit mode: the text size is whatever makes the longest line exactly fill
   // the column (the measure). Each line's width in em is read from hidden
   // nowrap copies at 100px; the size itself is pure CSS (container-query
   // units), so it tracks resizes with no JS. Icons are em-sized and follow.
   const measureRef = useRef<HTMLDivElement>(null)
-  const [lineEms, setLineEms] = useState<number[] | null>(null)
+  // Longest line (em) of each set.
+  const [setEms, setSetEms] = useState<number[] | null>(null)
   useLayoutEffect(() => {
     const box = measureRef.current
     if (!box) return
     const measure = () => {
-      const ems = [...box.children].map(c => c.getBoundingClientRect().width / 100)
-      if (ems.every(e => e > 0)) setLineEms(ems)
+      const ems = [...box.children].map(set => Math.max(...[...set.children].map(c => c.getBoundingClientRect().width / 100)))
+      if (ems.every(e => e > 0)) setSetEms(cur => (cur && cur.every((v, i) => Math.abs(v - ems[i]!) < 1e-4) ? cur : ems))
     }
     measure()
     // Literata loads lazily (after first use), so fonts.ready can resolve
     // before it swaps in. Watching the copies' own size catches the swap.
     const ro = new ResizeObserver(measure)
-    for (const c of box.children) ro.observe(c)
+    for (const set of box.children) for (const c of set.children) ro.observe(c)
     return () => ro.disconnect()
-  }, [layout.copy, phoneLines])
-  const longestEm = lineEms ? Math.max(...lineEms) : null
+  }, [layout.copy])
+  // The first set whose longest line fits the column at the minimum size.
+  let chosen = 0
+  if (layout.sizeMode === 'fit' && setEms && colWidth !== null) {
+    chosen = setEms.findIndex(em => (colWidth * 0.99) / em >= layout.minText)
+    if (chosen < 0) chosen = sets.length - 1
+  } else if (phone && PHONE_BREAKS[layout.copy]) {
+    chosen = sets.length - 1
+  }
+  const lines = sets[chosen]!
+  const phoneLines = chosen > 0 && chosen === sets.length - 1 && PHONE_BREAKS[layout.copy] ? lines : undefined
+  // Phones keep the preset's relative size (S < M < L), capped for the measure.
+  const maxText = phoneLines ? Math.min(PHONE_MAX_TEXT, Math.round((presetSize ?? 48) * 0.8)) : layout.maxText
+  const longestEm = setEms?.[chosen] ?? null
   const fit = layout.sizeMode === 'fit' && longestEm !== null
   const fontSize = fit
     // 1% slack so rounding/hinting differences never wrap a line.
@@ -128,7 +152,7 @@ export function SimpleHome() {
     document.fonts?.ready.then(measure)
     return () => ro.disconnect()
     // fontSize: a new size re-wraps the text, so the widest line moves too.
-  }, [layout.shrinkWrap, layout.maxWidth, layout.wrap, centred, fontSize, layout.copy, phoneLines])
+  }, [layout.shrinkWrap, layout.maxWidth, layout.wrap, centred, fontSize, layout.copy, chosen])
 
   // On the whole page, so the strip's GitHub link (data-link-card) shares the
   // prose links' glass.
@@ -184,6 +208,7 @@ export function SimpleHome() {
           padding: phone ? `96px 24px 64px ${STRIP_LABEL_INSET}px` : '96px clamp(24px, 6vw, 72px) 64px',
           containerType: 'inline-size',
         }}
+        ref={colRef}
       >
       <div
         ref={blockRef}
@@ -195,7 +220,7 @@ export function SimpleHome() {
         }}
       >
         <motion.p
-          className={phoneLines ? 'simple-intro' : 'simple-intro simple-intro--auto-phone'}
+          className="simple-intro"
           variants={item}
           custom={0}
           style={{
@@ -209,7 +234,7 @@ export function SimpleHome() {
           }}
         >
           {lines.map((line, li) => (
-            <span key={`${phoneLines ? 'p' : 'd'}${li}`}>
+            <span key={`${chosen}-${li}`}>
               {li > 0 && <br />}
               {line.map((seg, i) => renderSeg(seg, i, false))}
             </span>
@@ -226,10 +251,14 @@ export function SimpleHome() {
             fontFamily: '"Literata", Georgia, serif', fontSize: 100, fontWeight: 300,
           }}
         >
-          {lines.map((line, li) => (
-            <span key={li} style={{ display: 'block', width: 'max-content', whiteSpace: 'nowrap' }}>
-              {line.map((seg, i) => renderSeg(seg, i, true))}
-            </span>
+          {sets.map((set, si) => (
+            <div key={si}>
+              {set.map((line, li) => (
+                <span key={li} style={{ display: 'block', width: 'max-content', whiteSpace: 'nowrap' }}>
+                  {line.map((seg, i) => renderSeg(seg, i, true))}
+                </span>
+              ))}
+            </div>
           ))}
         </div>
         </div>

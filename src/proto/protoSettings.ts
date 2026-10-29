@@ -57,7 +57,7 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   cardCase: 'caps',
   simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · S' },
   cursorGlow: { on: true, intensity: 0.15, radius: 224, tint: 1 }, // Ben's tuning
-  emailFx: { typeCps: 50, foldPace: 1.6, planeLength: 100, throwSpeed: 1.5 }, // Ben's tuning
+  emailFx: { typeCps: 32, foldPace: 0.28, planeLength: 100, throwSpeed: 1.5 }, // typing starts at the terminal's 32/s; fold ≈ 2s (Ben)
   record: {
     size: 0.6,
     trackId: 'martini',

@@ -123,13 +123,7 @@
   }
 }
 
-/* Phones without designed breaks (PHONE_BREAKS): the type sits at its
-   floor and wraps anyway, so the forced break only makes ragged lines; let
-   the browser balance it. */
-@media (max-width: 640px) {
-  .simple-intro--auto-phone br { display: none; }
-  .simple-intro--auto-phone { text-wrap: balance !important; }
-}
+
 
 .sr-only {
   position: absolute;

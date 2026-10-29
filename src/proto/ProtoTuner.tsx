@@ -47,7 +47,7 @@ export default function ProtoTuner({ children }: { children: ReactNode }) {
   const E = P.emailFx
   const email = useDialKit('Email note', useStableConfig({
     'Typing chars/s': [E.typeCps, 10, 80, 1],
-    'Fold duration (×)': [E.foldPace, 0.5, 2.5, 0.05],
+    'Fold duration (×)': [E.foldPace, 0.15, 2.5, 0.01],
     'Plane length px': [E.planeLength, 70, 200, 2],
     'Throw speed (×)': [E.throwSpeed, 0.6, 2.5, 0.05],
   } satisfies DialConfig), { id: 'proto-email' })

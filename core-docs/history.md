@@ -2,6 +2,14 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-29 — `/new/simple`: natural creasing, 2s fold, one pop-out at a time, content-driven line breaks
+
+- **Creasing by light, not outlines (Ben: "they just look like vector lines… appear before the folding motion"):** no strokes on the flat folds. Each flap darkens as it turns edge-on (sin^1.4) and casts a contact shadow that's large while lifted and tightens as it's pressed flat; the right half shades as it turns about the crease. A crease (soft dark valley + lit shoulder, non-scaling) only fades in as its fold lands (corner/edge: smoothstep 0.75→1; centre: as the half lays back down) — never before the motion. Faces reach a hair (0.12 units) across their hinges so adjoining pieces never show an antialiased seam; bases, then the centre crease, then flaps (the right half split into two layers sharing its turn). Plane faces: soft edges, far wing in shade, near wing shaded by angle (same in the thrown sprite). Paper tile 96 → 256px: quieter grain, a faint slow mottle, a few soft fibres.
+- **Fold ≈ 2s** (Ben): fold duration ×0.28 (dial floor 0.15). Typing starts at the terminal's 32/s and steps up ×1.2 → ×2.6 with the tone.
+- **Hover pop-outs (Ben: several open at once):** each develops only after a 220ms dwell (the glass pill is still instant); one at a time (opening one closes the others); focus opens one only for real keyboard focus — not the browser restoring focus when the window returns (that arrives as :focus-visible, so a window-focus timestamp is checked too).
+- **Card:** a very slight tilt toward the pointer (±4°, soft spring) and a faint, out-of-step 3D sway, after Ben's reference recording. Email icon head-shake subtler (±2px).
+- **Line breaks by content, not breakpoint (Ben: "why does the text content change before it needs to"):** fit mode picks the first of desktop (2 lines) → a new 3-line middle set → phone breaks that fits the column at the minimum size. Swept 1280→340px: 2 lines ≥620, 3 lines 500–610, phone ≤490, no overflow at any width (the clipped-while-dragging frames in Ben's recording came from the old fixed 640px switch).
+
 ## 2026-10-29 — `/new/simple`: escalating notes, hold state, 8-grid spacing
 
 - **Escalating notes (Ben):** each note someone reads (≥600ms) or sends this session makes the next more excited — same content, tone climbing (no "following up" / multiple-message references, per Ben) until it's LET'S CHAT LET'S CHAT; typing speeds up, pauses shrink, and from level 4 a typo is typed, noticed and backspaced. sessionStorage `email-note-level`. Each note ends with an escalating "P.S. Click to copy address" — the hint toward the click (and the plane). The sheet is sized to the longest line across all notes; the note on screen at the click is the one folded into the plane.
