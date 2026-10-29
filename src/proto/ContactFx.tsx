@@ -506,12 +506,12 @@ async function copyText(text: string): Promise<boolean> {
 // Each ends in a P.S. that hints at the click (and the plane). The sheet
 // is sized to the longest line across all of them.
 const NOTE_PS = [
-  'P.S. Click to copy address',
-  'P.S. Click to copy address',
-  'P.S. Click to copy address!',
-  'P.S. CLICK to copy address',
-  'P.S. CLICK TO COPY ADDRESS',
-  'P.S. CLICK!! TO!! COPY!!',
+  'p.s. click to copy address',
+  'p.s. click to copy address',
+  'p.s. click to copy address!',
+  'p.s. CLICK to copy address',
+  'p.s. CLICK TO COPY ADDRESS',
+  'p.s. CLICK!! TO!! COPY!!',
 ]
 const NOTES = ([
   "Hi Ben,\n\nI love your portfolio and\nyou seem really cool.\nLet's chat!\n\nBest,\n[Your name]",
