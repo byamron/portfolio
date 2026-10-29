@@ -37,6 +37,10 @@ function renderSeg(seg: Seg, i: number, measuring: boolean) {
 }
 
 const STRIP_LABEL_INSET = 40 // ContributionStrip's label paddingLeft
+// Spacing is an 8-grid measured to what you see (baselines, glyph edges),
+// not to boxes: 24px between glyphs, 48px from text to icons.
+const ICON_INSET = 10 // (44px button − 24px glyph) / 2
+const SPACE_TEXT_TO_ICONS = 48
 const PHONE_MAX_TEXT = 38
 const subscribePhone = (cb: () => void) => {
   const mq = window.matchMedia(PHONE_QUERY)
@@ -235,7 +239,10 @@ export function SimpleHome() {
           custom={1}
           aria-label="Elsewhere"
           // Left: pulled back so the first glyph lines up with the text edge.
-          style={{ listStyle: 'none', margin: centred ? '40px 0 0' : '40px 0 0 -10px', padding: 0, display: 'flex', gap: 4, justifyContent: centred ? 'center' : 'flex-start' }}
+          // Top: 48px from the last line's baseline to the glyphs (8-grid,
+          // measured optically): less the button's 10px inset and the ~0.2em
+          // of line box under the baseline, at whatever size the text is.
+          style={{ listStyle: 'none', marginTop: `calc(${SPACE_TEXT_TO_ICONS - ICON_INSET}px - 0.2 * ${fontSize})`, marginLeft: centred ? 0 : -ICON_INSET, padding: 0, display: 'flex', gap: 4, justifyContent: centred ? 'center' : 'flex-start' }}
         >
           {SOCIALS.map(({ id, label, Icon }) => {
             const { href } = protoBySlug.get(id)!
@@ -264,6 +271,8 @@ export function SimpleHome() {
 
       {/* Contribution strip — full-bleed foot of the page (as on /new): at
           the viewport bottom when the content fits, below it when it scrolls. */}
+      {/* 16px from the strip's cells to the window's bottom edge (its row
+          carries 6px of hit padding below the cells). */}
       <motion.div variants={item} custom={2} style={{ alignSelf: 'stretch', flexShrink: 0, paddingBottom: 8 }}>
         <ContributionStrip topGap={0} />
       </motion.div>

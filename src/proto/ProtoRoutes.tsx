@@ -16,7 +16,7 @@ import { SimpleHome } from './SimpleHome'
 const SIMPLE_CONTROL_SCALE = 1.15
 // RecordToggle's size unit is 96px of plinth height.
 // The settings button sits in the page's top-right corner.
-const SIMPLE_TRIGGER_TOP = 24
+const SIMPLE_TRIGGER_TOP = 21 // glyph 32px from the top (8-grid), square with its 32–33px from the right
 // The rail stops above the contribution strip (label + cells + breathing room).
 const STRIP_RESERVE = 104
 

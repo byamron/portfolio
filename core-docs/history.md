@@ -2,6 +2,13 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-29 — `/new/simple`: escalating notes, hold state, 8-grid spacing
+
+- **Escalating notes (Ben):** each note someone reads (≥600ms) or sends this session makes the next more excited — same content, tone climbing (no "following up" / multiple-message references, per Ben) until it's LET'S CHAT LET'S CHAT; typing speeds up, pauses shrink, and from level 4 a typo is typed, noticed and backspaced. sessionStorage `email-note-level`. Each note ends with an escalating "P.S. Click to copy address" — the hint toward the click (and the plane). The sheet is sized to the longest line across all notes; the note on screen at the click is the one folded into the plane.
+- **Hover while the last one is moving (Ben):** the icon shakes its head (macOS-password style, 0.36s); once the plane is airborne (the sheet was under the button until then), a grey system line types there — "One at a time — the last one is still in the air." When the plane has gone and you're still hovering, it clears and the next note starts (the blimp's air-traffic-control pattern).
+- **Ben's defaults:** typing 50 chars/s, fold duration ×1.6 (dial renamed from "pace" — it multiplies durations), plane 100px, throw speed ×1.5.
+- **8-grid spacing (Ben: "follow a base 8 system… slightly tighter"):** measured optically, not by boxes — text baseline → icon glyphs 57 → 48 (margin derived from the intro's font size, so it holds at every size); glyph pitch 24 (was); pop-outs 10 → 8 below the button; the email sheet 8 below the button with 16/16 text insets and a 16px note line; the plane in the hand and the copied note 8 from the button; settings glyph 35 → 32 from the top (square with the right); strip label baseline → cells 21 → 16; cells → window bottom 24 (was).
+
 ## 2026-10-28 — `/new/simple`: email note → paper plane (Ben's direction)
 
 - **Hover:** the prod email preview's note ("Hi Ben, / I love your portfolio and / you seem really cool. / Let's chat! / Best, / [Your name]") types out under the button in IBM Plex Mono 12/1.6 (the terminal's setting), with a caret and a beat at line ends. Mounted/faded by hand, not AnimatePresence — the note keeps typing through its exit and an exited copy could linger invisibly.

@@ -230,7 +230,7 @@
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-weight: 400;
   font-size: 11px;
-  line-height: 1.55; /* LETTER_PX / LETTER_LH in ContactFx */
+  line-height: 16px; /* LETTER_PX / LETTER_LH in ContactFx */
   white-space: pre;
   color: var(--text-dark);
   pointer-events: none;
@@ -247,6 +247,10 @@
 @keyframes email-letter-in { from { opacity: 0; } }
 .email-letter[data-on-paper] {
   color: #2b2620;
+}
+/* The hold line ("One at a time…"): the page's voice, not the note's. */
+.email-letter[data-status] {
+  color: var(--text-grey);
 }
 
 /* The terminal follows the page's mode: a light window in light mode, a

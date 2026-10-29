@@ -89,7 +89,7 @@ function IconPopover({ show, children, width }: { show: boolean; children: React
           animate={{ opacity: 1, scale: 1, y: 0, transition: reducedMotion ? { duration: 0.12 } : POP }}
           exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.9, transition: { duration: 0.12, ease: 'easeIn' } }}
           style={{
-            position: 'absolute', top: 'calc(100% + 10px)', left: 0, width,
+            position: 'absolute', top: 'calc(100% + 8px)', left: 0, width,
             transformOrigin: '22px -10px', // the icon's centre
             zIndex: 30, pointerEvents: 'none',
           }}
@@ -501,23 +501,58 @@ async function copyText(text: string): Promise<boolean> {
 }
 
 // The note (Ben's prod email preview, tongue in cheek), set like the terminal.
-const LETTER = "Hi Ben,\n\nI love your portfolio and\nyou seem really cool.\nLet's chat!\n\nBest,\n[Your name]"
-const LETTER_LINES = LETTER.split('\n')
+// Each one someone reads or sends this session, the next is more excited —
+// the same note, the tone climbing until it's just LET'S CHAT.
+// Each ends in a P.S. that hints at the click (and the plane). The sheet
+// is sized to the longest line across all of them.
+const NOTE_PS = [
+  'P.S. Click to copy address',
+  'P.S. Click to copy address',
+  'P.S. Click to copy address!',
+  'P.S. CLICK to copy address',
+  'P.S. CLICK TO COPY ADDRESS',
+  'P.S. CLICK!! TO!! COPY!!',
+]
+const NOTES = ([
+  "Hi Ben,\n\nI love your portfolio and\nyou seem really cool.\nLet's chat!\n\nBest,\n[Your name]",
+  "Hi Ben!\n\nI really love your\nportfolio, and you seem\nreally, really cool.\nLet's chat!!\n\nBest,\n[Your name]",
+  "Hi Ben!!\n\nI LOVE your portfolio.\nYou seem SO cool.\nWe should totally chat!!\n\nBest!!\n[Your name]",
+  "BEN!!\n\nYour portfolio is SO\ngood and you seem SO\ncool. LET'S CHAT!!!\n\nBest!!!\n[Your name]",
+  "BEN!!!!\n\nLOVE THE PORTFOLIO!!!\nYOU SEEM SO COOL!!!\nLET'S CHAT!!! LET'S CHAT!!\n\n[YOUR NAME]!!!",
+  "BEN!!!!!!!!\n\nLET'S CHAT LET'S CHAT\nLET'S CHAT LET'S CHAT\nLET'S CHAT LET'S CHAT!!!\n\n[YOUR NAME]",
+]).map((body, i) => `${body}\n\n${NOTE_PS[i]}`)
+const NOTE_MAX_CHARS = Math.max(...NOTES.flatMap(n => n.split('\n').map(l => l.length)))
+// How each note types: faster, fewer pauses, and — once composure goes —
+// typos, noticed and backspaced.
+const NOTE_TEMPO = [
+  { speed: 1, beat: 3.5, typo: 0 },
+  { speed: 1.15, beat: 3, typo: 0 },
+  { speed: 1.35, beat: 2.5, typo: 0 },
+  { speed: 1.6, beat: 2, typo: 0.04 },
+  { speed: 1.9, beat: 1.6, typo: 0.07 },
+  { speed: 2.3, beat: 1.25, typo: 0.1 },
+]
+// While the last note is still folding / flying: the system's voice, not the note's.
+const HELD_NOTE = 'One at a time \u2014 the last\none is still in the air.'
+const NOTE_LEVEL_KEY = 'email-note-level'
+const readNoteLevel = () => {
+  try { return Math.min(NOTES.length - 1, Number(sessionStorage.getItem(NOTE_LEVEL_KEY)) || 0) } catch { return 0 }
+}
 const LETTER_PX = 11
-const LETTER_LH = LETTER_PX * 1.55 // matches .email-letter
+const LETTER_LH = 16 // matches .email-letter (8-grid)
 const LETTER_FONT = "'IBM Plex Mono', ui-monospace, monospace"
 const INK = '#2b2620'
 
 // The sheet the note lands on: a portrait sheet (34 × 44 sheet units), the
 // note inset like a letter — text at the top, the rest of the page blank.
-// Sized to the note: its longest line (25 mono chars) plus the side margins.
-const PAD_X = 14
-const PAD_TOP = 13
-const PAPER_W = Math.round(25 * 0.6 * LETTER_PX + 2 * PAD_X)
+// Sized to the notes: the longest line (mono, 0.6em a character) plus margins.
+const PAD_X = 16
+const PAD_TOP = 16
+const PAPER_W = Math.round(NOTE_MAX_CHARS * 0.6 * LETTER_PX + 2 * PAD_X)
 const PAPER_K = PAPER_W / 34 // px per sheet unit at note size
 const PAPER_H = 44 * PAPER_K
-// The note sits so its sheet starts 12px below the button.
-const LETTER_GAP = 12 + PAD_TOP
+// The note sits so its sheet starts 8px below the button.
+const LETTER_GAP = 8 + PAD_TOP
 
 /** Baseline of note line `i` on the sheet (px from its top), matching the
  *  DOM note's CSS line boxes (half-leading around the font's ascent+descent),
@@ -538,19 +573,53 @@ function letterBaseline(i: number) {
   return PAD_TOP + i * LETTER_LH + (LETTER_LH - asc - desc) / 2 + asc
 }
 
-/** Types the note out, a character at a time with a little human
- *  unevenness and a beat at line ends and punctuation. */
-function TypedLetter({ cps, complete, caret }: { cps: number; complete: boolean; caret: boolean }) {
-  const [n, setN] = useState(complete ? LETTER.length : 0)
-  useEffect(() => { if (complete) setN(LETTER.length) }, [complete])
+/** Types a note out, a keystroke at a time with a little human unevenness
+ *  and a beat at line ends and punctuation. With `typo` > 0, now and then a
+ *  wrong key goes in, is noticed, and is backspaced. */
+const NEAR_KEYS = 'asdfghjklqwertyuiopzxcvbnm'
+function TypedLetter({ text, cps, beat = 3.5, typo = 0, complete, caret }: {
+  text: string; cps: number; beat?: number; typo?: number; complete: boolean; caret: boolean
+}) {
+  // The keystrokes (null = backspace), drawn once per note.
+  const keys = useMemo(() => {
+    const out: (string | null)[] = []
+    for (const ch of text) {
+      if (typo && /[a-z]/i.test(ch) && Math.random() < typo) {
+        const wrong = NEAR_KEYS[Math.floor(Math.random() * NEAR_KEYS.length)]!
+        out.push(ch === ch.toUpperCase() ? wrong.toUpperCase() : wrong, null)
+      }
+      out.push(ch)
+    }
+    return out
+  }, [text, typo])
+  const [n, setN] = useState(complete ? keys.length : 0)
+  useEffect(() => { if (complete) setN(keys.length) }, [complete, keys.length])
   useEffect(() => {
-    if (n >= LETTER.length) return
-    const prev = LETTER[n - 1]
-    const beat = prev === '\n' || prev === ',' || prev === '.' || prev === '!' ? 3.5 : 1
-    const t = setTimeout(() => setN(v => v + 1), (1000 / cps) * (0.6 + Math.random() * 0.8) * beat)
+    if (n >= keys.length) return
+    const prev = keys[n - 1], next = keys[n]
+    const pause = next === null ? 2.2 // noticing the typo
+      : prev === null ? 0.6 // the backspace was quick
+      : prev === '\n' || prev === ',' || prev === '.' || prev === '!' ? beat : 1
+    const t = setTimeout(() => setN(v => v + 1), (1000 / cps) * (0.6 + Math.random() * 0.8) * pause)
     return () => clearTimeout(t)
-  }, [n, cps])
-  return <>{LETTER.slice(0, n)}{caret && <span className="term-caret" />}</>
+  }, [n, cps, beat, keys])
+  let shown = ''
+  for (let i = 0; i < n; i++) { const k = keys[i]; shown = k === null ? shown.slice(0, -1) : shown + k }
+  return <>{shown}{caret && <span className="term-caret" />}</>
+}
+
+/** Keeps a floating element mounted while shown and for its 160ms CSS
+ *  fade-out, then unmounts it. (Not AnimatePresence: a note keeps typing
+ *  through its exit, and that re-rendering could leave an invisible exited
+ *  copy behind.) */
+function useFadeMount(pos: Pt | null, key: number) {
+  const [mount, setMount] = useState<{ pos: Pt; key: number } | null>(null)
+  useEffect(() => {
+    if (pos) { setMount({ pos, key }); return }
+    const t = setTimeout(() => setMount(null), 200)
+    return () => clearTimeout(t)
+  }, [pos?.x, pos?.y, key]) // eslint-disable-line react-hooks/exhaustive-deps
+  return mount
 }
 
 // ── Paper airplane: a real dart fold, then a physical glide ─────────────
@@ -600,13 +669,13 @@ function PaperPattern({ id, pxPerUnit }: { id: string; pxPerUnit: number }) {
   )
 }
 /** The printed side: paper grain with the note set on it, in sheet units. */
-function LetterPattern({ id, grainId, inked }: { id: string; grainId: string; inked: boolean }) {
+function LetterPattern({ id, grainId, inked, lines }: { id: string; grainId: string; inked: boolean; lines: string[] }) {
   return (
     <pattern id={id} patternUnits="userSpaceOnUse" x={-17} y={-22} width={34} height={44}>
       <rect width={34} height={44} fill={`url(#${grainId})`} />
       {/* Off until the typed note hands over (same frame), so the two never double up. */}
       <text fontFamily={LETTER_FONT} fontWeight={400} fontSize={LETTER_PX / PAPER_K} fill={INK} opacity={inked ? 1 : 0}>
-        {LETTER_LINES.map((line, i) => (
+        {lines.map((line, i) => (
           <tspan key={i} x={PAD_X / PAPER_K} y={letterBaseline(i) / PAPER_K}>{line}</tspan>
         ))}
       </text>
@@ -726,8 +795,8 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 /** The note's sheet: fades in under the typed note, folds (a parameter per
  *  step, every face derived from them each frame, so the paper stays one
  *  continuous sheet), then is lifted into the throwing hand at `launch`. */
-function LetterFold({ at, launch, kPlane, pace, onPaperIn, onFolded }: {
-  at: Pt; launch: Pt; kPlane: number; pace: number; onPaperIn: () => void; onFolded: (at: Pt) => void
+function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
+  at: Pt; launch: Pt; kPlane: number; pace: number; lines: string[]; onPaperIn: () => void; onFolded: (at: Pt) => void
 }) {
   const uid = useId().replace(/:/g, '')
   const stage = useAnimationControls()
@@ -871,7 +940,7 @@ function LetterFold({ at, launch, kPlane, pace, onPaperIn, onFolded }: {
       >
         <defs>
           <PaperPattern id={`${uid}-back`} pxPerUnit={PAPER_K} />
-          <LetterPattern id={`${uid}-front`} grainId={`${uid}-back`} inked={inked} />
+          <LetterPattern id={`${uid}-front`} grainId={`${uid}-back`} inked={inked} lines={lines} />
         </defs>
         {/* Keyed, so the side view never inherits a front-view node. */}
         {!side ? (
@@ -997,8 +1066,9 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
 }
 
 /** The note → sheet → fold → throw, as one object. */
-function LetterPlane({ text, launch, kPlane, pace, speed, onPaperIn, onTail, onDone }: {
-  text: Pt; launch: Pt; kPlane: number; pace: number; speed: number; onPaperIn: () => void; onTail: (x: number) => void; onDone: () => void
+function LetterPlane({ text, lines, launch, kPlane, pace, speed, onPaperIn, onLaunch, onTail, onDone }: {
+  text: Pt; lines: string[]; launch: Pt; kPlane: number; pace: number; speed: number
+  onPaperIn: () => void; onLaunch: () => void; onTail: (x: number) => void; onDone: () => void
 }) {
   // Released level from the fold's pose; thrown well above trim speed so it
   // shoots out, then climbs gently on its own lift.
@@ -1011,10 +1081,10 @@ function LetterPlane({ text, launch, kPlane, pace, speed, onPaperIn, onTail, onD
   const [flight, setFlight] = useState<Pt | null>(null)
   return flight
     ? <PaperFlight from={flight} launch={toss} scale={kPlane} onTail={onTail} onDone={onDone} />
-    : <LetterFold at={at} launch={launch} kPlane={kPlane} pace={pace} onPaperIn={onPaperIn} onFolded={setFlight} />
+    : <LetterFold at={at} launch={launch} kPlane={kPlane} pace={pace} lines={lines} onPaperIn={onPaperIn} onFolded={p => { setFlight(p); onLaunch() }} />
 }
 
-type Throwing = { text: Pt; launch: Pt; noteLeft: number }
+type Throwing = { text: Pt; lines: string[]; launch: Pt; noteLeft: number }
 
 /** Email. Hover: a note to Ben types out under the button. Click: copies
  *  the address (never shown) — the icon turns to a check; the note lands on
@@ -1031,6 +1101,18 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   // At most one note in the air: from the click until the plane has gone.
   const [throwing, setThrowing] = useState<Throwing | null>(null)
   const [onPaper, setOnPaper] = useState(false)
+  const [airborne, setAirborne] = useState(false)
+  // This session's escalation (see NOTES).
+  const [level, setLevel] = useState(readNoteLevel)
+  const bumpLevel = () => setLevel(l => {
+    const next = Math.min(NOTES.length - 1, l + 1)
+    try { sessionStorage.setItem(NOTE_LEVEL_KEY, String(next)) } catch { /* private mode */ }
+    return next
+  })
+  const openedAt = useRef<number | null>(null)
+  // Hovered while the last note is still folding / flying.
+  const [held, setHeld] = useState<Pt | null>(null)
+  const shake = useAnimationControls()
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const btn = useRef<HTMLButtonElement>(null)
   const noteEl = useRef<HTMLSpanElement>(null)
@@ -1045,8 +1127,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const revealed = useRef(true)
   const maskEdge = useTransform(revealX, v => `${Math.round(v - noteLeft.current)}px`)
 
-  const live = useRef({ throwing, letterAt })
-  useLayoutEffect(() => { live.current = { throwing, letterAt } })
+  const live = useRef({ throwing, letterAt, held })
+  useLayoutEffect(() => { live.current = { throwing, letterAt, held } })
 
   const swap = reducedMotion
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
@@ -1088,27 +1170,43 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
 
   // Hover/focus: the note types out (mouse/pen, wider than a phone).
   const openLetter = () => {
-    if (!canFold || live.current.throwing || live.current.letterAt) return
+    if (!canFold || live.current.letterAt) return
     if (window.matchMedia(PHONE_QUERY).matches) return
     const r = btn.current?.getBoundingClientRect()
     if (!r) return
-    setLetterAt({ x: r.left, y: r.bottom + LETTER_GAP })
+    const at = { x: r.left, y: r.bottom + LETTER_GAP }
+    if (live.current.throwing) {
+      // Not another one yet: the icon shakes its head and — once the sheet
+      // has left the space under the button — says why. When the plane has
+      // gone, the next note starts by itself.
+      if (!reducedMotion) shake.start({ x: [0, -3, 3, -2, 1.5, 0], transition: { duration: 0.36, ease: 'easeOut' } })
+      setHeld(at)
+      return
+    }
+    openedAt.current = performance.now()
+    setLetterAt(at)
     setLetterKey(k => k + 1)
   }
-  const closeLetter = () => setLetterAt(null)
-  useWindowLeave(closeLetter, !!letterAt)
-  // Escape dismisses the note wherever focus is (capture: before a rail
-  // underneath, which then ignores the handled key).
+  const closeLetter = () => {
+    // A note someone stayed to read counts as an attempt to get in touch.
+    if (openedAt.current !== null && performance.now() - openedAt.current > 600) bumpLevel()
+    openedAt.current = null
+    setLetterAt(null)
+    setHeld(null)
+  }
+  useWindowLeave(closeLetter, !!letterAt || !!held)
+  // Escape dismisses the note (or the hold) wherever focus is (capture:
+  // before a rail underneath, which then ignores the handled key).
   useEffect(() => {
-    if (!letterAt || throwing) return
+    if ((!letterAt || throwing) && !held) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return
       e.preventDefault()
-      setLetterAt(null)
+      closeLetter()
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
-  }, [letterAt, throwing])
+  }, [letterAt, throwing, held]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const finishReveal = () => {
     if (revealed.current) return
@@ -1133,22 +1231,26 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     const fold = canFold && !reducedMotion && !live.current.throwing && r && !window.matchMedia(PHONE_QUERY).matches
     if (fold) {
       const text = live.current.letterAt ?? { x: r.left, y: r.bottom + LETTER_GAP }
-      // The note now belongs to the throw; once the plane has gone, a new one
-      // types only on the next hover.
+      const lines = NOTES[level]!.split('\n')
+      // The note now belongs to the throw (and the next will be keener);
+      // once the plane has gone, a new one types on the next hover.
+      openedAt.current = null
+      bumpLevel()
       setLetterAt(null)
+      setAirborne(false)
       placeNote()
       // Held in the hand just right of the button — its real outline clear of
       // the button and its focus ring (+4px) — over where the note will be,
       // so its tail uncovers the note as it goes. Centred on the row.
       const kPlane = emailFx.planeLength / 44
       const launch = {
-        x: r.right + 10 + FLY_BOUNDS.tail * kPlane, // Ben: ~8px further right than first cut
+        x: r.right + 8 + FLY_BOUNDS.tail * kPlane, // 8px from the button, like the note
         y: r.top + r.height / 2 - ((FLY_BOUNDS.top + FLY_BOUNDS.bottom) / 2) * kPlane,
       }
       revealed.current = false
       revealX.set(-1e6)
       setOnPaper(false)
-      setThrowing({ text, launch, noteLeft: r.right + 8 })
+      setThrowing({ text, lines, launch, noteLeft: r.right + 8 })
       // If the plane never clears the note (it turned back early, or the tab
       // was hidden), finish the reveal anyway.
       later((5.72 * emailFx.foldPace + 0.3 + 2.6) * 1000, () => {
@@ -1167,16 +1269,12 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
 
   const kPlane = emailFx.planeLength / 44
   const letterPos = throwing ? (onPaper ? null : throwing.text) : letterAt
-  // Mounted while shown and for its fade-out; unmounted after. (Not
-  // AnimatePresence: the note keeps typing through its exit, and that
-  // re-rendering could leave an invisible exited copy behind.)
-  const [letterMount, setLetterMount] = useState<{ pos: Pt; key: number } | null>(null)
-  useEffect(() => {
-    if (letterPos) { setLetterMount({ pos: letterPos, key: letterKey }); return }
-    const t = setTimeout(() => setLetterMount(null), 200)
-    return () => clearTimeout(t)
-  }, [letterPos?.x, letterPos?.y, letterKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const letterMount = useFadeMount(letterPos, letterKey)
   const handedOver = !!throwing && onPaper
+  const tempo = NOTE_TEMPO[level]!
+  // The hold line shows once the plane is in the air (the sheet was there).
+  const heldPos = held && airborne ? held : null
+  const heldMount = useFadeMount(heldPos, 0)
 
   return (
     <span
@@ -1194,6 +1292,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         onBlur={closeLetter}
         onClick={onClick}
       >
+        <motion.span animate={shake} style={{ display: 'flex' }}>
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
             key={copied ? 'check' : 'mail'}
@@ -1204,17 +1303,26 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
             {copied ? <Check size={24} weight="regular" aria-hidden="true" /> : icon}
           </motion.span>
         </AnimatePresence>
+        </motion.span>
       </button>
       {throwing && (
         <LetterPlane
           text={throwing.text}
+          lines={throwing.lines}
           launch={throwing.launch}
           kPlane={kPlane}
           pace={emailFx.foldPace}
           speed={emailFx.throwSpeed}
           onPaperIn={() => setOnPaper(true)}
+          onLaunch={() => setAirborne(true)}
           onTail={onTail}
-          onDone={() => { setThrowing(null); setOnPaper(false) }}
+          onDone={() => {
+            setThrowing(null)
+            setOnPaper(false)
+            setAirborne(false)
+            // Still waiting: the hold line clears and the next note starts.
+            if (live.current.held) { setHeld(null); later(220, openLetter) }
+          }}
         />
       )}
       {letterMount && createPortal(
@@ -1228,7 +1336,26 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           // (identical) text appears. Otherwise a soft fade.
           style={{ left: letterMount.pos.x, top: letterMount.pos.y, transition: handedOver ? 'none' : undefined }}
         >
-          <TypedLetter cps={emailFx.typeCps} complete={!!throwing || !!reducedMotion} caret={!throwing} />
+          <TypedLetter
+            text={throwing ? throwing.lines.join('\n') : NOTES[level]!}
+            cps={emailFx.typeCps * tempo.speed}
+            beat={tempo.beat}
+            typo={tempo.typo}
+            complete={!!throwing || !!reducedMotion}
+            caret={!throwing}
+          />
+        </div>,
+        document.body,
+      )}
+      {heldMount && createPortal(
+        <div
+          aria-hidden="true"
+          className="email-letter"
+          data-status=""
+          data-shown={heldPos ? '' : undefined}
+          style={{ left: heldMount.pos.x, top: heldMount.pos.y }}
+        >
+          <TypedLetter text={HELD_NOTE} cps={emailFx.typeCps * 2} beat={2} complete={!!reducedMotion} caret />
         </div>,
         document.body,
       )}

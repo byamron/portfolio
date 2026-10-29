@@ -44,8 +44,8 @@ export interface ProtoSettings {
   }
   /** /new/simple experiment: the glass pill's cursor light, page-wide. */
   cursorGlow: { on: boolean; intensity: number; radius: number; tint: number }
-  /** Email note → paper plane. foldPace scales the fold's timing (1 = as
-   *  tuned); planeLength is the thrown plane's length in px. */
+  /** Email note → paper plane. foldPace multiplies the fold's durations
+   *  (>1 = slower); planeLength is the thrown plane's length in px. */
   emailFx: { typeCps: number; foldPace: number; planeLength: number; throwSpeed: number }
 }
 
@@ -57,7 +57,7 @@ export const PROTO_DEFAULTS: ProtoSettings = {
   cardCase: 'caps',
   simpleLayout: { align: 'left', maxWidth: 1120, wrap: 'pretty', shrinkWrap: true, sizeMode: 'fit', minText: 26, maxText: 56, copy: 'two · even', preset: '2 lines · S' },
   cursorGlow: { on: true, intensity: 0.15, radius: 224, tint: 1 }, // Ben's tuning
-  emailFx: { typeCps: 30, foldPace: 1, planeLength: 120, throwSpeed: 1 },
+  emailFx: { typeCps: 50, foldPace: 1.6, planeLength: 100, throwSpeed: 1.5 }, // Ben's tuning
   record: {
     size: 0.6,
     trackId: 'martini',

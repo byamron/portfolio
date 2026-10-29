@@ -11,6 +11,7 @@ const STEP = CELL + GAP // 18px per day
 const RADIUS = 2
 const EDGE = 16
 const HIT_PAD = 10
+const LABEL_TO_CELLS = 16 - HIT_PAD - 5 // baseline → cells = 16
 const PILL_PAD = 2
 const PILL_RADIUS = RADIUS + PILL_PAD
 const TIP_OFFSET = 8
@@ -418,8 +419,11 @@ export function ContributionStrip({ labelPosition = 'top', topGap, labelAccessor
           fontFamily: "'Onest', sans-serif", fontSize: 'var(--text-size-small)', lineHeight: 1.3,
           color: 'var(--text-grey)', paddingLeft: labelInset,
           order: labelPosition === 'bottom' ? 2 : 0,
-          marginBottom: labelPosition === 'top' ? 16 - HIT_PAD : 0,
-          marginTop: labelPosition === 'bottom' ? 16 - HIT_PAD : 0,
+          // 16px from the label's baseline to the cells (8-grid, measured
+          // optically: the label's line box and the row's hit padding sit
+          // between them).
+          marginBottom: labelPosition === 'top' ? LABEL_TO_CELLS : 0,
+          marginTop: labelPosition === 'bottom' ? LABEL_TO_CELLS : 0,
         }}
       >
         <span>
