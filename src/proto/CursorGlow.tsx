@@ -199,11 +199,17 @@ export function CursorGlow() {
       if (!raf) raf = requestAnimationFrame(step)
     }
     const onLeave = () => el.removeAttribute('data-on')
+    // Switching apps / Spaces sends no pointerleave.
+    const onVis = () => { if (document.hidden) onLeave() }
     window.addEventListener('pointermove', onMove, { passive: true })
     document.documentElement.addEventListener('pointerleave', onLeave)
+    window.addEventListener('blur', onLeave)
+    document.addEventListener('visibilitychange', onVis)
     return () => {
       window.removeEventListener('pointermove', onMove)
       document.documentElement.removeEventListener('pointerleave', onLeave)
+      window.removeEventListener('blur', onLeave)
+      document.removeEventListener('visibilitychange', onVis)
       cancelAnimationFrame(raf)
       window.clearTimeout(meltTimer)
       el.removeAttribute('data-on')

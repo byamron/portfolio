@@ -714,6 +714,18 @@ export function SidebarThemeControls({
     return x >= l - 6 && x <= r + 6 && y >= t - 6 && y <= b + 6
   }, [])
   useEffect(() => () => { if (glideHide.current) clearTimeout(glideHide.current); stopRailWatch() }, [stopRailWatch])
+  // Switching apps / Spaces sends no pointerleave: let the pill go.
+  useEffect(() => {
+    if (!glidePill) return
+    const leave = () => { stopRailWatch(); glideOut() }
+    const onVis = () => { if (document.hidden) leave() }
+    window.addEventListener('blur', leave)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('blur', leave)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [glidePill, stopRailWatch, glideOut])
   // Closing the rail (Escape, outside click, the handle) hides the controls:
   // the pill stays only if it's on the handle.
   useEffect(() => {

@@ -10,6 +10,8 @@ Decision log and completed work, in reverse chronological order.
 - **Throw:** after folding in half, the plane turns to the side and is lifted into the hand — up to the icon row, receding from note size to a throwable 120px — sitting just right of the check, over where the note will be. Released, the glider's tail position drives a soft-edged mask that wipes "Email address copied" in behind it; the 1.8s hold starts once it's fully revealed (fallback reveal if the plane turns back early).
 - **DialKit "Email note":** typing chars/s (30), fold pace (×1), plane length (120px).
 - Old hover plane (envelope → sheet) removed.
+- **Ben's round:** the plane in the hand is placed by its true outline (the open wings' trailing corners swing ~1.7 units past the sheet's length — it had touched the focus ring), 10px clear of the button and centred on the row; smaller note/sheet (11px/1.55, 14/13px insets, 193px sheet) starting 12px below the button; faster throw with more carry (trim 130–165px/s, ×1.3–1.55 launch, L/D 4.5–6; "Throw speed" dial); the note's halo removed (it drew a dark smudge on tinted backgrounds); card back reads consensus.app.
+- **Hover stuck after switching Spaces (Ben):** leaving the window never sends pointerleave, so JS-driven hover stayed on (glass pill, note, popovers, cursor glow, rail pill). All now reset on window `blur` / `visibilitychange`; the shared glass pill (prod too) restores on the first mouse move back.
 
 ## 2026-10-28 — `/new/simple` round 8: defaults, ATC queue, flow pipeline (simplify + staff review)
 

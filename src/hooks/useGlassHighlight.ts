@@ -841,7 +841,27 @@ function setupGlassHighlight(
     removeScrollListeners()
   }
 
+  // Switching apps or macOS Spaces never delivers a mouseleave, so the pill
+  // would stay lit over a card nobody is hovering. Clear it when the window
+  // loses focus or is hidden; the first mouse move back restores it (no
+  // mouseover follows — the browser thinks the pointer never left).
+  let leftWindow = false
+  function handleWindowLeave(): void {
+    if (!currentCard) return
+    if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    releaseCardLean()
+    currentCard = null
+    fadeOut()
+    stopLoop()
+    removeScrollListeners()
+    leftWindow = true
+  }
+  function handleVisibility(): void {
+    if (document.hidden) handleWindowLeave()
+  }
+
   function handleMouseMove(e: MouseEvent): void {
+    if (leftWindow) { leftWindow = false; handleMouseOver(e) }
     state.mouseX = e.clientX
     state.mouseY = e.clientY
     if (!mouseActive) {
@@ -952,6 +972,8 @@ function setupGlassHighlight(
   container.addEventListener('focusin', handleFocusIn, true)
   container.addEventListener('focusout', handleFocusOut, true)
   document.addEventListener('theme-changed', skinPillBase)
+  window.addEventListener('blur', handleWindowLeave)
+  document.addEventListener('visibilitychange', handleVisibility)
 
   // -- Navigation fade-out --
 
@@ -981,6 +1003,8 @@ function setupGlassHighlight(
     container.removeEventListener('focusin', handleFocusIn, true)
     container.removeEventListener('focusout', handleFocusOut, true)
     document.removeEventListener('theme-changed', skinPillBase)
+    window.removeEventListener('blur', handleWindowLeave)
+    document.removeEventListener('visibilitychange', handleVisibility)
     pill?.remove()
     pill = null
     container.removeAttribute('data-glass-highlight-active')

@@ -16,6 +16,24 @@ const LINGER_MS = 1600
 
 const finePointer = () => typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches
 
+/** Leaving the window (another app or macOS Space) never sends a
+ *  pointerleave: run `onLeave` when the window blurs or is hidden. */
+function useWindowLeave(onLeave: () => void, active: boolean) {
+  const cb = useRef(onLeave)
+  cb.current = onLeave
+  useEffect(() => {
+    if (!active) return
+    const run = () => cb.current()
+    const onVis = () => { if (document.hidden) run() }
+    window.addEventListener('blur', run)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('blur', run)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [active])
+}
+
 /** Hover/focus → stage 1 at once, stage 2 after LINGER_MS; leave, blur or
  *  Escape → 0 (WCAG 1.4.13: dismissible). `viaPointer` tells callers whether
  *  a real hover (vs. keyboard focus) opened it. */
@@ -49,6 +67,7 @@ function useHoverStage() {
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
   }, [stage])
+  useWindowLeave(close, stage > 0)
   const handlers = {
     onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType !== 'touch') open(true) },
     onPointerLeave: close,
@@ -442,7 +461,7 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
                 <CardStock />
                 <div className="biz-grid biz-grid-back">
                   <div className="biz-logo-cell"><img src="/images/logo-consensus-mark.svg" alt="" /></div>
-                  <div className="biz-row">Consensus</div>
+                  <div className="biz-row">consensus.app</div>
                 </div>
               </div>
             </motion.div>
@@ -484,19 +503,21 @@ async function copyText(text: string): Promise<boolean> {
 // The note (Ben's prod email preview, tongue in cheek), set like the terminal.
 const LETTER = "Hi Ben,\n\nI love your portfolio and\nyou seem really cool.\nLet's chat!\n\nBest,\n[Your name]"
 const LETTER_LINES = LETTER.split('\n')
-const LETTER_PX = 12
-const LETTER_LH = LETTER_PX * 1.6
+const LETTER_PX = 11
+const LETTER_LH = LETTER_PX * 1.55 // matches .email-letter
 const LETTER_FONT = "'IBM Plex Mono', ui-monospace, monospace"
 const INK = '#2b2620'
-const LETTER_GAP = 20 // below the button (the sheet then starts 4px below it)
 
 // The sheet the note lands on: a portrait sheet (34 × 44 sheet units), the
 // note inset like a letter — text at the top, the rest of the page blank.
-const PAPER_W = 220
+// Sized to the note: its longest line (25 mono chars) plus the side margins.
+const PAD_X = 14
+const PAD_TOP = 13
+const PAPER_W = Math.round(25 * 0.6 * LETTER_PX + 2 * PAD_X)
 const PAPER_K = PAPER_W / 34 // px per sheet unit at note size
 const PAPER_H = 44 * PAPER_K
-const PAD_X = 20
-const PAD_TOP = 16
+// The note sits so its sheet starts 12px below the button.
+const LETTER_GAP = 12 + PAD_TOP
 
 /** Baseline of note line `i` on the sheet (px from its top), matching the
  *  DOM note's CSS line boxes (half-leading around the font's ascent+descent),
@@ -677,6 +698,19 @@ function sideFaces(psi: number, roll: number) {
 const OPEN_PSI = (95 * Math.PI) / 180 // a touch of dihedral
 const OPEN_ROLL = (-55 * Math.PI) / 180 // rolled toward us so the wings read
 const FLY_FACES = sideFaces(OPEN_PSI, OPEN_ROLL)
+/** The open plane's true extent (sheet units, before its turn to nose-right):
+ *  the wings' trailing corners swing out past the sheet's own length, so
+ *  placing it by half its length would let a wingtip overlap the button. */
+const FLY_BOUNDS = (() => {
+  const pts = [
+    ...WING.map(p => wingPoint(p, OPEN_PSI, OPEN_ROLL, -1)),
+    ...WING.map(p => wingPoint(p, OPEN_PSI, OPEN_ROLL, 1)),
+    ...KEEL.map(p => keelPoint(p, OPEN_ROLL)),
+  ]
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1])
+  // Turned nose-right (rotate 90°): screen x = −y, screen y = x.
+  return { tail: Math.max(...ys), top: Math.min(...xs), bottom: Math.max(...xs) }
+})()
 
 const PAPER_SHADOW = 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))'
 // Hairline paper edges, the same on screen at every scale and fold.
@@ -879,9 +913,10 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
     // Every throw is different: speed, trim, glide ratio, the air's
     // character, and whether / when it banks into turns.
     const r = (a: number, b: number) => a + Math.random() * (b - a)
-    const G = 240, V_TRIM = launch.vTrim, LD = r(3, 4.5)
+    // A clean glide ratio: it carries its speed (Ben: more momentum).
+    const G = 240, V_TRIM = launch.vTrim, LD = r(4.5, 6)
     const kL = G / (V_TRIM * V_TRIM), kD = kL / LD
-    const halfLen = 22 * scale
+    const tailLen = FLY_BOUNDS.tail * scale
     let x = from.x, y = from.y
     let v = launch.v0, gamma = 0, gdot = 0 // released level
     let dir = 1, bank = 0, turning = 0 // bank: 0 → π over a turn
@@ -911,7 +946,7 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
         const gust = Math.min(1, t / 0.8) * gustAmp * (Math.sin(tg * 1.7 + seed) + 0.6 * Math.sin(tg * 3.1 + seed * 2) + 0.3 * Math.sin(tg * 5.3 + seed * 3))
         // In the hand (release), speed and attitude are held.
         if (t >= RELEASE_S) {
-          v = Math.max(45, v + (-drag - G * Math.sin(gamma)) * h)
+          v = Math.max(60, v + (-drag - G * Math.sin(gamma)) * h)
           const cmd = (lift - G * Math.cos(gamma)) / v + gust
           gdot += (cmd - gdot) * h * 8 // pitch inertia
           gamma += gdot * h
@@ -921,7 +956,7 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
         x += facing * v * Math.cos(gamma) * h * k
         y -= v * Math.sin(gamma) * h * k
       }
-      if (dir > 0 && !turning) onTail?.(x - halfLen * Math.cos(gamma))
+      if (dir > 0 && !turning) onTail?.(x - tailLen * Math.cos(gamma))
       // Paper doesn't vanish mid-air: it fades only after leaving the window.
       if (x < -160 || x > vw + 160 || y > vh + 160 || y < -200 || t > 30) leaving = true
       if (leaving) fade = Math.max(0, fade - frameDt * 2.5)
@@ -962,15 +997,15 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
 }
 
 /** The note → sheet → fold → throw, as one object. */
-function LetterPlane({ text, launch, kPlane, pace, onPaperIn, onTail, onDone }: {
-  text: Pt; launch: Pt; kPlane: number; pace: number; onPaperIn: () => void; onTail: (x: number) => void; onDone: () => void
+function LetterPlane({ text, launch, kPlane, pace, speed, onPaperIn, onTail, onDone }: {
+  text: Pt; launch: Pt; kPlane: number; pace: number; speed: number; onPaperIn: () => void; onTail: (x: number) => void; onDone: () => void
 }) {
-  // Released level from the fold's pose; thrown a little above trim speed so
-  // it climbs gently on its own lift.
+  // Released level from the fold's pose; thrown well above trim speed so it
+  // shoots out, then climbs gently on its own lift.
   const toss = useMemo<Throw>(() => {
-    const vTrim = 105 + Math.random() * 30
-    return { vTrim, v0: vTrim * (1.15 + Math.random() * 0.25) }
-  }, [])
+    const vTrim = (130 + Math.random() * 35) * speed
+    return { vTrim, v0: vTrim * (1.3 + Math.random() * 0.25) }
+  }, [speed])
   // The sheet sits so the note's text lands exactly where it was typed.
   const at = useMemo(() => ({ x: text.x - PAD_X + PAPER_W / 2, y: text.y - PAD_TOP + PAPER_H / 2 }), [text])
   const [flight, setFlight] = useState<Pt | null>(null)
@@ -1061,6 +1096,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     setLetterKey(k => k + 1)
   }
   const closeLetter = () => setLetterAt(null)
+  useWindowLeave(closeLetter, !!letterAt)
   // Escape dismisses the note wherever focus is (capture: before a rail
   // underneath, which then ignores the handled key).
   useEffect(() => {
@@ -1101,10 +1137,14 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       // types only on the next hover.
       setLetterAt(null)
       placeNote()
-      // Held in the hand just right of the button, over where the note will
-      // be, so its tail uncovers the note as it goes.
+      // Held in the hand just right of the button — its real outline clear of
+      // the button and its focus ring (+4px) — over where the note will be,
+      // so its tail uncovers the note as it goes. Centred on the row.
       const kPlane = emailFx.planeLength / 44
-      const launch = { x: r.right + 8 - 2 + 22 * kPlane, y: r.top + r.height / 2 + 3 }
+      const launch = {
+        x: r.right + 10 + FLY_BOUNDS.tail * kPlane, // Ben: ~8px further right than first cut
+        y: r.top + r.height / 2 - ((FLY_BOUNDS.top + FLY_BOUNDS.bottom) / 2) * kPlane,
+      }
       revealed.current = false
       revealX.set(-1e6)
       setOnPaper(false)
@@ -1171,6 +1211,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           launch={throwing.launch}
           kPlane={kPlane}
           pace={emailFx.foldPace}
+          speed={emailFx.throwSpeed}
           onPaperIn={() => setOnPaper(true)}
           onTail={onTail}
           onDone={() => { setThrowing(null); setOnPaper(false) }}
