@@ -237,7 +237,9 @@ export function SimpleHome() {
         >
           {lines.map((line, li) => (
             <span key={`${chosen}-${li}`}>
-              {li > 0 && <br />}
+              {/* The space keeps the words apart in the text itself (find, copy,
+                  reader view); it collapses at the line end. */}
+              {li > 0 && <>{' '}<br /></>}
               {line.map((seg, i) => renderSeg(seg, i, false))}
             </span>
           ))}

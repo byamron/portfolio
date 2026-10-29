@@ -141,7 +141,7 @@ function Typed({ text, onDone, cps = 110 }: { text: string; onDone?: () => void;
 }
 
 const termLine: React.CSSProperties = { whiteSpace: 'pre', lineHeight: 1.6 }
-const prompt = <span style={{ opacity: 0.5 }}>$ </span>
+const prompt = <span className="term-dim">$ </span>
 
 // The program, one line at a time. Plain text is typed; colour comes from a
 // tiny highlighter so the half-typed line is coloured too.
@@ -208,7 +208,7 @@ function Terminal({ greeting, onRun, cleared }: {
           <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={35} onDone={() => setTypedRun(true)} /></div>
         )}
         {result && (
-          <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
+          <motion.div initial={{ opacity: 0, x: reducedMotion ? 0 : -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
             <span className="term-str">{result[0]}</span>  {result[1]}
             {/* Holding: the caret stays on the line — still running, not frozen. */}
             {holding && <> <span className="term-caret" /></>}
@@ -1506,6 +1506,11 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     // A press settles it: no note starts typing afterwards from the hover
     // dwell (it would replace the toast this press shows).
     if (dwell.current) clearTimeout(dwell.current)
+    // The press is what counts as this note's attempt (bumped below): leaving
+    // during the copy mustn't count it as well.
+    openedAt.current = null
+    // The note on screen as it was pressed (the pointer may leave meanwhile).
+    const note = live.current.letterAt
     // Couldn't copy: fall back to what an envelope usually means.
     if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
     // Announced at once, every time (the visible note may wait for a plane).
@@ -1526,14 +1531,13 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     // The plane carries the note you can see: no note on screen (a press
     // quicker than the hover dwell, or the last toast still up) → just the
     // check and the toast.
-    const fold = canFold && !reducedMotion && live.current.letterAt && r && !window.matchMedia(PHONE_QUERY).matches
+    const fold = canFold && !reducedMotion && note && r && !window.matchMedia(PHONE_QUERY).matches
     if (fold) {
       setCopied(true)
-      const text = live.current.letterAt ?? { x: r.left, y: r.bottom + LETTER_GAP }
+      const text = note
       const lines = NOTES[letterLevel]!.split('\n')
       // The note now belongs to the throw (and the next will be keener);
       // once the plane has gone, a new one types on the next hover.
-      openedAt.current = null
       bumpLevel()
       setLetterAt(null)
       placeNote()
@@ -1554,7 +1558,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       return
     }
     // Copied: the note (and its "click to copy" hint) has done its job.
-    if (live.current.letterAt) { openedAt.current = null; bumpLevel(); setLetterAt(null) }
+    if (note) { bumpLevel(); setLetterAt(null) }
     setCopied(true)
     placeNote()
     revealed.current = true
@@ -1563,8 +1567,9 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   }
   const popCheck = () => {
     if (reducedMotion) return
-    shake.set({ scale: 0.82 })
-    shake.start({ scale: 1, transition: SQUASH_POP })
+    // From rest every time: presses in quick succession mustn't stack the
+    // spring's velocity (it inherits the last one's, and runs away).
+    shake.start({ scale: [0.82, 1], transition: { ...SQUASH_POP, velocity: 0 } })
   }
 
   const letterPos = throwing ? (onPaper ? null : throwing.text) : letterAt

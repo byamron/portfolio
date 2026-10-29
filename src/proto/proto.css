@@ -257,6 +257,8 @@
   --term-fg: var(--text-dark);
   /* Strings in the accent, pulled toward the text for contrast. */
   --term-accent: var(--focus-ring);
+  /* Quiet text (prompt, file name): 4.5:1 on the light window. */
+  --term-dim: 0.65;
   background: var(--term-bg);
   color: var(--term-fg);
   border-radius: 10px;
@@ -271,6 +273,7 @@
 [data-theme="dark"] .term-window {
   --term-bg: color-mix(in oklab, var(--bg), white 7%);
   --term-accent: color-mix(in oklab, var(--swatch), white 18%);
+  --term-dim: 0.5;
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 .term-bar {
@@ -291,7 +294,7 @@
   text-align: center;
   font-style: normal;
   font-size: 11px;
-  opacity: 0.5;
+  opacity: var(--term-dim);
   margin-right: 24px; /* optically centre past the dots */
 }
 .term-body {
@@ -306,6 +309,7 @@
   opacity: 0.3;
 }
 .term-kw { opacity: 0.6; }
+.term-dim { opacity: var(--term-dim); }
 .term-str { color: var(--term-accent); }
 .term-caret {
   display: inline-block;
