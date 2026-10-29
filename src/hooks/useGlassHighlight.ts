@@ -890,6 +890,10 @@ function setupGlassHighlight(
     const cfg = configRef.current
     const card = (e.target as HTMLElement).closest<HTMLElement>(cfg.cardSelector)
     if (!card || card.closest('[data-glass-highlight-active]') !== container) return
+    // Focus landing within the leave fade carries on from here (as a mouse
+    // reaching another card does).
+    if (clearTimer) { clearTimeout(clearTimer); clearTimer = null }
+    if (leaving) { leaving = false; fadeIn() }
 
     const prevCard = currentCard
     currentCard = card

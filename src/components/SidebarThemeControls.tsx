@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, type ReactNode } from 'react'
-import { motion, AnimatePresence, animate, useMotionValue, useReducedMotion, useSpring, type AnimationPlaybackControls, type MotionStyle } from 'framer-motion'
+import { motion, AnimatePresence, animate, useMotionValue, useReducedMotion, useSpring, useTransform, type AnimationPlaybackControls, type MotionStyle } from 'framer-motion'
 import { Monitor, Sun, Moon, Cursor, Circle } from '@phosphor-icons/react'
 import { useTheme, computeBg, type AppearanceMode, type AccentColor } from '@/contexts/ThemeContext'
 import { useCursor, type CursorMode } from '@/contexts/CursorContext'
@@ -656,6 +656,14 @@ export function SidebarThemeControls({
   const pillY = useSpring(0, PILL_SPRING)
   const pillW = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
   const pillH = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
+  // Concentric with what it frames: 15px round a square control's selection
+  // ring (7px item + 3px offset + 1px ring = 11px, and the pill sits 4px
+  // outside it); a full capsule round a capsule (the record, the strip),
+  // eased between while it glides from one to the other.
+  const pillR = useTransform([pillW, pillH], ([w, h]: number[]) => {
+    const capsule = Math.min(w!, h!) / 2
+    return 15 + (capsule - 15) * Math.min(1, Math.abs(w! - h!) / 8)
+  })
   const pillO = useMotionValue(0)
   const pillFade = useRef<AnimationPlaybackControls | null>(null)
   const fadePill = useCallback((to: 0 | 1) => {
@@ -740,7 +748,7 @@ export function SidebarThemeControls({
       // A lifted finger has no "between controls".
       if (e.pointerType === 'touch') { releasePill(); return }
       const inSpan = (x: number, y: number) => { const span = railSpan(); return x >= span.l && x <= span.r && y >= span.t && y <= span.b }
-      if (!inSpan(e.clientX, e.clientY)) { glideOut(); return }
+      if (!inSpan(e.clientX, e.clientY)) { releasePill(); return }
       stopRailWatch()
       railWatch.current = (m: PointerEvent) => { if (!inSpan(m.clientX, m.clientY)) releasePill() }
       window.addEventListener('pointermove', railWatch.current, { passive: true })
@@ -893,10 +901,7 @@ export function SidebarThemeControls({
               ...({ '--pill-o': pillO } as unknown as MotionStyle),
               opacity: 'var(--pill-o)',
               position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none',
-              // Concentric with the selection rings it frames: a ring's outer
-              // corner is 7px (item) + 3px (offset) + 1px (ring) = 11px, and
-              // the 44px pill sits 4px outside its 36px square → 15px.
-              borderRadius: 15,
+              borderRadius: pillR,
               // Same frost as the page's glass pill (useGlassHighlight skinPill).
               background: resolvedAppearance === 'dark'
                 ? 'hsla(var(--accent-hue), 20%, 55%, 0.12)'

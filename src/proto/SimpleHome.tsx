@@ -114,7 +114,8 @@ export function SimpleHome() {
   let chosen = 0
   if (layout.sizeMode === 'fit' && setEms && colWidth !== null) {
     chosen = setEms.findIndex(em => (colWidth * 0.99) / em >= layout.minText)
-    if (chosen < 0) chosen = sets.length - 1
+    // (setEms may still be the previous copy's for a render: stay in range.)
+    if (chosen < 0 || chosen >= sets.length) chosen = sets.length - 1
   } else if (phone && PHONE_BREAKS[layout.copy]) {
     chosen = sets.length - 1
   }
@@ -301,8 +302,8 @@ export function SimpleHome() {
 
       {/* Contribution strip — full-bleed foot of the page (as on /new): at
           the viewport bottom when the content fits, below it when it scrolls. */}
-      {/* 16px from the strip's cells to the window's bottom edge (its row
-          carries 6px of hit padding below the cells). */}
+      {/* 24px from the strip's cells to the window's bottom edge (its row
+          carries hit padding below the cells). */}
       <motion.div variants={item} custom={2} style={{ alignSelf: 'stretch', flexShrink: 0, paddingBottom: 8 }}>
         <ContributionStrip topGap={0} />
       </motion.div>

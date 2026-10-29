@@ -624,6 +624,36 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 ---
 
+## `/new/simple` — staff review round 3 (2026-10-29)
+
+Fixed: other pop-outs can't open over the folding sheet; typed note could show "undefined" when clicked mid-typing (clamped); one-frame level pose at the fold→flight hand-off; rail pill concentric on capsules (record, strip) too; the "one at a time" hold ends once the plane is out of sight; reduced-motion copy clears the hint note; "Settings (music playing)" name restored; glass pill keyboard focus within the leave fade carries on; QWERTY-neighbour typos; fading note keeps its level; fold cleanup stops every motion value; docs drift.
+
+**For Ben (taste calls, not changed):**
+- "Email address copied" shows ~4.3s after the click (the plane's reveal, by design); the check is immediate and screen readers hear it at once. Option: a faint "Copied" at once, full label on the wipe.
+- The "click to copy" p.s. is typed last (~4.5–5s in).
+- Any hover >600ms escalates the note — four rests reach LET'S CHAT ×6. Option: count only finished notes or sends.
+- Mid line set breaks "…building AI for / researchers at Consensus." — "…building AI / for researchers at Consensus." keeps the phrase.
+- Switching to the 3-line set grows the type ~25% (26 → 32.7px at 610px).
+- Voice read of notes 5–6 as a hiring manager; cream paper is the brightest thing on the dark page for ~3s.
+- The settings glyph is 32px to its box, ~36px to the drawn glyph (matches its 36.5px right inset).
+
+**Follow-ups:**
+- Escape can't stop the folding sheet / plane (flight runs ~8–12s).
+- The sheet covers the strip on ~720px-tall windows; below ~690px it runs off the bottom (open upward/sideways, or cap).
+- Fold craft: the wing fold pulses the whole plane grey (`nearShade` peaks at ψ=π); cast shadows are hard-edged copies and the half-turn casts none; the p.s. glyph tops peek out at the dart's centre; fold vs flight hairlines differ (fold svg rasterised before it shrinks).
+- Card's box-shadow turns with the card (move it to a non-rotating wrapper).
+- At slow fold dials (6s) the carry settle and the wing fold may merge into one beat.
+
+## `/new/simple` — simplify pass follow-ups (2026-10-29)
+
+Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes only what changed, dead fields/comments. Left for a deliberate refactor (they'd re-architect tuned behaviour):
+- Email button lifecycle as one reducer (`phase`: idle → note → folding → paper → airborne → done) instead of `throwing`/`onPaper`/`airborne`/`held`/`copied` + refs and the `live` mirror.
+- One dismissible-layer stack (Escape closes the top; opening closes group siblings) replacing the capture-phase Escape convention + the `contact-egg-open` event bus.
+- One typewriter hook for `Typed` / `TypedHighlighted` / `TypedLetter`; a `usePopoutTriggers` shared by `useHoverStage` and the email button (dwell, keyboard gate, Escape, window leave).
+- An input-modality tracker instead of the window-focus timestamp in `keyboardFocus`.
+- Magic offsets as geometry: strip-jump `-9px`, `LABEL_TO_CELLS` `-5`, the `0.2em` baseline drop (share one helper).
+- SimpleHome: compute the line-set choice inside the ResizeObserver (re-render only when it changes); merge the two observers on the column.
+
 ## `/new/simple` — email note → paper plane (2026-10-28)
 
 - [x] Hover types the note under the button; click lands it on paper, folds (text on the real flaps), lifts into the hand beside the check, throws; the tail reveals "Email address copied".

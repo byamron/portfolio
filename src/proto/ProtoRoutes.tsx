@@ -90,7 +90,7 @@ function SimpleShell() {
       <SimpleHome />
       <SidebarThemeControls
         triggerIcon={<SlidersGlyph playing={playing} />}
-        triggerLabel="Settings"
+        triggerLabel={playing ? 'Settings (music playing)' : 'Settings'}
         controlScale={SIMPLE_CONTROL_SCALE}
         openOn="click"
         stagger={0.018}

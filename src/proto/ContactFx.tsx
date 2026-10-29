@@ -19,6 +19,8 @@ const LINGER_MS = 1600
 const DWELL_OPEN_MS = 220
 // One pop-out at a time: opening one tells the others to close.
 const EGG_OPEN = 'contact-egg-open'
+// …and none opens while a sent note is folding in the space under the row.
+let sheetUnderRow = false
 const announceOpen = (id: string) => document.dispatchEvent(new CustomEvent(EGG_OPEN, { detail: id }))
 function useOthersOpening(id: string, onOther: () => void) {
   const cb = useRef(onOther)
@@ -52,8 +54,10 @@ function useHoverStage() {
   const dwell = useRef<ReturnType<typeof setTimeout>>(null)
   const enabled = useMemo(finePointer, [])
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); if (dwell.current) clearTimeout(dwell.current) }, [])
+  const openRef = useRef(false) // `stage` is stale in the dwell timer's closure
   const open = (pointer: boolean) => {
-    if (!enabled || stage) return
+    if (!enabled || stage || openRef.current || sheetUnderRow) return
+    openRef.current = true
     setViaPointer(pointer)
     setStage(1)
     announceOpen(id)
@@ -62,6 +66,7 @@ function useHoverStage() {
   const close = () => {
     if (timer.current) clearTimeout(timer.current)
     if (dwell.current) clearTimeout(dwell.current)
+    openRef.current = false
     setStage(0)
   }
   useOthersOpening(id, close)
@@ -223,7 +228,7 @@ function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }
   useEffect(() => {
     if (n >= text.length) { const t = setTimeout(() => done.current(), 140); return () => clearTimeout(t) }
     // ~32 chars/s with a little human unevenness.
-    const t = setTimeout(() => setN(v => v + 1), 1000 / 32 * (0.6 + Math.random() * 0.8))
+    const t = setTimeout(() => setN(v => Math.min(v + 1, text.length)), 1000 / 32 * (0.6 + Math.random() * 0.8))
     return () => clearTimeout(t)
   }, [n, text])
   return <>{highlight(text.slice(0, n))}</>
@@ -633,7 +638,15 @@ function letterBaseline(i: number) {
 /** Types a note out, a keystroke at a time with a little human unevenness
  *  and a beat at line ends and punctuation. With `typo` > 0, now and then a
  *  wrong key goes in, is noticed, and is backspaced. */
-const NEAR_KEYS = 'asdfghjklqwertyuiopzxcvbnm'
+// A slip hits a neighbouring key (QWERTY), as a real one would.
+const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
+const neighbours = (ch: string) => {
+  const r = ROWS.findIndex(row => row.includes(ch))
+  if (r < 0) return 'e'
+  const i = ROWS[r]!.indexOf(ch)
+  return [ROWS[r]![i - 1], ROWS[r]![i + 1], ROWS[r - 1]?.[i], ROWS[r - 1]?.[i + 1], ROWS[r + 1]?.[i - 1], ROWS[r + 1]?.[i]]
+    .filter((k): k is string => !!k).join('')
+}
 function TypedLetter({ text, cps, beat = 3.5, typo = 0, complete, caret }: {
   text: string; cps: number; beat?: number; typo?: number; complete: boolean; caret: boolean
 }) {
@@ -642,7 +655,8 @@ function TypedLetter({ text, cps, beat = 3.5, typo = 0, complete, caret }: {
     const out: (string | null)[] = []
     for (const ch of text) {
       if (typo && /[a-z]/i.test(ch) && Math.random() < typo) {
-        const wrong = NEAR_KEYS[Math.floor(Math.random() * NEAR_KEYS.length)]!
+        const near = neighbours(ch.toLowerCase())
+        const wrong = near[Math.floor(Math.random() * near.length)]!
         out.push(ch === ch.toUpperCase() ? wrong.toUpperCase() : wrong, null)
       }
       out.push(ch)
@@ -657,11 +671,12 @@ function TypedLetter({ text, cps, beat = 3.5, typo = 0, complete, caret }: {
     const pause = next === null ? 2.2 // noticing the typo
       : prev === null ? 0.6 // the backspace was quick
       : prev === '\n' || prev === ',' || prev === '.' || prev === '!' ? beat : 1
-    const t = setTimeout(() => setN(v => v + 1), (1000 / cps) * (0.6 + Math.random() * 0.8) * pause)
+    // Clamped: a keystroke already queued can land after `complete` filled it in.
+    const t = setTimeout(() => setN(v => Math.min(v + 1, keys.length)), (1000 / cps) * (0.6 + Math.random() * 0.8) * pause)
     return () => clearTimeout(t)
   }, [n, cps, beat, keys])
   let shown = ''
-  for (let i = 0; i < n; i++) { const k = keys[i]; shown = k === null ? shown.slice(0, -1) : shown + k }
+  for (let i = 0; i < Math.min(n, keys.length); i++) { const k = keys[i]; shown = k === null ? shown.slice(0, -1) : shown + k }
   return <>{shown}{caret && <span className="term-caret" />}</>
 }
 
@@ -1083,12 +1098,13 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     const out = (t: number) => 1 - Math.pow(1 - t, 2.2) // across, early
     const rise = (t: number) => { const u = Math.pow(t, 1.4); return u * u * (3 - 2 * u) } // up, building
     const k0 = 1, k1 = kPlane / PAPER_K
+    let carry: { stop: () => void } | null = null
     at$(3.8, () => {
       setSide(true)
       // A spring, not a curve: it accelerates, carries a little past the
       // hand and settles back, like a hand bringing it into place. Past 1
       // the shapes extend linearly, so the overshoot reads as momentum.
-      animate(0, 1, {
+      carry = animate(0, 1, {
         type: 'spring', visualDuration: Math.max(0.7, CARRY * pace), bounce: 0.15,
         onUpdate: p => {
           const t = clamp01(p), over = p - t
@@ -1112,7 +1128,13 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
       stage.start({ x: dx - WIND_UP_PX, rotate: 90 - WIND_UP_DEG, transition: { duration: WIND_UP_S, ease: [0.45, 0, 0.55, 1] } })
       timers.push(setTimeout(() => onFolded({ x: launch.x - WIND_UP_PX, y: launch.y }), (WIND_UP_S + WIND_UP_HOLD_S) * 1000))
     })
-    return () => timers.forEach(clearTimeout)
+    // Leaving mid-fold: stop everything still moving, not just the timers.
+    return () => {
+      timers.forEach(clearTimeout)
+      carry?.stop()
+      stage.stop()
+      ;[split, lift, creased, cornerL, cornerR, edgeL, edgeR, psi, roll].forEach(v => v.stop())
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Draw order per face: cast shadow, paper, shade.
@@ -1217,7 +1239,7 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
     const turns = [r(1.6, 3.2), r(4.2, 7.5)].slice(0, turnCount)
     const turnSecs = r(0.9, 1.3)
     let t = 0, last = performance.now(), raf = 0, fade = 1, leaving = false
-    const vw = window.innerWidth, vh = window.innerHeight
+    const vw = window.innerWidth, vh = window.innerHeight, out = 44 * scale
     const frame = (now: number) => {
       let dt = Math.min(0.05, (now - last) / 1000)
       const frameDt = dt
@@ -1248,8 +1270,9 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
         y -= v * Math.sin(gamma) * h * k
       }
       if (dir > 0 && !turning) onTail?.(x - tailLen * Math.cos(gamma))
-      // Paper doesn't vanish mid-air: it fades only after leaving the window.
-      if (x < -160 || x > vw + 160 || y > vh + 160 || y < -200 || t > 30) leaving = true
+      // Paper doesn't vanish mid-air: it fades only once it's out of sight
+      // (a plane's length past any edge).
+      if (x < -out || x > vw + out || y > vh + out || y < -out || t > 30) leaving = true
       if (leaving) fade = Math.max(0, fade - frameDt * 2.5)
       // Banking through a turn, the plane passes edge-on (scaleX through 0).
       const sx = turning ? dir * Math.cos(bank) : dir
@@ -1271,7 +1294,8 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
       <svg
         ref={sprite}
         width={80} height={80} viewBox="-40 -40 80 80"
-        style={{ position: 'absolute', left: -40, top: -40, overflow: 'visible', willChange: 'transform' }}
+        // Painted in the wound-up pose (the first rAF hasn't run yet).
+        style={{ position: 'absolute', left: -40, top: -40, overflow: 'visible', willChange: 'transform', transform: `scaleX(1) rotate(${(-launch.gamma0 * 180) / Math.PI}deg)` }}
       >
         {/* The fold's last frame exactly: same faces, same turn and scale. */}
         <g transform={`rotate(90) scale(${scale})`}>
@@ -1322,17 +1346,16 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const [noteAt, setNoteAt] = useState<{ x: number; y: number; below: boolean } | null>(null)
   // The typed note (its text's top-left), while hovered/focused.
   const [letterAt, setLetterAt] = useState<Pt | null>(null)
+  // The level the note on screen opened at (so it doesn't change, or re-roll
+  // its typos, while it fades after a bump).
+  const [letterLevel, setLetterLevel] = useState(0)
   const [letterKey, setLetterKey] = useState(0)
   // At most one note in the air: from the click until the plane has gone.
   const [throwing, setThrowing] = useState<Throwing | null>(null)
   const [onPaper, setOnPaper] = useState(false)
   const [airborne, setAirborne] = useState(false)
-  // This session's escalation (see NOTES).
-  const [level, setLevel] = useState(noteLevel)
-  const bumpLevel = () => {
-    noteLevel = Math.min(NOTES.length - 1, noteLevel + 1)
-    setLevel(noteLevel)
-  }
+  // This page load's escalation (see NOTES): the next note opens at it.
+  const bumpLevel = () => { noteLevel = Math.min(NOTES.length - 1, noteLevel + 1) }
   const openedAt = useRef<number | null>(null)
   // Hovered while the last note is still folding / flying.
   const [held, setHeld] = useState<Pt | null>(null)
@@ -1344,6 +1367,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const btn = useRef<HTMLButtonElement>(null)
   const noteEl = useRef<HTMLSpanElement>(null)
   const canFold = useMemo(finePointer, [])
+  useEffect(() => () => { sheetUnderRow = false }, []) // unmounted mid-fold
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
   const later = (ms: number, fn: () => void) => timers.current.push(setTimeout(fn, ms))
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
@@ -1424,6 +1448,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     // A new note means the last one's done: its check and note step aside.
     if (live.current.copied) { clearTimers(); setCopied(false) }
     setLetterAt(at)
+    setLetterLevel(noteLevel)
     setLetterKey(k => k + 1)
   }
   const closeLetter = () => {
@@ -1505,7 +1530,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     if (fold) {
       setCopied(true)
       const text = live.current.letterAt ?? { x: r.left, y: r.bottom + LETTER_GAP }
-      const lines = NOTES[level]!.split('\n')
+      const lines = NOTES[letterLevel]!.split('\n')
       // The note now belongs to the throw (and the next will be keener);
       // once the plane has gone, a new one types on the next hover.
       openedAt.current = null
@@ -1524,9 +1549,12 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       revealed.current = false
       noteRight.current = null
       revealX.set(-1e6)
+      sheetUnderRow = true
       setThrowing({ text, lines, launch })
       return
     }
+    // Copied: the note (and its "click to copy" hint) has done its job.
+    if (live.current.letterAt) { openedAt.current = null; bumpLevel(); setLetterAt(null) }
     setCopied(true)
     placeNote()
     revealed.current = true
@@ -1542,7 +1570,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const letterPos = throwing ? (onPaper ? null : throwing.text) : letterAt
   const letterMount = useFadeMount(letterPos, letterKey)
   const handedOver = onPaper // (only ever set during a throw)
-  const tempo = NOTE_TEMPO[level]!
+  const tempo = NOTE_TEMPO[letterLevel]!
   // The hold line shows once the plane is in the air (the sheet was there).
   const heldPos = held && airborne ? held : null
   const heldMount = useFadeMount(heldPos, 0)
@@ -1590,9 +1618,11 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           pace={emailFx.foldSeconds / FOLD_STEPS_S}
           speed={emailFx.throwSpeed}
           onPaperIn={() => setOnPaper(true)}
-          onLaunch={() => setAirborne(true)}
+          onLaunch={() => { sheetUnderRow = false; setAirborne(true) }}
           onTail={onTail}
           onDone={() => {
+            // Never leave the toast up because the reveal didn't complete.
+            if (!revealed.current) finishReveal()
             setThrowing(null)
             setOnPaper(false)
             setAirborne(false)
@@ -1613,7 +1643,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
           style={{ left: letterMount.pos.x, top: letterMount.pos.y, transition: handedOver ? 'none' : undefined }}
         >
           <TypedLetter
-            text={throwing ? throwing.lines.join('\n') : NOTES[level]!}
+            text={throwing ? throwing.lines.join('\n') : NOTES[letterLevel]!}
             cps={emailFx.typeCps * tempo.speed}
             beat={tempo.beat}
             typo={tempo.typo}

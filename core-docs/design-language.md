@@ -199,7 +199,7 @@ So UW and Middlebury get black + logo with no underline (no destination), and Gi
 
 #### Simple home (`/new/simple`) — prototype rules (2026-10-28)
 
-- **Measure drives size.** The intro is set in fixed line breaks (pauses only at line ends — no mid-line commas) and the type is sized so the longest line exactly fills the column (`clamp(min, 99cqi / longestLineEm, max)`), ≈50 characters a line. Inline icons are em-sized and follow. Below the floor (phones) the breaks drop and the browser balances.
+- **Measure drives size.** The intro is set in fixed line breaks (pauses only at line ends — no mid-line commas) and the type is sized so the longest line exactly fills the column (`clamp(min, 99cqi / longestLineEm, max)`), ≈50 characters a line. Inline icons are em-sized and follow. Below the floor the text re-composes into the next line set that fits (desktop → mid 3-line → phone); every copy option needs all three sets, or it gets forced breaks on small screens.
 - **Optical centring.** Ragged left-aligned text is centred by its widest rendered line (shrink-wrap), not by its container.
 - **Icon-only buttons are allowed here** because each is a recognised brand mark (LinkedIn, GitHub, X) or a single-purpose verb with a visible result (envelope = copy, confirmed by a check + "Email address copied"). Accessible names say what happens ("Copy email address …", "… (opens in new tab)").
 - **Glass over small glyphs.** Icons and ≤13px labels sit *above* the pill (z 11) so the 1px frost never softens them; prose links stay frosted-over. Entrance animations must end with `filter: none` — any leftover filter is a stacking context that traps that z-index.
@@ -211,10 +211,10 @@ So UW and Middlebury get black + logo with no underline (no destination), and Gi
 - **Zero-day tooltips** are dry and specific, never punny or emoji: what Ben was plausibly doing instead ("Choosing between two greys", "Running around SF").
 - **Phones get designed line breaks**, not browser wrapping, and the type stays large (27–38px).
 - **Cursor glow melts into the pill** over links (one light, not two): slides to the pill centre, shrinks, fades; re-emerges on leave. It's a few 8-bit levels above the page, so it's a dithered canvas (per premultiplied channel — plain RGBA rounds the hue away at alpha 1–3), never a CSS gradient (bands into a disc with a rim). Mouse/pen only; no canvas on touch or reduced motion.
-- **Spacing on /new/simple is an 8-grid measured optically** — to baselines, glyph edges and paper edges, not to boxes with invisible padding (text→icons 48, glyph pitch 24, pop-outs/notes/plane 8 from the button, strip label→cells 16, cells→window 24).
+- **Spacing on /new/simple is an 8-grid measured optically** — to baselines, glyph edges and paper edges where the shape is known (text baseline→icon box 48, pop-outs/notes/plane 8 from the button, strip label baseline→cells 16, cells→window 24). Icon pitch (24) and the settings trigger (32 from the top) are measured to their 24px glyph boxes; the drawn glyphs sit a few px inside.
 - **Repeat attempts escalate in tone, not in story** (the email notes): never imply messages that weren't sent; the copy only gets more excited.
 - **Paper reads by light, not outlines:** folds shade as they turn and cast contact shadows; a crease appears only as its fold lands.
-- **Nested rounded shapes are concentric:** outer radius = inner radius + the gap between them (the rail pill: ring 11px + 4px gap = 15px).
+- **Nested rounded shapes are concentric:** outer radius = inner radius + the gap between them (the rail pill: ring 11px + 4px gap = 15px round a square control; a full capsule round the record and the strip, eased between as it glides).
 - **Carried objects move as one physical motion:** a spring-driven progress drives every property together (shape the path with easing per property, not staggered start times — staggering reads as separate beats); a little overshoot reads as momentum.
 - **The glass pill commits to leaving:** off every card it lets go at once (no pull toward the cursor) and fades; the fade is the grace for gliding to the next card.
 - **Pop-outs develop on intent:** a short dwell, one at a time; keyboard focus opens them, restored focus doesn't.
@@ -296,6 +296,7 @@ Radii follow a descending scale that maps to element role:
 | 32px | Image container, placeholder visuals | Content showcase — the largest, most prominent shape |
 | 16px | Glass hover surface (project cards) | Interactive surface — half of image radius, creating visual kinship |
 | 12px | Sidebar glass pill (36px) | Control-level hover surface — concentric with swatches/icons |
+| 15px / capsule | /new/simple rail glide pill (44px) | Concentric with selection rings (15) or with capsule controls (h/2) |
 | 8px | Mode buttons (40px), inline link glass | Large controls and small interactive surfaces — rounded rectangles |
 | 6px | Accent swatches (24px) | Small controls — rounded squares |
 | 5px | Sidebar trigger (16px) | Indicator — smallest rounded square, distinct from swatches by both size and proportion |
@@ -460,7 +461,7 @@ Each easing curve has a specific role. Don't swap them arbitrarily — the curve
 **Exit** (disappear):
 1. Pill fades out over 200ms with `ease` easing
 2. Slight scale-down to 0.96 with `ease-in` — a gentle "receding" impression
-3. A 150ms delay before clearing softens the exit when cursor leaves a card
+3. The fade starts at once (no pull toward the cursor); the card is released after max(fade, 150ms), so the fade itself is the grace for gliding to the next card
 
 **Cursor-as-light-source**:
 - Accent-tinted radial gradient tracks the cursor position within the pill
