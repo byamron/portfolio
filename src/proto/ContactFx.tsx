@@ -1083,20 +1083,34 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     at$(2.45, () => animate(edgeR, 1, tw(0.6)))
     // 4 · Fold in half: the right half turns over onto the left.
     at$(3.1, () => animate(lift, -1, tw(0.7)))
-    // 5 · Picked up and carried to the hand in one compound motion: it turns
-    //     onto its side and recedes to a throwable size while it moves —
-    //     across first, then up into place beside the button (the rise starts
-    //     later than the slide, so the path curves and never crosses the
-    //     button). Each property has its own eased stretch of one timeline;
-    //     none stops mid-way.
+    // 5 · Picked up and carried to the hand in one motion: turning onto its
+    //     side, receding to a throwable size, across and up into place
+    //     beside the button. One eased progress drives every property, so
+    //     nothing reads as a separate beat; the path bows out to the right
+    //     mid-way so the turning sheet never sweeps over the button.
     const dx = launch.x - at.x, dy = launch.y - at.y
     const CARRY = 1.3
+    const BOW = 14 // px outward at the middle of the carry
+    const shrink = (t: number) => 1 - Math.pow(1 - t, 3.5) // picked up: small, soon
+    const out = (t: number) => 1 - Math.pow(1 - t, 2.2) // across, early
+    const rise = (t: number) => { const u = Math.pow(t, 1.4); return u * u * (3 - 2 * u) } // up, building
+    const k0 = 1, k1 = kPlane / PAPER_K
     at$(3.8, () => {
       setSide(true)
-      const part = (from: number, to: number) => ({ delay: from * CARRY * pace, duration: (to - from) * CARRY * pace, ease: SMOOTH })
-      stage.start({
-        rotate: 90, scale: kPlane / PAPER_K, x: dx, y: dy,
-        transition: { rotate: part(0.05, 0.6), scale: part(0, 0.5), x: part(0.05, 0.75), y: part(0.3, 1) },
+      // A spring, not a curve: it accelerates, carries a little past the
+      // hand and settles back, like a hand bringing it into place. Past 1
+      // the shapes extend linearly, so the overshoot reads as momentum.
+      animate(0, 1, {
+        type: 'spring', visualDuration: Math.max(0.7, CARRY * pace), bounce: 0.15,
+        onUpdate: p => {
+          const t = Math.min(1, Math.max(0, p)), over = p - t
+          stage.set({
+            rotate: 90 * p,
+            scale: k0 + (k1 - k0) * shrink(t),
+            x: dx * out(t) + BOW * Math.sin(Math.PI * t) + dx * over,
+            y: dy * rise(t) + dy * over,
+          })
+        },
       })
     })
     at$(5.1, () => animate(psi, Math.PI, tw(0.5)))
