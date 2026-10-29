@@ -218,6 +218,7 @@ So UW and Middlebury get black + logo with no underline (no destination), and Gi
 - **Carried objects move as one physical motion:** a spring-driven progress drives every property together (shape the path with easing per property, not staggered start times — staggering reads as separate beats); a little overshoot reads as momentum.
 - **The glass pill commits to leaving:** off every card it lets go at once (no pull toward the cursor) and fades; the fade is the grace for gliding to the next card.
 - **Pop-outs develop on intent:** a short dwell, one at a time; keyboard focus opens them, restored focus doesn't.
+- **Terminal line numbers are decorative** (opacity 0.3, ~2:1): like an editor gutter, they carry no content; the prompt and file name (`--term-dim`, 0.6 light / 0.52 dark) clear 4.5:1 in every theme.
 - **Text re-composes only when it must:** the line set is chosen by what fits at the minimum size, not by a breakpoint.
 - **Drop-shadows go on a wrapper that doesn't rotate**, so light stays overhead while the object turns.
 - **Pop-out windows follow the page's mode** (the terminal is a light window in light mode; in dark mode a dark window lifted a step *above* the page — lighter reads as nearer, darker as recessed) — never an inverted chip. On a near-black page the shadow can't separate it; a 1px light edge does.

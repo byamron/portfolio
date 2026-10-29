@@ -66,9 +66,10 @@ export function ThemePortrait() {
     setAnnounce(`Theme changed to ${accentColor}`)
     if (reducedMotion) return
     // Snap to a squash on the same frame as the swap, then spring past 1 and
-    // settle: reads as the new photo bouncing in.
+    // settle: reads as the new photo bouncing in. From rest (velocity 0): the
+    // snap itself would otherwise register as speed and deepen repeat pops.
     pop.set({ scale: 0.82, rotate: forward ? -5 : 5 })
-    pop.start({ scale: 1, rotate: 0, transition: SQUASH_POP })
+    pop.start({ scale: 1, rotate: 0, transition: { ...SQUASH_POP, velocity: 0 } })
   }, [accentColor, pop, reducedMotion])
 
   return (

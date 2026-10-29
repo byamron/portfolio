@@ -513,7 +513,7 @@ export function LinkedInLink({ href, label, icon }: { href: string; label: strin
               <div className="biz-face">
                 <CardStock />
                 <div className="biz-grid">
-                  <div className="biz-name-cell">Ben<br />Yamron</div>
+                  <div className="biz-name-cell">Ben{' '}<br />Yamron</div>
                   <div className="biz-row">Product designer</div>
                   <div className="biz-row">linkedin.com/in/benyamron</div>
                   <div className="biz-logo-cell"><ConsensusMark /></div>
@@ -1517,7 +1517,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     // The note on screen as it was pressed (the pointer may leave meanwhile).
     const note = live.current.letterAt
     // Couldn't copy: fall back to what an envelope usually means.
-    if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
+    if (!(await copyText(EMAIL))) { if (note) bumpLevel(); window.location.href = `mailto:${EMAIL}`; return }
     // Announced at once, every time (the visible note may wait for a plane).
     setStatus('')
     requestAnimationFrame(() => setStatus('Email address copied'))
