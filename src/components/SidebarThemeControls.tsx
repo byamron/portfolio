@@ -671,9 +671,13 @@ export function SidebarThemeControls({
     if (glideHide.current) { clearTimeout(glideHide.current); glideHide.current = null }
     const c = col.getBoundingClientRect()
     const r = el.getBoundingClientRect()
-    // At least the trigger's square; wider/taller controls get a little air.
-    const w = Math.max(r.width + (r.width > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
-    const h = Math.max(r.height + (r.height > TRIGGER_ICON_BOX ? 8 : 0), TRIGGER_ICON_BOX)
+    // Compact controls (swatches, mode and cursor buttons — their hit boxes
+    // differ, the drawn items don't) all get the trigger's square, so the
+    // pill frames each the same way; only genuinely larger controls (the
+    // intensity strip, the record) get their own size plus a little air.
+    const COMPACT = TRIGGER_ICON_BOX + 4
+    const w = r.width <= COMPACT ? TRIGGER_ICON_BOX : r.width + 8
+    const h = r.height <= COMPACT ? TRIGGER_ICON_BOX : r.height + 8
     const target = { x: r.left - c.left + (r.width - w) / 2, y: r.top - c.top + (r.height - h) / 2, width: w, height: h }
     glideTarget.current = el
     const place = !glideShown.current || prefersReducedMotion ? 'jump' : 'set'
