@@ -1511,7 +1511,9 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       // so its tail uncovers the note as it goes. Centred on the row.
       const kPlane = emailFx.planeLength / 44
       const launch = {
-        x: r.right + 8 + FLY_BOUNDS.tail * kPlane, // 8px from the button, like the note
+        // 16px from the button at rest, so that cocked back (4px pull + the
+        // nose-up tilt) it still clears it by 8px.
+        x: r.right + 16 + FLY_BOUNDS.tail * kPlane,
         y: r.top + r.height / 2 - ((FLY_BOUNDS.top + FLY_BOUNDS.bottom) / 2) * kPlane,
       }
       revealed.current = false
