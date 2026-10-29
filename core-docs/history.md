@@ -2,6 +2,37 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-29 — `/new/simple`: flow pipeline round 3 (simplify → staff review → ship reviews)
+
+Branch `simplified-home-prototype` (commits b1fc993 → aa56ac0). After Ben's last copy fix ("you seem cool. Let's chat!" on one line), the whole round went back through `/simplify`, the four staff-review lenses, and the ship reviews (security, accessibility, behaviour verification).
+
+- **Simplify:** a shared `useWindowLeave` helper (ContactFx, CursorGlow, SidebarThemeControls, useGlassHighlight); one `clearNow()` path in the glass pill; the fold writes only the attributes that changed; dead fields and stale comments removed. Larger refactors are logged in plan.md and were not done: they would re-architect behaviour Ben has already tuned.
+- **Staff review (fixed):**
+  - Other pop-outs can't open over a note that's folding under the row.
+  - Clicking mid-typing could print "undefined" (a queued keystroke landed after `complete`): clamped.
+  - The flight's first frame is drawn in the wound-up pose.
+  - The rail pill is concentric on capsules too (radius `min(w,h)/2`, eased between shapes).
+  - Copying with reduced motion clears the hint note.
+  - The "Settings (music playing)" name is restored.
+  - Keyboard focus during the glass pill's leave fade carries on.
+  - Typos use QWERTY neighbours.
+  - The fading note keeps its level.
+  - Fold cleanup stops every motion value.
+  - Docs drift fixed.
+- **Ship reviews (fixed):**
+  - Presses ~60ms apart wound up the check's spring until the icon blew up (24 → 685px). Each pop now starts from rest (velocity 0).
+  - Leaving the button during the clipboard write counted the note twice, skipping a level. The press is now the attempt, and it uses the note as it was pressed.
+  - The plane's flight ends the moment it's wholly out of view (its true reach past any edge), so "one at a time" never outlives a visible plane. It used to linger 0.6–2.7s; now 0.13–0.42s.
+  - Quiet terminal text is 4.5:1 in light mode.
+  - The terminal result slide respects reduced motion.
+  - Intro lines keep a space before each `<br>`, so find, copy and reader view don't read "designercurrently".
+- **Security:** clean. The production bundle contains no dev panels (dialkit/agentation: 0 hits after `vite build`).
+- **Left for Ben** (plan.md § staff review round 3):
+  - Two accessibility design calls: hover pop-outs aren't hoverable (1.4.13), and fit-to-column text reaches 158–175% at 200% zoom (1.4.4).
+  - Taste calls: when the toast appears, where the p.s. sits, how fast notes escalate, the mid-set phrase break.
+  - Fold craft follow-ups.
+- **Verification method:** a fresh-context verifier drove the live page with 15 diff-derived criteria plus adversarial cases. A separate fresh-context judge graded the raw observations and frames. Regression probes passed (press, toast, esc, carry, gap, glide, closed, blur, pill), along with 77 unit tests, tsc and build.
+
 ## 2026-10-29 — `/new/simple`: natural creasing, 2s fold, one pop-out at a time, content-driven line breaks
 
 - **Creasing by light, not outlines (Ben: "they just look like vector lines… appear before the folding motion"):** no strokes on the flat folds. Each flap darkens as it turns edge-on (sin^1.4) and casts a contact shadow that's large while lifted and tightens as it's pressed flat; the right half shades as it turns about the crease. A crease (soft dark valley + lit shoulder, non-scaling) only fades in as its fold lands (corner/edge: smoothstep 0.75→1; centre: as the half lays back down) — never before the motion. Faces reach a hair (0.12 units) across their hinges so adjoining pieces never show an antialiased seam; bases, then the centre crease, then flaps (the right half split into two layers sharing its turn). Plane faces: soft edges, far wing in shade, near wing shaded by angle (same in the thrown sprite). Paper tile 96 → 256px: quieter grain, a faint slow mottle, a few soft fibres.

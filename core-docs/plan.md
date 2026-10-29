@@ -643,6 +643,12 @@ Fixed: other pop-outs can't open over the folding sheet; typed note could show "
 - Fold craft: the wing fold pulses the whole plane grey (`nearShade` peaks at ψ=π); cast shadows are hard-edged copies and the half-turn casts none; the p.s. glyph tops peek out at the dart's centre; fold vs flight hairlines differ (fold svg rasterised before it shrinks).
 - Card's box-shadow turns with the card (move it to a non-rotating wrapper).
 - At slow fold dials (6s) the carry settle and the wing fold may merge into one beat.
+- A pointer resting on GitHub/LinkedIn from before the plane launches doesn't open it after launch (re-entering does); could re-arm the dwell when the sheet lifts.
+- The X blimp can't be stopped either (~18s at 1440px); fold it into the Escape-stops-flight item.
+- The terminal is clipped at 320px CSS width (decorative).
+- Consider exposing the address itself to AT/voice users (e.g. in the button's description).
+
+**Ship reviews (2026-10-29):** security clean (no dev panels in the prod bundle). Fixed: runaway check spring on quick presses, double-counted note when leaving during the press, plane flight ends when wholly out of view, light-mode terminal contrast, reduced-motion terminal slide, spaces across intro line breaks. **Decisions for Ben** (a11y): hover pop-outs aren't hoverable (WCAG 1.4.13); fit-to-column text reaches 158–175% at 200% zoom (1.4.4).
 
 ## `/new/simple` — simplify pass follow-ups (2026-10-29)
 

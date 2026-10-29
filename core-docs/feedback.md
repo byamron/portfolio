@@ -2,6 +2,19 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-10-29 — My own probes missed rapid and mid-await input; a fresh adversarial verifier caught both
+
+**What happened:** The email button passed every regression probe I'd written: single presses, repeat presses about 1s apart, and hover/leave at human pace. A fresh-context verifier given only the criteria tried what I hadn't, and found two real bugs:
+- **Three presses ~60ms apart:** the check icon blew up from 24px to 685px. Each re-pop did `set(0.82)` and then started a new spring, which inherited the velocity the jump itself created.
+- **Leaving the button during the press:** if the pointer left in the same tick as the click, the note was counted twice and a level was skipped. `onClick` awaits the clipboard write, and `pointerleave` ran `closeLetter` (counting the note) in between. The fold path then read stale state and counted it again.
+
+**Lesson learned:**
+- **Re-triggerable spring pops:** start them from rest. Use explicit keyframes and `velocity: 0`, never `set()` then `start()`.
+- **Async event handlers:** capture the UI state they act on *before* the first `await`, and make the press itself the single place that records "this counted". Pointer and focus events can run in between.
+- **Verifying an interaction:** have something that didn't write the code generate the adversarial timings. Include 0ms and tens of ms between inputs, not only human-paced ones.
+
+---
+
 ## 2026-10-29 — Creases drawn as lines read as separate elements, not paper
 
 **What happened:** To make the paper fold look "natural", I added stroked crease lines (dark valley + light shoulder) that faded in as each fold landed. Ben's frame-by-frame recording showed they still looked and moved like their own elements: one spanned the full hinge while its flap was mid-air (sticking out past the paper), another rode a flap and drifted off the paper, and the centre one read as a dashed vector line.
