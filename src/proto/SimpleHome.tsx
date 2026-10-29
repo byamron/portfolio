@@ -36,13 +36,16 @@ function renderSeg(seg: Seg, i: number, measuring: boolean) {
   return <span key={i}>{seg}</span>
 }
 
-const STRIP_LABEL_INSET = 40 // ContributionStrip's label paddingLeft
+// Phones: the text and the strip label share one 24px margin.
+const PHONE_MARGIN = 24
 // Spacing is an 8-grid measured to what you see (baselines, glyph edges),
 // not to boxes: 24px between glyphs, 48px from text to icons.
 const ICON_BOX = 44, ICON_GLYPH = 24
 const ICON_INSET = (ICON_BOX - ICON_GLYPH) / 2
 const SPACE_TEXT_TO_ICONS = 48
-const PHONE_MAX_TEXT = 38
+// Phones fill the column (Ben); this only stops a wide window on the phone
+// breaks from going poster-sized.
+const PHONE_MAX_TEXT = 56
 const subscribePhone = (cb: () => void) => {
   const mq = window.matchMedia(PHONE_QUERY)
   mq.addEventListener('change', cb)
@@ -116,8 +119,7 @@ export function SimpleHome() {
   }
   const lines = sets[chosen]!
   const onPhoneBreaks = chosen > 0 && chosen === sets.length - 1 && !!PHONE_BREAKS[layout.copy]
-  // Phones keep the preset's relative size (S < M < L), capped for the measure.
-  const maxText = onPhoneBreaks ? Math.min(PHONE_MAX_TEXT, Math.round((presetSize ?? 48) * 0.8)) : layout.maxText
+  const maxText = onPhoneBreaks ? PHONE_MAX_TEXT : layout.maxText
   const longestEm = setEms?.[chosen] ?? null
   const fit = layout.sizeMode === 'fit' && longestEm !== null
   const fontSize = fit
@@ -199,10 +201,9 @@ export function SimpleHome() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          // Symmetric, so the column's centre is the page's centre. Phones:
-          // left edge on the strip label's 40px inset (centring a narrow
-          // block there reads as misalignment, not intent).
-          padding: phone ? `96px 24px 64px ${STRIP_LABEL_INSET}px` : '96px clamp(24px, 6vw, 72px) 64px',
+          // Symmetric, so the column's centre is the page's centre; phones
+          // on the same 24px margin as the strip label.
+          padding: phone ? `96px ${PHONE_MARGIN}px 64px` : '96px clamp(24px, 6vw, 72px) 64px',
           containerType: 'inline-size',
         }}
         ref={colRef}
@@ -302,7 +303,7 @@ export function SimpleHome() {
       {/* 24px from the strip's cells to the window's bottom edge (its row
           carries hit padding below the cells). */}
       <motion.div variants={item} custom={2} style={{ alignSelf: 'stretch', flexShrink: 0, paddingBottom: 8 }}>
-        <ContributionStrip topGap={0} />
+        <ContributionStrip topGap={0} labelInset={phone ? PHONE_MARGIN : undefined} />
       </motion.div>
     </motion.main>
   )

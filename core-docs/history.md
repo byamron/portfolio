@@ -4,6 +4,8 @@ Decision log and completed work, in reverse chronological order.
 
 ## 2026-10-29 — Launch: the simple home becomes benyamron.com
 
+- **Phone fit (Ben, from his iPhone: "incorrect half width… should extend the full width", "24px margins"):** the phone line set was capped at 80% of the preset size (27px), so its lines reached ~270 of 393px. The phone breaks now fill the column: 31px at 320, 40px at 393 and 49px at 470, with a ceiling of 56. The text, icon glyphs and contributions label share one 24px margin; the label had a 40px inset. Measured: the longest line reaches 2–4px of the column edge, and the label chip and first icon glyph sit at x=24. No horizontal overflow from 1280 down to 340px.
+
 Branch `launch-simple-home`, cut from `simplified-home-prototype`.
 
 - **Tags (git-only, never shown on the site):**
