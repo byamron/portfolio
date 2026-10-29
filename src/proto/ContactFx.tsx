@@ -603,10 +603,9 @@ const NOTE_TEMPO = [
 ]
 // While the last note is still folding / flying: the system's voice, not the note's.
 const HELD_NOTE = 'One at a time \u2014 the last\none is still in the air.'
-const NOTE_LEVEL_KEY = 'email-note-level'
-const readNoteLevel = () => {
-  try { return Math.min(NOTES.length - 1, Number(sessionStorage.getItem(NOTE_LEVEL_KEY)) || 0) } catch { return 0 }
-}
+// For this page load only (Ben): a reload starts calm again. Module scope so
+// it survives the button remounting (route changes) within the visit.
+let noteLevel = 0
 const LETTER_PX = 11
 const LETTER_LH = 16 // matches .email-letter (8-grid)
 const LETTER_FONT = "'IBM Plex Mono', ui-monospace, monospace"
@@ -891,15 +890,23 @@ const PAPER_SHADOW = 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))'
 // Hairline paper edges, the same on screen at every scale and fold.
 
 type Pt = { x: number; y: number }
-const RELEASE_S = 0.3
-interface Throw { v0: number; vTrim: number } // launch speed, trim speed (px/s)
+// After the wind-up the hand only follows through briefly before letting go.
+const RELEASE_S = 0.1
+// Launch speed, trim speed (px/s), and the nose-up angle it leaves the hand at.
+interface Throw { v0: number; vTrim: number; gamma0?: number }
 
 const SMOOTH = [0.37, 0, 0.63, 1] as const // sine in-out
 // The sheet materialises under the note (it resolves out of a soft blur as
 // it fades in), and only then takes the words over — never mid-fade.
 const PAPER_IN_S = 0.6
-// The fold's own timeline, in seconds at pace 1 (first crease → release).
-const FOLD_STEPS_S = 5.72
+// The fold's own timeline, in seconds at pace 1 (first crease → wings open).
+const FOLD_STEPS_S = 6.1
+// The throw, at its own (unscaled) tempo: draw back and tip the nose up,
+// a beat, let go.
+const WIND_UP_S = 0.3
+const WIND_UP_HOLD_S = 0.1
+const WIND_UP_PX = 9
+const WIND_UP_DEG = 7
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 
 // Side-view shading, shared by the fold's last steps and the flying sprite
@@ -1017,7 +1024,10 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         // Past edge-on, the right half shows its plain back, on top.
         half('R', true, cornerR.get(), edgeR.get(), whole || s < 0, tilt, flat)
         // Reaching a hair past the crease, over the left half's seam allowance.
-        face('Rback', !whole && s < 0 ? BASE_3.map(q => (q[0] === 0 ? [-SEAM, q[1]] as P2 : mirrorP(q))) : null, IDENTITY, BACK, shadeOf(tilt))
+        // (Its outline is whatever the right half is at this step — the whole
+        // half on the first crease, the folded dart on the fold in half.)
+        const rShape = edgeR.get() > 0 ? BASE_3 : cornerR.get() > 0 ? BASE_2 : SHEET
+        face('Rback', !whole && s < 0 ? rShape.map(q => (q[0] === 0 ? [-SEAM, q[1]] as P2 : mirrorP(q))) : null, IDENTITY, BACK, shadeOf(tilt))
       } else {
         const f = sideFaces(psi.get(), roll.get())
         const setD = (k: string, d: string | null, opacity = 1) => {
@@ -1060,31 +1070,45 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
     })
     // Fully there: the typed note hands its words to the sheet in one render.
     timers.push(setTimeout(() => { setInked(true); onPaperIn() }, PAPER_IN_S * 1000 + 20))
-    // 1 · Crease lengthwise: the right half lifts over and lays back down,
-    //     pressing the crease in as it lands.
-    at$(0.25, () => { split.set(1); animate(lift, [1, 0.18, 1], tw(0.8)) })
-    at$(0.75, () => animate(creased, 1, tw(0.35)))
+    // 1 · Crease lengthwise: the right half folds all the way over onto the
+    //     left, is pressed, and opens back out — the crease is made by the
+    //     fold, then shows as the half lays back down.
+    at$(0.25, () => { split.set(1); animate(lift, [1, -1, -1, 1], { ...tw(1.05), times: [0, 0.44, 0.56, 1] }) })
+    at$(0.25 + 1.05 * 0.6, () => animate(creased, 1, tw(0.4)))
     // 2 · Top corners to the crease, left then right.
-    at$(1.05, () => animate(cornerL, 1, tw(0.6)))
-    at$(1.25, () => animate(cornerR, 1, tw(0.6)))
+    at$(1.4, () => animate(cornerL, 1, tw(0.6)))
+    at$(1.6, () => animate(cornerR, 1, tw(0.6)))
     // 3 · The new slanted edges to the crease.
-    at$(1.9, () => animate(edgeL, 1, tw(0.6)))
-    at$(2.1, () => animate(edgeR, 1, tw(0.6)))
+    at$(2.25, () => animate(edgeL, 1, tw(0.6)))
+    at$(2.45, () => animate(edgeR, 1, tw(0.6)))
     // 4 · Fold in half: the right half turns over onto the left.
-    at$(2.75, () => animate(lift, -1, tw(0.7)))
-    // 5 · Turn to the side (nose right) and lift it into the hand — up to
-    //     the icon row, receding to a throwable size — then fold each wing.
-    at$(3.45, () => {
+    at$(3.1, () => animate(lift, -1, tw(0.7)))
+    // 5 · Picked up: turned onto its side where it lies (a little lifted off
+    //     the table), then carried to the hand — drawn back to a throwable
+    //     size early, across first (below the row, so it never passes over
+    //     the button), then up into place beside it. Then each wing down.
+    const dx = launch.x - at.x, dy = launch.y - at.y
+    at$(3.8, () => {
       setSide(true)
-      stage.start({ x: launch.x - at.x, y: launch.y - at.y, scale: kPlane / PAPER_K, rotate: 90, transition: tw(0.95) })
+      stage.start({ rotate: 90, scale: 0.9, y: -6, transition: tw(0.5) })
     })
-    at$(4.35, () => animate(psi, Math.PI, tw(0.7)))
-    // 6 · Open the wings (and roll a little so they read), then let go.
-    at$(5.1, () => {
-      animate(psi, OPEN_PSI, tw(0.6))
-      animate(roll, OPEN_ROLL, tw(0.6))
+    at$(4.3, () => {
+      stage.start({
+        x: [0, dx, dx], y: [-6, dy * 0.35, dy], scale: [0.9, (kPlane / PAPER_K) * 1.06, kPlane / PAPER_K],
+        transition: { ...tw(0.8), times: [0, 0.5, 1] },
+      })
     })
-    at$(5.72, () => onFolded(launch))
+    at$(5.1, () => animate(psi, Math.PI, tw(0.5)))
+    // 6 · Open the wings (and roll a little so they read)…
+    at$(5.6, () => {
+      animate(psi, OPEN_PSI, tw(0.5))
+      animate(roll, OPEN_ROLL, tw(0.5))
+    })
+    // …draw back with the nose tipped up, a beat, and let go.
+    at$(FOLD_STEPS_S, () => {
+      stage.start({ x: dx - WIND_UP_PX, rotate: 90 - WIND_UP_DEG, transition: { duration: WIND_UP_S, ease: [0.45, 0, 0.55, 1] } })
+      timers.push(setTimeout(() => onFolded({ x: launch.x - WIND_UP_PX, y: launch.y }), (WIND_UP_S + WIND_UP_HOLD_S) * 1000))
+    })
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1182,7 +1206,7 @@ function PaperFlight({ from, launch, scale, onTail, onDone }: {
     const kL = G / (V_TRIM * V_TRIM), kD = kL / LD
     const tailLen = FLY_BOUNDS.tail * scale
     let x = from.x, y = from.y
-    let v = launch.v0, gamma = 0, gdot = 0 // released level
+    let v = launch.v0, gamma = launch.gamma0 ?? 0, gdot = 0 // released nose-up, as wound up
     let dir = 1, bank = 0, turning = 0 // bank: 0 → π over a turn
     const seed = Math.random() * 100
     const gustAmp = r(0.1, 0.3), gustRate = r(0.7, 1.4)
@@ -1272,7 +1296,7 @@ function LetterPlane({ text, lines, launch, kPlane, pace, speed, onPaperIn, onLa
   // shoots out, then climbs gently on its own lift.
   const toss = useMemo<Throw>(() => {
     const vTrim = (130 + Math.random() * 35) * speed
-    return { vTrim, v0: vTrim * (1.3 + Math.random() * 0.25) }
+    return { vTrim, v0: vTrim * (1.3 + Math.random() * 0.25), gamma0: (WIND_UP_DEG * Math.PI) / 180 }
   }, [speed])
   // The sheet sits so the note's text lands exactly where it was typed.
   const at = useMemo(() => ({ x: text.x - PAD_X + PAPER_W / 2, y: text.y - PAD_TOP + PAPER_H / 2 }), [text])
@@ -1301,12 +1325,11 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const [onPaper, setOnPaper] = useState(false)
   const [airborne, setAirborne] = useState(false)
   // This session's escalation (see NOTES).
-  const [level, setLevel] = useState(readNoteLevel)
-  const bumpLevel = () => setLevel(l => {
-    const next = Math.min(NOTES.length - 1, l + 1)
-    try { sessionStorage.setItem(NOTE_LEVEL_KEY, String(next)) } catch { /* private mode */ }
-    return next
-  })
+  const [level, setLevel] = useState(noteLevel)
+  const bumpLevel = () => {
+    noteLevel = Math.min(NOTES.length - 1, noteLevel + 1)
+    setLevel(noteLevel)
+  }
   const openedAt = useRef<number | null>(null)
   // Hovered while the last note is still folding / flying.
   const [held, setHeld] = useState<Pt | null>(null)
@@ -1328,8 +1351,15 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const revealed = useRef(true)
   const maskEdge = useTransform(revealX, v => `${Math.round(v - noteLeft.current)}px`)
 
-  const live = useRef({ throwing, letterAt, held })
-  useLayoutEffect(() => { live.current = { throwing, letterAt, held } })
+  const live = useRef({ throwing, letterAt, held, copied })
+  useLayoutEffect(() => { live.current = { throwing, letterAt, held, copied } })
+  // Screen readers hear every copy at once; cleared so a repeat re-announces.
+  const [status, setStatus] = useState('')
+  useEffect(() => {
+    if (!status) return
+    const t = setTimeout(() => setStatus(''), 4000)
+    return () => clearTimeout(t)
+  }, [status])
 
   const swap = reducedMotion
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
@@ -1386,6 +1416,8 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
     }
     openedAt.current = performance.now()
     announceOpen(eggId)
+    // A new note means the last one's done: its check and note step aside.
+    if (live.current.copied) { clearTimers(); setCopied(false) }
     setLetterAt(at)
     setLetterKey(k => k + 1)
   }
@@ -1426,6 +1458,12 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
   const onClick = async () => {
     // Couldn't copy: fall back to what an envelope usually means.
     if (!(await copyText(EMAIL))) { window.location.href = `mailto:${EMAIL}`; return }
+    // Announced at once, every time (the visible note may wait for a plane).
+    setStatus('')
+    requestAnimationFrame(() => setStatus('Email address copied'))
+    // A note already folding / in the air: copied again, but the note still
+    // appears only as that plane flies off — nothing visible changes.
+    if (live.current.throwing) return
     clearTimers()
     // Off for a frame on a repeat click, so the check replays and the status
     // region re-announces (at once — the visual note may wait for the plane).
@@ -1457,7 +1495,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       setThrowing({ text, lines, launch, noteLeft: r.right + 8 })
       // If the plane never clears the note (it turned back early, or the tab
       // was hidden), finish the reveal anyway.
-      later((PAPER_IN_S + emailFx.foldSeconds + 2.6) * 1000, () => {
+      later((PAPER_IN_S + emailFx.foldSeconds + WIND_UP_S + WIND_UP_HOLD_S + 2.6) * 1000, () => {
         if (revealed.current) return
         const right = noteEl.current?.getBoundingClientRect().right ?? revealX.get()
         animate(revealX, right + 24, { duration: 0.35, ease: EASE_OUT })
@@ -1569,7 +1607,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         document.body,
       )}
       {/* Announced in place at once; drawn in the top layer beside the button. */}
-      <span role="status" className="sr-only">{copied ? 'Email address copied' : ''}</span>
+      <span role="status" className="sr-only">{status}</span>
       {noteAt && createPortal(
         <motion.span
           aria-hidden="true"
