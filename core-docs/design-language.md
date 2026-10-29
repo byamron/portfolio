@@ -214,6 +214,7 @@ So UW and Middlebury get black + logo with no underline (no destination), and Gi
 - **Spacing on /new/simple is an 8-grid measured optically** — to baselines, glyph edges and paper edges, not to boxes with invisible padding (text→icons 48, glyph pitch 24, pop-outs/notes/plane 8 from the button, strip label→cells 16, cells→window 24).
 - **Repeat attempts escalate in tone, not in story** (the email notes): never imply messages that weren't sent; the copy only gets more excited.
 - **Paper reads by light, not outlines:** folds shade as they turn and cast contact shadows; a crease appears only as its fold lands.
+- **Nested rounded shapes are concentric:** outer radius = inner radius + the gap between them (the rail pill: ring 11px + 4px gap = 15px).
 - **Carried objects move as one physical motion:** a spring-driven progress drives every property together (shape the path with easing per property, not staggered start times — staggering reads as separate beats); a little overshoot reads as momentum.
 - **The glass pill commits to leaving:** off every card it lets go at once (no pull toward the cursor) and fades; the fade is the grace for gliding to the next card.
 - **Pop-outs develop on intent:** a short dwell, one at a time; keyboard focus opens them, restored focus doesn't.

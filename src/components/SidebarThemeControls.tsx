@@ -906,7 +906,10 @@ export function SidebarThemeControls({
               ...({ '--pill-o': pillO } as unknown as MotionStyle),
               opacity: 'var(--pill-o)',
               position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none',
-              borderRadius: 12,
+              // Concentric with the selection rings it frames: a ring's outer
+              // corner is 7px (item) + 3px (offset) + 1px (ring) = 11px, and
+              // the 44px pill sits 4px outside its 36px square → 15px.
+              borderRadius: 15,
               // Same frost as the page's glass pill (useGlassHighlight skinPill).
               background: resolvedAppearance === 'dark'
                 ? 'hsla(var(--accent-hue), 20%, 55%, 0.12)'
