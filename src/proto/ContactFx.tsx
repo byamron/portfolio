@@ -583,7 +583,7 @@ const NOTE_PS = [
   'p.s. CLICK!! TO!! COPY!!',
 ]
 const NOTES = ([
-  "Hi Ben,\n\nI love your portfolio and\nyou seem cool.\nLet's chat!\n\nBest,\n[Your name]",
+  "Hi Ben,\n\nI love your portfolio and\nyou seem cool. Let's chat!\n\nBest,\n[Your name]",
   "Hi Ben!\n\nI really love your\nportfolio, and you seem\nreally cool.\nLet's chat!!\n\nBest,\n[Your name]",
   "Hi Ben!!\n\nI LOVE your portfolio.\nYou seem SO cool.\nWe should totally chat!!\n\nBest!!\n[Your name]",
   "BEN!!\n\nYour portfolio is SO\ngood and you seem SO\ncool. LET'S CHAT!!!\n\nBest!!!\n[Your name]",
