@@ -809,7 +809,6 @@ function acrossHinge(poly: P2[], a: P2, b: P2, eps: number): P2[] {
   if ((cx - a[0]) * nx + (cy - a[1]) * ny > 0) { nx = -nx; ny = -ny } // away from the polygon
   return poly.map(p => (Math.abs((p[0] - a[0]) * nx + (p[1] - a[1]) * ny) < 1e-6 ? [p[0] + nx * eps, p[1] + ny * eps] as P2 : p))
 }
-const smoothstep = (a: number, b: number, v: number) => { const t = clamp01((v - a) / (b - a)); return t * t * (3 - 2 * t) }
 /** How dark paper reads when turned θ from lying flat in the light. */
 const shadeOf = (theta: number) => 0.17 * Math.pow(Math.abs(Math.sin(theta)), 1.4)
 
@@ -909,9 +908,11 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 const farShade = 0.1
 const nearShade = (psi: number) => 0.04 + 0.12 * Math.abs(Math.cos(psi))
 const sideStroke = { stroke: EDGE, strokeWidth: 0.5, strokeLinejoin: 'round' as const, vectorEffect: 'non-scaling-stroke' as const }
-// A crease: a soft valley (shadow) with a lit shoulder beside it.
-const CREASE_DARK = { stroke: 'rgba(70,52,34,0.16)', strokeWidth: 1.1, strokeLinecap: 'round' as const, vectorEffect: 'non-scaling-stroke' as const, fill: 'none' }
-const CREASE_LIGHT = { stroke: 'rgba(255,255,255,0.7)', strokeWidth: 0.8, strokeLinecap: 'round' as const, vectorEffect: 'non-scaling-stroke' as const, fill: 'none' }
+// Paper has no lines: a folded edge reads only by the flap's own shading
+// and the contact shadow it casts; a pressed-and-reopened crease is a tonal
+// valley in the paper (a shade on one side of the fold, light catching the
+// other), painted into the sheet between its base and the flaps.
+const VALLEY_HALF = 0.45 // sheet units each side of the centre crease (~3px)
 const SEAM = 0.12 // sheet units each face reaches across its hinge (no seams)
 
 /** The note's sheet: fades in under the typed note, folds (a parameter per
@@ -968,34 +969,26 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         put(k + 'Cast', d, [m[0], m[1], m[2], m[3], m[4], m[5] + dy], 0.07 + 0.07 * lifted)
       } else hide(k + 'Cast')
     }
-    const line = (k: string, a: P2, b: P2, m: M6, opacity: number) => {
-      if (opacity < 0.01) { hide(k + 'D'); hide(k + 'L'); return }
-      const d = `M ${a[0]} ${a[1]} L ${b[0]} ${b[1]}`
-      put(k + 'D', d, m, opacity)
-      // The lit shoulder, a hair to the side.
-      put(k + 'L', d, [m[0], m[1], m[2], m[3], m[4] + 0.14, m[5] + 0.1], opacity)
-    }
+    const VALLEY = `M ${-VALLEY_HALF} -22 L ${VALLEY_HALF} -22 L ${VALLEY_HALF} 22 L ${-VALLEY_HALF} 22 Z`
     const FACES = ['base', 'cornerFlap', 'cornerStatic', 'edgeFlap', 'cornerMove']
-    const CREASES = ['c2s', 'c2m', 'c3']
     // One half's faces; the right half is drawn mirrored (and its group is
     // turned about the crease by `lift`, which also shades it).
-    const half = (p: string, mirror: boolean, c: number, e: number, hidden: boolean, tilt: number) => {
-      if (hidden) { FACES.forEach(k => face(p + k, null)); CREASES.forEach(k => line(p + k, NOSE, NOSE, IDENTITY, 0)); return }
+    const half = (p: string, mirror: boolean, c: number, e: number, hidden: boolean, tilt: number, flat: boolean) => {
+      if (hidden) { FACES.forEach(k => face(p + k, null)); return }
       const P = (pts: P2[]) => (mirror ? pts.map(mirrorP) : pts)
       const M = (m: M6) => (mirror ? mirrorM(m) : m)
       const tiltShade = shadeOf(tilt)
       const mix = (a: number) => 1 - (1 - a) * (1 - tiltShade)
-      // The base reaches a hair across the centre crease (no seam between halves).
-      const base = (e > 0 ? BASE_3 : c > 0 ? BASE_2 : SHEET).map(q => (q[0] === 0 ? [SEAM, q[1]] as P2 : q))
+      // While both halves lie flat side by side, the base reaches a hair
+      // across the centre crease (no seam between them); once the other half
+      // lifts, that sliver would show its printing, so it doesn't.
+      const reach = flat ? SEAM : 0
+      const base = (e > 0 ? BASE_3 : c > 0 ? BASE_2 : SHEET).map(q => (q[0] === 0 ? [reach, q[1]] as P2 : q))
       face(p + 'base', P(base), IDENTITY, FRONT, mix(0))
       if (e === 0) {
         const th = Math.PI * c
         face(p + 'cornerFlap', c > 0 ? P(acrossHinge(CORNER, NOSE, HINGE_2, SEAM)) : null, M(foldMatrix(NOSE, HINGE_2, c)), c < 0.5 ? FRONT : BACK, mix(shadeOf(th)), Math.sin(th))
         ;['cornerStatic', 'edgeFlap', 'cornerMove'].forEach(k => face(p + k, null))
-        // The corner's crease forms as it presses flat (its folded edge).
-        line(p + 'c2s', NOSE, HINGE_2, M(IDENTITY), smoothstep(0.75, 1, c))
-        line(p + 'c2m', NOSE, NOSE, IDENTITY, 0)
-        line(p + 'c3', NOSE, NOSE, IDENTITY, 0)
       } else {
         const th = Math.PI * e
         const m3 = M(foldMatrix(NOSE, HINGE_3, e))
@@ -1004,11 +997,6 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         face(p + 'edgeFlap', P(acrossHinge(EDGE_FLAP, NOSE, HINGE_3, SEAM)), m3, e < 0.5 ? FRONT : BACK, mix(shadeOf(th)), Math.sin(th))
         // Rides on the edge flap's face; past edge-on it's underneath.
         face(p + 'cornerMove', e < 0.5 ? P(acrossHinge(CORNER_MOVE, NOSE, H3_AT_Y5, SEAM)) : null, m3, BACK, mix(shadeOf(th)))
-        // The corner's crease: the part on the static piece stays; the part
-        // riding the edge flap goes with it, then under.
-        line(p + 'c2s', NOSE, H3_AT_Y5, IDENTITY, 1)
-        line(p + 'c2m', H3_AT_Y5, HINGE_2, m3, e < 0.5 ? 1 : 0)
-        line(p + 'c3', NOSE, HINGE_3, IDENTITY, smoothstep(0.75, 1, e))
       }
     }
     const render = () => {
@@ -1020,11 +1008,14 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         face('whole', whole ? FULL_SHEET : null, IDENTITY, FRONT)
         els.current.rightBase?.setAttribute('transform', `scale(${s} 1)`)
         els.current.rightFlaps?.setAttribute('transform', `scale(${s} 1)`)
-        half('L', false, cornerL.get(), edgeL.get(), whole, 0)
-        // Folded over, the crease is the paper's edge now (and under it).
-        line('centre', NOSE, [0, 22], IDENTITY, whole || s < 0 ? 0 : creased.get())
+        const flat = s > 0.97
+        half('L', false, cornerL.get(), edgeL.get(), whole, 0, flat)
+        // The centre crease's valley, pressed in as the half lands; folded
+        // over, it's the paper's edge (and underneath).
+        const valley = whole || s < 0 ? 0 : creased.get()
+        if (valley > 0.01) put('valley', VALLEY, IDENTITY, valley); else hide('valley')
         // Past edge-on, the right half shows its plain back, on top.
-        half('R', true, cornerR.get(), edgeR.get(), whole || s < 0, tilt)
+        half('R', true, cornerR.get(), edgeR.get(), whole || s < 0, tilt, flat)
         // Reaching a hair past the crease, over the left half's seam allowance.
         face('Rback', !whole && s < 0 ? BASE_3.map(q => (q[0] === 0 ? [-SEAM, q[1]] as P2 : mirrorP(q))) : null, IDENTITY, BACK, shadeOf(tilt))
       } else {
@@ -1105,24 +1096,14 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
       <path ref={ref(k + 'Shade')} fill={SHADE} style={{ display: 'none' }} />
     </>
   )
-  const creaseEls = (k: string) => (
-    <>
-      <path ref={ref(k + 'D')} {...CREASE_DARK} style={{ display: 'none' }} />
-      <path ref={ref(k + 'L')} {...CREASE_LIGHT} style={{ display: 'none' }} />
-    </>
-  )
-  // Bottom to top: both halves' bases, the centre crease, then each half's
-  // corner piece and its crease, the edge flap, what rides on it, and the
-  // fold lines that land on top.
+  // Bottom to top: both halves' bases, the centre crease's valley, then
+  // each half's corner piece, the edge flap, and what rides on it.
   const flapEls = (p: string) => (
     <>
       {faceEls(p + 'cornerStatic')}
       {faceEls(p + 'cornerFlap')}
-      {creaseEls(p + 'c2s')}
       {faceEls(p + 'edgeFlap')}
       {faceEls(p + 'cornerMove')}
-      {creaseEls(p + 'c2m')}
-      {creaseEls(p + 'c3')}
     </>
   )
   const back = `url(#${uid}-back)`
@@ -1139,6 +1120,15 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
         <defs>
           <PaperPattern id={`${uid}-back`} pxPerUnit={PAPER_K} />
           <LetterPattern id={`${uid}-front`} grainId={`${uid}-back`} inked={inked} lines={lines} />
+          {/* The valley across the centre crease: shade falling into it on
+              one side, light catching the far slope on the other. */}
+          <linearGradient id={`${uid}-valley`} gradientUnits="userSpaceOnUse" x1={-VALLEY_HALF} y1={0} x2={VALLEY_HALF} y2={0}>
+            <stop offset="0" stopColor={SHADE} stopOpacity={0} />
+            <stop offset="0.42" stopColor={SHADE} stopOpacity={0.07} />
+            <stop offset="0.5" stopColor={SHADE} stopOpacity={0.1} />
+            <stop offset="0.6" stopColor="#ffffff" stopOpacity={0.28} />
+            <stop offset="1" stopColor="#ffffff" stopOpacity={0} />
+          </linearGradient>
         </defs>
         {/* Keyed, so the side view never inherits a front-view node. */}
         {!side ? (
@@ -1147,7 +1137,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
             {faceEls('Lbase')}
             {/* The right half's two layers share its turn about the crease. */}
             <g ref={ref('rightBase')}>{faceEls('Rbase')}</g>
-            {creaseEls('centre')}
+            <path ref={ref('valley')} fill={`url(#${uid}-valley)`} style={{ display: 'none' }} />
             {flapEls('L')}
             <g ref={ref('rightFlaps')}>
               {flapEls('R')}

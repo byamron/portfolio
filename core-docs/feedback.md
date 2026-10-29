@@ -2,6 +2,14 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-10-29 — Creases drawn as lines read as separate elements, not paper
+
+**What happened:** To make the paper fold look "natural", I added stroked crease lines (dark valley + light shoulder) that faded in as each fold landed. Ben's frame-by-frame recording showed they still looked and moved like their own elements: one spanned the full hinge while its flap was mid-air (sticking out past the paper), another rode a flap and drifted off the paper, and the centre one read as a dashed vector line.
+
+**Lesson learned:** For physical materials, don't add decoration that isn't part of the surface. Real paper has no lines — a fold edge is visible because a layer of paper sits on another (shading + contact shadow, both part of that layer's geometry), and a reopened crease is a tonal step (a gradient painted into the sheet). Anything drawn as a separate element will eventually desync from the surface it's meant to belong to. Verify motion work frame by frame (dense captures through each transition), not from a few stills.
+
+---
+
 ## 2026-10-28 — "It jumps the first time": interaction glitches need per-frame traces, and gaps between targets count
 
 **What happened:** Ben reported the rail's glide pill often jumped (instead of travelling) from the settings handle to the first option. Earlier checks of the pill only looked at end states. A per-frame trace showed two causes: (1) the air between handle and options belongs to the page, so crossing it triggered the pill's leave-grace — a slow first move faded it out and it reappeared on the option with no travel (a 56px one-frame jump); (2) Framer hands `opacity` animations to WAAPI, which ends one frame before Framer commits the final inline value — a one-frame blink to 0 at the end of every fade-in.
