@@ -10,6 +10,169 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 
 ---
 
+## ▶ START HERE — current state and backlog (updated 2026-10-31)
+
+> This section is the handoff for any new workspace or agent. It's canonical: the dated `/new/simple` sections further down are history, and every open item from them has been carried into the backlog here. Read `core-docs/feedback.md` and the top of `core-docs/history.md` too, as CLAUDE.md requires.
+
+### What's live
+
+**benyamron.com is one page**, the "simple home". It launched 2026-10-29 in PR #210 (merge `6d8bbc1`) and was deployed and verified live.
+
+- **Routes** (`src/App.tsx`):
+  - `/` is the simple home.
+  - `/havana/privacy` and `/trio/privacy` are the apps' privacy policies; they stay at their URLs.
+  - **Every other path redirects to `/`.** That includes old case-study URLs and `/new/*`.
+- **The previous portfolio** (two-column home, case studies, playground, demos) is at git tag **`portfolio-v1`** (`0b45233`).
+  - Pull a single file back: `git show portfolio-v1:<path>`.
+  - Restore it into the working tree: `git checkout portfolio-v1 -- <path>`.
+- **The prototype with its DialKit tuner** is at tag **`simple-home-dev`** (`752dc69`).
+  - To tune again: branch from `main`, restore `src/proto/ProtoTuner.tsx` from the tag, re-add the settings context (`ProtoSettingsContext` in `protoSettings.ts` at the tag) and the `dialkit` devDependency, mount it in `SimpleSite`, then strip it all before merging (dev-panel policy).
+  - Tag names are git-only. Ben doesn't want versioning ("v1") anywhere user-visible.
+
+**Deploy.** Any push to `main` runs `.github/workflows/deploy.yml`: `npm ci`, then `npx vite build`, then `cp dist/index.html dist/404.html`, then GitHub Pages. It does not run `tsc` or the sitemap script.
+- `public/sitemap.xml` is committed. Regenerate it with `npx tsx scripts/generate-sitemap.ts` when routes change.
+- `update-contributions.yml` commits fresh GitHub contribution data to `main` daily, and each of those commits deploys.
+
+**Map of the live page:**
+
+| Area | Files |
+|---|---|
+| Shell | `src/proto/SimpleSite.tsx`: page shell, settings trigger (`SlidersGlyph`), rail with record |
+| Intro text | `src/proto/SimpleHome.tsx`. Copy and line sets are in `src/proto/data.ts`: `COPY_VARIANTS`, `MID_BREAKS` (3-line), `PHONE_BREAKS` (5-line), `TEXT_PRESETS`. |
+| Contact row easter eggs | `src/proto/ContactFx.tsx`, covering the email note → paper fold → plane, the GitHub terminal, the LinkedIn business card and the X blimp. The X birds/glass crack is `src/components/FlockX.tsx`. |
+| Tuned values | `src/proto/protoSettings.ts`, `PROTO_DEFAULTS` (constants; `useProtoSettings()` returns them) |
+| Portrait / theme toy | `src/proto/InlineIcon.tsx` |
+| Cursor glow | `src/proto/CursorGlow.tsx` |
+| Record | `src/proto/RecordDock.tsx`, `src/components/RecordToggle.tsx` (audio in `public/audio/record-toggle/`) |
+| Settings rail and glide pill | `src/components/SidebarThemeControls.tsx` |
+| Contribution strip | `src/components/ContributionStrip.tsx` |
+| Page glass pill | `src/hooks/useGlassHighlight.ts` |
+| Window blur / Spaces resets | `src/hooks/useWindowLeave.ts` |
+| Styles | `src/proto/proto.css` |
+| Rules | `core-docs/design-language.md` § "Simple home (`/new/simple`) — prototype rules" |
+
+**How it was verified, and how to re-check.**
+- Headless Chrome via `puppeteer-core`, run against `npx vite build && npx vite preview`, the same build the deploy runs.
+- **Breakpoints:** light and dark at 1440 / 1280 / 1024 / 768 / 640 / 430 / 390 / 320.
+- **What each run asserts:**
+  - no horizontal overflow and no broken images;
+  - on phones, the intro's longest line reaches the column edge and the text, icons and strip label all start at x=24;
+  - zero console or page errors;
+  - interaction traces: pill opacity per frame while gliding, plane/button gap of at least 8px, and correct counts and timings for the email press, hold and queue.
+- **The probe scripts were scratch files and are not in the repo.** Recreate them as needed.
+- **Inject per-frame only:** a `page.evaluateOnNewDocument` that touches `localStorage` throws a SecurityError in non-top frames, and that error is the harness's, not the site's.
+- **Local `npm run build` / `tsc -b` fails.** The cause is strict-mode errors in the `ui-playground` submodule plus unused `@ts-expect-error` directives in `PlaygroundDemo` / `PlaygroundGallery`. It predates the launch, and the deploy is unaffected.
+
+### Backlog
+
+Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[ready]** is scoped and can be picked up. **[cleanup]** removes or restructures without visible change.
+
+#### 1. Next up (Ben has raised these)
+
+- [ ] **[ready] Settings glyph onto the 24px phone margin.** Measured live on a 393px phone: the glyph is 32px from the top and 34px from the right, while the text, icons and strip label are at 24px. Ben asked for 24px margins on phones; this one wasn't moved yet. Files: `SIMPLE_TRIGGER_TOP` in `SimpleSite.tsx`, and the trigger's `right: 16` plus box inset in `SidebarThemeControls.tsx`. Keep the desktop placement, which is glyph 32px from the top and about 29px from the right, unless Ben says otherwise.
+- [ ] **[Ben] Case studies.** Ben: "i don't need the case studies reachable (we'll come back to this)". The old renderer is still in `src/`, unrouted: `CaseStudyPage`, `CaseStudyLayoutA` and `data/case-study-content.ts`. The data is in `src/data/projects.ts`, and the preview media is still in `public/`. The options to put to Ben are:
+  1. Re-route `/project/:slug` with a layout redesigned to match the simple home.
+  2. Link out from the intro sentence.
+  3. Leave them archived at `portfolio-v1`.
+  The older case-study follow-ups further down this file (declarative headings and visual slots, reduced-motion `VideoPreview`) apply only if option 1 is chosen.
+- [ ] **[Ben] Accessibility decisions he deferred at launch.**
+  - **WCAG 1.4.13 (hoverable):** the hover pop-outs close when the pointer moves toward them, because they're `pointer-events: none` and close on `pointerleave`. The pop-outs are the email note, terminal and card. This includes the note's "p.s. click to copy address" hint. The recommended fix is to keep a pop-out open while the pointer crosses the 8px gap or is over it, without making it clickable.
+  - **WCAG 1.4.4:** at 200% zoom, the fit-to-column intro grows only 158–175%. Measured: 34px becomes 53.6–59.4 device px at 1024/1280/1440. The fix is a zoom-aware floor, e.g. rem-based.
+
+#### 2. Email note → paper plane (`ContactFx.tsx`)
+
+- [ ] **[ready] Escape should stop an in-flight sheet or plane, and the X blimp.** The plane flies about 8–12s and the blimp about 18s at 1440. On Escape, fade the object out and finish the "Email address copied" reveal.
+- [ ] **[ready] Short windows.** The 285px sheet covers the contribution strip at about 720px tall and runs off the bottom below about 690px. Open it upward or sideways, or cap it.
+- [ ] **[ready] Re-arm a hover held through the fold.** A pointer resting on GitHub or LinkedIn from before the plane launches doesn't open that pop-out after launch; re-entering does. Re-arm the dwell when the sheet lifts (the `sheetUnderRow` flag).
+- [ ] **[ready] Fold craft.** All four found by the design-engineer lens at round 3:
+  - The wing fold pulses the whole plane grey, because `nearShade` peaks at ψ=π. Ease the shade with progress instead.
+  - Cast shadows are hard-edged copies, and the lengthwise half-turn casts none. Feather them with a precomputed mask, not a live filter.
+  - The tops of the p.s. glyphs peek out at the dart's centre around 2.2–2.45s. Keep the last line above y≈0 in sheet units.
+  - The hairlines look different in the fold and in flight, because the fold svg is rasterised before it shrinks.
+- [ ] **[ready] At slow fold settings** (the 6s dial on `simple-home-dev`), the carry settle and the wing fold may read as one beat.
+- [ ] **[ready] Expose the address to screen-reader and voice users**, for example in the button's description. Ben's D1 was "copy only, never shown visually"; ask him if the wording matters.
+- [ ] **[Ben] Taste calls flagged by the reviewers (nothing changed):**
+  - "Email address copied" appears about 4.3s after the click, as the plane reveals it. The option is a faint "Copied" immediately and the full label on the wipe.
+  - The "click to copy" p.s. is typed last, about 4.5–5s in.
+  - Any hover longer than 600ms escalates the note, so four rests reach the all-caps notes. The option is to count only finished notes or sends.
+  - Reviewers recommend a hiring-manager voice read of notes 5–6.
+  - The cream paper is the brightest thing on the dark page for about 3s.
+
+#### 3. Other contact pop-outs and page
+
+- [ ] **[ready] The business card's `box-shadow` turns with the card.** Move it to a wrapper that doesn't rotate (design-language: "Drop-shadows go on a wrapper that doesn't rotate").
+- [ ] **[ready] The terminal is clipped at 320px** CSS width. It's 300px wide, anchored at the GitHub icon, and decorative.
+- [ ] **[ready] The LinkedIn card creates 2 WebGL contexts per hover** (`PaperTexture`). If it stutters, render the texture to an image once. Check the card flip in Safari (canvas + `backface-visibility`).
+- [ ] **[ready] Profile, then decide whether to bake drop-shadows into the SVGs.** The filter re-runs per frame on the morphing fold and the blimp banner.
+- [ ] **[Ben] Copy and voice calls:**
+  - **Blimp greetings:** reviewers flag "Ahoy", "Howdy", "Hiya", "Greetings" and "Good day" as character voices, and suggest Hi / Hello / Hey / Hi there / Hey there.
+  - **Zero-day tooltips:** reviewers flag "Designing, not committing" and "Cooking (actual food)" as puns, and "Out of range" / "Somewhere without wifi" as near-duplicates. "Cooking on my work account" is Ben's own wording.
+  - **Easter-egg density:** all four contact icons perform.
+  - **The Consensus mark** appears on a personal card.
+- [ ] **[Ben] Intro.**
+  - The 3-line set breaks "…building AI for / researchers at Consensus."; "…building AI / for researchers at Consensus." keeps the phrase together.
+  - Switching to the 3-line set grows the type about 25% (26px → 32.7px at 610px).
+
+#### 4. Settings rail and record
+
+- [ ] **[ready] On short windows the rail overruns the strip reserve.** Measured live at 1280×600: the lowest control reaches 567px, but the rail should stop at about 496 (`STRIP_RESERVE` 104). Add a fourth fit lever (a smaller trigger or record) or shrink the reserve.
+- [ ] **[ready] On phones the rail overlays the prose.** Consider a bottom sheet on narrow viewports. The rail's record hit area is under 44px on touch.
+- [ ] **[ready] The compact record's off state is a plain switch.** Give it its own design (a tiny vinyl, a label dot) so it reads as music before it's played.
+- [ ] **[Ben] Rail glide pill motion:** it could stretch along its travel like the page pill. The rail is tool-like, so the rigid glide may be right.
+- [ ] **[Ben] Dark-mode cursor glow** is about one level above the page at intensity 0.15. Light mode peaks at about twice that. Eyeball it on a real GPU; headless blending can't verify dark.
+
+#### 5. Cleanup (no visible change; verify the bundle and the live page afterwards)
+
+- [ ] **[cleanup] Remove the old site's unrouted source.** These 24 files under `src/` are unreachable from `src/main.tsx` (import-graph walk, 2026-10-31):
+  - `src/components/`: `AboutSection`, `CaseStudyLayoutA`, `CaseStudyPage`, `ContributionHeatmap`, `HeroTitle`, `ImageDisplay`, `Layout`, `LeftColumn`, `NotFound`, `PlaceholderVisual`, `PlaygroundDemo`, `PlaygroundGallery`, `PlaygroundRoutes`, `PlaygroundWrapper`, `ProjectLink`, `RightColumn`, `Section`, `SignatureAnimation`, `SignatureAnimationInner`, `VideoPreview`;
+  - `src/contexts/TransitionContext`;
+  - `src/data/case-study-content.ts`;
+  - `src/proto/ProtoHome.tsx`;
+  - `src/utils/preloadImages`.
+
+  Do this only after Ben decides on case studies (1 above), since some may come back. Everything stays recoverable from `portfolio-v1`. Removing the Playground files (which pull in the `ui-playground` submodule) should also clear the local `tsc` errors.
+- [ ] **[cleanup] Remove `public/` assets the live page never loads.** The reachable source + `index.html` never reference these 14 files (5 MB):
+  - **Figjam UI:** `figjam-left-corner.png`, `figjam-right-corner.png`, `figjam-toolbar.png`;
+  - **logos:** `logo-consensus-mark.svg`, `logo-middlebury.svg`, `logo-sony.svg`, `logo-uw.svg`;
+  - **portrait thumbs:** `portrait-thumb-*.jpg` (×5);
+  - **other:** `preview-sony.gif`, `prototypes/uw-alert.html`.
+
+  Separately, about 30 MB of old-site media is still referenced by `src/data/projects.ts`, which `CustomCursor` / `CursorCompanion` import for project hover previews. The one-page site has no project links, so none of it is ever fetched. This covers `public/images/preview-*`, `public/prototypes/*-preview.mp4` and the tall `portrait-*.jpeg` set (`defaultImageMap`; the live portrait uses `portrait-square-*`). To clear it, cut `projects.ts` out of the cursor components first, then delete.
+
+  **Keep these:**
+  - `public/font-guesser/` and `public/consensus/`: separately deployed sub-apps (see CLAUDE.md);
+  - `ben-yamron-resume.pdf`, which may be linked externally;
+  - `audio/record-toggle/`;
+  - `portrait-square-*` (the live portrait);
+  - `logo-consensus*.svg` and `logo-mochi.svg`;
+  - `og-image.png`, `CNAME`, `robots.txt`, `404.html`.
+
+  Re-run a reachability check before deleting anything.
+- [ ] **[cleanup] Unused provider.** `TypographyProvider` wraps the app (`App.tsx`), but nothing reachable reads it, so it can go. `HoverProvider` is still read by `CustomCursor` and `ContributionStrip`.
+- [ ] **[cleanup] The live site lives in `src/proto/`, under prototype names** (`useProtoSettings`, `PROTO_DEFAULTS`, `proto.css`). Moving it to `src/site/` would make the structure honest. Do it as a pure rename PR with no behaviour change.
+- [ ] **[cleanup] Deferred `/simplify` refactors.** Each re-architects tuned behaviour, so do one at a time, with per-frame verification:
+  - Make the email button lifecycle one reducer (`phase`: idle → note → folding → paper → airborne → done).
+  - Make one dismissible-layer stack replace the capture-phase Escape convention plus the `contact-egg-open` bus.
+  - Make one typewriter hook for `Typed`, `TypedHighlighted` and `TypedLetter`.
+  - Use a shared `usePopoutTriggers` (dwell, keyboard gate, Escape, window leave).
+  - Replace the window-focus timestamp in `keyboardFocus` with an input-modality tracker.
+  - Turn magic offsets into geometry: strip-jump `-9px`, `LABEL_TO_CELLS` `-5`, the `0.2em` baseline drop.
+  - In `SimpleHome`, choose the line set inside the ResizeObserver and merge its two observers.
+  - Make easing curves tokens.
+  - Remove the duplicated frost recipe (`proto.css` and the rail glide pill).
+- [ ] **[cleanup] Tests.** `ContactFx` has no unit tests. Two bugs were caught only by adversarial timing: presses about 60ms apart, and leaving during the async copy. Add tests for the press/hold/queue rules if the reducer refactor happens.
+
+#### 6. Process and infrastructure
+
+- [ ] **[Ben] Branching.** CLAUDE.md and `core-docs/workflow.md` say feature branches merge into `next-update`. But `next-update` is 213 commits behind `main` (2026-10-31), and the launch merged straight to `main` with Ben's approval (#210). Ask Ben whether to retire `next-update` or reset it to `main`. Until he answers, ask him for the PR base each time.
+- [ ] **[ready] GitHub Actions maintenance.**
+  - The deploy runs on Node 20 actions (`actions/checkout@v4`, `setup-node@v4`, `upload-artifact@v4`). These are now forced onto Node 24 with a deprecation warning, and `node-version: 20` is set in both workflows.
+  - `ubuntu-latest` is migrating to Ubuntu 26.
+  - Bump both deliberately and watch one deploy.
+- [ ] **[ready] `@paper-design/shaders-react` is pre-1.0** (pinned at `0.0.82` by the lockfile). Vet the publisher, or replace it with a pre-rendered texture (see the WebGL item in section 3).
+
+---
+
 ## Visual Spec (from live site)
 
 These are the concrete values extracted from the production Framer site. All phases reference these.
@@ -628,10 +791,13 @@ Surfaced by `/flow:staff-review` (push-further lens) on the case-study preview-v
 
 - [x] `/` → simple home; privacy pages kept; all else → `/`. Old site at tag `portfolio-v1`, DialKit at `simple-home-dev`.
 - [x] Dev panels and dev-only deps stripped.
-- [ ] Ben approves the preview → PR to `main` (deploy runs on push to main).
-- [ ] Later: case studies (bring back, or link out); remove the old home's unrouted source + unused `public/` assets; the open a11y decisions (hoverable pop-outs, 200% zoom).
+- [x] Ben approved the preview → PR #210 merged to `main` (`6d8bbc1`), deployed and verified live 2026-10-29.
+- [x] Phones: intro fills the column; text, icons, strip label on one 24px margin (Ben).
+- Open items → **▶ START HERE** backlog at the top of this file.
 
 ## `/new/simple` — staff review round 3 (2026-10-29)
+
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
 
 Fixed: other pop-outs can't open over the folding sheet; typed note could show "undefined" when clicked mid-typing (clamped); one-frame level pose at the fold→flight hand-off; rail pill concentric on capsules (record, strip) too; the "one at a time" hold ends once the plane is out of sight; reduced-motion copy clears the hint note; "Settings (music playing)" name restored; glass pill keyboard focus within the leave fade carries on; QWERTY-neighbour typos; fading note keeps its level; fold cleanup stops every motion value; docs drift.
 
@@ -659,6 +825,8 @@ Fixed: other pop-outs can't open over the folding sheet; typed note could show "
 
 ## `/new/simple` — simplify pass follow-ups (2026-10-29)
 
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
+
 Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes only what changed, dead fields/comments. Left for a deliberate refactor (they'd re-architect tuned behaviour):
 - Email button lifecycle as one reducer (`phase`: idle → note → folding → paper → airborne → done) instead of `throwing`/`onPaper`/`airborne`/`held`/`copied` + refs and the `live` mirror.
 - One dismissible-layer stack (Escape closes the top; opening closes group siblings) replacing the capture-phase Escape convention + the `contact-egg-open` event bus.
@@ -669,12 +837,16 @@ Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes on
 
 ## `/new/simple` — email note → paper plane (2026-10-28)
 
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
+
 - [x] Hover types the note under the button; click lands it on paper, folds (text on the real flaps), lifts into the hand beside the check, throws; the tail reveals "Email address copied".
 - [x] Touch / phone / reduced motion: check + note only; keyboard focus types, Enter throws.
 
 **Open for Ben:** total click→throw ≈ 6s (fold pace dial); paper may overlap the strip on short windows (the sheet is 285px tall); the note's wording ("you seem really cool") taken from Ben's message — confirm against the prod video.
 
 ## `/new/simple` round 8 — defaults, ATC queue, flow pipeline (2026-10-28)
+
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
 
 - [x] Ben's DialKit values are defaults (glow 0.15 / 224 / tint 1; record crackle, vinyl, grain, spin, glow tuning).
 - [x] One blimp and one paper plane at a time; a run while a blimp is up holds ("waiting for air traffic control" + live caret) and launches when the sky clears, with a fresh greeting.
@@ -695,6 +867,8 @@ Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes on
 
 ## `/new/simple` round 7 — continuous paper + staff review (2026-10-28)
 
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
+
 - [x] Paper airplane is one continuous sheet: per-step parameters drive every face each frame (no cancelled animations, no layer swaps that show); corner flap splits on the next hinge; turned-over half shows a plain back; the dart's real wing fold (nose → bottom-edge midpoint) modelled in 3D (wing turns ψ about the hinge, orthographic view, roll to open); flight sprite = the fold's last frame. Level release, no tilt.
 - [x] Flight: launch 1.15–1.4× trim, L/D 3–4.5, pitch inertia → max ~14°/150ms (was ~100° in 0.4s at the stall); fades only after leaving the window.
 - [x] Staff review (4 lenses) fixes — see history.
@@ -712,6 +886,8 @@ Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes on
 
 ## `/new/simple` round 3 — Ben's decisions + micro-interactions (2026-10-28)
 
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
+
 - [x] **D1 Email copy only** — address never shown; accessible name "Copy email address".
 - [x] **D2 Zero-day tooltips** — "Cooking on my work account" only on zero days 10/02–10/26; other past zero days get a dry weekday/weekend line (stable per date, never repeated on consecutive days); contribution days keep counts. Tests: 76 pass.
 - [x] **D3 Portrait cycles theme + handle shake** — settings glyph wiggles and its knobs tweak (skipped when rail open / reduced motion).
@@ -726,6 +902,8 @@ Applied: shared `useWindowLeave`, `clearNow()` in the glass pill, fold writes on
 **Follow-ups:** Paper.design shader for the plane's paper (SVG grain used — a WebGL context per 1s flight at 24px isn't worth it yet); popovers have no tap equivalent on phones (links navigate — by design for now); rail ≤600px tall still overruns the strip reserve.
 
 ## `/new/simple` round 2 — Ben's feedback batch (active, 2026-10-28)
+
+> Historical. Open items were triaged into **▶ START HERE** (top of file) on 2026-10-31; items resolved since are omitted there.
 
 Branch `simplified-home-prototype`. One sentence + four icon links + strip, theme/record in the sidebar (see history 2026-10-28). Ben's requests from this round, each with the check that proves it:
 
@@ -765,7 +943,9 @@ Branch `simplified-home-prototype`. One sentence + four icon links + strip, them
 - Branch is 71 commits behind `main` — rebase before any PR.
 - Ideas (push-further): LinkedIn badge swing on hover; portrait-click accent wave across the strip; one rule for contact interactions — change the glyph or something already on the page, never new chrome.
 
-## V2 home exploration — prose home + morphing preview transitions (active, 2026-08-19)
+## V2 home exploration — prose home + morphing preview transitions (shelved, 2026-08-19)
+
+> Shelved. The simple home replaced this direction, and `/new` is no longer routed. `ProtoHome.tsx` and the morph code are kept at the `portfolio-v1` / `simple-home-dev` tags. Revisit only if Ben reopens the link-anchored preview idea.
 
 Ben is prototyping a radically simplified home page, designed in Paper (`https://app.paper.design/file/01M01HV1S56YYN78DMKCGKTB59/1-0`, frames `F1-0` home / `AV-0` case study). The Paper mock is **inspiration**, the real implementation takes precedence — the prototype lives inside the site's theme-token system, fonts, and data conventions rather than transplanting the mock's hardcoded values.
 
