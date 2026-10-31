@@ -16,6 +16,8 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 
 ### What's live
 
+**Version:** `package.json` 0.0.1. The site isn't versioned; this line exists for Flow's doc-currency check, so update it if the version ever changes.
+
 **benyamron.com is one page**, the "simple home". It launched 2026-10-29 in PR #210 (merge `6d8bbc1`) and was deployed and verified live.
 
 - **Routes** (`src/App.tsx`):
