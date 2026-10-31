@@ -109,3 +109,5 @@ The site is hosted on GitHub Pages, which auto-deploys every push to `main` with
 - **Feature branches → `next-update`**: New work is merged into `next-update` via PR.
 - **`next-update` → `main`**: Merge when the queued features are ready to ship together.
 - Daily `Update contribution data` commits push directly to `main`; they bypass `next-update` and that's fine.
+
+**Status (2026-10-31):** `next-update` is 213 commits behind `main` and hasn't been used since August. The one-page launch (PR #210) merged a feature branch directly into `main` with Ben's explicit approval. Retiring or resetting `next-update` is an open decision for Ben (`core-docs/plan.md` § START HERE → Process). Until it's settled, confirm the PR base with him.

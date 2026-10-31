@@ -2,7 +2,32 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-10-31 — Post-launch handoff docs
+
+Branch `docs/post-launch-handoff`. Ben asked for every follow-up to be documented on GitHub so the work can continue in another workspace.
+
+- **`core-docs/plan.md` § "▶ START HERE"** is the single canonical entry point. It covers:
+  - what's live, with routes, tags, deploy and a file map;
+  - how the site was verified and how to re-check it;
+  - a triaged backlog. **[Ben]** marks a decision, **[ready]** is scoped, **[cleanup]** has no visible change.
+
+  Every open item from the dated `/new/simple` sections was carried in, minus those since resolved: dev-panel stripping, rebasing, unused deps, the work-account tooltip and heatmap clamp. Those sections are now marked historical, and the V2 morph exploration is marked shelved.
+- **New measurements for the backlog:**
+  - An import-graph walk from `src/main.tsx` finds 24 unrouted old-site source files.
+  - 14 `public/` files (5 MB) are never referenced.
+  - About 30 MB of preview media is referenced only through `projects.ts` → the cursor components, so it's never fetched.
+  - On the live site, the settings glyph is 34px from the right on a 393px phone, against the 24px margin.
+  - The rail's lowest control reaches 567px at 1280×600, past the ~496px strip reserve.
+- **CLAUDE.md:**
+  - It now has a start-here pointer.
+  - The project structure is replaced with the live layout; the old "target" tree described the two-column site.
+  - The font-guesser note says nothing links to it any more.
+  - The branching rule notes that `next-update` is 213 commits behind (an open decision for Ben).
+- **`core-docs/workflow.md`:** the branching section gets the same status note.
+
 ## 2026-10-29 — Launch: the simple home becomes benyamron.com
+
+- **Shipped:** PR #210 merged into `main` (`6d8bbc1`); the deploy workflow passed (build + deploy), and benyamron.com was verified live the same day: `/` on desktop and phone with no errors, old URLs land on `/`, and the privacy pages work.
 
 - **Phone fit (Ben, from his iPhone: "incorrect half width… should extend the full width", "24px margins"):** the phone line set was capped at 80% of the preset size (27px), so its lines reached ~270 of 393px. The phone breaks now fill the column: 31px at 320, 40px at 393 and 49px at 470, with a ceiling of 56. The text, icon glyphs and contributions label share one 24px margin; the label had a 40px inset. Measured: the longest line reaches 2–4px of the column edge, and the label chip and first icon glyph sit at x=24. No horizontal overflow from 1280 down to 340px.
 

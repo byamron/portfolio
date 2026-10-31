@@ -6,6 +6,8 @@ Ben is a senior product designer working across health tech, AI, and tools for c
 
 ## Core Documentation
 
+> **New workspace or agent? Start with `core-docs/plan.md` § "▶ START HERE".** It covers the live site's state, a file map, how to verify and deploy, and the triaged backlog. Items marked [Ben] need his decision first.
+
 All project documentation lives in `core-docs/`. **You must review and proactively update these files as part of your workflow.**
 
 | File | Purpose | When to update |
@@ -30,7 +32,7 @@ All project documentation lives in `core-docs/`. **You must review and proactive
 - **After completing work**: Update `core-docs/history.md` with what was done, decisions made, and technical details (branch, date).
 - **After negative feedback**: Record the lesson in `core-docs/feedback.md` before re-attempting.
 - **When the plan evolves**: Update `core-docs/plan.md` — mark completed phases, add new information, adjust scope. The plan is a living document, not a snapshot.
-- **Branching**: Feature branches merge into `next-update`, not `main`. Only merge `next-update → main` when intentionally deploying. See `core-docs/workflow.md` § Branching and Deploy Strategy.
+- **Branching**: Feature branches merge into `next-update`, not `main`. Only merge `next-update → main` when intentionally deploying. See `core-docs/workflow.md` § Branching Strategy. *Status 2026-10-31: `next-update` is 213 commits behind `main`, and the launch merged straight to `main` with Ben's approval (#210). Whether to retire or reset `next-update` is an open question for Ben, so ask him for the PR base until it's settled.*
 - **Proactive updates**: If you notice a doc is stale, inaccurate, or missing useful context, update it. Don't wait to be asked.
 
 ## Technical Context
@@ -52,7 +54,7 @@ The font-guessing game is a **self-contained sub-app** with its own `package.jso
 - **Source of truth**: `apps/fontguesser/` (edit here to fix game bugs).
 - **Deploy mechanism**: the built game is committed to `public/font-guesser/` and served verbatim by GitHub Pages at `benyamron.com/font-guesser/` (Pages serves the real file before the SPA fallback). The portfolio build copies `public/` verbatim and never processes it.
 - **Rebuild + re-vendor** after any change: `npm run build:fontguesser` (builds with `--base=/font-guesser/` and refreshes `public/font-guesser/`). The `--base` flag is required or the built HTML requests assets from the domain root and loads blank.
-- The home-page card for it lives in `src/data/projects.ts` with an **absolute** `href` (so `ProjectLink` treats it as external and the browser handles it natively) and **no** `caseStudySlug` (keeps it out of the sitemap and case-study routing).
+- It's still deployed at `/font-guesser/`, but since the 2026-10-29 launch nothing on the one-page site links to it. Its old home-page card is in `src/data/projects.ts` (absolute `href`, no `caseStudySlug`), which is now unused by the live page.
 
 ### Consensus prototype (`apps/consensus-prototype/`, unlisted)
 
@@ -73,53 +75,31 @@ After completing any feature implementation, bug fix, or code change, **always r
 - **Approval gate**: Before preparing any PR for merge, always: (1) review the branch for bugs and errors, (2) start a dev server and send a test link, (3) wait for Ben's explicit approval. Never create a PR without first receiving a green light on a live preview.
 - **Quality comparison**: After completing any significant implementation or refactor, explicitly compare the result against the prior state: does it perform the same functions, preserve visual fidelity, and represent a net improvement? State this assessment before closing out the task.
 
-## Project Structure (Target)
+## Project Structure (live site, 2026-10-31)
 
 ```
-├── CLAUDE.md                 # This file
-├── tokens.md                 # Design tokens (HSL values for all themes)
-├── index.html                # Vite entry HTML
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── eslint.config.js
-├── core-docs/
-│   ├── guidelines.md         # Positioning, voice, philosophy, decision filters
-│   ├── plan.md               # Migration plan (living document)
-│   ├── design-language.md    # Visual & interaction rules
-│   ├── workflow.md           # Development process
-│   ├── feedback.md           # Lessons from negative feedback
-│   └── history.md            # Decision log (reverse chronological)
+├── CLAUDE.md
+├── tokens.md                    # Design tokens (HSL values for all themes)
+├── index.html                   # Vite entry; title/description/OG; portrait preload
+├── scripts/generate-sitemap.ts  # → public/sitemap.xml (run by hand; deploy doesn't)
+├── .github/workflows/           # deploy.yml (push to main → Pages), update-contributions.yml (daily)
+├── core-docs/                   # plan.md ▶ START HERE first; see the table above
 ├── src/
-│   ├── App.tsx
-│   ├── main.tsx
-│   ├── vite-env.d.ts
-│   ├── contexts/
-│   │   ├── ThemeContext.tsx   # Mode + accent color state
-│   │   └── HoverContext.tsx   # Hovered project ID
-│   ├── components/           # Portfolio-specific components
-│   │   ├── Layout.tsx         # Two-column flex
-│   │   ├── LeftColumn.tsx     # Scrollable content
-│   │   ├── RightColumn.tsx    # Fixed image display
-│   │   ├── HeroTitle.tsx
-│   │   ├── Section.tsx
-│   │   ├── ProjectLink.tsx    # Hoverable link with glass effect
-│   │   ├── AboutSection.tsx
-│   │   ├── ThemeControls.tsx  # Footer: mode + accent
-│   │   ├── ModeSwitcher.tsx
-│   │   ├── AccentPicker.tsx
-│   │   ├── ImageDisplay.tsx   # Cross-fading images
-│   │   └── GlassButton.tsx
-│   ├── hooks/
-│   │   ├── useTheme.ts
-│   │   └── useHoveredProject.ts
-│   ├── data/
-│   │   ├── projects.ts
-│   │   └── case-studies/      # Markdown content for case studies
-│   ├── assets/
-│   │   └── images/
-│   └── styles/
-│       ├── globals.css        # CSS entry: imports Tailwind → portfolio tokens
-│       └── theme.css          # Portfolio design tokens
-└── public/
+│   ├── App.tsx                  # routes: / (SimpleSite), /havana/privacy, /trio/privacy, * → /
+│   ├── proto/                   # THE LIVE SITE (prototype-era names; see plan.md cleanup)
+│   │   ├── SimpleSite.tsx       # shell, settings trigger, rail + record
+│   │   ├── SimpleHome.tsx       # intro (fit-to-column line sets), icon row, strip
+│   │   ├── ContactFx.tsx        # contact easter eggs (email note → plane, terminal, card, blimp)
+│   │   ├── InlineIcon.tsx       # portrait = theme toy
+│   │   ├── CursorGlow.tsx, RecordDock.tsx, data.ts, protoSettings.ts, proto.css
+│   ├── components/              # shared: SidebarThemeControls, ContributionStrip, RecordToggle,
+│   │                            #   FlockX, CustomCursor… plus the OLD site's unrouted files
+│   ├── hooks/                   # useGlassHighlight, useWindowLeave, …
+│   ├── contexts/                # ThemeContext (mode + accent), HoverContext, CursorContext, …
+│   ├── data/projects.ts         # old-site project data (still imported by the cursor; see plan.md)
+│   └── styles/                  # globals.css → theme.css tokens
+├── apps/                        # fontguesser, consensus-prototype (self-contained sub-apps)
+└── public/                      # font-guesser/, consensus/ (built sub-apps), audio/, images/, …
 ```
+
+The old site's files (two-column `Layout`, case studies, playground) are listed for removal in `core-docs/plan.md` § START HERE → Cleanup, and are preserved at the `portfolio-v1` tag.
