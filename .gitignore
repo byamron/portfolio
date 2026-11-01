@@ -20,3 +20,6 @@ dist/
 
 # Conductor
 .context/
+
+# Claude Code side worktrees (each is its own checkout; never part of this repo)
+.claude/worktrees/

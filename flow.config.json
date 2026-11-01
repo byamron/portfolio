@@ -1,0 +1,15 @@
+{
+  "defaultBranch": "main",
+  "typecheckCmd": "npx tsc -b",
+  "preflightCmd": "npx tsc -b && npx vitest run",
+  "historyPath": "core-docs/history.md",
+  "planPath": "core-docs/plan.md",
+  "roadmapPath": "core-docs/plan.md",
+  "feedbackPath": "core-docs/feedback.md",
+  "designLanguagePath": "core-docs/design-language.md",
+  "specPath": "core-docs/guidelines.md",
+  "referenceGlob": "core-docs/*.md",
+  "visualHistoryPath": "core-docs/visual-history.html",
+  "uiSurface": true,
+  "platform": "web"
+}
