@@ -35,6 +35,12 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 - `public/sitemap.xml` is committed. Regenerate it with `npx tsx scripts/generate-sitemap.ts` when routes change.
 - `update-contributions.yml` commits fresh GitHub contribution data to `main` daily, and each of those commits deploys.
 
+**Flow is configured** in `flow.config.json` (#212):
+- Its skills read and write `core-docs/`; follow-ups land in this section.
+- Its preflight is `npx tsc -b && npx vitest run`.
+- **The loop:** plan → build → `/simplify` → `/flow:staff-review` → `/flow:ship` (opens the PR, never merges) → after the human merges, `/flow:post-merge`, which the human must type.
+- `/flow:doctor` checks the setup.
+
 **Map of the live page:**
 
 | Area | Files |
