@@ -84,6 +84,18 @@ const G = {
   restDeg: -34, // arm parked angle (tip up, off the record)
 };
 
+// Label print. "full" is the large switch's label (curved artist caps,
+// italic title, side/speed line). A compact record (≲ 36px, the settings
+// rail) has a ~10px label: "simple" keeps it reading as print with the
+// title in heavy caps round the rim and a ring round the spindle; "full"
+// scales the large print down as-is; "none" is a plain coloured label.
+type LabelVariant = "full" | "simple" | "none";
+const COMPACT_PRINT: LabelVariant = "simple";
+// Compact label radius / knob diameter: grown a touch to carry print, but
+// bounded by the tonearm: its headshell nose sits ~0.21·K from the spindle,
+// so the label just tucks under it.
+const COMPACT_LABEL_R: Record<LabelVariant, number> = { full: 0.22, simple: 0.22, none: 0.21 };
+
 // Tonearm proportions (× track height), relative to the pivot
 const ARM = {
   weightEnd: 0.2, // counterweight far edge, behind the pivot
@@ -967,7 +979,12 @@ export function RecordToggle({
       if (lacquerEl.current) lacquerEl.current.style.opacity = String(wood * wood);
       if (knobEl.current) {
         // Press: the knob gives a little under the finger
-        knobEl.current.style.transform = `translate3d(${kx}px,0,0) scale(${1 - 0.035 * press.x})`;
+        // Compact: a plain 2D transform, so the record paints at its true
+        // sub-pixel spot instead of a layer bitmap resampled there (blurs
+        // the ~10px label print).
+        knobEl.current.style.transform = g.K < 36
+          ? `translate(${kx}px,0) scale(${1 - 0.035 * press.x})`
+          : `translate3d(${kx}px,0,0) scale(${1 - 0.035 * press.x})`;
       }
       // The knob is already spinning; the record fades in across the whole
       // face. On the way out it stays a record for as long as it's still
@@ -1247,19 +1264,17 @@ export function RecordToggle({
   // edge, run-out, sheen). 1 = the high-contrast pass.
   const vd = params.appearance === "dark" ? params.vinylDark : params.vinylLight;
   // Compact (a toolbar-sized switch, record ≲ 36px): sub-pixel detail turns
-  // to noise, so drop the printed label, groove texture and lathe rings, and
-  // let a slightly larger plain label carry the colour.
+  // to noise, so drop the groove texture and lathe rings, grow the label a
+  // little, and print it in the compact style (COMPACT_PRINT).
   const compact = K < 36;
   const wa = (a: number) => `rgba(255,255,255,${(a * vd).toFixed(3)})`;
   const runOut = mixOklab(C.vinyl, "#ffffff", 0.045 * vd); // opaque: no grooves show through
   const grooves = `repeating-radial-gradient(circle at 50% 50%, ${wa(0.07)} 0 0.6px, transparent 0.6px ${Math.max(2, K * 0.022)}px)`;
-  const labelR = K * (compact ? 0.21 : G.labelR);
+  const print: LabelVariant = compact ? COMPACT_PRINT : "full";
+  const labelR = K * (compact ? COMPACT_LABEL_R[print] : G.labelR);
   // Beside a small switch (rail), match the host's small type step (13px).
   const creditSize = creditPlacement === "left" ? 13 : Math.min(16, Math.max(12, 9 + H * 0.045));
-  // Label type is set in a 100-unit box; long names shrink to fit their line
   const track = TRACKS[trackId];
-  const artistSize = Math.min(7.6, 90 / (track.artist.length * 0.86));
-  const titleSize = Math.min(9.5, 56 / (track.fullTitle.length * 0.5));
   const deadR = compact ? labelR + 1.5 : K * 0.215; // run-out ("dead wax") between label and grooves
   const gapW = Math.max(1, K * 0.006);
   const gaps = (compact ? [0.36] : [0.3, 0.39]).map((f) => K * f);
@@ -1383,13 +1398,14 @@ export function RecordToggle({
                 width: K,
                 height: K,
                 borderRadius: "50%",
-                willChange: "transform",
+                // Compact: no layer (see the loop), so it repaints crisp
+                willChange: compact ? undefined : "transform",
               }}
             >
               {/* Rotating: the knob itself spins, and the record fades in on it */}
               <div
                 ref={spinEl}
-                style={{ position: "absolute", inset: 0, borderRadius: "50%", willChange: "transform" }}
+                style={{ position: "absolute", inset: 0, borderRadius: "50%", willChange: compact ? undefined : "transform" }}
               >
                 <div
                   ref={faceEl}
@@ -1428,50 +1444,16 @@ export function RecordToggle({
                       background: `radial-gradient(circle at 50% 50%, ${labelColor} 0 68%, ${labelEdge} 100%)`,
                     }}
                   >
-                    {/* Printed label: rule, curved caps, title — sized in a 100-unit box */}
-                    {!compact && <svg
-                      viewBox="0 0 100 100"
-                      width="100%"
-                      height="100%"
-                      aria-hidden
-                      style={{ position: "absolute", inset: 0 }}
-                    >
-                      <defs>
-                        <path id={`${labelId}-arc-top`} d="M 17 50 A 33 33 0 0 1 83 50" />
-                        <path id={`${labelId}-arc-bottom`} d="M 13 50 A 37 37 0 0 0 87 50" />
-                      </defs>
-                      <circle cx="50" cy="50" r="44.5" fill="none" stroke={INK} strokeOpacity={0.36} strokeWidth={1.2} />
-                      {/* Artist, curved across the top */}
-                      <text
-                        fill={INK}
-                        fillOpacity={0.92}
-                        fontFamily={FONT}
-                        fontWeight={600}
-                        fontSize={artistSize}
-                        letterSpacing={artistSize * 0.18}
-                      >
-                        <textPath href={`#${labelId}-arc-top`} startOffset="50%" textAnchor="middle">
-                          {track.artist.toUpperCase()}
-                        </textPath>
-                      </text>
-                      {/* Title under the spindle */}
-                      <text
-                        x="50"
-                        y={68}
-                        textAnchor="middle"
-                        fill={INK}
-                        fontFamily="'Iowan Old Style', 'Palatino', Georgia, serif"
-                        fontStyle="italic"
-                        fontSize={titleSize}
-                      >
-                        {track.fullTitle}
-                      </text>
-                      <text fill={INK} fillOpacity={0.72} fontFamily={FONT} fontSize={5} letterSpacing={0.8}>
-                        <textPath href={`#${labelId}-arc-bottom`} startOffset="50%" textAnchor="middle">
-                          {`SIDE A · ${params.rpm === 45 ? "45" : "33⅓"} RPM`}
-                        </textPath>
-                      </text>
-                    </svg>}
+                    {print !== "none" && (
+                      <LabelPrint
+                        variant={print}
+                        ids={labelId}
+                        diameter={labelR * 2}
+                        artist={track.artist}
+                        title={track.fullTitle}
+                        rpm={params.rpm}
+                      />
+                    )}
                     {/* Spindle */}
                     <div
                       style={{
@@ -1661,6 +1643,105 @@ export function RecordToggle({
         .record-toggle:focus-visible { outline: 2px solid ${focusColor ?? (params.appearance === "dark" ? "#8ab4ff" : "#2f6fed")}; outline-offset: 4px; }
       `}</style>
     </>
+  );
+}
+
+/** The printed label, set in a 100-unit box over the label disc. */
+function LabelPrint({
+  variant,
+  ids,
+  diameter,
+  artist,
+  title,
+  rpm,
+}: {
+  variant: "full" | "simple";
+  ids: string;
+  /** Rendered label diameter, CSS px (keeps the simple print's lines ≥ 1 device px). */
+  diameter: number;
+  artist: string;
+  title: string;
+  rpm: number;
+}) {
+  const svg = (children: React.ReactNode) => (
+    <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ position: "absolute", inset: 0 }}>
+      {children}
+    </svg>
+  );
+  if (variant === "full") {
+    // Long names shrink to fit their line
+    const artistSize = Math.min(7.6, 90 / (artist.length * 0.86));
+    const titleSize = Math.min(9.5, 56 / (title.length * 0.5));
+    return svg(
+      <>
+        <defs>
+          <path id={`${ids}-arc-top`} d="M 17 50 A 33 33 0 0 1 83 50" />
+          <path id={`${ids}-arc-bottom`} d="M 13 50 A 37 37 0 0 0 87 50" />
+        </defs>
+        <circle cx="50" cy="50" r="44.5" fill="none" stroke={INK} strokeOpacity={0.36} strokeWidth={1.2} />
+        {/* Artist, curved across the top */}
+        <text
+          fill={INK}
+          fillOpacity={0.92}
+          fontFamily={FONT}
+          fontWeight={600}
+          fontSize={artistSize}
+          letterSpacing={artistSize * 0.18}
+        >
+          <textPath href={`#${ids}-arc-top`} startOffset="50%" textAnchor="middle">
+            {artist.toUpperCase()}
+          </textPath>
+        </text>
+        {/* Title under the spindle */}
+        <text
+          x="50"
+          y={68}
+          textAnchor="middle"
+          fill={INK}
+          fontFamily="'Iowan Old Style', 'Palatino', Georgia, serif"
+          fontStyle="italic"
+          fontSize={titleSize}
+        >
+          {title}
+        </text>
+        <text fill={INK} fillOpacity={0.72} fontFamily={FONT} fontSize={5} letterSpacing={0.8}>
+          <textPath href={`#${ids}-arc-bottom`} startOffset="50%" textAnchor="middle">
+            {`SIDE A · ${rpm === 45 ? "45" : "33⅓"} RPM`}
+          </textPath>
+        </text>
+      </>,
+    );
+  }
+  // Simple: the title in heavy caps round the rim, tracked out to fill a
+  // fixed arc over the top so every track prints the same shape, and a
+  // rule ring round the spindle. Lines stay ≥ ½ CSS px (1 device px at 2×).
+  const u = 100 / diameter; // units per CSS px
+  const air = 0.45 * u; // rim → cap tops
+  const ringW = Math.max(1.2, 0.5 * u);
+  const caps = title.toUpperCase();
+  const span = (250 * Math.PI) / 180;
+  const capTop = 50 - air;
+  // Caps sized so the line's natural width fits the arc (cap height ≈ 0.72
+  // em, bold caps ≈ 0.72 em wide); textLength then tracks it out exactly.
+  let f = 18;
+  for (let i = 0; i < 6; i++) f = Math.min(18, ((capTop - 0.72 * f) * span) / (caps.length * 0.72));
+  const rb = capTop - 0.72 * f; // baseline radius
+  const pt = (a: number) => `${(50 + rb * Math.cos(a)).toFixed(2)} ${(50 - rb * Math.sin(a)).toFixed(2)}`;
+  return svg(
+    <>
+      <defs>
+        <path
+          id={`${ids}-arc`}
+          d={`M ${pt(Math.PI / 2 + span / 2)} A ${rb.toFixed(2)} ${rb.toFixed(2)} 0 1 1 ${pt(Math.PI / 2 - span / 2)}`}
+        />
+      </defs>
+      <circle cx="50" cy="50" r={24} fill="none" stroke={INK} strokeOpacity={0.5} strokeWidth={ringW} />
+      <text fill={INK} fontFamily={FONT} fontWeight={700} fontSize={f.toFixed(2)}>
+        <textPath href={`#${ids}-arc`} textLength={(rb * span).toFixed(2)} lengthAdjust="spacing">
+          {caps}
+        </textPath>
+      </text>
+    </>,
   );
 }
 
