@@ -94,7 +94,9 @@ function useHoverStage() {
     onFocus: (e: React.FocusEvent) => { if (keyboardFocus(e)) open(false) },
     onBlur: close,
   }
-  return { stage, viaPointer, handlers }
+  // `openRef` is current the moment the pointer leaves (`stage` re-renders
+  // a beat later), for key handlers that must not act on a closing pop-out.
+  return { stage, viaPointer, handlers, openRef }
 }
 
 /** Popover anchored under an icon button: springs out of the icon. */
@@ -123,8 +125,9 @@ function IconPopover({ show, children, width }: { show: boolean; children: React
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// GitHub: a little editor writes a blimp, runs it, and the blimp flies
-// across the top of the page (it finishes its trip even after you leave).
+// GitHub: a little editor writes a flying machine (a different one each
+// visit), runs it, and it flies across the top of the page with a hello
+// (it finishes its trip even after you leave).
 // ─────────────────────────────────────────────────────────────────────────
 
 /** Types `text` at a fast clip, then calls onDone. Reduced motion: instant. */
@@ -145,11 +148,12 @@ const termLine: React.CSSProperties = { whiteSpace: 'pre', lineHeight: 1.6 }
 const prompt = <span className="term-dim">$ </span>
 
 // The program, one line at a time. Plain text is typed; colour comes from a
-// tiny highlighter so the half-typed line is coloured too.
-const codeFor = (greeting: string) => [
-  "const blimp = new Blimp()",
-  `blimp.banner('${greeting}')`,
-  "blimp.fly('across the top')",
+// tiny highlighter so the half-typed line is coloured too. What's typed is
+// what flies.
+const codeFor = (v: Vehicle, greeting: string) => [
+  `const ${v.name} = new ${v.cls}()`,
+  `${v.name}.banner('${greeting}')`,
+  `${v.name}.fly('across the top')`,
 ]
 // What the banner says — a different hello each flight (never twice running).
 const GREETINGS = ['Hi', 'Hello', 'Hey', 'Hey there', 'Hi there', 'Hiya', 'Howdy', 'Ahoy', 'Greetings', 'Good day']
@@ -166,32 +170,82 @@ function highlight(src: string) {
   )
 }
 
-function Terminal({ greeting, onRun, cleared }: {
+/** One output line, easing in like the run printed it. */
+function TermResult({ status, children }: { status: string; children: ReactNode }) {
+  const reducedMotion = useReducedMotion()
+  return (
+    <motion.div initial={{ opacity: 0, x: reducedMotion ? 0 : -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
+      <span className="term-str">{status}</span>  {children}
+    </motion.div>
+  )
+}
+
+type RunResult = 'launched' | 'flying' | 'standby'
+
+/** hi.js written out and run. An override rewrites the file (a new machine,
+ *  a new hello), quick, and runs it with --force. */
+function Program({ vehicle, greeting, forced, onRun, cleared }: {
+  vehicle: Vehicle
   greeting: string
-  onRun: () => 'launched' | 'flying' | 'standby'
+  forced: boolean
+  onRun: () => RunResult
   /** A held launch was cleared (the sky emptied while you waited). */
   cleared: boolean
 }) {
-  const CODE = codeFor(greeting)
+  const CODE = codeFor(vehicle, greeting)
+  const { noun } = vehicle
   const reducedMotion = useReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
   const [result, setResult] = useState<[string, string] | null>(null)
+  // The program can't change under a run (a rewrite remounts this), so the
+  // effects read it as it was typed.
   useEffect(() => {
     if (!typedRun) return
     const t = setTimeout(() => {
-      if (reducedMotion) { setResult(['hold', 'blimp grounded']); return }
+      if (reducedMotion) { setResult(['hold', `${noun} grounded`]); return }
       const r = onRun()
-      setResult(r === 'launched' ? ['done', 'blimp launched']
+      setResult(r === 'launched' ? ['done', `${forced ? 'override · ' : ''}${noun} launched`]
         : r === 'flying' ? ['hold', 'waiting for air traffic control']
-        : ['ready', 'blimp on standby'])
-    }, 180)
+        : ['ready', `${noun} on standby`])
+    }, forced ? 90 : 180)
     return () => clearTimeout(t)
-  }, [typedRun, onRun, reducedMotion])
+  }, [typedRun, onRun, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (cleared) setResult(r => (r?.[0] === 'hold' ? ['done', 'cleared · blimp launched'] : r))
-  }, [cleared])
+    if (cleared) setResult(r => (r?.[0] === 'hold' ? ['done', `cleared · ${noun} launched`] : r))
+  }, [cleared]) // eslint-disable-line react-hooks/exhaustive-deps
   const holding = result?.[0] === 'hold' && !reducedMotion
+  return (
+    <>
+      {CODE.map((src, i) => i <= line && (
+        <div key={i} style={termLine}>
+          <span className="term-ln">{i + 1}</span>
+          {i < line ? highlight(src) : <TypedHighlighted text={src} fast={forced} onDone={() => setLine(l => l + 1)} />}
+        </div>
+      ))}
+      {line >= CODE.length && (
+        <div style={{ ...termLine, marginTop: 6 }}>
+          {prompt}<Typed text={forced ? 'node hi.js --force' : 'node hi.js'} cps={forced ? 240 : 35} onDone={() => setTypedRun(true)} />
+        </div>
+      )}
+      {result && (
+        <TermResult status={result[0]}>
+          {result[1]}
+          {/* Holding: the caret stays on the line — still running, not frozen. */}
+          {holding && <> <span className="term-caret" /></>}
+        </TermResult>
+      )}
+      {!result && <span className="term-caret" />}
+    </>
+  )
+}
+
+function Terminal({ run, hint, ...program }: Omit<React.ComponentProps<typeof Program>, 'forced'> & {
+  /** Which write of hi.js this is: 0 for the visit's own, then each override. */
+  run: number
+  /** The dim line under a held run, if any. */
+  hint: string | null
+}) {
   return (
     <div className="term-window">
       <div className="term-bar">
@@ -199,139 +253,375 @@ function Terminal({ greeting, onRun, cleared }: {
         <em>hi.js</em>
       </div>
       <div className="term-body">
-        {CODE.map((src, i) => i <= line && (
-          <div key={i} style={termLine}>
-            <span className="term-ln">{i + 1}</span>
-            {i < line ? highlight(src) : <TypedHighlighted text={src} onDone={() => setLine(l => l + 1)} />}
-          </div>
-        ))}
-        {line >= CODE.length && (
-          <div style={{ ...termLine, marginTop: 6 }}>{prompt}<Typed text="node hi.js" cps={35} onDone={() => setTypedRun(true)} /></div>
-        )}
-        {result && (
-          <motion.div initial={{ opacity: 0, x: reducedMotion ? 0 : -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16 }} style={termLine}>
-            <span className="term-str">{result[0]}</span>  {result[1]}
-            {/* Holding: the caret stays on the line — still running, not frozen. */}
-            {holding && <> <span className="term-caret" /></>}
+        {/* Each override clears the window and rewrites the file, so it
+            never grows past one program and its run. */}
+        <Program key={run} forced={run > 0} {...program} />
+        {hint && (
+          // A second beat, dim: the way past the hold (or why there isn't one).
+          <motion.div key={hint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: run ? 0.15 : 0.5, duration: 0.3 }} style={termLine}>
+            <span className="term-dim">{hint}</span>
           </motion.div>
         )}
-        {!result && <span className="term-caret" />}
       </div>
     </div>
   )
 }
 
-function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }) {
+function TypedHighlighted({ text, onDone, fast = false }: { text: string; onDone: () => void; fast?: boolean }) {
   const reducedMotion = useReducedMotion()
   const [n, setN] = useState(reducedMotion ? text.length : 0)
   const done = useRef(onDone)
   done.current = onDone
   useEffect(() => {
-    if (n >= text.length) { const t = setTimeout(() => done.current(), 140); return () => clearTimeout(t) }
-    // ~32 chars/s with a little human unevenness.
-    const t = setTimeout(() => setN(v => Math.min(v + 1, text.length)), 1000 / 32 * (0.6 + Math.random() * 0.8))
+    if (n >= text.length) { const t = setTimeout(() => done.current(), fast ? 50 : 140); return () => clearTimeout(t) }
+    // ~32 chars/s with a little human unevenness (an override: ~120).
+    const t = setTimeout(() => setN(v => Math.min(v + 1, text.length)), 1000 / (fast ? 120 : 32) * (0.6 + Math.random() * 0.8))
     return () => clearTimeout(t)
-  }, [n, text])
+  }, [n, text, fast])
   return <>{highlight(text.slice(0, n))}</>
 }
 
+// ── The fleet. All lit from the top-left, tinted by the accent, carrying
+// the same cream cloth. Each draws its banner in banner space (leading edge
+// at x 118, middle at y 48), moved where it hangs.
+
+// Towed: the cloth flutters along its length.
 const BANNER_A = 'M 118 30 C 92 25, 58 35, 12 29 L 12 67 C 58 73, 92 63, 118 66 Z'
 const BANNER_B = 'M 118 30 C 92 35, 58 26, 12 33 L 12 71 C 58 64, 92 72, 118 66 Z'
+// Hung (the balloon drifts with the wind): straight along the top, the hem sways.
+const BANNER_HUNG_A = 'M 118 30 L 12 30 L 12 67 C 40 70, 88 64, 118 67 Z'
+const BANNER_HUNG_B = 'M 118 30 L 12 30 L 12 67 C 40 64, 88 70, 118 67 Z'
+
+function Banner({ greeting, ripple = 1.4, hung = false }: { greeting: string; ripple?: number; hung?: boolean }) {
+  const [a, b] = hung ? [BANNER_HUNG_A, BANNER_HUNG_B] : [BANNER_A, BANNER_B]
+  // Mono: ~0.6em per character; longer hellos step down to fit the cloth.
+  const size = greeting.length <= 5 ? 18 : greeting.length <= 8 ? 15 : 13.5
+  // Capitals centred on the cloth at every size (Plex Mono caps ≈ 0.7em).
+  const y = 48.7 + 0.35 * size
+  const loop = { duration: ripple, repeat: Infinity, ease: 'easeInOut' } as const
+  return (
+    <>
+      <motion.path initial={{ d: a }} animate={{ d: [a, b, a] }} transition={loop} fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75" />
+      <motion.text
+        x="65" textAnchor="middle" fontFamily={LETTER_FONT} fontWeight="500" fontSize={size} fill={INK}
+        // Rides the cloth, not across it: the towed banner's centre moves
+        // ~0.7 units between its two ripple shapes (cubic midpoints of A/B).
+        initial={{ y }} animate={{ y: hung ? y : [y, y + 0.65, y] }} transition={loop}
+      >
+        {greeting}
+      </motion.text>
+    </>
+  )
+}
+
+const TETHER = { fill: 'none', stroke: 'rgba(60,50,40,0.45)', strokeWidth: 1 } as const
+const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
+
+/** Gradient ids per instance: two of the same vehicle can be in the air. */
+function useSvgIds() {
+  const base = useId().replace(/[^\w-]/g, '')
+  return useMemo(() => ({ id: (n: string) => `${base}-${n}`, url: (n: string) => `url(#${base}-${n})` }), [base])
+}
+type SvgIds = ReturnType<typeof useSvgIds>
+
+/** The shared shading: a body that's white where the light lands, the
+ *  accent in shadow, a darker rim, and a soft highlight. */
+function ShadeDefs({ s }: { s: SvgIds }) {
+  return (
+    <>
+      <linearGradient id={s.id('body')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style={{ stopColor: '#fdfcfa' }} />
+        <stop offset="0.45" style={tint(12, 85)} />
+        <stop offset="1" style={tint(14, 58)} />
+      </linearGradient>
+      <radialGradient id={s.id('rim')} cx="0.52" cy="0.38" r="0.6">
+        <stop offset="0.62" stopColor="#000" stopOpacity="0" />
+        <stop offset="1" stopColor="#000" stopOpacity="0.2" />
+      </radialGradient>
+      <linearGradient id={s.id('fin')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style={tint(14, 72)} />
+        <stop offset="1" style={tint(16, 50)} />
+      </linearGradient>
+      <filter id={s.id('soft')}><feGaussianBlur stdDeviation="3" /></filter>
+      <filter id={s.id('glint')}><feGaussianBlur stdDeviation="1.2" /></filter>
+    </>
+  )
+}
 
 /** A small, chubby airship: shaded envelope with gores and seams, fins,
  *  gondola, and a greeting banner on a tether. Lit from the top-left. */
 const BLIMP = { cx: 214, cy: 50, rx: 70, ry: 33 }
 function BlimpArt({ greeting }: { greeting: string }) {
-  const tint = (s: number, l: number) => ({ stopColor: `hsl(var(--accent-hue) ${s}% ${l}%)` })
+  const s = useSvgIds()
   const { cx, cy, rx, ry } = BLIMP
   const tail = cx - rx
-  // Mono: ~0.6em per character; longer hellos step down to fit the cloth.
-  const bannerSize = greeting.length <= 5 ? 18 : greeting.length <= 8 ? 15 : 13.5
-  // Capitals centred on the cloth at every size (Plex Mono caps ≈ 0.7em).
-  const bannerY = 48.7 + 0.35 * bannerSize
   return (
     <svg width={300} height={104} viewBox="0 0 300 104" aria-hidden="true" style={{ overflow: 'visible' }}>
       <defs>
-        <linearGradient id="blimp-body" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style={{ stopColor: '#fdfcfa' }} />
-          <stop offset="0.45" style={tint(12, 85)} />
-          <stop offset="1" style={tint(14, 58)} />
-        </linearGradient>
-        <radialGradient id="blimp-rim" cx="0.52" cy="0.38" r="0.6">
-          <stop offset="0.62" stopColor="#000" stopOpacity="0" />
-          <stop offset="1" stopColor="#000" stopOpacity="0.2" />
-        </radialGradient>
-        <linearGradient id="blimp-fin" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style={tint(14, 72)} />
-          <stop offset="1" style={tint(16, 50)} />
-        </linearGradient>
-        <clipPath id="blimp-clip"><ellipse cx={cx} cy={cy} rx={rx} ry={ry} /></clipPath>
-        <filter id="blimp-soft"><feGaussianBlur stdDeviation="3" /></filter>
+        <ShadeDefs s={s} />
+        <clipPath id={s.id('clip')}><ellipse cx={cx} cy={cy} rx={rx} ry={ry} /></clipPath>
       </defs>
 
       {/* Tether + banner (trails behind; the cloth ripples) */}
-      <path d={`M 118 48 Q 128 52 ${tail + 4} 50`} fill="none" stroke="rgba(60,50,40,0.45)" strokeWidth="1" />
-      <motion.path
-        initial={{ d: BANNER_A }}
-        animate={{ d: [BANNER_A, BANNER_B, BANNER_A] }}
-        transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-        fill="#f6f1e6" stroke="rgba(60,50,40,0.25)" strokeWidth="0.75"
-      />
-      <motion.text
-        x="65" textAnchor="middle" fontFamily={LETTER_FONT} fontWeight="500"
-        fontSize={bannerSize} fill={INK}
-        // Rides the cloth, not across it: the banner's centre moves ~0.7 units
-        // between its two ripple shapes (cubic midpoints of BANNER_A/B).
-        initial={{ y: bannerY }} animate={{ y: [bannerY, bannerY + 0.65, bannerY] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        {greeting}
-      </motion.text>
+      <path d={`M 118 48 Q 128 52 ${tail + 4} 50`} {...TETHER} />
+      <Banner greeting={greeting} />
 
       {/* Fins: short and stubby to match the round body */}
-      <path d={`M ${tail + 22} 27 L ${tail + 4} 10 L ${tail - 6} 12 L ${tail + 8} 32 Z`} fill="url(#blimp-fin)" />
-      <path d={`M ${tail + 22} 73 L ${tail + 4} 90 L ${tail - 6} 88 L ${tail + 8} 68 Z`} fill="url(#blimp-fin)" />
-      <path d={`M ${tail + 16} 50 L ${tail - 6} 44 L ${tail - 7} 56 Z`} fill="url(#blimp-fin)" opacity="0.9" />
+      <path d={`M ${tail + 22} 27 L ${tail + 4} 10 L ${tail - 6} 12 L ${tail + 8} 32 Z`} fill={s.url('fin')} />
+      <path d={`M ${tail + 22} 73 L ${tail + 4} 90 L ${tail - 6} 88 L ${tail + 8} 68 Z`} fill={s.url('fin')} />
+      <path d={`M ${tail + 16} 50 L ${tail - 6} 44 L ${tail - 7} 56 Z`} fill={s.url('fin')} opacity="0.9" />
 
       {/* Gondola, centred under the body */}
       <rect x={cx - 20} y={cy + ry - 4} width="40" height="12" rx="6" style={{ fill: 'hsl(var(--accent-hue) 10% 38%)' }} />
       {[-12, -4, 4].map(dx => <rect key={dx} x={cx + dx} y={cy + ry} width="5" height="4" rx="1" fill="#f3efe6" opacity="0.8" />)}
 
       {/* Envelope */}
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-body)" />
-      <g clipPath="url(#blimp-clip)" fill="none" stroke="rgba(40,30,20,0.08)" strokeWidth="1">
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={s.url('body')} />
+      <g clipPath={s.url('clip')} fill="none" stroke="rgba(40,30,20,0.08)" strokeWidth="1">
         {/* Panels run nose to tail, like an airship's (not a globe's). */}
         <ellipse cx={cx} cy={cy} rx={rx} ry={ry * 0.38} />
         <ellipse cx={cx} cy={cy} rx={rx} ry={ry * 0.75} />
       </g>
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#blimp-rim)" />
-      <ellipse cx={cx - 10} cy={cy - 20} rx={rx * 0.62} ry="7" fill="#fff" opacity="0.55" filter="url(#blimp-soft)" />
-
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={s.url('rim')} />
+      <ellipse cx={cx - 10} cy={cy - 20} rx={rx * 0.62} ry="7" fill="#fff" opacity="0.55" filter={s.url('soft')} />
     </svg>
   )
 }
 
-// px/s — an unhurried float (≈18s across a 1440px window).
-const BLIMP_SPEED = 95
+/** A biplane towing the banner: two stacked wings edge-on, struts, a
+ *  pilot's head over the cockpit rim, and a propeller spun to a blur. */
+const BIPLANE_BODY = 'M 150 43 C 166 40, 180 37.5, 196 36.5 L 222 36 C 228 36, 231 40.5, 231 46 C 231 51.5, 228 56, 222 56 L 198 56 C 180 55, 164 51, 150 47 Z'
+function BiplaneArt({ greeting }: { greeting: string }) {
+  const s = useSvgIds()
+  const strut = { stroke: 'hsl(var(--accent-hue) 12% 40%)', strokeWidth: 1.4, strokeLinecap: 'round' } as const
+  return (
+    <svg width={244} height={84} viewBox="0 0 244 84" aria-hidden="true" style={{ overflow: 'visible' }}>
+      <defs><ShadeDefs s={s} /></defs>
 
-/** Crosses the top of the viewport at a constant cruise, bobbing gently. */
-function BlimpFlight({ greeting, onDone }: { greeting: string; onDone: () => void }) {
+      {/* Tow rope + banner (faster air, quicker flutter) */}
+      <path d="M 118 48 Q 134 51 150 45" {...TETHER} />
+      <Banner greeting={greeting} ripple={0.8} />
+
+      {/* Tail: the fin up, the stabiliser edge-on */}
+      <path d="M 154 43 L 148 25 L 157 25 L 170 40 Z" fill={s.url('fin')} />
+      <path d="M 143 45.5 L 168 44.5 L 168 47.5 L 145 48 Z" fill={s.url('fin')} />
+
+      {/* Pilot, mostly hidden by the cockpit rim */}
+      <circle cx="191" cy="33.5" r="4.6" style={{ fill: 'hsl(25 28% 34%)' }} />
+      <path d="M 186.6 32.4 L 195.4 32.4" stroke="#f3efe6" strokeWidth="1.3" opacity="0.7" />
+
+      {/* Fuselage + cowl */}
+      <path d={BIPLANE_BODY} fill={s.url('body')} />
+      <path d={BIPLANE_BODY} fill={s.url('rim')} />
+      <path d="M 222 36 C 228 36, 231 40.5, 231 46 C 231 51.5, 228 56, 222 56 Z" fill={s.url('fin')} />
+      <ellipse cx="194" cy="39.5" rx="20" ry="2.2" fill="#fff" opacity="0.6" filter={s.url('glint')} />
+
+      {/* Wings, edge-on, and the struts between them */}
+      <path d="M 199 36.5 L 197 24.5 M 207 36 L 206 24.5" {...strut} strokeWidth={1.1} />
+      <rect x="181" y="19" width="38" height="5.5" rx="2.75" fill={s.url('fin')} />
+      <rect x="182.5" y="19.6" width="30" height="1.6" rx="0.8" fill="#fff" opacity="0.45" />
+      <rect x="183" y="54" width="34" height="5" rx="2.5" fill={s.url('fin')} />
+      <path d="M 186.5 24.5 L 188.5 54 M 212 24.5 L 214 54" {...strut} />
+
+      {/* Undercarriage */}
+      <path d="M 200 58 L 206 68 L 213 58" fill="none" {...strut} />
+      <circle cx="206" cy="70" r="5.5" style={{ fill: 'hsl(var(--accent-hue) 8% 26%)' }} />
+      <circle cx="206" cy="70" r="1.8" fill="#f3efe6" opacity="0.8" />
+
+      {/* Propeller: a blurred disc, one blade catching the light */}
+      <ellipse cx="233.5" cy="46" rx="2" ry="17" fill="rgba(60,50,40,0.1)" />
+      <motion.rect
+        x="232.4" y="29" width="2.2" height="34" rx="1.1" style={{ fill: 'hsl(var(--accent-hue) 10% 30%)' }} opacity="0.55"
+        animate={{ scaleY: [1, -1, 1] }} transition={{ duration: 0.14, repeat: Infinity, ease: 'linear' }}
+      />
+      <path d="M 231 42 Q 237.5 46 231 50 Z" style={{ fill: 'hsl(var(--accent-hue) 10% 36%)' }} />
+    </svg>
+  )
+}
+
+/** A hot-air balloon: gored envelope, wicker basket, and the banner hung
+ *  beneath it on two lines. */
+const BALLOON_ENV = 'M 57 84 C 42 74, 27 60, 27 41 C 27 18, 44 4, 65 4 C 86 4, 103 18, 103 41 C 103 60, 88 74, 73 84 Z'
+function BalloonArt({ greeting }: { greeting: string }) {
+  const s = useSvgIds()
+  return (
+    <svg width={130} height={156} viewBox="0 0 130 156" aria-hidden="true" style={{ overflow: 'visible' }}>
+      <defs>
+        <ShadeDefs s={s} />
+        <clipPath id={s.id('clip')}><path d={BALLOON_ENV} /></clipPath>
+        <linearGradient id={s.id('wicker')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#c9a87c" />
+          <stop offset="1" stopColor="#8a6844" />
+        </linearGradient>
+      </defs>
+
+      {/* Lines down to the banner, then the banner, hanging */}
+      <path d="M 58 104 L 13 112 M 72 104 L 117 112" {...TETHER} strokeWidth={0.8} />
+      <g transform="translate(0 82)"><Banner greeting={greeting} ripple={2.6} hung /></g>
+
+      {/* Envelope: gores meet at the crown and the mouth */}
+      <path d={BALLOON_ENV} fill={s.url('body')} />
+      <g clipPath={s.url('clip')}>
+        <path d="M 20 40 Q 65 47 110 40 L 110 52 Q 65 59 20 52 Z" style={{ fill: 'hsl(var(--accent-hue) 30% 60%)' }} opacity="0.28" />
+        <g fill="none" stroke="rgba(40,30,20,0.09)" strokeWidth="1">
+          {[-0.68, -0.24, 0.24, 0.68].map(k => <path key={k} d={`M 65 4 C ${65 + k * 50} 8, ${65 + k * 50} 62, ${65 + k * 10} 84`} />)}
+        </g>
+      </g>
+      <path d={BALLOON_ENV} fill={s.url('rim')} />
+      <ellipse cx="52" cy="22" rx="15" ry="8" transform="rotate(-28 52 22)" fill="#fff" opacity="0.55" filter={s.url('soft')} />
+
+      {/* Skirt, burner lines, basket */}
+      <path d="M 57 84 L 73 84 L 71 89 L 59 89 Z" fill={s.url('fin')} />
+      <path d="M 60 89 L 60.5 94 M 70 89 L 69.5 94" {...TETHER} strokeWidth={0.8} />
+      <rect x="58" y="94" width="14" height="11" rx="2" fill={s.url('wicker')} />
+      <path d="M 58.5 98 L 71.5 98 M 58.5 101.5 L 71.5 101.5" stroke="rgba(60,40,20,0.25)" strokeWidth="0.8" />
+      <rect x="57" y="93" width="16" height="2.6" rx="1.3" fill="#7a5a3a" />
+    </svg>
+  )
+}
+
+/** A helicopter in forward flight (nose down), the banner trailing on a
+ *  line from its belly. */
+const HELI_CABIN = 'M 168 34 C 172 24, 196 20, 212 26 C 222 30, 226 40, 222 48 C 218 56, 200 58, 180 56 C 170 54, 164 44, 168 34 Z'
+function HelicopterArt({ greeting }: { greeting: string }) {
+  const s = useSvgIds()
+  const skid = { fill: 'none', stroke: 'hsl(var(--accent-hue) 10% 34%)', strokeWidth: 1.6, strokeLinecap: 'round' } as const
+  return (
+    <svg width={252} height={120} viewBox="0 0 252 120" aria-hidden="true" style={{ overflow: 'visible' }}>
+      <defs>
+        <ShadeDefs s={s} />
+        <linearGradient id={s.id('glass')} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style={tint(20, 88)} />
+          <stop offset="1" style={tint(24, 42)} />
+        </linearGradient>
+        <linearGradient id={s.id('disc')} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="rgba(60,50,40,0)" />
+          <stop offset="0.5" stopColor="rgba(60,50,40,0.16)" />
+          <stop offset="1" stopColor="rgba(60,50,40,0)" />
+        </linearGradient>
+      </defs>
+
+      {/* The line hangs straight-ish under the belly; the banner trails */}
+      <path d="M 188 60 Q 160 82 118 92" {...TETHER} />
+      <g transform="translate(0 44)"><Banner greeting={greeting} ripple={1.1} /></g>
+
+      {/* Everything that tilts with the airframe */}
+      <g transform="rotate(7 190 42)">
+        {/* Tail boom, fin and the tail rotor's blur */}
+        <path d="M 172 36 L 124 40 L 124 44 L 172 50 Z" fill={s.url('fin')} />
+        <path d="M 130 41 L 121 27 L 127 27 L 138 40 Z" fill={s.url('fin')} />
+        <circle cx="125" cy="38" r="7.5" fill="rgba(60,50,40,0.1)" />
+        <motion.rect
+          x="124" y="30.5" width="1.8" height="15" rx="0.9" style={{ fill: 'hsl(var(--accent-hue) 10% 30%)' }} opacity="0.5"
+          animate={{ rotate: 360 }} transition={{ duration: 0.18, repeat: Infinity, ease: 'linear' }}
+        />
+
+        {/* Skids */}
+        <path d="M 183 56 L 180 66 M 205 57 L 207 66" {...skid} />
+        <path d="M 172 66 L 214 66 Q 220 66 222 62" {...skid} />
+
+        {/* Cabin, glass, light */}
+        <path d={HELI_CABIN} fill={s.url('body')} />
+        <path d={HELI_CABIN} fill={s.url('rim')} />
+        <path d="M 200 25.5 C 212 25.5, 221 33, 222.5 42 L 204 42 C 202 36, 200.5 30, 200 25.5 Z" fill={s.url('glass')} opacity="0.85" />
+        <path d="M 203 28 C 210 28.5, 216 32, 218.5 37" fill="none" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+        <ellipse cx="186" cy="29" rx="13" ry="3" fill="#fff" opacity="0.5" filter={s.url('glint')} />
+
+        {/* Mast + main rotor: a flat disc of blur, one blade sweeping it */}
+        <rect x="189.5" y="16" width="5" height="8" rx="1.5" style={{ fill: 'hsl(var(--accent-hue) 10% 36%)' }} />
+        <ellipse cx="192" cy="15" rx="56" ry="2.6" fill={s.url('disc')} />
+        <motion.rect
+          x="136" y="14" width="112" height="2" rx="1" style={{ fill: 'hsl(var(--accent-hue) 10% 30%)' }} opacity="0.5"
+          animate={{ scaleX: [1, 0.08, 1] }} transition={{ duration: 0.16, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <circle cx="192" cy="15" r="2.6" style={{ fill: 'hsl(var(--accent-hue) 10% 30%)' }} />
+      </g>
+    </svg>
+  )
+}
+
+/** Adding a vehicle is one entry. x0/x1: the drawn extent across its box
+ *  (so it enters and leaves wholly out of view); y0/y1: down it, bob
+ *  included (so concurrent flights get lanes that never touch). */
+type Vehicle = {
+  cls: string // what the program constructs
+  name: string // the variable it's typed into
+  noun: string // what the log calls it
+  Art: (p: { greeting: string }) => ReactNode
+  speed: number // px/s cruise — linear: they're at cruise long before they're in view
+  x0: number; x1: number; y0: number; y1: number
+  bob: { y: number[]; rotate: number[] }
+  bobFor: { duration: number; ease: 'easeInOut' | 'easeOut' }
+}
+const VEHICLES: Vehicle[] = [
+  // An unhurried float (≈18s across a 1440px window).
+  { cls: 'Blimp', name: 'blimp', noun: 'blimp', Art: BlimpArt, speed: 95, x0: 12, x1: 284, y0: 2, y1: 98,
+    bob: { y: [0, -5, 0, 4, 0], rotate: [0, -1.2, 0, 1, 0] }, bobFor: { duration: 4.2, ease: 'easeInOut' } },
+  // Brisk, and it pitches as it rides the air.
+  { cls: 'Biplane', name: 'plane', noun: 'biplane', Art: BiplaneArt, speed: 175, x0: 12, x1: 238, y0: 10, y1: 84,
+    bob: { y: [0, -4, 0, 3, 0], rotate: [0, -2, 0, 1.6, 0] }, bobFor: { duration: 2.4, ease: 'easeInOut' } },
+  // Slow, rising and settling on the warm air.
+  { cls: 'Balloon', name: 'balloon', noun: 'balloon', Art: BalloonArt, speed: 62, x0: 12, x1: 118, y0: -6, y1: 160,
+    bob: { y: [0, -8, 0, 6, 0], rotate: [0, 0.8, 0, -0.8, 0] }, bobFor: { duration: 7, ease: 'easeInOut' } },
+  // Steady, a little sway on the rotor.
+  { cls: 'Helicopter', name: 'heli', noun: 'helicopter', Art: HelicopterArt, speed: 130, x0: 12, x1: 252, y0: 2, y1: 121,
+    bob: { y: [0, -3, 0, 3, 0], rotate: [0, 1, 0, -0.8, 0] }, bobFor: { duration: 3.2, ease: 'easeInOut' } },
+]
+// A different machine each visit (never the same twice running).
+const pickVehicle = (...not: (Vehicle | undefined)[]) => {
+  const pool = VEHICLES.filter(v => !not.includes(v))
+  return pool[Math.floor(Math.random() * pool.length)]!
+}
+
+// Air traffic control: at most this many up at once, each in its own lane…
+const MAX_AIRBORNE = 3
+const SKY_TOP = 58 // the top lane's drawn top (the blimp's box at 56, as ever)
+const LANE_GAP = 8
+// Past the drawn edge: the drop-shadow's blur and the bob's tilt.
+const FLIGHT_CLEAR = 16
+
+type Flight = { id: number; v: Vehicle; greeting: string; top: number }
+
+/** The highest lane the vehicle fits without touching anything up there. */
+function laneFor(v: Vehicle, sky: Flight[]) {
+  const h = v.y1 - v.y0
+  const bands = sky.map(f => [f.top + f.v.y0, f.top + f.v.y1] as const).sort((a, b) => a[0] - b[0])
+  let t = SKY_TOP
+  for (const [a, b] of bands) if (t < b + LANE_GAP && t + h + LANE_GAP > a) t = b + LANE_GAP
+  return t - v.y0
+}
+// …and the sky ends above the intro: nothing flies over the words.
+const skyFloor = () => (document.querySelector('.simple-intro')?.getBoundingClientRect().top ?? window.innerHeight) - LANE_GAP
+/** What an override could send now: a machine that's neither on screen in
+ *  hi.js nor the last one up, with a lane clear of the intro. None: full. */
+const overridePool = (current: Vehicle, sky: Flight[]) => {
+  if (sky.length >= MAX_AIRBORNE) return []
+  const floor = skyFloor()
+  return VEHICLES.filter(v => v !== current && v !== sky[sky.length - 1]?.v && laneFor(v, sky) + v.y1 <= floor)
+}
+
+/** Crosses the top of the viewport at a constant cruise, bobbing. Done the
+ *  moment it's wholly out of view. */
+function FlightPath({ flight, onDone }: { flight: Flight; onDone: () => void }) {
+  const { v, greeting, top } = flight
+  // A touch of variance, so a convoy loosens and doesn't bob in step.
+  const [jitter] = useState(() => [0.96 + Math.random() * 0.08, 0.9 + Math.random() * 0.2] as const)
   const vw = window.innerWidth
-  const distance = vw + 340
+  const from = -(v.x1 + FLIGHT_CLEAR)
+  const to = vw - v.x0 + FLIGHT_CLEAR
+  const { Art } = v
   return createPortal(
     <motion.div
       aria-hidden="true"
-      initial={{ x: -320 }}
-      animate={{ x: vw + 20 }}
-      // Linear on purpose: an airship cruises at constant speed.
-      transition={{ duration: distance / BLIMP_SPEED, ease: 'linear' }}
+      initial={{ x: from }}
+      animate={{ x: to }}
+      // Linear on purpose: a cruise is constant speed.
+      transition={{ duration: (to - from) / (v.speed * jitter[0]), ease: 'linear' }}
       onAnimationComplete={onDone}
-      style={{ position: 'fixed', top: 56, left: 0, zIndex: 9990, pointerEvents: 'none', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.12))' }}
+      style={{ position: 'fixed', top, left: 0, zIndex: 9990, pointerEvents: 'none', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.12))' }}
     >
-      <motion.div
-        animate={{ y: [0, -5, 0, 4, 0], rotate: [0, -1.2, 0, 1, 0] }}
-        transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <BlimpArt greeting={greeting} />
+      <motion.div animate={v.bob} transition={{ ...v.bobFor, duration: v.bobFor.duration * jitter[1], repeat: Infinity }}>
+        <Art greeting={greeting} />
       </motion.div>
     </motion.div>,
     document.body,
@@ -339,65 +629,125 @@ function BlimpFlight({ greeting, onDone }: { greeting: string; onDone: () => voi
 }
 
 export function GitHubLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
-  const { stage, viaPointer, handlers } = useHoverStage()
-  const [flying, setFlying] = useState(false)
-  const flyingRef = useRef(false)
-  // Lives here (not in the popover), so the flight outlasts the hover.
-  // Only a real hover launches it: a long screen-crossing flight shouldn't
+  const { stage, viaPointer, handlers, openRef } = useHoverStage()
+  // Flights live here (not in the popover), so they outlast the hover.
+  // Only a real hover launches one: a long screen-crossing flight shouldn't
   // start from keyboard focus passing through (WCAG 2.2.2).
   const pointerRef = useRef(false)
   pointerRef.current = viaPointer
-  // A new hello for each visit to the terminal; the blimp in the air keeps
-  // the one it launched with, and the next never repeats it.
-  const [greeting, setGreeting] = useState(() => pickGreeting())
-  const [flightGreeting, setFlightGreeting] = useState<string | null>(null)
-  const greetingRef = useRef(greeting)
-  greetingRef.current = greeting
-  const flightGreetingRef = useRef(flightGreeting)
-  flightGreetingRef.current = flightGreeting
+  // The sky. The ref is the truth (Return can land between renders).
+  const [flights, setFlights] = useState<Flight[]>([])
+  const flightsRef = useRef<Flight[]>([])
+  const setSky = (next: Flight[]) => { flightsRef.current = next; setFlights(next) }
+  const nextId = useRef(0)
+  // What hi.js says: a new machine and a new hello for each visit (and each
+  // override). What's in the air keeps what it launched with; a new hello
+  // repeats none of them.
+  const [program, setProgram] = useState(() => ({ v: pickVehicle(), greeting: pickGreeting(), run: 0 }))
+  const programRef = useRef(program)
+  programRef.current = program
+  const rewrite = (run: number, pool?: Vehicle[]) => {
+    const { v, greeting } = programRef.current
+    const sky = flightsRef.current
+    const nextV = pool ? pool[Math.floor(Math.random() * pool.length)]! : pickVehicle(v, sky[sky.length - 1]?.v)
+    const next = { v: nextV, greeting: pickGreeting(greeting, ...sky.map(f => f.greeting)), run }
+    programRef.current = next
+    setProgram(next)
+    return next
+  }
   const lastStage = useRef(0)
   useEffect(() => {
-    if (lastStage.current === 0 && stage > 0) setGreeting(g => pickGreeting(g, flightGreetingRef.current))
+    if (lastStage.current === 0 && stage > 0) rewrite(0)
     lastStage.current = stage
   }, [stage])
-  // One blimp at a time. A run while one is up is held for air traffic
-  // control, and cleared to launch when that one lands — if you're still here.
-  const [flightId, setFlightId] = useState(0)
+  // A run while anything's up is held for air traffic control, and cleared
+  // to launch when the sky empties — if you're still here. Or press Return:
+  // hi.js is rewritten (quick) and forced up.
   const queuedRef = useRef(false)
   const stageRef = useRef(stage)
   stageRef.current = stage
   const [cleared, setCleared] = useState(false)
-  useEffect(() => { if (stage === 0) { queuedRef.current = false; setCleared(false) } }, [stage])
-  const takeOff = useCallback(() => {
-    flyingRef.current = true
-    setFlightGreeting(greetingRef.current)
-    setFlightId(n => n + 1)
-    setFlying(true)
+  const [armed, setArmed] = useState(false)
+  const armedRef = useRef(false)
+  // An override being typed. Leaving first cancels it, as leaving before
+  // `node hi.js` always has: nothing flies that the terminal didn't run.
+  const forcingRef = useRef<typeof program | null>(null)
+  const [forcing, setForcing] = useState(false)
+  const takeOff = useCallback((p: { v: Vehicle; greeting: string } = programRef.current) => {
+    const sky = flightsRef.current
+    setSky([...sky, { id: ++nextId.current, v: p.v, greeting: p.greeting, top: laneFor(p.v, sky) }])
   }, [])
-  const launch = useCallback((): 'launched' | 'flying' | 'standby' => {
+  useEffect(() => {
+    if (stage > 0) return
+    forcingRef.current = null
+    queuedRef.current = false
+    armedRef.current = false
+    setForcing(false)
+    setCleared(false)
+    setArmed(false)
+  }, [stage])
+  const launch = useCallback((): RunResult => {
     if (!pointerRef.current) return 'standby'
-    if (flyingRef.current) { queuedRef.current = true; return 'flying' }
+    if (flightsRef.current.length) {
+      queuedRef.current = true
+      armedRef.current = true
+      setArmed(true)
+      return 'flying'
+    }
     takeOff()
     return 'launched'
   }, [takeOff])
-  const landed = useCallback(() => {
-    flyingRef.current = false
-    setFlying(false)
-    if (queuedRef.current && stageRef.current > 0 && pointerRef.current) {
+  const forced = useCallback((): RunResult => {
+    const p = forcingRef.current
+    forcingRef.current = null
+    setForcing(false)
+    if (!p) return 'standby'
+    takeOff(p)
+    return 'launched'
+  }, [takeOff])
+  const landed = useCallback((id: number) => {
+    setSky(flightsRef.current.filter(f => f.id !== id))
+    if (!flightsRef.current.length && queuedRef.current && stageRef.current > 0 && pointerRef.current) {
       queuedRef.current = false
       setCleared(true)
       takeOff()
     }
   }, [takeOff])
+  // Return, once held. Capture phase + preventDefault (as Escape does), so
+  // it never also opens a focused link — while the terminal owns Return.
+  useEffect(() => {
+    if (!armed) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' || e.defaultPrevented || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return
+      if (!armedRef.current || !openRef.current || !pointerRef.current) return
+      e.preventDefault()
+      // Held down, mid-rewrite, or the sky's full: nothing. (A press while
+      // one is being typed is ignored — no backlog of programs.)
+      if (e.repeat || forcingRef.current) return
+      const pool = overridePool(programRef.current.v, flightsRef.current)
+      if (!pool.length) return
+      queuedRef.current = false // the held run is superseded
+      forcingRef.current = rewrite(programRef.current.run + 1, pool)
+      setForcing(true)
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [armed, openRef])
+  const hint = !armed || forcing ? null : overridePool(program.v, flights).length ? 'return to override' : 'airspace full'
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
         {icon}
       </a>
       <IconPopover show={stage > 0} width={300}>
-        {stage > 0 && <Terminal greeting={greeting} onRun={launch} cleared={cleared} />}
+        {stage > 0 && (
+          <Terminal
+            run={program.run} vehicle={program.v} greeting={program.greeting}
+            onRun={program.run ? forced : launch} cleared={cleared} hint={hint}
+          />
+        )}
       </IconPopover>
-      {flying && flightGreeting && <BlimpFlight key={flightId} greeting={flightGreeting} onDone={landed} />}
+      {flights.map(f => <FlightPath key={f.id} flight={f} onDone={() => landed(f.id)} />)}
     </span>
   )
 }
