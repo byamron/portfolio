@@ -2,9 +2,26 @@
 
 Decision log and completed work, in reverse chronological order.
 
+## 2026-11-01 — Flow configured for this repo
+
+Branch `chore/flow-config`, merged as #212 @ `35d19b4`.
+
+- `flow.config.json` points Flow's skills at `core-docs/`:
+  - plan, history, feedback and design language;
+  - `roadmapPath` is `plan.md`, because there is no separate roadmap;
+  - `specPath` is `guidelines.md`;
+  - the visual history.
+
+  It also sets `typecheckCmd` (`npx tsc -b`), `preflightCmd` (`tsc` + `vitest`), `platform: web` and `defaultBranch: main`. Before this, every Flow review defaulted to `dev-docs/` paths that don't exist here.
+- `npx tsc -b` passes with 0 errors on a fresh checkout. It fails only when the `ui-playground` submodule is checked out, until the cleanup item removes the unrouted Playground files.
+- `plan.md` § START HERE carries a version line. Flow's doc-currency gate otherwise blocks every `/flow:ship` on `package.json` 0.0.1.
+- `.gitignore` now ignores `.claude/worktrees/` (Claude Code's side worktrees), which had shown up as uncommitted changes in Conductor.
+- `/flow:doctor` reports no failures. The remaining warnings are optional: CLAUDE.md has undeclared status lines, and there's no `safety.md`, preflight script or run skill.
+- Closed out with `/flow:post-merge`: `/flow:land` for #210, #211 and #212.
+
 ## 2026-10-31 — Post-launch handoff docs
 
-Branch `docs/post-launch-handoff`. Ben asked for every follow-up to be documented on GitHub so the work can continue in another workspace.
+Branch `docs/post-launch-handoff`, merged as #211 @ `b0cbbbd`. Ben asked for every follow-up to be documented on GitHub so the work can continue in another workspace.
 
 - **`core-docs/plan.md` § "▶ START HERE"** is the single canonical entry point. It covers:
   - what's live, with routes, tags, deploy and a file map;
