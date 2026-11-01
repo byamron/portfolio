@@ -11,6 +11,12 @@ const FIGPAL_SIZE = 72
 const FIGPAL_OFFSET_X = 24
 const FIGPAL_OFFSET_Y = 24
 const LERP_RATE = 0.12
+// Avoid zones: elements marked `data-figpal-avoid` (the contact icon row and
+// its open pop-outs). The figpal steps aside rather than covering them.
+const AVOID_SELECTOR = '[data-figpal-avoid]'
+const AVOID_MARGIN = 8 // breathing room round each zone
+const AVOID_RETURN = 12 // extra clearance before stepping back home (no flip-flop at the edge)
+const FIGPAL_FADE = 'opacity 150ms ease'
 const MORPH_LEAVE_DELAY = 150
 const CIRCLE_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
@@ -62,6 +68,7 @@ export function CustomCursor() {
   const isWide = useIsWide()
   const [isCoarsePointer, setIsCoarsePointer] = useState(() => window.matchMedia('(pointer: coarse)').matches)
   const isTouch = isCoarsePointer || !isWide
+  const figpalSpotRef = useRef(0) // index into the figpal's spots; -1 = nowhere clear (faded)
   const onCardRef = useRef(false)
   const cursorContentRef = useRef<'idle' | 'arrow' | 'coming-soon'>('idle')
   const onSidebarRef = useRef(false)
@@ -95,6 +102,8 @@ export function CustomCursor() {
     document.querySelectorAll('[data-custom-cursor]').forEach(el => el.remove())
 
     const elements: HTMLElement[] = []
+    let figpalW = FIGPAL_SIZE * 192 / 222 // figpal.png's aspect until it loads
+    figpalSpotRef.current = 0
 
     if (cursorMode === 'invert') {
       injectCursorNoneStyle()
@@ -223,11 +232,15 @@ export function CustomCursor() {
         left: '0',
         willChange: 'transform',
         opacity: '0',
+        transition: reducedMotion.current ? 'none' : FIGPAL_FADE,
       })
       const img = document.createElement('img')
       img.src = '/images/figpal.png'
       img.alt = ''
       img.draggable = false
+      img.onload = () => {
+        if (img.naturalHeight) figpalW = FIGPAL_SIZE * img.naturalWidth / img.naturalHeight
+      }
       Object.assign(img.style, {
         height: `${FIGPAL_SIZE}px`,
         width: 'auto',
@@ -237,6 +250,70 @@ export function CustomCursor() {
       document.body.appendChild(el)
       figpalRef.current = el
       elements.push(el)
+    }
+
+    // ── Figpal avoidance ──────────────────────────────────────────────
+    // Spots for the figpal's top-left, in order of preference: home
+    // (down-right of the pointer), then up-left (above the icon row, clear of
+    // the pop-outs that open below and to the right), up-right, down-left.
+    // An off-home spot clears any zone the pointer is inside: above it for the
+    // upper spots (so over an icon it sits just above the row), below it for
+    // the lower one.
+    const spot = (i: number, mx: number, my: number) => {
+      const up = i === 1 || i === 2
+      const l = mx + (i === 1 || i === 3 ? -FIGPAL_OFFSET_X - figpalW : FIGPAL_OFFSET_X)
+      let t = my + (up ? -FIGPAL_OFFSET_Y - FIGPAL_SIZE : FIGPAL_OFFSET_Y)
+      if (i !== 0) {
+        for (const r of zones) {
+          if (!inside(r, mx, my, AVOID_MARGIN)) continue
+          t = up ? Math.min(t, r.top - AVOID_MARGIN - FIGPAL_SIZE) : Math.max(t, r.bottom + AVOID_MARGIN)
+        }
+      }
+      return { l, t }
+    }
+    const inside = (r: DOMRect, x: number, y: number, m: number) =>
+      x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m
+    // Zone rects, read once per frame (only when zones exist).
+    let zones: DOMRect[] = []
+    let zoneSig = ''
+    const readZones = () => {
+      const els = document.querySelectorAll(AVOID_SELECTOR)
+      zones = []
+      let sig = ''
+      for (const el of els) {
+        const r = el.getBoundingClientRect()
+        if (r.width < 1 || r.height < 1) continue
+        zones.push(r)
+        sig += `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)};`
+      }
+      const changed = sig !== zoneSig
+      zoneSig = sig
+      return changed
+    }
+    const hits = (l: number, t: number, w: number, h: number, extra: number) => {
+      const m = AVOID_MARGIN + extra
+      for (const r of zones) {
+        if (l < r.right + m && l + w > r.left - m && t < r.bottom + m && t + h > r.top - m) return true
+      }
+      return false
+    }
+    const spotBlocked = (i: number, mx: number, my: number, extra: number) => {
+      const s = spot(i, mx, my)
+      return hits(s.l, s.t, figpalW, FIGPAL_SIZE, extra)
+    }
+    const pickSpot = (mx: number, my: number) => {
+      if (!zones.length) return 0
+      const cur = figpalSpotRef.current
+      // Home is blocked while the pointer is over a zone (the icon row: the
+      // figpal moves on approach, before a dwell opens anything), or if its box
+      // would overlap one. Leaving home is immediate; coming back needs a
+      // little extra clearance.
+      const extra = cur === 0 ? 0 : AVOID_RETURN
+      const m = AVOID_MARGIN + extra
+      if (!zones.some(r => inside(r, mx, my, m)) && !spotBlocked(0, mx, my, extra)) return 0
+      if (cur > 0 && !spotBlocked(cur, mx, my, 0)) return cur
+      for (let i = 1; i < 4; i++) if (!spotBlocked(i, mx, my, 0)) return i
+      return -1
     }
 
     // Preserve cursor position and visibility on tint-only switches
@@ -441,8 +518,18 @@ export function CustomCursor() {
         }
         settled = true // invert mode has no lerp — always settled after one frame
       } else {
-        targetX = mouseRef.current.x + FIGPAL_OFFSET_X
-        targetY = mouseRef.current.y + FIGPAL_OFFSET_Y
+        const zonesChanged = readZones()
+        const mx = mouseRef.current.x
+        const my = mouseRef.current.y
+        const next = pickSpot(mx, my)
+        if (next !== figpalSpotRef.current) {
+          figpalSpotRef.current = next
+          if (figpalRef.current) figpalRef.current.style.opacity = next === -1 ? '0' : '1'
+        }
+        // Nowhere clear: fade out where it is (keep following home, unseen).
+        const s = spot(Math.max(0, next), mx, my)
+        targetX = s.l
+        targetY = s.t
         if (reducedMotion.current) {
           posRef.current.x = targetX
           posRef.current.y = targetY
@@ -458,6 +545,9 @@ export function CustomCursor() {
             posRef.current.y = targetY
           }
         }
+        // Zones still moving (a pop-out springing open, a note typing):
+        // keep checking until they're still too.
+        if (zonesChanged) settled = false
       }
 
       const t = `translate(${posRef.current.x}px, ${posRef.current.y}px)`
@@ -480,7 +570,21 @@ export function CustomCursor() {
     loopRunning = true
     rafRef.current = requestAnimationFrame(loop)
 
+    // Figpal: a pop-out can open (or a page scroll move the row) under a
+    // still pointer, so wake the loop when the DOM or the scroll changes. The
+    // loop settles again in a frame when nothing it cares about moved.
+    let observer: MutationObserver | null = null
+    if (cursorMode === 'figpal') {
+      observer = new MutationObserver(startLoop)
+      observer.observe(document.body, { childList: true, subtree: true })
+      window.addEventListener('scroll', startLoop, { passive: true, capture: true })
+      window.addEventListener('resize', startLoop)
+    }
+
     return () => {
+      observer?.disconnect()
+      window.removeEventListener('scroll', startLoop, { capture: true })
+      window.removeEventListener('resize', startLoop)
       document.removeEventListener('pointermove', handlePointerMoveAndLoop)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       removeCursorNoneStyle()

@@ -105,6 +105,7 @@ function IconPopover({ show, children, width }: { show: boolean; children: React
       {show && (
         <motion.div
           aria-hidden="true"
+          data-figpal-avoid=""
           initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6, y: -6 }}
           animate={{ opacity: 1, scale: 1, y: 0, transition: reducedMotion ? { duration: 0.12 } : POP }}
           exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.9, transition: { duration: 0.12, ease: 'easeIn' } }}
@@ -1163,7 +1164,7 @@ function LetterFold({ at, launch, kPlane, pace, lines, onPaperIn, onFolded }: {
   // The shadow sits on a wrapper that stays put, so it always falls straight
   // down instead of turning with the paper.
   return createPortal(
-    <div aria-hidden="true" style={{ position: 'fixed', left: at.x - PAPER_W / 2, top: at.y - PAPER_H / 2, width: PAPER_W, height: PAPER_H, zIndex: 9999, pointerEvents: 'none', filter: PAPER_SHADOW }}>
+    <div aria-hidden="true" data-figpal-avoid="" style={{ position: 'fixed', left: at.x - PAPER_W / 2, top: at.y - PAPER_H / 2, width: PAPER_W, height: PAPER_H, zIndex: 9999, pointerEvents: 'none', filter: PAPER_SHADOW }}>
       <motion.svg
         width={PAPER_W} height={PAPER_H} viewBox="-17 -22 34 44"
         initial={{ opacity: 0, scale: 0.985, x: 0, y: 0, rotate: 0, filter: 'blur(3px)' }}
@@ -1645,6 +1646,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
         <div
           key={letterMount.key}
           aria-hidden="true"
+          data-figpal-avoid=""
           className="email-letter"
           data-on-paper={throwing ? '' : undefined}
           data-shown={letterPos ? '' : undefined}
@@ -1666,6 +1668,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       {heldMount && createPortal(
         <div
           aria-hidden="true"
+          data-figpal-avoid=""
           className="email-letter"
           data-status=""
           data-shown={heldPos ? '' : undefined}
@@ -1680,6 +1683,7 @@ export function CopyEmailButton({ icon }: { icon: ReactNode }) {
       {noteAt && createPortal(
         <motion.span
           aria-hidden="true"
+          data-figpal-avoid=""
           className="simple-copied-float"
           data-below={noteAt.below || undefined}
           data-reveal={throwing ? '' : undefined}
