@@ -1001,7 +1001,11 @@ export function SidebarThemeControls({
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             maxHeight: toolbarMaxHeight, overflowY: 'auto',
             scrollbarWidth: 'none' as React.CSSProperties['scrollbarWidth'],
-            padding: '0 6px',
+            // Room for focus rings (2px offset + 2px ring), which the scroll
+            // box would otherwise clip: at the sides, and under the last
+            // control (cancelled by the margin, so the layout doesn't move).
+            padding: '0 6px 6px',
+            marginBottom: -6,
           }}
         >
           {/* Divider: trigger ↔ swatches */}
