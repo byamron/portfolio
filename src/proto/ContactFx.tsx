@@ -156,7 +156,7 @@ const codeFor = (v: Vehicle, greeting: string) => [
   `${v.name}.fly('across the top')`,
 ]
 // What the banner says — a different hello each flight (never twice running).
-const GREETINGS = ['Hi', 'Hello', 'Hey', 'Hey there', 'Hi there', 'Hiya', 'Howdy', 'Ahoy', 'Greetings', 'Good day']
+const GREETINGS = ['Hi', 'Hello', 'Hey', 'Hey there', 'Hi there', 'Howdy', 'Ahoy', 'Greetings', 'Good day']
 const pickGreeting = (...not: (string | null)[]) => {
   const pool = GREETINGS.filter(g => !not.includes(g))
   return pool[Math.floor(Math.random() * pool.length)]!
