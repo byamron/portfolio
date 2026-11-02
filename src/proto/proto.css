@@ -56,6 +56,24 @@
   opacity: 1 !important;
 }
 
+/* The intensity strip isn't a button, so it takes no glass: the thumb (the
+   part you grab) lifts while you're over it or dragging it. `scale` composes
+   with the thumb's inline centring transform. Keyboard focus gets the ring. */
+.rail-strip:is(:hover, :active) .rail-strip-thumb {
+  scale: 1.25;
+}
+[data-glide] .rail-strip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+.rail-strip:focus:not(:focus-visible) {
+  outline: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-strip-thumb { transition: none !important; }
+}
+
 /* Settings trigger (sidebar rail). Its glass is the rail's glide pill;
    here just its press spring and the open/rest opacity fade. */
 .sidebar-icon-trigger {

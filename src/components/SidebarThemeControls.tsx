@@ -333,8 +333,14 @@ const PILL_FADE_OUT = { duration: 0.16, ease: 'easeOut' } as const
 // restarted per control — a fast sweep across the rail is one smooth glide.
 const PILL_SPRING = { stiffness: 560, damping: 40, mass: 0.7 }
 
-// What the glide pill lands on: the trigger, every button, the strip, the record.
-export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
+// What the glide pill lands on: the trigger and every button. The strip and
+// the record aren't buttons, so they don't take the glass: the strip's thumb
+// lifts instead (proto.css), the record keeps its pointer, and the pill
+// fades while you're over either.
+export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control]'
+// The strip's thumb lifts under the pointer: the trigger's press spring.
+const THUMB_LIFT = 'scale 180ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+const RAIL_CONTROLS = `${GLIDE_TARGETS}, [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]`
 // Fit mode floors: intensity strip (before ×controlScale) and divider air.
 const STRIP_MIN = 42
 const DIVIDER_MIN = 10
@@ -658,8 +664,8 @@ export function SidebarThemeControls({
   const pillH = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
   // Concentric with what it frames: 15px round a square control's selection
   // ring (7px item + 3px offset + 1px ring = 11px, and the pill sits 4px
-  // outside it); a full capsule round a capsule (the record, the strip),
-  // eased between while it glides from one to the other.
+  // outside it); a full capsule round a capsule, eased between while it
+  // glides from one to the other.
   const pillR = useTransform([pillW, pillH], ([w, h]: number[]) => {
     const capsule = Math.min(w!, h!) / 2
     return 15 + (capsule - 15) * Math.min(1, Math.abs(w! - h!) / 8)
@@ -682,8 +688,8 @@ export function SidebarThemeControls({
     const r = el.getBoundingClientRect()
     // Compact controls (swatches, mode and cursor buttons — their hit boxes
     // differ, the drawn items don't) all get the trigger's square, so the
-    // pill frames each the same way; only genuinely larger controls (the
-    // intensity strip, the record) get their own size plus a little air.
+    // pill frames each the same way; a genuinely larger control would get
+    // its own size plus a little air.
     const COMPACT = TRIGGER_ICON_BOX + 4
     const w = r.width <= COMPACT ? TRIGGER_ICON_BOX : r.width + 8
     const h = r.height <= COMPACT ? TRIGGER_ICON_BOX : r.height + 8
@@ -721,7 +727,7 @@ export function SidebarThemeControls({
     const col = columnRef.current
     let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
     // Closed, the controls are faded but still laid out: only the handle counts.
-    col?.querySelectorAll(hoveredRef.current ? GLIDE_TARGETS : '.sidebar-icon-trigger').forEach(el => {
+    col?.querySelectorAll(hoveredRef.current ? RAIL_CONTROLS : '.sidebar-icon-trigger').forEach(el => {
       const q = el.getBoundingClientRect()
       if (!q.width) return
       l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
@@ -739,8 +745,11 @@ export function SidebarThemeControls({
   }, [hovered, glidePill, releasePill])
   const glideHandlers = glidePill ? {
     onPointerOver: (e: React.PointerEvent) => {
-      const t = (e.target as Element).closest(GLIDE_TARGETS)
-      if (t && columnRef.current?.contains(t)) { stopRailWatch(); glideTo(t) }
+      const t = (e.target as Element).closest(RAIL_CONTROLS)
+      if (!t || !columnRef.current?.contains(t)) return
+      stopRailWatch()
+      if (t.matches(GLIDE_TARGETS)) glideTo(t)
+      else glideOut()
     },
     onPointerOut: (e: React.PointerEvent) => {
       const to = e.relatedTarget as Element | null
@@ -759,6 +768,7 @@ export function SidebarThemeControls({
     onFocus: (e: React.FocusEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
       if (t) glideTo(t)
+      else glideOut()
     },
     onBlur: glideOut,
   } : {}
@@ -1056,6 +1066,7 @@ export function SidebarThemeControls({
                 style={{ pointerEvents: hovered ? 'auto' : 'none' }}
               >
                 <div
+                  className="rail-strip"
                   aria-label="Background intensity"
                   role="slider"
                   aria-valuemin={0}
@@ -1101,6 +1112,7 @@ export function SidebarThemeControls({
                   {/* Active level indicator — thumb dot */}
                   <div
                     ref={thumbRef}
+                    className="rail-strip-thumb"
                     style={{
                       position: 'absolute',
                       width: 11,
@@ -1112,7 +1124,8 @@ export function SidebarThemeControls({
                       left: '50%',
                       transform: 'translateX(-50%)',
                       top: bgIntensity * thumbTravel,
-                      transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
+                      // The lift (proto.css `scale`) springs even mid-drag.
+                      transition: isDragging ? THUMB_LIFT : `top 200ms ease-in-out, background 500ms ease-in-out, ${THUMB_LIFT}`,
                     }}
                   />
                 </div>
