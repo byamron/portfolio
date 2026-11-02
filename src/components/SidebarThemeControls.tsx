@@ -338,8 +338,9 @@ const PILL_SPRING = { stiffness: 560, damping: 40, mass: 0.7 }
 // lifts instead (proto.css), the record keeps its pointer, and the pill
 // fades while you're over either.
 export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control]'
-// The strip's thumb lifts under the pointer: the trigger's press spring.
-const THUMB_LIFT = 'scale 180ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+// The strip rests slim and grows to full size under the pointer (track
+// width, thumb scale; proto.css), on the trigger's press spring.
+const STRIP_GROW = '180ms cubic-bezier(0.34, 1.56, 0.64, 1)'
 const RAIL_CONTROLS = `${GLIDE_TARGETS}, [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]`
 // Fit mode floors: intensity strip (before ×controlScale) and divider air.
 const STRIP_MIN = 42
@@ -1100,14 +1101,15 @@ export function SidebarThemeControls({
                 >
                   {/* The visual gradient strip */}
                   <div
+                    className="rail-strip-track"
                     style={{
-                      width: Math.round(8 * sc),
+                      '--track-w': `${Math.round(8 * sc)}px`,
                       height: stripHeight,
-                      borderRadius: Math.round(4 * sc),
+                      borderRadius: 999,
                       background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
-                      transition: 'background 500ms ease-in-out',
+                      transition: `background 500ms ease-in-out, width ${STRIP_GROW}`,
                       pointerEvents: 'none',
-                    }}
+                    } as React.CSSProperties}
                   />
                   {/* Active level indicator — thumb dot */}
                   <div
@@ -1115,17 +1117,19 @@ export function SidebarThemeControls({
                     className="rail-strip-thumb"
                     style={{
                       position: 'absolute',
-                      width: 11,
-                      height: 11,
+                      width: THUMB_SIZE,
+                      height: THUMB_SIZE,
                       borderRadius: '50%',
                       background: 'var(--swatch)',
                       border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
                       boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                      // Centred by margin, not a translate: proto.css's
+                      // `scale` would scale a translate too, pulling it off-axis.
                       left: '50%',
-                      transform: 'translateX(-50%)',
+                      marginLeft: -THUMB_SIZE / 2,
                       top: bgIntensity * thumbTravel,
-                      // The lift (proto.css `scale`) springs even mid-drag.
-                      transition: isDragging ? THUMB_LIFT : `top 200ms ease-in-out, background 500ms ease-in-out, ${THUMB_LIFT}`,
+                      // The grow springs even mid-drag.
+                      transition: isDragging ? `scale ${STRIP_GROW}` : `top 200ms ease-in-out, background 500ms ease-in-out, scale ${STRIP_GROW}`,
                     }}
                   />
                 </div>

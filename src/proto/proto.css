@@ -56,11 +56,20 @@
   opacity: 1 !important;
 }
 
-/* The intensity strip isn't a button, so it takes no glass: the thumb (the
-   part you grab) lifts while you're over it or dragging it. `scale` composes
-   with the thumb's inline centring transform. Keyboard focus gets the ring. */
-.rail-strip:is(:hover, :active) .rail-strip-thumb {
-  scale: 1.25;
+/* The intensity strip isn't a button, so it takes no glass. It rests slim
+   and grows to full size while you're over it, dragging it or focused on
+   it: the track widens and the thumb (the part you grab) scales up. */
+.rail-strip-track {
+  width: calc(var(--track-w) * 0.7);
+}
+.rail-strip-thumb {
+  scale: 0.8;
+}
+.rail-strip:is(:hover, :active, :focus-visible) .rail-strip-track {
+  width: var(--track-w);
+}
+.rail-strip:is(:hover, :active, :focus-visible) .rail-strip-thumb {
+  scale: 1;
 }
 [data-glide] .rail-strip:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -71,7 +80,20 @@
   outline: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .rail-strip-thumb { transition: none !important; }
+  .rail-strip-thumb, .rail-strip-track { transition: none !important; }
+}
+
+/* The rail's record, while it's off, rests a shade darker and comes up to
+   full brightness under the pointer or focus, so it answers without glass.
+   Playing, it stays at full. */
+[data-glide] .record-toggle {
+  transition: filter 180ms ease-out;
+}
+[data-glide] .record-toggle[aria-checked="false"]:not(:hover, :focus-visible) {
+  filter: brightness(0.88);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-glide] .record-toggle { transition: none; }
 }
 
 /* Settings trigger (sidebar rail). Its glass is the rail's glide pill;
