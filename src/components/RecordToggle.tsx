@@ -86,8 +86,8 @@ const G = {
 
 // Label print. "full" is the large switch's label (curved artist caps,
 // italic title, side/speed line). A compact record (≲ 36px, the settings
-// rail) has a ~10px label: "simple" keeps it reading as print with the
-// title in heavy caps round the rim and a ring round the spindle; "full"
+// rail) has a ~10px label: "simple" is one short line of the title near
+// the rim (a mark that shows it turning, legible zoomed in); "full"
 // scales the large print down as-is; "none" is a plain coloured label.
 type LabelVariant = "full" | "simple" | "none";
 const COMPACT_PRINT: LabelVariant = "simple";
@@ -1712,19 +1712,18 @@ function LabelPrint({
       </>,
     );
   }
-  // Simple: the title in heavy caps round the rim, tracked out to fill a
-  // fixed arc over the top so every track prints the same shape, and a
-  // rule ring round the spindle. Lines stay ≥ ½ CSS px (1 device px at 2×).
+  // Simple: one short line, the title in caps near the rim over ~40% of the
+  // circle. It's there to show the record turning (a mark that goes round),
+  // not to be read at a glance, but it's real type, legible zoomed in.
   const u = 100 / diameter; // units per CSS px
   const air = 0.45 * u; // rim → cap tops
-  const ringW = Math.max(1.2, 0.5 * u);
   const caps = title.toUpperCase();
-  const span = (250 * Math.PI) / 180;
+  const span = 0.4 * 2 * Math.PI;
   const capTop = 50 - air;
-  // Caps sized so the line's natural width fits the arc (cap height ≈ 0.72
-  // em, bold caps ≈ 0.72 em wide); textLength then tracks it out exactly.
-  let f = 18;
-  for (let i = 0; i < 6; i++) f = Math.min(18, ((capTop - 0.72 * f) * span) / (caps.length * 0.72));
+  // Caps sized so the line's natural width (bold caps ≈ 0.72 em, plus a
+  // little tracking) fills the arc; textLength only trims the remainder.
+  let f = 14;
+  for (let i = 0; i < 6; i++) f = Math.min(14, ((capTop - 0.72 * f) * span) / (caps.length * 0.78));
   const rb = capTop - 0.72 * f; // baseline radius
   const pt = (a: number) => `${(50 + rb * Math.cos(a)).toFixed(2)} ${(50 - rb * Math.sin(a)).toFixed(2)}`;
   return svg(
@@ -1732,11 +1731,10 @@ function LabelPrint({
       <defs>
         <path
           id={`${ids}-arc`}
-          d={`M ${pt(Math.PI / 2 + span / 2)} A ${rb.toFixed(2)} ${rb.toFixed(2)} 0 1 1 ${pt(Math.PI / 2 - span / 2)}`}
+          d={`M ${pt(Math.PI / 2 + span / 2)} A ${rb.toFixed(2)} ${rb.toFixed(2)} 0 0 1 ${pt(Math.PI / 2 - span / 2)}`}
         />
       </defs>
-      <circle cx="50" cy="50" r={24} fill="none" stroke={INK} strokeOpacity={0.5} strokeWidth={ringW} />
-      <text fill={INK} fontFamily={FONT} fontWeight={700} fontSize={f.toFixed(2)}>
+      <text fill={INK} fontFamily={FONT} fontWeight={700} fontSize={f.toFixed(2)} letterSpacing={(f * 0.06).toFixed(2)}>
         <textPath href={`#${ids}-arc`} textLength={(rb * span).toFixed(2)} lengthAdjust="spacing">
           {caps}
         </textPath>
