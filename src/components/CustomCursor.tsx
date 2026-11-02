@@ -16,6 +16,20 @@ const LERP_RATE = 0.12
 const AVOID_SELECTOR = '[data-figpal-avoid]'
 const AVOID_MARGIN = 8 // breathing room round each zone
 const AVOID_RETURN = 12 // extra clearance before stepping back home (no flip-flop at the edge)
+const DIR_WINDOW_MS = 100 // approach direction: pointer travel over this window
+const RING_ANGLES = 16 // candidate spots round the pointer…
+const RING_GAPS = [32, 60, 88] // …at these gaps (pointer → figpal edge); home's is ~35
+const SPOT_HYSTERESIS = 24 // px of score a new spot must win by
+const ICON_PENALTY = 64 // px of score for sitting over a neighbouring icon
+const ESCAPE_LERP_RATE = 0.2 // while inside a pop-out's space
+const HOLD_MAX_MS = 400 // longest it waits for a closing pop-out before gliding through
+// The space a contact pop-out opens into, relative to the hovered icon: from
+// just left of it (the email sheet) out past the GitHub terminal (300px), and
+// down past the email sheet (~280px). Kept clear before anything opens.
+const POP_RESERVE = { left: -24, width: 344, height: 300 }
+// …and the "Email address copied" note, which appears beside the button on a
+// click: a strip along the row's centre line to the right of the icon.
+const NOTE_RESERVE = { width: 200, halfHeight: 12 }
 const FIGPAL_FADE = 'opacity 150ms ease'
 const MORPH_LEAVE_DELAY = 150
 const CIRCLE_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
@@ -68,7 +82,7 @@ export function CustomCursor() {
   const isWide = useIsWide()
   const [isCoarsePointer, setIsCoarsePointer] = useState(() => window.matchMedia('(pointer: coarse)').matches)
   const isTouch = isCoarsePointer || !isWide
-  const figpalSpotRef = useRef(0) // index into the figpal's spots; -1 = nowhere clear (faded)
+  const figpalSpotRef = useRef(0) // 0 = home, n > 0 = ring spot, -1 = nowhere clear (faded)
   const onCardRef = useRef(false)
   const cursorContentRef = useRef<'idle' | 'arrow' | 'coming-soon'>('idle')
   const onSidebarRef = useRef(false)
@@ -253,67 +267,172 @@ export function CustomCursor() {
     }
 
     // ── Figpal avoidance ──────────────────────────────────────────────
-    // Spots for the figpal's top-left, in order of preference: home
-    // (down-right of the pointer), then up-left (above the icon row, clear of
-    // the pop-outs that open below and to the right), up-right, down-left.
-    // An off-home spot clears any zone the pointer is inside: above it for the
-    // upper spots (so over an icon it sits just above the row), below it for
-    // the lower one.
-    const spot = (i: number, mx: number, my: number) => {
-      const up = i === 1 || i === 2
-      const l = mx + (i === 1 || i === 3 ? -FIGPAL_OFFSET_X - figpalW : FIGPAL_OFFSET_X)
-      let t = my + (up ? -FIGPAL_OFFSET_Y - FIGPAL_SIZE : FIGPAL_OFFSET_Y)
-      if (i !== 0) {
-        for (const r of zones) {
-          if (!inside(r, mx, my, AVOID_MARGIN)) continue
-          t = up ? Math.min(t, r.top - AVOID_MARGIN - FIGPAL_SIZE) : Math.max(t, r.bottom + AVOID_MARGIN)
-        }
-      }
-      return { l, t }
-    }
-    const inside = (r: DOMRect, x: number, y: number, m: number) =>
-      x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m
-    // Zone rects, read once per frame (only when zones exist).
-    let zones: DOMRect[] = []
+    // Away from avoid zones the figpal sits at home (+24/+24). Near them it
+    // stays on the side the pointer came from, like a pet that was trailing:
+    // candidate spots on rings round the pointer are scored by distance to
+    // the point *behind* the pointer along its approach, and any spot that
+    // would cover an open pop-out (or the space one is about to take) is out.
+    type Box = { l: number; t: number; r: number; b: number }
+    let rows: Box[] = [] // the icon row(s): trigger the step-aside
+    let pops: Box[] = [] // open pop-outs: never covered
+    let rowItems: Box[] = [] // the row's icons, read only while the pointer is on a row
     let zoneSig = ''
-    const readZones = () => {
-      const els = document.querySelectorAll(AVOID_SELECTOR)
-      zones = []
+    const toBox = (r: DOMRect): Box => ({ l: r.left, t: r.top, r: r.right, b: r.bottom })
+    const inside = (r: Box, x: number, y: number, m: number) =>
+      x > r.l - m && x < r.r + m && y > r.t - m && y < r.b + m
+    const overlaps = (a: Box, r: Box, m: number) =>
+      a.l < r.r + m && a.r > r.l - m && a.t < r.b + m && a.b > r.t - m
+    const boxAt = (c: { x: number; y: number }): Box =>
+      ({ l: c.x - figpalW / 2, t: c.y - FIGPAL_SIZE / 2, r: c.x + figpalW / 2, b: c.y + FIGPAL_SIZE / 2 })
+    const boxAtPos = (x: number, y: number): Box => ({ l: x, t: y, r: x + figpalW, b: y + FIGPAL_SIZE })
+    const ROW_SPAN = AVOID_MARGIN + AVOID_RETURN
+
+    // Zone rects, read once per frame (only when zones exist).
+    const readZones = (mx: number, my: number) => {
+      const els = document.querySelectorAll<HTMLElement>(AVOID_SELECTOR)
+      rows = []
+      pops = []
+      rowItems = []
       let sig = ''
       for (const el of els) {
-        const r = el.getBoundingClientRect()
-        if (r.width < 1 || r.height < 1) continue
-        zones.push(r)
-        sig += `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)};`
+        let box: Box
+        const isRow = el.dataset.figpalAvoid === 'row'
+        if (isRow) {
+          // A row's span is its icons, not its (column-wide) box.
+          const items = Array.from(el.children, li => toBox(li.getBoundingClientRect()))
+          if (!items.length) continue
+          box = {
+            l: Math.min(...items.map(i => i.l)), t: Math.min(...items.map(i => i.t)),
+            r: Math.max(...items.map(i => i.r)), b: Math.max(...items.map(i => i.b)),
+          }
+          if (inside(box, mx, my, ROW_SPAN)) rowItems.push(...items)
+        } else {
+          box = toBox(el.getBoundingClientRect())
+        }
+        if (box.r - box.l < 1 || box.b - box.t < 1) continue
+        ;(isRow ? rows : pops).push(box)
+        sig += `${isRow ? 'r' : 'p'}${Math.round(box.l)},${Math.round(box.t)},${Math.round(box.r)},${Math.round(box.b)};`
       }
       const changed = sig !== zoneSig
       zoneSig = sig
       return changed
     }
-    const hits = (l: number, t: number, w: number, h: number, extra: number) => {
-      const m = AVOID_MARGIN + extra
-      for (const r of zones) {
-        if (l < r.right + m && l + w > r.left - m && t < r.bottom + m && t + h > r.top - m) return true
+
+    // Pointer history for a smoothed approach direction (the last ~100ms of
+    // moves, not one event).
+    const trail: { t: number; x: number; y: number }[] = []
+    let frozenDir: { x: number; y: number } | null = null
+    let figpalHidden = false
+    let holdSince: number | null = null
+    const liveDir = (mx: number, my: number) => {
+      const now = performance.now()
+      const first = trail.find(p => now - p.t <= DIR_WINDOW_MS)
+      if (first) {
+        const dx = mx - first.x
+        const dy = my - first.y
+        const d = Math.hypot(dx, dy)
+        if (d >= 6) return { x: dx / d, y: dy / d }
       }
-      return false
+      // Pointer still (or the row arrived by scroll): keep the figpal on the
+      // side it's already on.
+      const dx = mx - (posRef.current.x + figpalW / 2)
+      const dy = my - (posRef.current.y + FIGPAL_SIZE / 2)
+      const d = Math.hypot(dx, dy) || 1
+      return { x: dx / d, y: dy / d }
     }
-    const spotBlocked = (i: number, mx: number, my: number, extra: number) => {
-      const s = spot(i, mx, my)
-      return hits(s.l, s.t, figpalW, FIGPAL_SIZE, extra)
+
+    // Centre of a spot in direction (ux, uy) with `gap` px between the pointer
+    // and the near edge of the figpal's box along that ray.
+    const ringCentre = (mx: number, my: number, ux: number, uy: number, gap: number) => {
+      const reach = Math.min(
+        Math.abs(ux) > 1e-6 ? figpalW / 2 / Math.abs(ux) : Infinity,
+        Math.abs(uy) > 1e-6 ? FIGPAL_SIZE / 2 / Math.abs(uy) : Infinity,
+      )
+      return { x: mx + ux * (gap + reach), y: my + uy * (gap + reach) }
     }
+    const CANDIDATES = RING_ANGLES * RING_GAPS.length
+    const candidate = (i: number, mx: number, my: number) => {
+      const th = (Math.floor((i - 1) / RING_GAPS.length) / RING_ANGLES) * Math.PI * 2
+      return ringCentre(mx, my, Math.cos(th), Math.sin(th), RING_GAPS[(i - 1) % RING_GAPS.length]!)
+    }
+    const homeCentre = (mx: number, my: number) =>
+      ({ x: mx + FIGPAL_OFFSET_X + figpalW / 2, y: my + FIGPAL_OFFSET_Y + FIGPAL_SIZE / 2 })
+    const spotCentre = (i: number, mx: number, my: number) =>
+      i > 0 ? candidate(i, mx, my) : homeCentre(mx, my)
+
+    // What a spot must stay clear of: open pop-outs; and, while the pointer
+    // is on the row, the icon under it plus the space its pop-out opens into
+    // (so the figpal is already out of the way when it opens). Off the row,
+    // the row itself.
+    let obstacles: Box[] = []
+    let reserve: Box | null = null // the space the hovered icon's pop-out opens into
+    const buildObstacles = (mx: number, my: number, onRow: boolean) => {
+      obstacles = pops.slice()
+      reserve = null
+      if (!onRow) {
+        obstacles.push(...rows)
+        return
+      }
+      let item: Box | null = null
+      let nearest = Infinity
+      for (const it of rowItems) {
+        const d = mx < it.l ? it.l - mx : mx > it.r ? mx - it.r : 0
+        if (d < nearest) { nearest = d; item = it }
+      }
+      if (!item) return
+      const row = rows.find(r => inside(r, mx, my, ROW_SPAN))
+      const top = row ? row.b : item.b
+      reserve = {
+        l: item.l + POP_RESERVE.left, t: top,
+        r: item.l + POP_RESERVE.left + POP_RESERVE.width, b: top + POP_RESERVE.height,
+      }
+      const mid = (item.t + item.b) / 2
+      obstacles.push(item, reserve, { l: item.r, t: mid - NOTE_RESERVE.halfHeight, r: item.r + NOTE_RESERVE.width, b: mid + NOTE_RESERVE.halfHeight })
+    }
+    const isClear = (c: { x: number; y: number }) => {
+      const box = boxAt(c)
+      if (box.l < 0 || box.t < 0 || box.r > window.innerWidth || box.b > window.innerHeight) return false
+      for (const o of obstacles) if (overlaps(box, o, AVOID_MARGIN)) return false
+      return true
+    }
+
+    // The spot to head for: 0 = home, 1…CANDIDATES = a ring spot, -1 = none clear.
     const pickSpot = (mx: number, my: number) => {
-      if (!zones.length) return 0
       const cur = figpalSpotRef.current
-      // Home is blocked while the pointer is over a zone (the icon row: the
-      // figpal moves on approach, before a dwell opens anything), or if its box
-      // would overlap one. Leaving home is immediate; coming back needs a
-      // little extra clearance.
-      const extra = cur === 0 ? 0 : AVOID_RETURN
-      const m = AVOID_MARGIN + extra
-      if (!zones.some(r => inside(r, mx, my, m)) && !spotBlocked(0, mx, my, extra)) return 0
-      if (cur > 0 && !spotBlocked(cur, mx, my, 0)) return cur
-      for (let i = 1; i < 4; i++) if (!spotBlocked(i, mx, my, 0)) return i
-      return -1
+      if (!rows.length && !pops.length) { frozenDir = null; obstacles = []; reserve = null; return 0 }
+      // Stepping aside is immediate; coming back home needs extra clearance.
+      const m = AVOID_MARGIN + (cur === 0 ? 0 : AVOID_RETURN)
+      const inZone = rows.some(r => inside(r, mx, my, m)) || pops.some(r => inside(r, mx, my, m))
+      buildObstacles(mx, my, inZone && rows.some(r => inside(r, mx, my, ROW_SPAN)))
+      if (!inZone) {
+        frozenDir = null
+        const home = boxAt(homeCentre(mx, my))
+        if (!pops.some(o => overlaps(home, o, m)) && !rows.some(o => overlaps(home, o, m))) return 0
+      } else if (!frozenDir) {
+        // Entering: capture the approach and hold it while the pointer stays
+        // in the zone, so sliding along the row doesn't swing the figpal round.
+        frozenDir = liveDir(mx, my)
+      }
+      const dir = frozenDir ?? liveDir(mx, my)
+      const want = ringCentre(mx, my, -dir.x, -dir.y, RING_GAPS[0]!) // behind the pointer
+      // Distance from behind, plus a nudge off the neighbouring icons: it
+      // may sit over one, but takes a spot just past it when there's one near.
+      const score = (i: number) => {
+        const c = candidate(i, mx, my)
+        const box = boxAt(c)
+        const onIcon = rowItems.some(it => overlaps(box, it, 0))
+        return Math.hypot(c.x - want.x, c.y - want.y) + (onIcon ? ICON_PENALTY : 0)
+      }
+      let best = -1
+      let bestScore = Infinity
+      for (let i = 1; i <= CANDIDATES; i++) {
+        if (!isClear(candidate(i, mx, my))) continue
+        const sc = score(i)
+        if (sc < bestScore) { bestScore = sc; best = i }
+      }
+      // Don't hop between neighbours: stay unless the new best is clearly better.
+      if (cur > 0 && best > 0 && cur !== best && isClear(candidate(cur, mx, my)) && score(cur) <= bestScore + SPOT_HYSTERESIS) return cur
+      return best
     }
 
     // Preserve cursor position and visibility on tint-only switches
@@ -378,6 +497,11 @@ export function CustomCursor() {
     const handlePointerMove = (e: PointerEvent) => {
       mouseRef.current.x = e.clientX
       mouseRef.current.y = e.clientY
+      if (cursorMode === 'figpal') {
+        const now = performance.now()
+        trail.push({ t: now, x: e.clientX, y: e.clientY })
+        while (trail.length > 2 && now - trail[0]!.t > DIR_WINDOW_MS * 2) trail.shift()
+      }
 
       if (!initializedRef.current) {
         initializedRef.current = true
@@ -518,32 +642,54 @@ export function CustomCursor() {
         }
         settled = true // invert mode has no lerp — always settled after one frame
       } else {
-        const zonesChanged = readZones()
         const mx = mouseRef.current.x
         const my = mouseRef.current.y
+        const zonesChanged = readZones(mx, my)
         const next = pickSpot(mx, my)
-        if (next !== figpalSpotRef.current) {
-          figpalSpotRef.current = next
-          if (figpalRef.current) figpalRef.current.style.opacity = next === -1 ? '0' : '1'
-        }
+        figpalSpotRef.current = next
         // Nowhere clear: fade out where it is (keep following home, unseen).
-        const s = spot(Math.max(0, next), mx, my)
-        targetX = s.l
-        targetY = s.t
+        const c = spotCentre(Math.max(0, next), mx, my)
+        targetX = c.x - figpalW / 2
+        targetY = c.y - FIGPAL_SIZE / 2
         if (reducedMotion.current) {
           posRef.current.x = targetX
           posRef.current.y = targetY
           settled = true
         } else {
-          posRef.current.x += (targetX - posRef.current.x) * LERP_RATE
-          posRef.current.y += (targetY - posRef.current.y) * LERP_RATE
-          settled =
-            Math.abs(posRef.current.x - targetX) < 0.5 &&
-            Math.abs(posRef.current.y - targetY) < 0.5
-          if (settled) {
-            posRef.current.x = targetX
-            posRef.current.y = targetY
+          // Caught inside a pop-out (or the space one is about to open into),
+          // e.g. trailing up from below: hurry out rather than drift across.
+          const { x, y } = posRef.current
+          const inPop = pops.some(o => overlaps(boxAtPos(x, y), o, 0))
+          const rate = inPop || (reserve && overlaps(boxAtPos(x, y), reserve, 0)) ? ESCAPE_LERP_RATE : LERP_RATE
+          const nx = x + (targetX - x) * rate
+          const ny = y + (targetY - y) * rate
+          // Outside a pop-out but the next step would cross one (heading home
+          // as it closes, say): wait for it to go, then glide. Capped, so a
+          // pop-out that stays put can't strand the figpal; past the cap the
+          // dip below covers the crossing.
+          const now = performance.now()
+          const ahead = !inPop && pops.some(o => overlaps(boxAtPos(nx, ny), o, 0))
+          if (!ahead) holdSince = null
+          else if (holdSince === null) holdSince = now
+          if (ahead && now - holdSince! < HOLD_MAX_MS) {
+            settled = false
+          } else {
+            posRef.current.x = nx
+            posRef.current.y = ny
+            settled = Math.abs(nx - targetX) < 0.5 && Math.abs(ny - targetY) < 0.5
+            if (settled) {
+              posRef.current.x = targetX
+              posRef.current.y = targetY
+            }
           }
+        }
+        // Never drawn over an open pop-out: if the glide still crosses one,
+        // it dips out for those frames.
+        const box = boxAtPos(posRef.current.x, posRef.current.y)
+        const hidden = next === -1 || pops.some(o => overlaps(box, o, 0))
+        if (hidden !== figpalHidden && figpalRef.current) {
+          figpalHidden = hidden
+          figpalRef.current.style.opacity = hidden ? '0' : '1'
         }
         // Zones still moving (a pop-out springing open, a note typing):
         // keep checking until they're still too.

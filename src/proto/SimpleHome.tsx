@@ -269,7 +269,7 @@ export function SimpleHome() {
           aria-label="Elsewhere"
           // The figpal cursor steps aside on approach (CustomCursor), so it
           // never sits where the contact pop-outs open.
-          data-figpal-avoid=""
+          data-figpal-avoid="row"
           // Left: pulled back so the first glyph lines up with the text edge.
           // Top: 48px from the last line's baseline to the glyphs (8-grid,
           // measured optically): less the button's 10px inset and the ~0.2em
