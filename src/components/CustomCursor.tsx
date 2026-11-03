@@ -21,7 +21,12 @@ const RING_ANGLES = 16 // candidate spots round the pointer…
 const RING_GAPS = [32, 60, 88] // …at these gaps (pointer → figpal edge); home's is ~35
 const SPOT_HYSTERESIS = 24 // px of score a new spot must win by
 const ICON_PENALTY = 64 // px of score for sitting over a neighbouring icon
-const ESCAPE_LERP_RATE = 0.2 // while inside a pop-out's space
+// Stepping aside and back is its own motion, layered on the trailing lerp:
+// a critically damped spring on the figpal's offset from the pointer, so it
+// eases out and settles (no first-frame dart). Natural frequencies (rad/s):
+const STEP_ASIDE_W = 13 // out of the way: brisk, still ahead of a pop-out
+const STEP_HOME_W = 7 // back into place: unhurried
+const ESCAPE_W = 20 // caught inside a pop-out's space: hurry out
 const HOLD_MAX_MS = 400 // longest it waits for a closing pop-out before gliding through
 // The space a contact pop-out opens into, relative to the hovered icon: from
 // just left of it (the email sheet) out past the GitHub terminal (300px), and
@@ -324,6 +329,12 @@ export function CustomCursor() {
     let frozenDir: { x: number; y: number } | null = null
     let figpalHidden = false
     let holdSince: number | null = null
+    // The motion's two layers: `follow` trails the pointer (the lerp), and
+    // `off` is the figpal's centre relative to it, sprung toward the chosen
+    // spot. Set up from where the figpal is on its first frame.
+    let follow: { x: number; y: number } | null = null
+    const off = { x: 0, y: 0, vx: 0, vy: 0 }
+    let lastFrame = 0
     const liveDir = (mx: number, my: number) => {
       const now = performance.now()
       const first = trail.find(p => now - p.t <= DIR_WINDOW_MS)
@@ -655,31 +666,53 @@ export function CustomCursor() {
           posRef.current.x = targetX
           posRef.current.y = targetY
           settled = true
+          follow = null
         } else {
+          const now = performance.now()
+          const dt = Math.min(0.032, lastFrame ? (now - lastFrame) / 1000 : 1 / 60)
+          lastFrame = now
+          const { x, y } = posRef.current
+          const tox = c.x - mx, toy = c.y - my // the spot, relative to the pointer
+          if (!follow) {
+            off.x = tox; off.y = toy; off.vx = off.vy = 0
+            follow = { x: x + figpalW / 2 - tox, y: y + FIGPAL_SIZE / 2 - toy }
+          }
           // Caught inside a pop-out (or the space one is about to open into),
           // e.g. trailing up from below: hurry out rather than drift across.
-          const { x, y } = posRef.current
+          // Otherwise brisk stepping aside, unhurried coming home.
           const inPop = pops.some(o => overlaps(boxAtPos(x, y), o, 0))
-          const rate = inPop || (reserve && overlaps(boxAtPos(x, y), reserve, 0)) ? ESCAPE_LERP_RATE : LERP_RATE
-          const nx = x + (targetX - x) * rate
-          const ny = y + (targetY - y) * rate
+          const w = inPop || (reserve && overlaps(boxAtPos(x, y), reserve, 0)) ? ESCAPE_W
+            : Math.max(0, next) === 0 ? STEP_HOME_W : STEP_ASIDE_W
+          // Semi-implicit Euler on a critically damped spring.
+          const nvx = off.vx + (w * w * (tox - off.x) - 2 * w * off.vx) * dt
+          const nvy = off.vy + (w * w * (toy - off.y) - 2 * w * off.vy) * dt
+          const nox = off.x + nvx * dt, noy = off.y + nvy * dt
+          const nfx = follow.x + (mx - follow.x) * LERP_RATE
+          const nfy = follow.y + (my - follow.y) * LERP_RATE
+          const nx = nfx + nox - figpalW / 2
+          const ny = nfy + noy - FIGPAL_SIZE / 2
           // Outside a pop-out but the next step would cross one (heading home
           // as it closes, say): wait for it to go, then glide. Capped, so a
           // pop-out that stays put can't strand the figpal; past the cap the
           // dip below covers the crossing.
-          const now = performance.now()
           const ahead = !inPop && pops.some(o => overlaps(boxAtPos(nx, ny), o, 0))
           if (!ahead) holdSince = null
           else if (holdSince === null) holdSince = now
           if (ahead && now - holdSince! < HOLD_MAX_MS) {
             settled = false
           } else {
+            off.x = nox; off.y = noy; off.vx = nvx; off.vy = nvy
+            follow.x = nfx; follow.y = nfy
             posRef.current.x = nx
             posRef.current.y = ny
             settled = Math.abs(nx - targetX) < 0.5 && Math.abs(ny - targetY) < 0.5
+              && Math.hypot(off.vx, off.vy) < 2
             if (settled) {
               posRef.current.x = targetX
               posRef.current.y = targetY
+              off.x = tox; off.y = toy; off.vx = off.vy = 0
+              follow.x = mx; follow.y = my
+              lastFrame = 0 // the loop stops: the next start begins a fresh step
             }
           }
         }
