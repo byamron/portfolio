@@ -182,12 +182,12 @@ function TermResult({ status, children }: { status: string; children: ReactNode 
 
 type RunResult = 'launched' | 'flying' | 'standby'
 
-/** How this write of hi.js came about: the visit's own, Return after a
- *  launch (another), or Return past a held run (override, run with --force). */
-type RunMode = 'visit' | 'another' | 'override'
+/** How this write of hi.js came about: the visit's own, or Return past a
+ *  held run (override: rewritten quick, run with --force). */
+type RunMode = 'visit' | 'override'
 
-/** hi.js written out and run. Return rewrites the file (a new machine, a
- *  new hello), quick; past a hold it runs with --force. */
+/** hi.js written out and run. An override rewrites the file (a new machine,
+ *  a new hello), quick, and runs it with --force. */
 function Program({ vehicle, greeting, mode, onRun, cleared }: {
   vehicle: Vehicle
   greeting: string
@@ -667,19 +667,18 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     lastStage.current = stage
   }, [stage])
   // A run while anything's up is held for air traffic control, and cleared
-  // to launch when the sky empties — if you're still here. Return is by
-  // hand: past a hold it overrides (hi.js rewritten, quick, forced up); once
-  // something's launched it sends another. Either way, while there's sky.
+  // to launch when the sky empties — if you're still here. Or press Return
+  // (offered only while held): hi.js is rewritten (quick) and forced up.
+  // Once it's up, nothing more is offered: come back for another hold.
   const queuedRef = useRef(false)
   const stageRef = useRef(stage)
   stageRef.current = stage
   const [cleared, setCleared] = useState(false)
-  // Armed: Return does something now (a run is held, or one's launched).
+  // Armed: a run is held, so Return can override it (until the override
+  // is up, or the hold clears).
   const [armed, setArmed] = useState(false)
   const armedRef = useRef(false)
-  const arm = () => { armedRef.current = true; setArmed(true) }
-  // A run is waiting on air traffic control (what an override overrides).
-  const [held, setHeld] = useState(false)
+  const setArmedBoth = (on: boolean) => { armedRef.current = on; setArmed(on) }
   // An override being typed. Leaving first cancels it, as leaving before
   // `node hi.js` always has: nothing flies that the terminal didn't run.
   const forcingRef = useRef<typeof program | null>(null)
@@ -692,18 +691,15 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     if (stage > 0) return
     forcingRef.current = null
     queuedRef.current = false
-    armedRef.current = false
+    setArmedBoth(false)
     setForcing(false)
     setCleared(false)
-    setArmed(false)
-    setHeld(false)
   }, [stage])
   const launch = useCallback((): RunResult => {
     if (!pointerRef.current) return 'standby'
-    arm()
     if (flightsRef.current.length) {
       queuedRef.current = true
-      setHeld(true)
+      setArmedBoth(true)
       return 'flying'
     }
     takeOff()
@@ -714,6 +710,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     forcingRef.current = null
     setForcing(false)
     if (!p) return 'standby'
+    setArmedBoth(false)
     takeOff(p)
     return 'launched'
   }, [takeOff])
@@ -721,7 +718,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     setSky(flightsRef.current.filter(f => f.id !== id))
     if (!flightsRef.current.length && queuedRef.current && stageRef.current > 0 && pointerRef.current) {
       queuedRef.current = false
-      setHeld(false)
+      setArmedBoth(false)
       setCleared(true)
       takeOff()
     }
@@ -739,18 +736,14 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       if (e.repeat || forcingRef.current) return
       const pool = overridePool(programRef.current.v, flightsRef.current)
       if (!pool.length) return
-      const mode: RunMode = queuedRef.current ? 'override' : 'another'
-      queuedRef.current = false // a held run is superseded
-      setHeld(false)
-      forcingRef.current = rewrite(programRef.current.run + 1, mode, pool)
+      queuedRef.current = false // the held run is superseded
+      forcingRef.current = rewrite(programRef.current.run + 1, 'override', pool)
       setForcing(true)
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
   }, [armed, openRef])
-  const hint = !armed || forcing ? null
-    : !overridePool(program.v, flights).length ? 'airspace full'
-    : held ? 'return to override' : 'return for another'
+  const hint = !armed || forcing ? null : overridePool(program.v, flights).length ? 'return to override' : 'airspace full'
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
