@@ -86,8 +86,9 @@ const G = {
 
 // Label print. "full" is the large switch's label (curved artist caps,
 // italic title, side/speed line). A compact record (≲ 36px, the settings
-// rail) has a ~10px label: "simple" is one short line of the title near
-// the rim (a mark that shows it turning, legible zoomed in); "full"
+// rail) has a ~10px label: "simple" is set like a 7" single, the title in
+// one straight line above the spindle inside a faint printed ring (a mark
+// that shows it turning, legible zoomed in); "full"
 // scales the large print down as-is; "none" is a plain coloured label.
 type LabelVariant = "full" | "simple" | "none";
 const COMPACT_PRINT: LabelVariant = "simple";
@@ -1712,32 +1713,35 @@ function LabelPrint({
       </>,
     );
   }
-  // Simple: one short line, the title in caps near the rim over ~40% of the
-  // circle. It's there to show the record turning (a mark that goes round),
-  // not to be read at a glance, but it's real type, legible zoomed in.
+  // Simple: set like a 7" single, the title in one straight line above the
+  // spindle, inside a faint printed ring near the edge. One bright mark that
+  // visibly goes round when it spins; real type, legible zoomed in.
   const u = 100 / diameter; // units per CSS px
-  const air = 0.45 * u; // rim → cap tops
+  const ringW = Math.max(1.2, 0.5 * u); // ≥ ½ CSS px (1 device px at 2×)
   const caps = title.toUpperCase();
-  const span = 0.4 * 2 * Math.PI;
-  const capTop = 50 - air;
-  // Caps sized so the line's natural width (bold caps ≈ 0.72 em, plus a
-  // little tracking) fills the arc; textLength only trims the remainder.
-  let f = 14;
-  for (let i = 0; i < 6; i++) f = Math.min(14, ((capTop - 0.72 * f) * span) / (caps.length * 0.78));
-  const rb = capTop - 0.72 * f; // baseline radius
-  const pt = (a: number) => `${(50 + rb * Math.cos(a)).toFixed(2)} ${(50 - rb * Math.sin(a)).toFixed(2)}`;
+  const RING_R = 45.5;
+  const baseline = 37;
+  // Caps sized to sit inside the ring with a margin at the line's height
+  // (≈0.62 em a character with the tracking; 0.66 leaves room for any
+  // system font), capped for short titles. The line clears the spindle.
+  const capTop = 50 - baseline + 0.72 * 9; // distance from centre to the cap tops (approx.)
+  const room = 2 * Math.sqrt(RING_R * RING_R - capTop * capTop) - 10;
+  const f = Math.min(9.5, room / (caps.length * 0.66));
   return svg(
     <>
-      <defs>
-        <path
-          id={`${ids}-arc`}
-          d={`M ${pt(Math.PI / 2 + span / 2)} A ${rb.toFixed(2)} ${rb.toFixed(2)} 0 0 1 ${pt(Math.PI / 2 - span / 2)}`}
-        />
-      </defs>
-      <text fill={INK} fontFamily={FONT} fontWeight={700} fontSize={f.toFixed(2)} letterSpacing={(f * 0.06).toFixed(2)}>
-        <textPath href={`#${ids}-arc`} textLength={(rb * span).toFixed(2)} lengthAdjust="spacing">
-          {caps}
-        </textPath>
+      <circle cx="50" cy="50" r={RING_R} fill="none" stroke={INK} strokeOpacity={0.4} strokeWidth={ringW} />
+      <text
+        x="50"
+        y={baseline}
+        textAnchor="middle"
+        fill={INK}
+        fillOpacity={0.92}
+        fontFamily={FONT}
+        fontWeight={600}
+        fontSize={f.toFixed(2)}
+        letterSpacing={(f * 0.06).toFixed(2)}
+      >
+        {caps}
       </text>
     </>,
   );
