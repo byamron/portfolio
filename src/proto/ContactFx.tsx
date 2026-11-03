@@ -252,6 +252,14 @@ function Terminal({ run, hint, ...program }: React.ComponentProps<typeof Program
   /** The dim line under the run: what Return would do now, if anything. */
   hint: string | null
 }) {
+  // The hint is printed a beat after the hold, as a terminal would: the line
+  // doesn't exist (or take room) until then.
+  const [shownHint, setShownHint] = useState<string | null>(null)
+  useEffect(() => {
+    if (!hint) { setShownHint(null); return }
+    const t = setTimeout(() => setShownHint(hint), run ? 150 : 500)
+    return () => clearTimeout(t)
+  }, [hint, run])
   return (
     <div className="term-window">
       <div className="term-bar">
@@ -262,10 +270,10 @@ function Terminal({ run, hint, ...program }: React.ComponentProps<typeof Program
         {/* Each Return clears the window and rewrites the file, so it
             never grows past one program and its run. */}
         <Program key={run} {...program} />
-        {hint && (
+        {shownHint && (
           // A second beat, dim: what Return does now (or why it can't).
-          <motion.div key={hint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: run ? 0.15 : 0.5, duration: 0.3 }} style={termLine}>
-            <span className="term-dim">{hint}</span>
+          <motion.div key={shownHint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} style={termLine}>
+            <span className="term-dim">{shownHint}</span>
           </motion.div>
         )}
       </div>
