@@ -687,12 +687,11 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   const [armed, setArmed] = useState(false)
   const armedRef = useRef(false)
   const setArmedBoth = (on: boolean) => { armedRef.current = on; setArmed(on) }
-  // Once Return has overridden, the terminal keeps it for the rest of the
-  // visit: further presses do nothing here, and never reach whatever was
-  // focused elsewhere (a clicked record would toggle).
-  const [ownsReturn, setOwnsReturn] = useState(false)
-  const ownsReturnRef = useRef(false)
-  const rootRef = useRef<HTMLSpanElement>(null)
+  // Return goes to whatever has focus. The terminal only takes it when
+  // nothing does (focus on the page itself), and only offers it then: a
+  // focused control (a clicked record, the GitHub link) keeps its key.
+  const focusFree = () => { const a = document.activeElement; return !a || a === document.body }
+  const [returnFree, setReturnFree] = useState(focusFree)
   // An override being typed. Leaving first cancels it, as leaving before
   // `node hi.js` always has: nothing flies that the terminal didn't run.
   const forcingRef = useRef<typeof program | null>(null)
@@ -706,8 +705,6 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     forcingRef.current = null
     queuedRef.current = false
     setArmedBoth(false)
-    ownsReturnRef.current = false
-    setOwnsReturn(false)
     setForcing(false)
     setCleared(false)
   }, [stage])
@@ -739,37 +736,39 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       takeOff()
     }
   }, [takeOff])
-  // Return, once held (and for the rest of the visit after an override).
-  // Capture phase + preventDefault (as Escape does), so it never also
-  // activates a focused control — while the terminal owns Return.
+  // Return, once held, if nothing's focused. Capture phase + preventDefault
+  // (as Escape does), so the page sees it once.
   useEffect(() => {
-    if (!armed && !ownsReturn) return
+    if (!armed) return
+    // focusout fires before focus lands anywhere: read it a frame later.
+    const sync = () => setReturnFree(focusFree())
+    const syncLater = () => requestAnimationFrame(sync)
+    sync()
+    document.addEventListener('focusin', sync)
+    document.addEventListener('focusout', syncLater)
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' || e.defaultPrevented || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return
-      if (!(armedRef.current || ownsReturnRef.current) || !openRef.current || !pointerRef.current) return
+      if (!armedRef.current || !openRef.current || !pointerRef.current || !focusFree()) return
       e.preventDefault()
-      // Held down, mid-rewrite, the sky's full, or already overridden:
-      // nothing. (A press while one is being typed is ignored — no backlog.)
-      if (e.repeat || forcingRef.current || !armedRef.current) return
+      // Held down, mid-rewrite, or the sky's full: nothing. (A press while
+      // one is being typed is ignored — no backlog of programs.)
+      if (e.repeat || forcingRef.current) return
       const pool = overridePool(programRef.current.v, flightsRef.current)
       if (!pool.length) return
-      // Focus left elsewhere by an earlier click (the record, say) would
-      // show its ring on this keypress: this is the pointer's moment, so
-      // let it go.
-      const focused = document.activeElement
-      if (focused instanceof HTMLElement && focused !== document.body && !rootRef.current?.contains(focused)) focused.blur()
-      ownsReturnRef.current = true
-      setOwnsReturn(true)
       queuedRef.current = false // the held run is superseded
       forcingRef.current = rewrite(programRef.current.run + 1, 'override', pool)
       setForcing(true)
     }
     document.addEventListener('keydown', onKey, true)
-    return () => document.removeEventListener('keydown', onKey, true)
-  }, [armed, ownsReturn, openRef])
-  const hint = !armed || forcing ? null : overridePool(program.v, flights).length ? 'return to override' : 'airspace full'
+    return () => {
+      document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('focusin', sync)
+      document.removeEventListener('focusout', syncLater)
+    }
+  }, [armed, openRef])
+  const hint = !armed || forcing || !returnFree ? null : overridePool(program.v, flights).length ? 'return to override' : 'airspace full'
   return (
-    <span ref={rootRef} style={{ position: 'relative', display: 'flex' }} {...handlers}>
+    <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
         {icon}
       </a>
