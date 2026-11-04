@@ -1069,6 +1069,7 @@ export function SidebarThemeControls({
               >
                 <div
                   className="rail-strip"
+                  data-dragging={isDragging || undefined}
                   aria-label="Background intensity"
                   role="slider"
                   aria-valuemin={0}
@@ -1115,7 +1116,6 @@ export function SidebarThemeControls({
                   <div
                     ref={thumbRef}
                     className="rail-strip-thumb"
-                    data-dragging={isDragging || undefined}
                     style={{
                       position: 'absolute',
                       width: THUMB_SIZE,

@@ -250,7 +250,8 @@ export function CustomCursor() {
         left: '0',
         willChange: 'transform',
         opacity: '0',
-        transition: reducedMotion.current ? 'none' : FIGPAL_FADE,
+        // A fade isn't motion: it stays under reduced motion too.
+        transition: FIGPAL_FADE,
       })
       const img = document.createElement('img')
       img.src = '/images/figpal.png'
@@ -730,9 +731,13 @@ export function CustomCursor() {
         // Never drawn over an open pop-out: if the glide still crosses one,
         // it dips out for those frames.
         const box = boxAtPos(posRef.current.x, posRef.current.y)
-        const hidden = next === -1 || pops.some(o => overlaps(box, o, 0))
+        const over = pops.some(o => overlaps(box, o, 0))
+        const hidden = next === -1 || over
         if (hidden !== figpalHidden && figpalRef.current) {
           figpalHidden = hidden
+          // Over a pop-out it goes at once (a fade would be seen over it);
+          // nowhere clear, it fades; it always fades back in.
+          figpalRef.current.style.transition = hidden && over ? 'none' : FIGPAL_FADE
           figpalRef.current.style.opacity = hidden ? '0' : '1'
         }
         // Zones still moving (a pop-out springing open, a note typing):

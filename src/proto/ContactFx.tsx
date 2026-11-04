@@ -292,7 +292,9 @@ function TypedHighlighted({ text, onDone, fast = false }: { text: string; onDone
 
 // ── The fleet. All lit from the top-left, tinted by the accent, carrying
 // the same cream cloth. Each draws its banner in banner space (leading edge
-// at x 118, middle at y 48), moved where it hangs.
+// at x 118, middle at y 48), moved where it hangs. A few parts keep their
+// own material colour on purpose, like the cloth: the pilot's leather cap
+// and the balloon's wicker basket.
 
 // Towed: the cloth flutters along its length.
 const BANNER_A = 'M 118 30 C 92 25, 58 35, 12 29 L 12 67 C 58 73, 92 63, 118 66 Z'
@@ -596,6 +598,14 @@ function laneFor(v: Vehicle, sky: Flight[]) {
 }
 // …and the sky ends above the intro: nothing flies over the words.
 const skyFloor = () => (document.querySelector('.simple-intro')?.getBoundingClientRect().top ?? window.innerHeight) - LANE_GAP
+/** The machines that fit the top lane above the intro (a visit's own run
+ *  always flies there: on an empty sky, or once a held one is cleared). On
+ *  a window too short for any, the shortest still flies, as the blimp did. */
+const fitsTheSky = () => {
+  const floor = skyFloor()
+  const fit = VEHICLES.filter(v => laneFor(v, []) + v.y1 <= floor)
+  return fit.length ? fit : [VEHICLES.reduce((a, b) => (b.y1 - b.y0 < a.y1 - a.y0 ? b : a))]
+}
 /** What an override could send now: a machine that's neither on screen in
  *  hi.js nor the last one up, with a lane clear of the intro. None: full. */
 const overridePool = (current: Vehicle, sky: Flight[]) => {
@@ -654,7 +664,10 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   const rewrite = (run: number, pool?: Vehicle[]) => {
     const { v, greeting } = programRef.current
     const sky = flightsRef.current
-    const nextV = pool ? pickOne(pool) : pickFresh(VEHICLES, v, sky[sky.length - 1]?.v)
+    // A visit: one that fits, fresh if any fresh one does.
+    const fit = fitsTheSky()
+    const fresh = fit.filter(f => f !== v && f !== sky[sky.length - 1]?.v)
+    const nextV = pool ? pickOne(pool) : pickOne(fresh.length ? fresh : fit)
     const next = { v: nextV, greeting: pickFresh(GREETINGS, greeting, ...sky.map(f => f.greeting)), run }
     programRef.current = next
     setProgram(next)
@@ -683,6 +696,8 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   // focused control (a clicked record, the GitHub link) keeps its key.
   const focusFree = () => { const a = document.activeElement; return !a || a === document.body }
   const [returnFree, setReturnFree] = useState(focusFree)
+  // The sky's floor is the intro's top: re-read it if the page moves.
+  const [layoutTick, setLayoutTick] = useState(0)
   // An override being typed. Leaving first cancels it, as leaving before
   // `node hi.js` always has: nothing flies that the terminal didn't run.
   const forcingRef = useRef<typeof program | null>(null)
@@ -734,9 +749,12 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     // focusout fires before focus lands anywhere: read it a frame later.
     const sync = () => setReturnFree(focusFree())
     const syncLater = () => requestAnimationFrame(sync)
+    const relayout = () => setLayoutTick(t => t + 1)
     sync()
     document.addEventListener('focusin', sync)
     document.addEventListener('focusout', syncLater)
+    window.addEventListener('resize', relayout)
+    document.addEventListener('scroll', relayout, { capture: true, passive: true })
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' || e.defaultPrevented || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return
       if (!armedRef.current || !openRef.current || !pointerRef.current || !focusFree()) return
@@ -755,11 +773,14 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       document.removeEventListener('keydown', onKey, true)
       document.removeEventListener('focusin', sync)
       document.removeEventListener('focusout', syncLater)
+      window.removeEventListener('resize', relayout)
+      document.removeEventListener('scroll', relayout, { capture: true })
     }
   }, [armed, openRef])
   // (Reads the intro's position: only when what it depends on changes.)
   const hint = useMemo(() => !armed || forcing || !returnFree ? null
-    : overridePool(program.v, flights).length ? 'return to override' : 'airspace full', [armed, forcing, returnFree, program.v, flights])
+    : overridePool(program.v, flights).length ? 'return to override' : 'airspace full',
+  [armed, forcing, returnFree, program.v, flights, layoutTick]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
