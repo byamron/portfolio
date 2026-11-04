@@ -1122,8 +1122,10 @@ export function SidebarThemeControls({
                       height: THUMB_SIZE,
                       borderRadius: '50%',
                       background: 'var(--swatch)',
-                      border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                      // The edge is an inset ring, not a border: border widths snap
+                      // to whole device px, so a scaled-down thumb (proto.css) couldn't
+                      // keep it a true 1.5px.
+                      boxShadow: 'inset 0 0 0 var(--thumb-bw, 1.5px) color-mix(in srgb, var(--text-dark) 25%, transparent), 0 1px 3px rgba(0,0,0,0.25)',
                       // Centred by margin, not a translate: proto.css's
                       // `scale` would scale a translate too, pulling it off-axis.
                       left: '50%',

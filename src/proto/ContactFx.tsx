@@ -5,6 +5,7 @@ import { Check } from '@phosphor-icons/react'
 import { PaperTexture } from '@paper-design/shaders-react'
 import { protoBySlug } from './data'
 import { EASE_OUT, PHONE_QUERY, SQUASH_POP, useProtoSettings } from './protoSettings'
+import { usePrefersReducedMotion } from '@/hooks/useMediaQuery'
 import { useWindowLeave } from '@/hooks/useWindowLeave'
 
 // Contact-row easter eggs for /new/simple, in the X flock's spirit: an
@@ -180,7 +181,7 @@ function TermResult({ status, children }: { status: string; children: ReactNode 
   )
 }
 
-type RunResult = 'launched' | 'flying' | 'standby'
+type RunResult = 'launched' | 'flying' | 'standby' | 'grounded'
 
 /** hi.js written out and run. An override rewrites the file (a new machine,
  *  a new hello), quick, and runs it with --force. */
@@ -190,8 +191,9 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
   /** Written by an override: quick, and run with --force. */
   forced: boolean
   onRun: () => RunResult
-  /** A held launch was cleared (the sky emptied while you waited). */
-  cleared: boolean
+  /** A held launch was cleared when the sky emptied while you waited
+   *  (launched), or there was no room above the intro by then (grounded). */
+  cleared: false | 'launched' | 'grounded'
 }) {
   const CODE = codeFor(vehicle, greeting)
   const { noun } = vehicle
@@ -208,14 +210,16 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
       const r = onRun()
       setResult(r === 'launched' ? ['done', `${forced ? 'override · ' : ''}${noun} launched`]
         : r === 'flying' ? ['hold', 'waiting for air traffic control']
+        : r === 'grounded' ? ['hold', `${noun} grounded`]
         : ['ready', `${noun} on standby`])
     }, forced ? 90 : 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (cleared) setResult(r => (r?.[0] === 'hold' ? ['done', `cleared · ${noun} launched`] : r))
+    if (cleared) setResult(r => (r?.[0] === 'hold' ? (cleared === 'launched' ? ['done', `cleared · ${noun} launched`] : ['hold', `${noun} grounded`]) : r))
   }, [cleared]) // eslint-disable-line react-hooks/exhaustive-deps
-  const holding = result?.[0] === 'hold' && !reducedMotion
+  // Still running (waiting on air traffic control), not grounded or done.
+  const holding = result?.[0] === 'hold' && result[1].startsWith('waiting') && !reducedMotion
   return (
     <>
       {CODE.map((src, i) => i <= line && (
@@ -598,32 +602,39 @@ function laneFor(v: Vehicle, sky: Flight[]) {
 }
 // …and the sky ends above the intro: nothing flies over the words.
 const skyFloor = () => (document.querySelector('.simple-intro')?.getBoundingClientRect().top ?? window.innerHeight) - LANE_GAP
+/** Whether `v` has a lane above the intro, with `sky` up. */
+const roomFor = (v: Vehicle, sky: Flight[]) => laneFor(v, sky) + v.y1 <= skyFloor()
 /** The machines that fit the top lane above the intro (a visit's own run
  *  always flies there: on an empty sky, or once a held one is cleared). On
- *  a window too short for any, the shortest still flies, as the blimp did. */
+ *  a window too short for any (or the intro scrolled up out of the way), the
+ *  shortest is written, and the run reports it grounded rather than fly it
+ *  over the words. */
 const fitsTheSky = () => {
-  const floor = skyFloor()
-  const fit = VEHICLES.filter(v => laneFor(v, []) + v.y1 <= floor)
+  const fit = VEHICLES.filter(v => roomFor(v, []))
   return fit.length ? fit : [VEHICLES.reduce((a, b) => (b.y1 - b.y0 < a.y1 - a.y0 ? b : a))]
 }
 /** What an override could send now: a machine that's neither on screen in
  *  hi.js nor the last one up, with a lane clear of the intro. None: full. */
 const overridePool = (current: Vehicle, sky: Flight[]) => {
   if (sky.length >= MAX_AIRBORNE) return []
-  const floor = skyFloor()
-  return VEHICLES.filter(v => v !== current && v !== sky[sky.length - 1]?.v && laneFor(v, sky) + v.y1 <= floor)
+  return VEHICLES.filter(v => v !== current && v !== sky[sky.length - 1]?.v && roomFor(v, sky))
 }
 
 /** Crosses the top of the viewport at a constant cruise, bobbing. Done the
  *  moment it's wholly out of view. */
 const FlightPath = memo(function FlightPath({ flight, onDone }: { flight: Flight; onDone: (id: number) => void }) {
   const { v, greeting, top } = flight
+  // Reduced motion switched on mid-flight: it leaves at once (a live read;
+  // framer's useReducedMotion doesn't follow a mid-session change).
+  const reducedMotion = usePrefersReducedMotion()
+  useEffect(() => { if (reducedMotion) onDone(flight.id) }, [reducedMotion, onDone, flight.id])
   // A touch of variance, so a convoy loosens and doesn't bob in step.
   const [jitter] = useState(() => [0.96 + Math.random() * 0.08, 0.9 + Math.random() * 0.2] as const)
   const vw = window.innerWidth
   const from = -(v.x1 + FLIGHT_CLEAR)
   const to = vw - v.x0 + FLIGHT_CLEAR
   const { Art } = v
+  if (reducedMotion) return null
   return createPortal(
     <motion.div
       aria-hidden="true"
@@ -685,7 +696,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   const queuedRef = useRef(false)
   const stageRef = useRef(stage)
   stageRef.current = stage
-  const [cleared, setCleared] = useState(false)
+  const [cleared, setCleared] = useState<false | 'launched' | 'grounded'>(false)
   // Armed: a run is held, so Return can override it (until the override
   // is up, or the hold clears).
   const [armed, setArmed] = useState(false)
@@ -721,6 +732,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       setArmedBoth(true)
       return 'flying'
     }
+    if (!roomFor(programRef.current.v, [])) return 'grounded'
     takeOff()
     return 'launched'
   }, [takeOff])
@@ -738,8 +750,9 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     if (!flightsRef.current.length && queuedRef.current && stageRef.current > 0 && pointerRef.current) {
       queuedRef.current = false
       setArmedBoth(false)
-      setCleared(true)
-      takeOff()
+      const room = roomFor(programRef.current.v, [])
+      setCleared(room ? 'launched' : 'grounded')
+      if (room) takeOff()
     }
   }, [takeOff])
   // Return, once held, if nothing's focused. Capture phase + preventDefault
