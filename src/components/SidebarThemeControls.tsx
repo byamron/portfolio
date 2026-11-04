@@ -338,9 +338,6 @@ const PILL_SPRING = { stiffness: 560, damping: 40, mass: 0.7 }
 // lifts instead (proto.css), the record keeps its pointer, and the pill
 // fades while you're over either.
 export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control]'
-// The strip rests slim and grows to full size under the pointer (track
-// width, thumb scale; proto.css), on the trigger's press spring.
-const STRIP_GROW = '180ms cubic-bezier(0.34, 1.56, 0.64, 1)'
 const RAIL_CONTROLS = `${GLIDE_TARGETS}, [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]`
 // Fit mode floors: intensity strip (before ×controlScale) and divider air.
 const STRIP_MIN = 42
@@ -1111,7 +1108,6 @@ export function SidebarThemeControls({
                       height: stripHeight,
                       borderRadius: 999,
                       background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
-                      transition: `background 500ms ease-in-out, width ${STRIP_GROW}`,
                       pointerEvents: 'none',
                     } as React.CSSProperties}
                   />
@@ -1119,6 +1115,7 @@ export function SidebarThemeControls({
                   <div
                     ref={thumbRef}
                     className="rail-strip-thumb"
+                    data-dragging={isDragging || undefined}
                     style={{
                       position: 'absolute',
                       width: THUMB_SIZE,
@@ -1132,8 +1129,6 @@ export function SidebarThemeControls({
                       left: '50%',
                       marginLeft: -THUMB_SIZE / 2,
                       top: bgIntensity * thumbTravel,
-                      // The grow springs even mid-drag.
-                      transition: isDragging ? `scale ${STRIP_GROW}` : `top 200ms ease-in-out, background 500ms ease-in-out, scale ${STRIP_GROW}`,
                     }}
                   />
                 </div>

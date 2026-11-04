@@ -87,7 +87,6 @@ export function CustomCursor() {
   const isWide = useIsWide()
   const [isCoarsePointer, setIsCoarsePointer] = useState(() => window.matchMedia('(pointer: coarse)').matches)
   const isTouch = isCoarsePointer || !isWide
-  const figpalSpotRef = useRef(0) // 0 = home, n > 0 = ring spot, -1 = nowhere clear (faded)
   const onCardRef = useRef(false)
   const cursorContentRef = useRef<'idle' | 'arrow' | 'coming-soon'>('idle')
   const onSidebarRef = useRef(false)
@@ -122,7 +121,7 @@ export function CustomCursor() {
 
     const elements: HTMLElement[] = []
     let figpalW = FIGPAL_SIZE * 192 / 222 // figpal.png's aspect until it loads
-    figpalSpotRef.current = 0
+    let figpalSpot = 0 // 0 = home, n > 0 = ring spot, -1 = nowhere clear (faded)
 
     if (cursorMode === 'invert') {
       injectCursorNoneStyle()
@@ -291,9 +290,21 @@ export function CustomCursor() {
       ({ l: c.x - figpalW / 2, t: c.y - FIGPAL_SIZE / 2, r: c.x + figpalW / 2, b: c.y + FIGPAL_SIZE / 2 })
     const boxAtPos = (x: number, y: number): Box => ({ l: x, t: y, r: x + figpalW, b: y + FIGPAL_SIZE })
     const ROW_SPAN = AVOID_MARGIN + AVOID_RETURN
+    // Beyond this from the row, nothing about it can reach the figpal (its
+    // farthest spot plus its own size, with room).
+    const ZONE_REACH = 320
 
     // Zone rects, read once per frame (only when zones exist).
+    // Layout reads are skipped while nothing's open and the pointer is far
+    // from the row: its cached box can't have moved unless the DOM, the
+    // scroll or the window changed (which mark it stale).
+    let zonesStale = true
     const readZones = (mx: number, my: number) => {
+      if (!zonesStale && !pops.length && rows.length && rows.every(r => !inside(r, mx, my, ZONE_REACH))) {
+        rowItems = []
+        return false
+      }
+      zonesStale = false
       const els = document.querySelectorAll<HTMLElement>(AVOID_SELECTOR)
       rows = []
       pops = []
@@ -409,7 +420,7 @@ export function CustomCursor() {
 
     // The spot to head for: 0 = home, 1…CANDIDATES = a ring spot, -1 = none clear.
     const pickSpot = (mx: number, my: number) => {
-      const cur = figpalSpotRef.current
+      const cur = figpalSpot
       if (!rows.length && !pops.length) { frozenDir = null; obstacles = []; reserve = null; return 0 }
       // Stepping aside is immediate; coming back home needs extra clearance.
       const m = AVOID_MARGIN + (cur === 0 ? 0 : AVOID_RETURN)
@@ -657,9 +668,9 @@ export function CustomCursor() {
         const my = mouseRef.current.y
         const zonesChanged = readZones(mx, my)
         const next = pickSpot(mx, my)
-        figpalSpotRef.current = next
+        figpalSpot = next
         // Nowhere clear: fade out where it is (keep following home, unseen).
-        const c = spotCentre(Math.max(0, next), mx, my)
+        const c = spotCentre(next, mx, my)
         targetX = c.x - figpalW / 2
         targetY = c.y - FIGPAL_SIZE / 2
         if (reducedMotion.current) {
@@ -682,7 +693,7 @@ export function CustomCursor() {
           // Otherwise brisk stepping aside, unhurried coming home.
           const inPop = pops.some(o => overlaps(boxAtPos(x, y), o, 0))
           const w = inPop || (reserve && overlaps(boxAtPos(x, y), reserve, 0)) ? ESCAPE_W
-            : Math.max(0, next) === 0 ? STEP_HOME_W : STEP_ASIDE_W
+            : next <= 0 ? STEP_HOME_W : STEP_ASIDE_W
           // Semi-implicit Euler on a critically damped spring.
           const nvx = off.vx + (w * w * (tox - off.x) - 2 * w * off.vx) * dt
           const nvy = off.vy + (w * w * (toy - off.y) - 2 * w * off.vy) * dt
@@ -750,20 +761,29 @@ export function CustomCursor() {
     rafRef.current = requestAnimationFrame(loop)
 
     // Figpal: a pop-out can open (or a page scroll move the row) under a
-    // still pointer, so wake the loop when the DOM or the scroll changes. The
-    // loop settles again in a frame when nothing it cares about moved.
+    // still pointer, so wake the loop when an avoid zone comes, goes or
+    // changes, or the page scrolls or resizes. Any DOM change marks the
+    // cached zones stale; only one that touches a zone wakes the loop (the
+    // rest of the page typing, flying or updating doesn't).
+    const touchesZone = (n: Node) => n instanceof Element && (n.matches(AVOID_SELECTOR) || !!n.querySelector(AVOID_SELECTOR))
+    const onMutations = (records: MutationRecord[]) => {
+      zonesStale = true
+      if (records.some(r => (r.target instanceof Element && r.target.closest(AVOID_SELECTOR))
+        || [...r.addedNodes].some(touchesZone) || [...r.removedNodes].some(touchesZone))) startLoop()
+    }
+    const onLayout = () => { zonesStale = true; startLoop() }
     let observer: MutationObserver | null = null
     if (cursorMode === 'figpal') {
-      observer = new MutationObserver(startLoop)
+      observer = new MutationObserver(onMutations)
       observer.observe(document.body, { childList: true, subtree: true })
-      window.addEventListener('scroll', startLoop, { passive: true, capture: true })
-      window.addEventListener('resize', startLoop)
+      window.addEventListener('scroll', onLayout, { passive: true, capture: true })
+      window.addEventListener('resize', onLayout)
     }
 
     return () => {
       observer?.disconnect()
-      window.removeEventListener('scroll', startLoop, { capture: true })
-      window.removeEventListener('resize', startLoop)
+      window.removeEventListener('scroll', onLayout, { capture: true })
+      window.removeEventListener('resize', onLayout)
       document.removeEventListener('pointermove', handlePointerMoveAndLoop)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       removeCursorNoneStyle()

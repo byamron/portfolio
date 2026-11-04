@@ -84,18 +84,14 @@ const G = {
   restDeg: -34, // arm parked angle (tip up, off the record)
 };
 
-// Label print. "full" is the large switch's label (curved artist caps,
-// italic title, side/speed line). A compact record (≲ 36px, the settings
-// rail) has a ~10px label: "simple" is the title curved over the top, set
-// in from the edge inside a faint printed ring (a mark that shows it
-// turning, legible zoomed in); "full"
-// scales the large print down as-is; "none" is a plain coloured label.
-type LabelVariant = "full" | "simple" | "none";
-const COMPACT_PRINT: LabelVariant = "simple";
+// A record smaller than this (px, e.g. the settings rail's) is compact:
+// sub-pixel detail turns to noise, and it paints without its own layer so
+// its ~10px label print stays crisp (one threshold for both).
+const COMPACT_K = 36;
 // Compact label radius / knob diameter: grown a touch to carry print, but
 // bounded by the tonearm: its headshell nose sits ~0.21·K from the spindle,
 // so the label just tucks under it.
-const COMPACT_LABEL_R: Record<LabelVariant, number> = { full: 0.22, simple: 0.22, none: 0.21 };
+const COMPACT_LABEL_R = 0.22;
 
 // Tonearm proportions (× track height), relative to the pivot
 const ARM = {
@@ -983,9 +979,8 @@ export function RecordToggle({
         // Compact: a plain 2D transform, so the record paints at its true
         // sub-pixel spot instead of a layer bitmap resampled there (blurs
         // the ~10px label print).
-        knobEl.current.style.transform = g.K < 36
-          ? `translate(${kx}px,0) scale(${1 - 0.035 * press.x})`
-          : `translate3d(${kx}px,0,0) scale(${1 - 0.035 * press.x})`;
+        const give = `scale(${1 - 0.035 * press.x})`;
+        knobEl.current.style.transform = g.K < COMPACT_K ? `translate(${kx}px,0) ${give}` : `translate3d(${kx}px,0,0) ${give}`;
       }
       // The knob is already spinning; the record fades in across the whole
       // face. On the way out it stays a record for as long as it's still
@@ -1264,15 +1259,13 @@ export function RecordToggle({
   // Vinyl detail: one multiplier on every texture highlight (grooves, gaps,
   // edge, run-out, sheen). 1 = the high-contrast pass.
   const vd = params.appearance === "dark" ? params.vinylDark : params.vinylLight;
-  // Compact (a toolbar-sized switch, record ≲ 36px): sub-pixel detail turns
-  // to noise, so drop the groove texture and lathe rings, grow the label a
-  // little, and print it in the compact style (COMPACT_PRINT).
-  const compact = K < 36;
+  // Compact (a toolbar-sized switch): drop the groove texture and lathe
+  // rings, grow the label a little, and give it the compact print.
+  const compact = K < COMPACT_K;
   const wa = (a: number) => `rgba(255,255,255,${(a * vd).toFixed(3)})`;
   const runOut = mixOklab(C.vinyl, "#ffffff", 0.045 * vd); // opaque: no grooves show through
   const grooves = `repeating-radial-gradient(circle at 50% 50%, ${wa(0.07)} 0 0.6px, transparent 0.6px ${Math.max(2, K * 0.022)}px)`;
-  const print: LabelVariant = compact ? COMPACT_PRINT : "full";
-  const labelR = K * (compact ? COMPACT_LABEL_R[print] : G.labelR);
+  const labelR = K * (compact ? COMPACT_LABEL_R : G.labelR);
   // Beside a small switch (rail), match the host's small type step (13px).
   const creditSize = creditPlacement === "left" ? 13 : Math.min(16, Math.max(12, 9 + H * 0.045));
   const track = TRACKS[trackId];
@@ -1445,16 +1438,14 @@ export function RecordToggle({
                       background: `radial-gradient(circle at 50% 50%, ${labelColor} 0 68%, ${labelEdge} 100%)`,
                     }}
                   >
-                    {print !== "none" && (
-                      <LabelPrint
-                        variant={print}
-                        ids={labelId}
-                        diameter={labelR * 2}
-                        artist={track.artist}
-                        title={track.fullTitle}
-                        rpm={params.rpm}
-                      />
-                    )}
+                    <LabelPrint
+                      variant={compact ? "simple" : "full"}
+                      ids={labelId}
+                      diameter={labelR * 2}
+                      artist={track.artist}
+                      title={track.fullTitle}
+                      rpm={params.rpm}
+                    />
                     {/* Spindle */}
                     <div
                       style={{
@@ -1647,7 +1638,9 @@ export function RecordToggle({
   );
 }
 
-/** The printed label, set in a 100-unit box over the label disc. */
+/** The printed label, set in a 100-unit box over the label disc. "full" is
+ *  the large switch's (curved artist caps, italic title, side and speed);
+ *  "simple" is a compact record's, a mark that shows it turning. */
 function LabelPrint({
   variant,
   ids,

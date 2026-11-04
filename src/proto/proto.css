@@ -58,12 +58,19 @@
 
 /* The intensity strip isn't a button, so it takes no glass. It rests slim
    and grows to full size while you're over it, dragging it or focused on
-   it: the track widens and the thumb (the part you grab) scales up. */
+   it: the track widens and the thumb (the part you grab) scales up, on the
+   press curve the trigger uses. Dragging, the thumb follows the pointer
+   at once (no `top` easing) but still grows. */
 .rail-strip-track {
   width: calc(var(--track-w) * 0.7);
+  transition: background 500ms ease-in-out, width 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .rail-strip-thumb {
   scale: 0.8;
+  transition: top 200ms ease-in-out, background 500ms ease-in-out, scale 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rail-strip-thumb[data-dragging] {
+  transition: scale 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .rail-strip:is(:hover, :active, :focus-visible) .rail-strip-track {
   width: var(--track-w);
@@ -80,7 +87,7 @@
   outline: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .rail-strip-thumb, .rail-strip-track { transition: none !important; }
+  .rail-strip-track, .rail-strip-thumb, .rail-strip-thumb[data-dragging] { transition: none; }
 }
 
 /* The rail's record, while it's off, rests a shade darker and comes up to

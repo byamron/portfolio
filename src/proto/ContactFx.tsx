@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { animate, AnimatePresence, cancelFrame, frame, motion, useAnimationControls, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionStyle } from 'framer-motion'
 import { Check } from '@phosphor-icons/react'
@@ -155,12 +155,12 @@ const codeFor = (v: Vehicle, greeting: string) => [
   `${v.name}.banner('${greeting}')`,
   `${v.name}.fly('across the top')`,
 ]
+/** Any one of `xs`, at random. */
+const pickOne = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)]!
+/** Any one of `xs` that isn't in `not` (so never the same twice running). */
+const pickFresh = <T,>(xs: readonly T[], ...not: (T | null | undefined)[]) => pickOne(xs.filter(x => !not.includes(x)))
 // What the banner says — a different hello each flight (never twice running).
 const GREETINGS = ['Hi', 'Hello', 'Hey', 'Hey there', 'Hi there', 'Howdy', 'Ahoy', 'Greetings', 'Good day']
-const pickGreeting = (...not: (string | null)[]) => {
-  const pool = GREETINGS.filter(g => !not.includes(g))
-  return pool[Math.floor(Math.random() * pool.length)]!
-}
 function highlight(src: string) {
   return src.split(/('[^']*'?)/).map((part, i) =>
     part.startsWith("'")
@@ -182,24 +182,19 @@ function TermResult({ status, children }: { status: string; children: ReactNode 
 
 type RunResult = 'launched' | 'flying' | 'standby'
 
-/** How this write of hi.js came about: the visit's own, or Return past a
- *  held run (override: rewritten quick, run with --force). */
-type RunMode = 'visit' | 'override'
-
 /** hi.js written out and run. An override rewrites the file (a new machine,
  *  a new hello), quick, and runs it with --force. */
-function Program({ vehicle, greeting, mode, onRun, cleared }: {
+function Program({ vehicle, greeting, forced, onRun, cleared }: {
   vehicle: Vehicle
   greeting: string
-  mode: RunMode
+  /** Written by an override: quick, and run with --force. */
+  forced: boolean
   onRun: () => RunResult
   /** A held launch was cleared (the sky emptied while you waited). */
   cleared: boolean
 }) {
   const CODE = codeFor(vehicle, greeting)
   const { noun } = vehicle
-  const forced = mode === 'override'
-  const fast = mode !== 'visit'
   const reducedMotion = useReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
@@ -214,7 +209,7 @@ function Program({ vehicle, greeting, mode, onRun, cleared }: {
       setResult(r === 'launched' ? ['done', `${forced ? 'override · ' : ''}${noun} launched`]
         : r === 'flying' ? ['hold', 'waiting for air traffic control']
         : ['ready', `${noun} on standby`])
-    }, fast ? 90 : 180)
+    }, forced ? 90 : 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -226,12 +221,12 @@ function Program({ vehicle, greeting, mode, onRun, cleared }: {
       {CODE.map((src, i) => i <= line && (
         <div key={i} style={termLine}>
           <span className="term-ln">{i + 1}</span>
-          {i < line ? highlight(src) : <TypedHighlighted text={src} fast={fast} onDone={() => setLine(l => l + 1)} />}
+          {i < line ? highlight(src) : <TypedHighlighted text={src} fast={forced} onDone={() => setLine(l => l + 1)} />}
         </div>
       ))}
       {line >= CODE.length && (
         <div style={{ ...termLine, marginTop: 6 }}>
-          {prompt}<Typed text={forced ? 'node hi.js --force' : 'node hi.js'} cps={fast ? 240 : 35} onDone={() => setTypedRun(true)} />
+          {prompt}<Typed text={forced ? 'node hi.js --force' : 'node hi.js'} cps={forced ? 240 : 35} onDone={() => setTypedRun(true)} />
         </div>
       )}
       {result && (
@@ -246,7 +241,7 @@ function Program({ vehicle, greeting, mode, onRun, cleared }: {
   )
 }
 
-function Terminal({ run, hint, ...program }: React.ComponentProps<typeof Program> & {
+function Terminal({ run, hint, ...program }: Omit<React.ComponentProps<typeof Program>, 'forced'> & {
   /** Which write of hi.js this is: 0 for the visit's own, then one per Return. */
   run: number
   /** The dim line under the run: what Return would do now, if anything. */
@@ -269,7 +264,7 @@ function Terminal({ run, hint, ...program }: React.ComponentProps<typeof Program
       <div className="term-body">
         {/* Each Return clears the window and rewrites the file, so it
             never grows past one program and its run. */}
-        <Program key={run} {...program} />
+        <Program key={run} forced={run > 0} {...program} />
         {shownHint && (
           // A second beat, dim: what Return does now (or why it can't).
           <motion.div key={shownHint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} style={termLine}>
@@ -581,11 +576,6 @@ const VEHICLES: Vehicle[] = [
   { cls: 'Helicopter', name: 'heli', noun: 'helicopter', Art: HelicopterArt, speed: 130, x0: 12, x1: 252, y0: 2, y1: 121,
     bob: { y: [0, -3, 0, 3, 0], rotate: [0, 1, 0, -0.8, 0] }, bobFor: { duration: 3.2, ease: 'easeInOut' } },
 ]
-// A different machine each visit (never the same twice running).
-const pickVehicle = (...not: (Vehicle | undefined)[]) => {
-  const pool = VEHICLES.filter(v => !not.includes(v))
-  return pool[Math.floor(Math.random() * pool.length)]!
-}
 
 // Air traffic control: at most this many up at once, each in its own lane…
 const MAX_AIRBORNE = 3
@@ -616,7 +606,7 @@ const overridePool = (current: Vehicle, sky: Flight[]) => {
 
 /** Crosses the top of the viewport at a constant cruise, bobbing. Done the
  *  moment it's wholly out of view. */
-function FlightPath({ flight, onDone }: { flight: Flight; onDone: () => void }) {
+const FlightPath = memo(function FlightPath({ flight, onDone }: { flight: Flight; onDone: (id: number) => void }) {
   const { v, greeting, top } = flight
   // A touch of variance, so a convoy loosens and doesn't bob in step.
   const [jitter] = useState(() => [0.96 + Math.random() * 0.08, 0.9 + Math.random() * 0.2] as const)
@@ -631,8 +621,9 @@ function FlightPath({ flight, onDone }: { flight: Flight; onDone: () => void }) 
       animate={{ x: to }}
       // Linear on purpose: a cruise is constant speed.
       transition={{ duration: (to - from) / (v.speed * jitter[0]), ease: 'linear' }}
-      onAnimationComplete={onDone}
-      style={{ position: 'fixed', top, left: 0, zIndex: 9990, pointerEvents: 'none', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.12))' }}
+      onAnimationComplete={() => onDone(flight.id)}
+      // Its own layer: the shadow's blur isn't redone on the main thread as it moves.
+      style={{ position: 'fixed', top, left: 0, zIndex: 9990, pointerEvents: 'none', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.12))', willChange: 'transform' }}
     >
       <motion.div animate={v.bob} transition={{ ...v.bobFor, duration: v.bobFor.duration * jitter[1], repeat: Infinity }}>
         <Art greeting={greeting} />
@@ -640,7 +631,7 @@ function FlightPath({ flight, onDone }: { flight: Flight; onDone: () => void }) 
     </motion.div>,
     document.body,
   )
-}
+})
 
 export function GitHubLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   const { stage, viaPointer, handlers, openRef } = useHoverStage()
@@ -657,21 +648,21 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   // What hi.js says: a new machine and a new hello for each visit (and each
   // override). What's in the air keeps what it launched with; a new hello
   // repeats none of them.
-  const [program, setProgram] = useState(() => ({ v: pickVehicle(), greeting: pickGreeting(), run: 0, mode: 'visit' as RunMode }))
+  const [program, setProgram] = useState(() => ({ v: pickOne(VEHICLES), greeting: pickOne(GREETINGS), run: 0 }))
   const programRef = useRef(program)
   programRef.current = program
-  const rewrite = (run: number, mode: RunMode, pool?: Vehicle[]) => {
+  const rewrite = (run: number, pool?: Vehicle[]) => {
     const { v, greeting } = programRef.current
     const sky = flightsRef.current
-    const nextV = pool ? pool[Math.floor(Math.random() * pool.length)]! : pickVehicle(v, sky[sky.length - 1]?.v)
-    const next = { v: nextV, greeting: pickGreeting(greeting, ...sky.map(f => f.greeting)), run, mode }
+    const nextV = pool ? pickOne(pool) : pickFresh(VEHICLES, v, sky[sky.length - 1]?.v)
+    const next = { v: nextV, greeting: pickFresh(GREETINGS, greeting, ...sky.map(f => f.greeting)), run }
     programRef.current = next
     setProgram(next)
     return next
   }
   const lastStage = useRef(0)
   useEffect(() => {
-    if (lastStage.current === 0 && stage > 0) rewrite(0, 'visit')
+    if (lastStage.current === 0 && stage > 0) rewrite(0)
     lastStage.current = stage
   }, [stage])
   // A run while anything's up is held for air traffic control, and cleared
@@ -756,7 +747,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       const pool = overridePool(programRef.current.v, flightsRef.current)
       if (!pool.length) return
       queuedRef.current = false // the held run is superseded
-      forcingRef.current = rewrite(programRef.current.run + 1, 'override', pool)
+      forcingRef.current = rewrite(programRef.current.run + 1, pool)
       setForcing(true)
     }
     document.addEventListener('keydown', onKey, true)
@@ -766,7 +757,9 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       document.removeEventListener('focusout', syncLater)
     }
   }, [armed, openRef])
-  const hint = !armed || forcing || !returnFree ? null : overridePool(program.v, flights).length ? 'return to override' : 'airspace full'
+  // (Reads the intro's position: only when what it depends on changes.)
+  const hint = useMemo(() => !armed || forcing || !returnFree ? null
+    : overridePool(program.v, flights).length ? 'return to override' : 'airspace full', [armed, forcing, returnFree, program.v, flights])
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
@@ -776,11 +769,11 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
         {stage > 0 && (
           <Terminal
             run={program.run} vehicle={program.v} greeting={program.greeting}
-            mode={program.mode} onRun={program.run ? forced : launch} cleared={cleared} hint={hint}
+            onRun={program.run ? forced : launch} cleared={cleared} hint={hint}
           />
         )}
       </IconPopover>
-      {flights.map(f => <FlightPath key={f.id} flight={f} onDone={() => landed(f.id)} />)}
+      {flights.map(f => <FlightPath key={f.id} flight={f} onDone={landed} />)}
     </span>
   )
 }
