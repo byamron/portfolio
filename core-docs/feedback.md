@@ -2,6 +2,14 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-11-04 — An earlier answer reversed once Ben used the feature
+
+**What happened:** On 2026-11-01 Ben answered "new random, reflected in the code as it's written out" for what Return-to-override should send. It shipped that way: the terminal cleared and typed a fresh program. Using it on the preview, he found it "restarts the terminal process and sends a new thing", and asked for the opposite: send what's already written, updating in place.
+
+**Lesson learned:** For interaction details answered in the abstract ("which should it send?"), a written answer is a starting point, not the requirement. When a choice changes what the user sees happen (clearing and retyping vs updating in place), show both on the preview, or describe the visible difference in the question, before treating the answer as settled. Interactions get decided by feel.
+
+---
+
 ## 2026-11-03 — A page-wide key handler took Return from a focused control, and the first fix stole focus
 
 **What happened:** Ben pressed Return to override in the GitHub terminal, and the record toggle lit up with its focus ring. The record still had focus from an earlier click. Any keypress makes Chrome show the focused element's ring, and `preventDefault` doesn't stop that. In reproducing it I found worse: a second Return, when nothing was offered, toggled the music. My first fix blurred whatever was focused outside the GitHub control. Ben asked for best practice, not workarounds, and moving focus away is a known accessibility anti-pattern.

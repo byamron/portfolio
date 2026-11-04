@@ -182,18 +182,18 @@ function TermResult({ status, children }: { status: string; children: ReactNode 
 }
 
 type RunResult = 'launched' | 'flying' | 'standby' | 'grounded'
+type Cleared = false | 'launched' | 'override' | 'grounded'
 
 /** hi.js written out and run. An override rewrites the file (a new machine,
  *  a new hello), quick, and runs it with --force. */
-function Program({ vehicle, greeting, forced, onRun, cleared }: {
+function Program({ vehicle, greeting, onRun, cleared }: {
   vehicle: Vehicle
   greeting: string
-  /** Written by an override: quick, and run with --force. */
-  forced: boolean
   onRun: () => RunResult
-  /** A held launch was cleared when the sky emptied while you waited
-   *  (launched), or there was no room above the intro by then (grounded). */
-  cleared: false | 'launched' | 'grounded'
+  /** How a held run ended: cleared when the sky emptied while you waited
+   *  (launched), overridden by Return (override: this same program sent),
+   *  or grounded (no room above the intro, or reduced motion). */
+  cleared: Cleared
 }) {
   const CODE = codeFor(vehicle, greeting)
   const { noun } = vehicle
@@ -209,7 +209,7 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
   const [typedRun, setTypedRun] = useState(false)
   // [status, line, still running (waiting on air traffic control)]
   const [result, setResult] = useState<[string, string, boolean?] | null>(null)
-  // The program can't change under a run (a rewrite remounts this), so the
+  // The program can't change under a run (a visit is one program), so the
   // effects read it as it was typed.
   useEffect(() => {
     if (!typedRun || ran.current) return
@@ -217,15 +217,16 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
       ran.current = true
       if (reducedMotionRef.current) { setResult(['hold', `${noun} grounded`]); return }
       const r = onRun()
-      setResult(r === 'launched' ? ['done', `${forced ? 'override · ' : ''}${noun} launched`]
+      setResult(r === 'launched' ? ['done', `${noun} launched`]
         : r === 'flying' ? ['hold', 'waiting for air traffic control', true]
         : r === 'grounded' ? ['hold', `${noun} grounded`]
         : ['ready', `${noun} on standby`])
-    }, forced ? 90 : 180)
+    }, 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (cleared) setResult(r => (r?.[2] ? (cleared === 'launched' ? ['done', `cleared · ${noun} launched`] : ['hold', `${noun} grounded`]) : r))
+    // Updated in place: the held line becomes how it ended.
+    if (cleared) setResult(r => (r?.[2] ? (cleared === 'grounded' ? ['hold', `${noun} grounded`] : ['done', `${cleared === 'override' ? 'override' : 'cleared'} · ${noun} launched`]) : r))
   }, [cleared]) // eslint-disable-line react-hooks/exhaustive-deps
   // Still running (waiting on air traffic control), not grounded or done.
   const holding = !!result?.[2] && !reducedMotion
@@ -234,12 +235,12 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
       {CODE.map((src, i) => i <= line && (
         <div key={i} style={termLine}>
           <span className="term-ln">{i + 1}</span>
-          {i < line ? highlight(src) : <TypedHighlighted text={src} fast={forced} onDone={() => setLine(l => l + 1)} />}
+          {i < line ? highlight(src) : <TypedHighlighted text={src} onDone={() => setLine(l => l + 1)} />}
         </div>
       ))}
       {line >= CODE.length && (
         <div style={{ ...termLine, marginTop: 6 }}>
-          {prompt}<Typed text={forced ? 'node hi.js --force' : 'node hi.js'} cps={forced ? 240 : 35} onDone={() => setTypedRun(true)} />
+          {prompt}<Typed text="node hi.js" cps={35} onDone={() => setTypedRun(true)} />
         </div>
       )}
       {result && (
@@ -254,9 +255,7 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
   )
 }
 
-function Terminal({ run, hint, ...program }: Omit<React.ComponentProps<typeof Program>, 'forced'> & {
-  /** Which write of hi.js this is: 0 for the visit's own, then one per Return. */
-  run: number
+function Terminal({ hint, ...program }: React.ComponentProps<typeof Program> & {
   /** The dim line under the run: what Return would do now, if anything. */
   hint: string | null
 }) {
@@ -265,9 +264,9 @@ function Terminal({ run, hint, ...program }: Omit<React.ComponentProps<typeof Pr
   const [shownHint, setShownHint] = useState<string | null>(null)
   useEffect(() => {
     if (!hint) { setShownHint(null); return }
-    const t = setTimeout(() => setShownHint(hint), run ? 150 : 500)
+    const t = setTimeout(() => setShownHint(hint), 500)
     return () => clearTimeout(t)
-  }, [hint, run])
+  }, [hint])
   return (
     <div className="term-window">
       <div className="term-bar">
@@ -275,9 +274,7 @@ function Terminal({ run, hint, ...program }: Omit<React.ComponentProps<typeof Pr
         <em>hi.js</em>
       </div>
       <div className="term-body">
-        {/* Each Return clears the window and rewrites the file, so it
-            never grows past one program and its run. */}
-        <Program key={run} forced={run > 0} {...program} />
+        <Program {...program} />
         {shownHint && (
           // A second beat, dim: what Return does now (or why it can't).
           <motion.div key={shownHint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} style={termLine}>
@@ -289,17 +286,17 @@ function Terminal({ run, hint, ...program }: Omit<React.ComponentProps<typeof Pr
   )
 }
 
-function TypedHighlighted({ text, onDone, fast = false }: { text: string; onDone: () => void; fast?: boolean }) {
+function TypedHighlighted({ text, onDone }: { text: string; onDone: () => void }) {
   const reducedMotion = useReducedMotion()
   const [n, setN] = useState(reducedMotion ? text.length : 0)
   const done = useRef(onDone)
   done.current = onDone
   useEffect(() => {
-    if (n >= text.length) { const t = setTimeout(() => done.current(), fast ? 50 : 140); return () => clearTimeout(t) }
-    // ~32 chars/s with a little human unevenness (an override: ~120).
-    const t = setTimeout(() => setN(v => Math.min(v + 1, text.length)), 1000 / (fast ? 120 : 32) * (0.6 + Math.random() * 0.8))
+    if (n >= text.length) { const t = setTimeout(() => done.current(), 140); return () => clearTimeout(t) }
+    // ~32 chars/s with a little human unevenness.
+    const t = setTimeout(() => setN(v => Math.min(v + 1, text.length)), 1000 / 32 * (0.6 + Math.random() * 0.8))
     return () => clearTimeout(t)
-  }, [n, text, fast])
+  }, [n, text])
   return <>{highlight(text.slice(0, n))}</>
 }
 
@@ -622,12 +619,9 @@ const fitsTheSky = () => {
   const fit = VEHICLES.filter(v => roomFor(v, []))
   return fit.length ? fit : [VEHICLES.reduce((a, b) => (b.y1 - b.y0 < a.y1 - a.y0 ? b : a))]
 }
-/** What an override could send now: a machine that's neither on screen in
- *  hi.js nor the last one up, with a lane clear of the intro. None: full. */
-const overridePool = (current: Vehicle, sky: Flight[]) => {
-  if (sky.length >= MAX_AIRBORNE) return []
-  return VEHICLES.filter(v => v !== current && v !== sky[sky.length - 1]?.v && roomFor(v, sky))
-}
+/** Whether a held run can be sent now: a free slot, and a lane for its
+ *  machine clear of the intro. Otherwise the airspace is full. */
+const hasRoom = (v: Vehicle, sky: Flight[]) => sky.length < MAX_AIRBORNE && roomFor(v, sky)
 
 /** Crosses the top of the viewport at a constant cruise, bobbing. Done the
  *  moment it's wholly out of view. */
@@ -675,37 +669,35 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   const flightsRef = useRef<Flight[]>([])
   const setSky = (next: Flight[]) => { flightsRef.current = next; setFlights(next) }
   const nextId = useRef(0)
-  // What hi.js says: a new machine and a new hello for each visit (and each
-  // override). What's in the air keeps what it launched with; a new hello
-  // repeats none of them.
-  const [program, setProgram] = useState(() => ({ v: pickOne(VEHICLES), greeting: pickOne(GREETINGS), run: 0 }))
+  // What hi.js says: a new machine and a new hello for each visit. What's in
+  // the air keeps what it launched with; a new hello repeats none of them.
+  const [program, setProgram] = useState(() => ({ v: pickOne(VEHICLES), greeting: pickOne(GREETINGS) }))
   const programRef = useRef(program)
   programRef.current = program
-  const rewrite = (run: number, pool?: Vehicle[]) => {
+  const rewrite = () => {
     const { v, greeting } = programRef.current
     const sky = flightsRef.current
-    // A visit: one that fits, fresh if any fresh one does.
+    // One that fits, fresh if any fresh one does.
     const fit = fitsTheSky()
     const fresh = fit.filter(f => f !== v && f !== sky[sky.length - 1]?.v)
-    const nextV = pool ? pickOne(pool) : pickOne(fresh.length ? fresh : fit)
-    const next = { v: nextV, greeting: pickFresh(GREETINGS, greeting, ...sky.map(f => f.greeting)), run }
+    const next = { v: pickOne(fresh.length ? fresh : fit), greeting: pickFresh(GREETINGS, greeting, ...sky.map(f => f.greeting)) }
     programRef.current = next
     setProgram(next)
-    return next
   }
   const lastStage = useRef(0)
   useEffect(() => {
-    if (lastStage.current === 0 && stage > 0) rewrite(0)
+    if (lastStage.current === 0 && stage > 0) rewrite()
     lastStage.current = stage
   }, [stage])
   // A run while anything's up is held for air traffic control, and cleared
   // to launch when the sky empties — if you're still here. Or press Return
-  // (offered only while held): hi.js is rewritten (quick) and forced up.
-  // Once it's up, nothing more is offered: come back for another hold.
+  // (offered only while held): the program already written is sent up now,
+  // and the held line says so in place. Once it's up, nothing more is
+  // offered: come back for another hold.
   const queuedRef = useRef(false)
   const stageRef = useRef(stage)
   stageRef.current = stage
-  const [cleared, setCleared] = useState<false | 'launched' | 'grounded'>(false)
+  const [cleared, setCleared] = useState<Cleared>(false)
   // Armed: a run is held, so Return can override it (until the override
   // is up, or the hold clears).
   const [armed, setArmed] = useState(false)
@@ -718,20 +710,14 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   const [returnFree, setReturnFree] = useState(focusFree)
   // The sky's floor is the intro's top: re-read it if the page moves.
   const [layoutTick, setLayoutTick] = useState(0)
-  // An override being typed. Leaving first cancels it, as leaving before
-  // `node hi.js` always has: nothing flies that the terminal didn't run.
-  const forcingRef = useRef<typeof program | null>(null)
-  const [forcing, setForcing] = useState(false)
   const takeOff = useCallback((p: { v: Vehicle; greeting: string } = programRef.current) => {
     const sky = flightsRef.current
     setSky([...sky, { id: ++nextId.current, v: p.v, greeting: p.greeting, top: laneFor(p.v, sky) }])
   }, [])
   useEffect(() => {
     if (stage > 0) return
-    forcingRef.current = null
     queuedRef.current = false
     setArmedBoth(false)
-    setForcing(false)
     setCleared(false)
   }, [stage])
   const launch = useCallback((): RunResult => {
@@ -743,16 +729,6 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     }
     if (!roomFor(programRef.current.v, [])) return 'grounded'
     takeOff()
-    return 'launched'
-  }, [takeOff])
-  const forced = useCallback((): RunResult => {
-    const p = forcingRef.current
-    forcingRef.current = null
-    setForcing(false)
-    if (!p) return 'standby'
-    setArmedBoth(false)
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'grounded'
-    takeOff(p)
     return 'launched'
   }, [takeOff])
   const landed = useCallback((id: number) => {
@@ -784,14 +760,14 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       if (e.key !== 'Enter' || e.defaultPrevented || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return
       if (!armedRef.current || !openRef.current || !pointerRef.current || !focusFree()) return
       e.preventDefault()
-      // Held down, mid-rewrite, or the sky's full: nothing. (A press while
-      // one is being typed is ignored — no backlog of programs.)
-      if (e.repeat || forcingRef.current) return
-      const pool = overridePool(programRef.current.v, flightsRef.current)
-      if (!pool.length) return
-      queuedRef.current = false // the held run is superseded
-      forcingRef.current = rewrite(programRef.current.run + 1, pool)
-      setForcing(true)
+      // Held down, or the sky's full: nothing.
+      if (e.repeat || !hasRoom(programRef.current.v, flightsRef.current)) return
+      // Sent: the held program, as written. Reduced motion grounds it.
+      queuedRef.current = false
+      setArmedBoth(false)
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setCleared('grounded'); return }
+      takeOff()
+      setCleared('override')
     }
     document.addEventListener('keydown', onKey, true)
     return () => {
@@ -801,11 +777,11 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       window.removeEventListener('resize', relayout)
       document.removeEventListener('scroll', relayout, { capture: true })
     }
-  }, [armed, openRef])
+  }, [armed, openRef, takeOff])
   // (Reads the intro's position: only when what it depends on changes.)
-  const hint = useMemo(() => !armed || forcing || !returnFree ? null
-    : overridePool(program.v, flights).length ? 'return to override' : 'airspace full',
-  [armed, forcing, returnFree, program.v, flights, layoutTick]) // eslint-disable-line react-hooks/exhaustive-deps
+  const hint = useMemo(() => !armed || !returnFree ? null
+    : hasRoom(program.v, flights) ? 'return to override' : 'airspace full',
+  [armed, returnFree, program.v, flights, layoutTick]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <span style={{ position: 'relative', display: 'flex' }} {...handlers}>
       <a data-social className="simple-social" href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
@@ -814,8 +790,8 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
       <IconPopover show={stage > 0} width={300}>
         {stage > 0 && (
           <Terminal
-            run={program.run} vehicle={program.v} greeting={program.greeting}
-            onRun={program.run ? forced : launch} cleared={cleared} hint={hint}
+            vehicle={program.v} greeting={program.greeting}
+            onRun={launch} cleared={cleared} hint={hint}
           />
         )}
       </IconPopover>

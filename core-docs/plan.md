@@ -80,7 +80,7 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
 - [ ] **[at PR, 2026-11-04] Contact and record batch** (branch `naypyidaw`; plan and worker briefs in that workspace's `.context/feature-plan.md`):
   - **GitHub terminal, "press return to override":** while a run is held for air traffic control, Return sends another vehicle at once. Flights become a list with their own lanes and a cap.
   - **More flying vehicles:** biplane (banner tow), hot-air balloon and helicopter join the blimp (Ben approved the set). One is picked at random each time the terminal opens, and the typed program names the vehicle that flies.
-  - **Override picks fresh (Ben, 2026-11-01):** each Return sends a new random vehicle and greeting, and the terminal writes that new program out before it flies. What's typed is always what flies.
+  - **Override sends what's written (Ben, 2026-11-04):** Return sends the held program as written. The held line updates in place to `override · <vehicle> launched`, with no clearing or retyping. This replaces "override picks fresh" (2026-11-01), which rewrote hi.js with a new vehicle and greeting.
   - **Return only past a hold (Ben, 2026-11-03):** a launch on the first visit shows no hint, and Return does nothing then. Only a revisit while something's flying is held (`waiting for air traffic control`) and offers `return to override` (or `airspace full`). After the override flies, nothing more is offered; come back for another hold. Ben: rarer to find, "that's the point of an Easter egg". This replaces a short-lived "return for another" after every launch.
   - **Record label text:** the compact rail record (`K < 36`) drops the playground's printed label. Bring back a print that reads at rail size.
   - **No glass on the rail's non-buttons (Ben, 2026-11-02):** the intensity strip and the record aren't buttons, so the glide pill fades while the pointer is over them. The strip rests slim (track 70%, thumb 0.8) and grows to full size on hover, drag or focus (the trigger's press spring; the thumb is centred by margin so the scale stays on-axis). While off, the record rests a shade darker (`brightness(0.88)`) and comes up to full on hover or focus; playing, it stays at full. The page's cursor glow now stays on under both. The strip has its own focus ring, because the pill had been its only keyboard indicator.
@@ -90,7 +90,7 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
   - [ ] Each GitHub hover visit types a randomly chosen vehicle (blimp, biplane, hot-air balloon or helicopter) and greeting into hi.js. What's typed is what flies, and the same vehicle isn't picked twice running.
   - [ ] On a first visit with an empty sky, the run launches and shows no override hint, and Return does nothing.
   - [ ] Revisiting while something is still flying holds the run (`waiting for air traffic control`), then prints `return to override` as a new line. No blank line is reserved before it appears.
-  - [ ] Pressing Return on a held run, with nothing focused, rewrites hi.js with a new random vehicle and greeting, runs `node hi.js --force` and launches it (`override · <vehicle> launched`). After that no hint shows, and Return does nothing.
+  - [ ] Pressing Return on a held run, with nothing focused, sends the program already written. The terminal isn't cleared or retyped; the held line updates in place to `override · <vehicle> launched`, and that vehicle and greeting fly. After that no hint shows, and Return does nothing. (Ben, 2026-11-04: send what's already written, rather than the earlier "new random vehicle and greeting".)
   - [ ] When a control has focus (e.g. the record after being clicked), the override hint doesn't show and Return goes to that control. Focus is never moved or taken.
   - [ ] No flight ever crosses the intro text. When no vehicle fits above it, the run reports `<vehicle> grounded` and nothing flies.
   - [ ] The greetings never include "Hiya".
@@ -98,6 +98,9 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
   - [ ] The rail record's label shows one curved line of the track title, set in from the edge inside a faint ring, visible while the record plays.
   - [ ] In the settings rail, the glide pill doesn't cover the intensity slider or the record. The slider rests slim and grows, centred on its track, on hover. The idle record rests darker and brightens on hover, and stays at full brightness while playing.
   - [ ] No focus ring in the settings rail is clipped.
+  - [ ] When there's no room for another flight, a held revisit shows `airspace full` and Return launches nothing. (Added by Ben at the merge gate, 2026-11-04.)
+  - [ ] Switching on reduced motion makes any flight leave at once, and a held run is grounded, not launched. (Added by Ben at the merge gate, 2026-11-04.)
+  - [ ] Selecting an option in the settings rail fades its selection ring in at its final width, with no thick or white flash. (Ben flagged the flash, 2026-11-04. It predates the branch.)
 
   **Visual-walk:**
   - [ ] [state: held] The GitHub terminal shows the held run with `return to override` under it, and no empty line.

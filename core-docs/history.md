@@ -12,7 +12,7 @@ Branch `naypyidaw`, PR against `main` (Ben chose `main`; `next-update` is still 
   - Nothing ever flies over the intro: a visit only picks machines that fit above it. When none fit (a short window, 200% zoom, or a scrolled page), the run reports `<machine> grounded`.
   - The greetings drop "Hiya" (Ben).
 - **Return to override, offered only past a hold (Ben).** A revisit while something is flying is held (`waiting for air traffic control`). Only then does `return to override` (or `airspace full`) appear, printed as a new line, not reserved in advance.
-  - Return rewrites the program with a fresh machine and greeting and runs `node hi.js --force`. After that, nothing more is offered.
+  - Return sends the program already written. The held line updates in place to `override · <machine> launched`, and after that nothing more is offered. Ben changed this at the merge gate: the first version rewrote the program with a fresh machine and greeting, which he had asked for on 2026-11-01.
   - A launch on the first visit shows no hint. Ben dropped an interim "return for another": rarer to find suits an easter egg.
   - **Return goes to whatever has focus.** The terminal takes it, and offers it, only when nothing is focused, and it never moves focus (Ben asked for best practice, not workarounds). The first fix had blurred stray focus; that was replaced.
 - **The figpal steps aside.** Elements marked `data-figpal-avoid` (the icon row and open pop-outs) are avoid zones.
@@ -21,6 +21,7 @@ Branch `naypyidaw`, PR against `main` (Ben chose `main`; `next-update` is still 
   - It vanishes at once over a pop-out. Its loop only wakes for zone changes.
 - **The rail record prints a label** (option B of 4 mockups, Ben): the title curved over the top, set in from the edge, inside a faint ring. It shows the record is turning and is legible zoomed in.
   - Below `COMPACT_K` the record paints without its own layer, so the ~10px print stays crisp.
+- **Selection rings fade in rather than flash** (Ben flagged it; it predates the branch). Unselected options carry a transparent ring of the same width.
 - **The rail's non-buttons take no glass** (Ben: they aren't buttons).
   - The intensity strip rests slim and grows, centred, on hover, drag or focus. It grows on the press spring and settles smoothly.
   - While off, the record rests at `brightness(0.88)` and comes up to full on hover or focus, and stays at full while playing.

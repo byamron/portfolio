@@ -1042,7 +1042,9 @@ export function SidebarThemeControls({
                     style={{
                       width: swatchSize, height: swatchSize, borderRadius: Math.round(6 * sc),
                       background: cssVar, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
-                      outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : 'none',
+                      // Unselected: the same ring, transparent, so selecting fades only
+                      // its colour in (from 'none' it animated from currentColor at 3px: a white flash).
+                      outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : '1.5px solid transparent',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                     }}
                   />
@@ -1180,7 +1182,7 @@ export function SidebarThemeControls({
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
-                        outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
+                        outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : '1.5px solid transparent',
                         outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                       }}
                     >
@@ -1239,7 +1241,7 @@ export function SidebarThemeControls({
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
-                            outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
+                            outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : '1.5px solid transparent',
                             outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                           }}
                         >
