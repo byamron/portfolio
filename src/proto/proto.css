@@ -93,6 +93,13 @@
 .rail-strip[data-dragging] .rail-strip-thumb {
   transition: scale 180ms cubic-bezier(0.34, 1.56, 0.64, 1), --thumb-bw 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+/* Forced colours repaint outline colours, transparent included: drop the
+   unselected options' resting ring there, or every option reads selected.
+   (!important: beats the inline ring; keyboard focus keeps its ring.) */
+@media (forced-colors: active) {
+  [data-sidebar-control][aria-checked="false"]:not(:focus-visible),
+  [data-sidebar-control][aria-checked="false"]:not(:focus-visible) > span { outline-style: none !important; }
+}
 /* Forced colours drop box-shadows: give the thumb a system-coloured edge. */
 @media (forced-colors: active) {
   .rail-strip-thumb { border: 1.5px solid CanvasText; }

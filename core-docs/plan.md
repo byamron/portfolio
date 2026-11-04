@@ -122,8 +122,8 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
   - **WCAG 1.4.4:** at 200% zoom, the fit-to-column intro grows only 158–175%. Measured: 34px becomes 53.6–59.4 device px at 1024/1280/1440. The fix is a zoom-aware floor, e.g. rem-based.
 
 - [ ] **Follow-ups from the batch's reviews** (`/simplify` and the four staff lenses, 2026-11-04; nothing here blocks):
-  - **[cleanup] One hold state in the GitHub terminal.** `queuedRef`, `armed`/`armedRef` and `forcing`/`forcingRef` only ever take three combinations (idle, held, override typing). Collapse them into one `hold` state, with the fast-timing probes re-run (Return at 0ms, leave mid-rewrite, sky emptying mid-override).
-  - **[cleanup] Tests for the air-traffic rules.** `laneFor`, `overridePool`, `fitsTheSky` and `pickFresh` are pure. Move them to `src/proto/airTraffic.ts` and pin the rules with vitest: at most 3 up, lanes never touch, nothing over the intro, no repeats.
+  - **[cleanup] One hold state in the GitHub terminal.** `queuedRef` and `armed`/`armedRef` move together (idle or held). Collapse them into one `hold` state, with the fast-timing probes re-run (Return at 0ms, leaving mid-hold, the sky emptying mid-hold).
+  - **[cleanup] Tests for the air-traffic rules.** `laneFor`, `hasRoom`, `fitsTheSky` and `pickFresh` are pure. Move them to `src/proto/airTraffic.ts` and pin the rules with vitest: at most 3 up, lanes never touch, nothing over the intro, no repeats.
   - **[ready] Pop-outs declare their own figpal reserve.** `CustomCursor` hard-codes the pop-out space (`POP_RESERVE` 344×300, `NOTE_RESERVE`) and the `"row"` children walk. A `data-figpal-reserve` on each trigger would let X (no pop-out) and LinkedIn (a smaller card) reserve only what they open. This changes where the figpal rests, so check it with Ben.
   - **[ready] A `ResizeObserver` on the icon row** for the figpal's cached row box. A font swap or CSS-only reflow doesn't invalidate it today; the 320px reach hides small shifts.
   - **[ready] Profile the flights' drop-shadows with 3 up.** The bob, banner and rotor loops repaint each layer anyway. Bake soft shadows into the SVGs if it stutters (joins the existing drop-shadow item in section 3).
@@ -134,13 +134,13 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
   - **[Ben] Balloon crossing time on very wide screens** (~45s at 2560). A minimum speed in viewport widths per second?
   - **[Ben] Dark-mode vehicles** are the brightest things on the page, up to 3 at once now. A slightly lower body peak in dark?
   - **[Ben] The compact label's typeface.** It uses the system stack (SF Pro on a Mac) at 600. Onest 500 (already loaded) would match the site's type and give predictable widths.
+  - **[Ben] `airspace full` when only the written machine won't fit.** Since an override sends what's written, a tall machine (balloon, blimp) can find no lane with 1–2 up, while a smaller one would fit. "No room for <machine>" would be more accurate. The same machine can also be up twice (two biplanes) now that the written one is always sent.
   - **[Ben] "return" vs "enter"** in the hint on Windows and Linux. Terminal voice says return.
   - **[ready] The rail record's off state fails 1.4.11 in light mode** (this predates the branch). Track vs page is 1.33:1, and knob vs track is about 1.5:1. A 1px `text-dark` 30% edge around the off track would fix it.
   - **[ready] The intensity slider has no Home/End/PageUp/PageDown** (this predates the branch). Add them alongside the arrow keys.
   - **[ready] A flight leaving on reduced motion vanishes in one frame.** A 120ms opacity exit would match the popovers and "a fade isn't motion" (design-engineer lens, 2026-11-04).
   - **[Ben] Grounding when the intro is scrolled out of view.** The floor goes negative, so the run grounds even though no words are on screen. One option: use the viewport height as the floor once the intro is fully above it.
   - **[Ben] The grounded line reads `hold  <machine> grounded`.** Reviewers note that `hold` reads as pending (it also prefixes the waiting line). It matches the reduced-motion wording that shipped earlier. Options: a final word (`stop`, `skip`), or `grounded · low ceiling` for the no-room case.
-  - **[cleanup] The grounded early return skips `onRun()`.** On an override, if reduced motion turns on in the 90ms run window, `forcing` stays set until the hover ends. Nothing visible breaks. The fix is to always call `onRun()` and let `launch`/`forced` decide whether to ground. Also reword the comment above `usePrefersReducedMotion` in `Program`: after the run, a switch grounds through the cleared path. (Staff-engineer review of `13baa74`.)
   - **[cleanup] Tests for the terminal's run outcomes** (launch / hold / cleared / grounded, with matchMedia and the intro rect stubbed). The state machine was hand-fixed in three commits in a row.
   - **[ready] The record's focus ring has no slack** in the rail scroll box: 4px offset plus a 2px ring is exactly its 6px bottom padding. Check it at 125% and 175% zoom for sub-pixel clipping.
 

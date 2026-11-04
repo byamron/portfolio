@@ -184,8 +184,8 @@ function TermResult({ status, children }: { status: string; children: ReactNode 
 type RunResult = 'launched' | 'flying' | 'standby' | 'grounded'
 type Cleared = false | 'launched' | 'override' | 'grounded'
 
-/** hi.js written out and run. An override rewrites the file (a new machine,
- *  a new hello), quick, and runs it with --force. */
+/** hi.js written out and run. A Return while held sends this program as
+ *  written; the held line updates in place. */
 function Program({ vehicle, greeting, onRun, cleared }: {
   vehicle: Vehicle
   greeting: string
@@ -275,12 +275,15 @@ function Terminal({ hint, ...program }: React.ComponentProps<typeof Program> & {
       </div>
       <div className="term-body">
         <Program {...program} />
-        {shownHint && (
-          // A second beat, dim: what Return does now (or why it can't).
-          <motion.div key={shownHint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} style={termLine}>
-            <span className="term-dim">{shownHint}</span>
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {shownHint && (
+            // A second beat, dim: what Return does now (or why it can't).
+            // It goes the way it came, not in one frame with the takeoff.
+            <motion.div key={shownHint} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={termLine}>
+              <span className="term-dim">{shownHint}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
@@ -710,9 +713,11 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
   const [returnFree, setReturnFree] = useState(focusFree)
   // The sky's floor is the intro's top: re-read it if the page moves.
   const [layoutTick, setLayoutTick] = useState(0)
-  const takeOff = useCallback((p: { v: Vehicle; greeting: string } = programRef.current) => {
+  // Sends what hi.js says.
+  const takeOff = useCallback(() => {
+    const { v, greeting } = programRef.current
     const sky = flightsRef.current
-    setSky([...sky, { id: ++nextId.current, v: p.v, greeting: p.greeting, top: laneFor(p.v, sky) }])
+    setSky([...sky, { id: ++nextId.current, v, greeting, top: laneFor(v, sky) }])
   }, [])
   useEffect(() => {
     if (stage > 0) return
