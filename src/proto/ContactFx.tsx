@@ -750,7 +750,9 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     if (!flightsRef.current.length && queuedRef.current && stageRef.current > 0 && pointerRef.current) {
       queuedRef.current = false
       setArmedBoth(false)
-      const room = roomFor(programRef.current.v, [])
+      // Cleared, if there's room above the intro and motion is welcome
+      // (reduced motion grounds it, as it grounds every run).
+      const room = roomFor(programRef.current.v, []) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
       setCleared(room ? 'launched' : 'grounded')
       if (room) takeOff()
     }
