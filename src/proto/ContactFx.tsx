@@ -197,10 +197,13 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
 }) {
   const CODE = codeFor(vehicle, greeting)
   const { noun } = vehicle
-  const reducedMotion = useReducedMotion()
+  // Live, not framer's useReducedMotion (which reads once): a switch to
+  // reduced motion mid-visit grounds the run rather than 'launch' nothing.
+  const reducedMotion = usePrefersReducedMotion()
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
-  const [result, setResult] = useState<[string, string] | null>(null)
+  // [status, line, still running (waiting on air traffic control)]
+  const [result, setResult] = useState<[string, string, boolean?] | null>(null)
   // The program can't change under a run (a rewrite remounts this), so the
   // effects read it as it was typed.
   useEffect(() => {
@@ -209,17 +212,17 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
       if (reducedMotion) { setResult(['hold', `${noun} grounded`]); return }
       const r = onRun()
       setResult(r === 'launched' ? ['done', `${forced ? 'override · ' : ''}${noun} launched`]
-        : r === 'flying' ? ['hold', 'waiting for air traffic control']
+        : r === 'flying' ? ['hold', 'waiting for air traffic control', true]
         : r === 'grounded' ? ['hold', `${noun} grounded`]
         : ['ready', `${noun} on standby`])
     }, forced ? 90 : 180)
     return () => clearTimeout(t)
   }, [typedRun, onRun, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (cleared) setResult(r => (r?.[0] === 'hold' ? (cleared === 'launched' ? ['done', `cleared · ${noun} launched`] : ['hold', `${noun} grounded`]) : r))
+    if (cleared) setResult(r => (r?.[2] ? (cleared === 'launched' ? ['done', `cleared · ${noun} launched`] : ['hold', `${noun} grounded`]) : r))
   }, [cleared]) // eslint-disable-line react-hooks/exhaustive-deps
   // Still running (waiting on air traffic control), not grounded or done.
-  const holding = result?.[0] === 'hold' && result[1].startsWith('waiting') && !reducedMotion
+  const holding = !!result?.[2] && !reducedMotion
   return (
     <>
       {CODE.map((src, i) => i <= line && (
@@ -742,6 +745,7 @@ export function GitHubLink({ href, label, icon }: { href: string; label: string;
     setForcing(false)
     if (!p) return 'standby'
     setArmedBoth(false)
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'grounded'
     takeOff(p)
     return 'launched'
   }, [takeOff])
