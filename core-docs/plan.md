@@ -77,6 +77,38 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
 
 #### 1. Next up (Ben has raised these)
 
+- [ ] **[at PR, 2026-11-04] Contact and record batch** (branch `naypyidaw`; plan and worker briefs in that workspace's `.context/feature-plan.md`):
+  - **GitHub terminal, "press return to override":** while a run is held for air traffic control, Return sends another vehicle at once. Flights become a list with their own lanes and a cap.
+  - **More flying vehicles:** biplane (banner tow), hot-air balloon and helicopter join the blimp (Ben approved the set). One is picked at random each time the terminal opens, and the typed program names the vehicle that flies.
+  - **Override picks fresh (Ben, 2026-11-01):** each Return sends a new random vehicle and greeting, and the terminal writes that new program out before it flies. What's typed is always what flies.
+  - **Return only past a hold (Ben, 2026-11-03):** a launch on the first visit shows no hint, and Return does nothing then. Only a revisit while something's flying is held (`waiting for air traffic control`) and offers `return to override` (or `airspace full`). After the override flies, nothing more is offered; come back for another hold. Ben: rarer to find, "that's the point of an Easter egg". This replaces a short-lived "return for another" after every launch.
+  - **Record label text:** the compact rail record (`K < 36`) drops the playground's printed label. Bring back a print that reads at rail size.
+  - **No glass on the rail's non-buttons (Ben, 2026-11-02):** the intensity strip and the record aren't buttons, so the glide pill fades while the pointer is over them. The strip rests slim (track 70%, thumb 0.8) and grows to full size on hover, drag or focus (the trigger's press spring; the thumb is centred by margin so the scale stays on-axis). While off, the record rests a shade darker (`brightness(0.88)`) and comes up to full on hover or focus; playing, it stays at full. The page's cursor glow now stays on under both. The strip has its own focus ring, because the pill had been its only keyboard indicator.
+  - **Figpal vs the pop-outs:** the figpal trails at +24/+24, right where the pop-outs open. Ben offered avoid-or-remove; the recommendation is avoid: it steps aside, up and left, from `data-figpal-avoid` zones (the icon row and open pop-outs). Removing it would empty the rail's cursor section.
+
+  **Spec-walk:** (written at ship time, 2026-11-04, from Ben's requests and decisions in the session; each was approved on the live preview)
+  - [ ] Each GitHub hover visit types a randomly chosen vehicle (blimp, biplane, hot-air balloon or helicopter) and greeting into hi.js. What's typed is what flies, and the same vehicle isn't picked twice running.
+  - [ ] On a first visit with an empty sky, the run launches and shows no override hint, and Return does nothing.
+  - [ ] Revisiting while something is still flying holds the run (`waiting for air traffic control`), then prints `return to override` as a new line. No blank line is reserved before it appears.
+  - [ ] Pressing Return on a held run, with nothing focused, rewrites hi.js with a new random vehicle and greeting, runs `node hi.js --force` and launches it (`override · <vehicle> launched`). After that no hint shows, and Return does nothing.
+  - [ ] When a control has focus (e.g. the record after being clicked), the override hint doesn't show and Return goes to that control. Focus is never moved or taken.
+  - [ ] No flight ever crosses the intro text. When no vehicle fits above it, the run reports `<vehicle> grounded` and nothing flies.
+  - [ ] The greetings never include "Hiya".
+  - [ ] The figpal cursor steps aside on the side the pointer approached from, never covers an open pop-out, and eases back into place rather than darting.
+  - [ ] The rail record's label shows one curved line of the track title, set in from the edge inside a faint ring, visible while the record plays.
+  - [ ] In the settings rail, the glide pill doesn't cover the intensity slider or the record. The slider rests slim and grows, centred on its track, on hover. The idle record rests darker and brightens on hover, and stays at full brightness while playing.
+  - [ ] No focus ring in the settings rail is clipped.
+
+  **Visual-walk:**
+  - [ ] [state: held] The GitHub terminal shows the held run with `return to override` under it, and no empty line.
+  - [ ] [state: flight] A vehicle with its greeting banner crosses the top of the page, above the intro.
+  - [ ] [interaction / a11y: figpal] With the figpal on, it rests clear of the open GitHub terminal.
+  - [ ] [state: rail] The rail is open with the slider hovered (grown, centred) and the glass pill absent from it.
+  - [ ] [state: record] The playing rail record shows the curved title inside a faint ring.
+  - [ ] [interaction / a11y: focus] The figpal cursor button's focus ring is fully visible above the record.
+
+  **(End of this batch's walks.)**
+
 - [ ] **[ready] Settings glyph onto the 24px phone margin.** Measured live on a 393px phone: the glyph is 32px from the top and 34px from the right, while the text, icons and strip label are at 24px. Ben asked for 24px margins on phones; this one wasn't moved yet. Files: `SIMPLE_TRIGGER_TOP` in `SimpleSite.tsx`, and the trigger's `right: 16` plus box inset in `SidebarThemeControls.tsx`. Keep the desktop placement, which is glyph 32px from the top and about 29px from the right, unless Ben says otherwise.
 - [ ] **[Ben] Case studies.** Ben: "i don't need the case studies reachable (we'll come back to this)". The old renderer is still in `src/`, unrouted: `CaseStudyPage`, `CaseStudyLayoutA` and `data/case-study-content.ts`. The data is in `src/data/projects.ts`, and the preview media is still in `public/`. The options to put to Ben are:
   1. Re-route `/project/:slug` with a layout redesigned to match the simple home.
@@ -86,6 +118,28 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
 - [ ] **[Ben] Accessibility decisions he deferred at launch.**
   - **WCAG 1.4.13 (hoverable):** the hover pop-outs close when the pointer moves toward them, because they're `pointer-events: none` and close on `pointerleave`. The pop-outs are the email note, terminal and card. This includes the note's "p.s. click to copy address" hint. The recommended fix is to keep a pop-out open while the pointer crosses the 8px gap or is over it, without making it clickable.
   - **WCAG 1.4.4:** at 200% zoom, the fit-to-column intro grows only 158–175%. Measured: 34px becomes 53.6–59.4 device px at 1024/1280/1440. The fix is a zoom-aware floor, e.g. rem-based.
+
+- [ ] **Follow-ups from the batch's reviews** (`/simplify` and the four staff lenses, 2026-11-04; nothing here blocks):
+  - **[cleanup] One hold state in the GitHub terminal.** `queuedRef`, `armed`/`armedRef` and `forcing`/`forcingRef` only ever take three combinations (idle, held, override typing). Collapse them into one `hold` state, with the fast-timing probes re-run (Return at 0ms, leave mid-rewrite, sky emptying mid-override).
+  - **[cleanup] Tests for the air-traffic rules.** `laneFor`, `overridePool`, `fitsTheSky` and `pickFresh` are pure. Move them to `src/proto/airTraffic.ts` and pin the rules with vitest: at most 3 up, lanes never touch, nothing over the intro, no repeats.
+  - **[ready] Pop-outs declare their own figpal reserve.** `CustomCursor` hard-codes the pop-out space (`POP_RESERVE` 344×300, `NOTE_RESERVE`) and the `"row"` children walk. A `data-figpal-reserve` on each trigger would let X (no pop-out) and LinkedIn (a smaller card) reserve only what they open. This changes where the figpal rests, so check it with Ben.
+  - **[ready] A `ResizeObserver` on the icon row** for the figpal's cached row box. A font swap or CSS-only reflow doesn't invalidate it today; the 320px reach hides small shifts.
+  - **[ready] Profile the flights' drop-shadows with 3 up.** The bob, banner and rotor loops repaint each layer anyway. Bake soft shadows into the SVGs if it stutters (joins the existing drop-shadow item in section 3).
+  - **[ready] Rotor and propeller loops (0.14–0.18s) may strobe at 60Hz.** Check frame by frame at 60 and 120Hz.
+  - **[ready] The strip rests slim on touch**, where there's no hover. Consider full size under `@media (hover: none)`; check on a phone.
+  - **[ready] The compact label's fade-in is a `filter` transition** on a record without its own layer. Do a 2× frame capture on hover; if the print softens, dim with a scrim instead.
+  - **[Ben] Flights cross the open settings rail** (z 9990 over the rail's 100; pointer-events none). Options: fly under the rail, end lanes at its edge, or accept it.
+  - **[Ben] Balloon crossing time on very wide screens** (~45s at 2560). A minimum speed in viewport widths per second?
+  - **[Ben] Dark-mode vehicles** are the brightest things on the page, up to 3 at once now. A slightly lower body peak in dark?
+  - **[Ben] The compact label's typeface.** It uses the system stack (SF Pro on a Mac) at 600. Onest 500 (already loaded) would match the site's type and give predictable widths.
+  - **[Ben] "return" vs "enter"** in the hint on Windows and Linux. Terminal voice says return.
+  - **[ready] The rail record's off state fails 1.4.11 in light mode** (this predates the branch). Track vs page is 1.33:1, and knob vs track is about 1.5:1. A 1px `text-dark` 30% edge around the off track would fix it.
+  - **[ready] The intensity slider has no Home/End/PageUp/PageDown** (this predates the branch). Add them alongside the arrow keys.
+  - **[ready] A flight leaving on reduced motion vanishes in one frame.** A 120ms opacity exit would match the popovers and "a fade isn't motion" (design-engineer lens, 2026-11-04).
+  - **[Ben] Grounding when the intro is scrolled out of view.** The floor goes negative, so the run grounds even though no words are on screen. One option: use the viewport height as the floor once the intro is fully above it.
+  - **[Ben] The grounded line reads `hold  <machine> grounded`.** Reviewers note that `hold` reads as pending (it also prefixes the waiting line). It matches the reduced-motion wording that shipped earlier. Options: a final word (`stop`, `skip`), or `grounded · low ceiling` for the no-room case.
+  - **[cleanup] Tests for the terminal's run outcomes** (launch / hold / cleared / grounded, with matchMedia and the intro rect stubbed). The state machine was hand-fixed in three commits in a row.
+  - **[ready] The record's focus ring has no slack** in the rail scroll box: 4px offset plus a 2px ring is exactly its 6px bottom padding. Check it at 125% and 175% zoom for sub-pixel clipping.
 
 #### 2. Email note → paper plane (`ContactFx.tsx`)
 
@@ -113,7 +167,7 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
 - [ ] **[ready] The LinkedIn card creates 2 WebGL contexts per hover** (`PaperTexture`). If it stutters, render the texture to an image once. Check the card flip in Safari (canvas + `backface-visibility`).
 - [ ] **[ready] Profile, then decide whether to bake drop-shadows into the SVGs.** The filter re-runs per frame on the morphing fold and the blimp banner.
 - [ ] **[Ben] Copy and voice calls:**
-  - **Blimp greetings:** reviewers flag "Ahoy", "Howdy", "Hiya", "Greetings" and "Good day" as character voices, and suggest Hi / Hello / Hey / Hi there / Hey there.
+  - ~~**Blimp greetings**~~ **Decided (Ben, 2026-11-02):** drop "Hiya" and keep the other nine (Hi, Hello, Hey, Hey there, Hi there, Howdy, Ahoy, Greetings, Good day) for every vehicle. Reviewers had flagged the character voices.
   - **Zero-day tooltips:** reviewers flag "Designing, not committing" and "Cooking (actual food)" as puns, and "Out of range" / "Somewhere without wifi" as near-duplicates. "Cooking on my work account" is Ben's own wording.
   - **Easter-egg density:** all four contact icons perform.
   - **The Consensus mark** appears on a personal card.
