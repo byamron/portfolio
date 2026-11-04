@@ -200,6 +200,11 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
   // Live, not framer's useReducedMotion (which reads once): a switch to
   // reduced motion mid-visit grounds the run rather than 'launch' nothing.
   const reducedMotion = usePrefersReducedMotion()
+  const reducedMotionRef = useRef(reducedMotion)
+  reducedMotionRef.current = reducedMotion
+  // The run happens once per typed program: a later change of the setting
+  // never re-runs it (no second launch, no overwritten result).
+  const ran = useRef(false)
   const [line, setLine] = useState(0) // code lines finished
   const [typedRun, setTypedRun] = useState(false)
   // [status, line, still running (waiting on air traffic control)]
@@ -207,9 +212,10 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
   // The program can't change under a run (a rewrite remounts this), so the
   // effects read it as it was typed.
   useEffect(() => {
-    if (!typedRun) return
+    if (!typedRun || ran.current) return
     const t = setTimeout(() => {
-      if (reducedMotion) { setResult(['hold', `${noun} grounded`]); return }
+      ran.current = true
+      if (reducedMotionRef.current) { setResult(['hold', `${noun} grounded`]); return }
       const r = onRun()
       setResult(r === 'launched' ? ['done', `${forced ? 'override · ' : ''}${noun} launched`]
         : r === 'flying' ? ['hold', 'waiting for air traffic control', true]
@@ -217,7 +223,7 @@ function Program({ vehicle, greeting, forced, onRun, cleared }: {
         : ['ready', `${noun} on standby`])
     }, forced ? 90 : 180)
     return () => clearTimeout(t)
-  }, [typedRun, onRun, reducedMotion]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [typedRun, onRun]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (cleared) setResult(r => (r?.[2] ? (cleared === 'launched' ? ['done', `cleared · ${noun} launched`] : ['hold', `${noun} grounded`]) : r))
   }, [cleared]) // eslint-disable-line react-hooks/exhaustive-deps
