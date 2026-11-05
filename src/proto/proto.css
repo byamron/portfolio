@@ -95,10 +95,13 @@
 }
 /* Forced colours repaint outline colours, transparent included: drop the
    unselected options' resting ring there, or every option reads selected.
-   (!important: beats the inline ring; keyboard focus keeps its ring.) */
+   (!important: beats the inline ring.) A swatch carries its ring on the
+   button, which is also where keyboard focus draws, so focus keeps it; the
+   mode and cursor options carry theirs on an inner span that is only ever
+   the selection ring, so it goes whether or not the button has focus. */
 @media (forced-colors: active) {
   [data-sidebar-control][aria-checked="false"]:not(:focus-visible),
-  [data-sidebar-control][aria-checked="false"]:not(:focus-visible) > span { outline-style: none !important; }
+  [data-sidebar-control][aria-checked="false"] > span { outline-style: none !important; }
 }
 /* Forced colours drop box-shadows: give the thumb a system-coloured edge. */
 @media (forced-colors: active) {
