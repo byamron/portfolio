@@ -2,6 +2,62 @@
 
 Record negative feedback and lessons learned here. Review this file before starting new work.
 
+## 2026-11-04 — An earlier answer reversed once Ben used the feature
+
+**What happened:** On 2026-11-01 Ben answered "new random, reflected in the code as it's written out" for what Return-to-override should send. It shipped that way: the terminal cleared and typed a fresh program. Using it on the preview, he found it "restarts the terminal process and sends a new thing", and asked for the opposite: send what's already written, updating in place.
+
+**Lesson learned:** For interaction details answered in the abstract ("which should it send?"), a written answer is a starting point, not the requirement. When a choice changes what the user sees happen (clearing and retyping vs updating in place), show both on the preview, or describe the visible difference in the question, before treating the answer as settled. Interactions get decided by feel.
+
+---
+
+## 2026-11-03 — A page-wide key handler took Return from a focused control, and the first fix stole focus
+
+**What happened:** Ben pressed Return to override in the GitHub terminal, and the record toggle lit up with its focus ring. The record still had focus from an earlier click. Any keypress makes Chrome show the focused element's ring, and `preventDefault` doesn't stop that. In reproducing it I found worse: a second Return, when nothing was offered, toggled the music. My first fix blurred whatever was focused outside the GitHub control. Ben asked for best practice, not workarounds, and moving focus away is a known accessibility anti-pattern.
+
+**Lesson learned:** A key belongs to whatever has focus. A document-level shortcut acts only when nothing is focused (`activeElement` is the body). It *offers* itself (the hint) only then, too, tracked with `focusin` and a frame after `focusout`, so the UI never promises what the key won't do. Never blur or move focus to make a shortcut work. When a fix has to fight the platform, it's the wrong fix.
+
+---
+
+## 2026-11-03 — A hint has to describe the state it's shown in
+
+**What happened:** "return to override" stayed on screen after an override had already flown, under a program that had run. Nothing was held, so there was nothing to override, and Ben found it confusing. The interim fix ("return for another" after every launch) answered a question Ben had asked in passing. On reflection he wanted the override only past a real hold: rarer to find, "that's the point of an Easter egg".
+
+**Lesson learned:** Prompt and hint text must match the current state exactly (offered only while it applies, gone once it doesn't). When a user muses about a design out loud, ask before you build it as a requirement.
+
+---
+
+## 2026-11-03 — A lerp darts: moving between targets needs motion that starts from rest
+
+**What happened:** The figpal stepped aside correctly, but Ben said it felt fast and abrupt, and it "darted" back into place. Closing 12% of the remaining gap each frame moves fastest on the very first frame. When the target jumps 100–200px, that first step is 20–30px.
+
+**Lesson learned:** A trailing lerp is fine for following a moving pointer. When the *target* changes (step aside, return home), drive the change with a critically damped spring layered on top. It starts at zero velocity, accelerates, then settles. Verify it with a per-frame step profile, where the peak should come mid-move, not on frame 0. Make a smooth pointer exit: a teleporting test pointer makes the follow layer look like a dart.
+
+---
+
+## 2026-11-02 — CSS `scale` runs before the inline transform; border widths snap
+
+**What happened:** The slider's thumb drifted about 1.4px left as it grew. Its centring was an inline `translateX(-50%)`, and the individual `scale` property is applied before the `transform` list, so the scale multiplied the centring shift too. Later, keeping the thumb's 1.5px edge true at rest by setting `border-width: calc(1.5px / 0.8)` drew 1px, because border widths snap to whole device pixels.
+
+**Lesson learned:** Don't centre an element with a translate if you'll also scale it with the `scale` property. Use `margin-left: -w/2` or the standalone `translate` property. For an edge that has to stay a precise width under scaling, use an inset `box-shadow`, which isn't snapped. Measure it: the centre offset, and the drawn width × scale.
+
+---
+
+## 2026-11-04 — framer-motion's `useReducedMotion` reads the setting once
+
+**What happened:** The accessibility review asked for flights in the air to leave when reduced motion is switched on mid-session. The first implementation used `useReducedMotion()`, and a test that emulated the media feature mid-flight showed the flight still flying. The hook reads once and doesn't re-render on change.
+
+**Lesson learned:** For anything that must react to the user changing reduced motion mid-session, use a live media-query hook (`usePrefersReducedMotion()` in `src/hooks/useMediaQuery.ts`). Test the change mid-session (`page.emulateMediaFeatures`), not only from page load.
+
+---
+
+## 2026-11-04 — Verification captures must wait for motion to settle
+
+**What happened:** The frame-integrity judge failed a focus-ring frame for a "stray box" between two rail buttons. It was the glide pill, caught mid-glide 50ms after Tab moved focus. A per-frame trace showed it settle within about 16 frames. The settled frame passed.
+
+**Lesson learned:** Capture state frames after the interaction's motion has settled (≥ its settle time). When a judge fails a frame, trace the element per frame before deciding whether it's a defect or the capture's timing.
+
+---
+
 ## 2026-10-29 — My own probes missed rapid and mid-await input; a fresh adversarial verifier caught both
 
 **What happened:** The email button passed every regression probe I'd written: single presses, repeat presses about 1s apart, and hover/leave at human pace. A fresh-context verifier given only the criteria tried what I hadn't, and found two real bugs:

@@ -333,8 +333,12 @@ const PILL_FADE_OUT = { duration: 0.16, ease: 'easeOut' } as const
 // restarted per control — a fast sweep across the rail is one smooth glide.
 const PILL_SPRING = { stiffness: 560, damping: 40, mass: 0.7 }
 
-// What the glide pill lands on: the trigger, every button, the strip, the record.
-export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control], [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]'
+// What the glide pill lands on: the trigger and every button. The strip and
+// the record aren't buttons, so they don't take the glass: the strip's thumb
+// lifts instead (proto.css), the record keeps its pointer, and the pill
+// fades while you're over either.
+export const GLIDE_TARGETS = '.sidebar-icon-trigger, [data-sidebar-control]'
+const RAIL_CONTROLS = `${GLIDE_TARGETS}, [data-sidebar] [role="slider"], [data-sidebar] [role="switch"]`
 // Fit mode floors: intensity strip (before ×controlScale) and divider air.
 const STRIP_MIN = 42
 const DIVIDER_MIN = 10
@@ -658,8 +662,8 @@ export function SidebarThemeControls({
   const pillH = useSpring(TRIGGER_ICON_BOX, PILL_SPRING)
   // Concentric with what it frames: 15px round a square control's selection
   // ring (7px item + 3px offset + 1px ring = 11px, and the pill sits 4px
-  // outside it); a full capsule round a capsule (the record, the strip),
-  // eased between while it glides from one to the other.
+  // outside it); a full capsule round a capsule, eased between while it
+  // glides from one to the other.
   const pillR = useTransform([pillW, pillH], ([w, h]: number[]) => {
     const capsule = Math.min(w!, h!) / 2
     return 15 + (capsule - 15) * Math.min(1, Math.abs(w! - h!) / 8)
@@ -682,8 +686,8 @@ export function SidebarThemeControls({
     const r = el.getBoundingClientRect()
     // Compact controls (swatches, mode and cursor buttons — their hit boxes
     // differ, the drawn items don't) all get the trigger's square, so the
-    // pill frames each the same way; only genuinely larger controls (the
-    // intensity strip, the record) get their own size plus a little air.
+    // pill frames each the same way; a genuinely larger control would get
+    // its own size plus a little air.
     const COMPACT = TRIGGER_ICON_BOX + 4
     const w = r.width <= COMPACT ? TRIGGER_ICON_BOX : r.width + 8
     const h = r.height <= COMPACT ? TRIGGER_ICON_BOX : r.height + 8
@@ -721,7 +725,7 @@ export function SidebarThemeControls({
     const col = columnRef.current
     let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
     // Closed, the controls are faded but still laid out: only the handle counts.
-    col?.querySelectorAll(hoveredRef.current ? GLIDE_TARGETS : '.sidebar-icon-trigger').forEach(el => {
+    col?.querySelectorAll(hoveredRef.current ? RAIL_CONTROLS : '.sidebar-icon-trigger').forEach(el => {
       const q = el.getBoundingClientRect()
       if (!q.width) return
       l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
@@ -739,8 +743,11 @@ export function SidebarThemeControls({
   }, [hovered, glidePill, releasePill])
   const glideHandlers = glidePill ? {
     onPointerOver: (e: React.PointerEvent) => {
-      const t = (e.target as Element).closest(GLIDE_TARGETS)
-      if (t && columnRef.current?.contains(t)) { stopRailWatch(); glideTo(t) }
+      const t = (e.target as Element).closest(RAIL_CONTROLS)
+      if (!t || !columnRef.current?.contains(t)) return
+      stopRailWatch()
+      if (t.matches(GLIDE_TARGETS)) glideTo(t)
+      else glideOut()
     },
     onPointerOut: (e: React.PointerEvent) => {
       const to = e.relatedTarget as Element | null
@@ -759,6 +766,7 @@ export function SidebarThemeControls({
     onFocus: (e: React.FocusEvent) => {
       const t = (e.target as Element).closest(GLIDE_TARGETS)
       if (t) glideTo(t)
+      else glideOut()
     },
     onBlur: glideOut,
   } : {}
@@ -990,7 +998,11 @@ export function SidebarThemeControls({
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             maxHeight: toolbarMaxHeight, overflowY: 'auto',
             scrollbarWidth: 'none' as React.CSSProperties['scrollbarWidth'],
-            padding: '0 6px',
+            // Room for focus rings (2px offset + 2px ring), which the scroll
+            // box would otherwise clip: at the sides, and under the last
+            // control (cancelled by the margin, so the layout doesn't move).
+            padding: '0 6px 6px',
+            marginBottom: -6,
           }}
         >
           {/* Divider: trigger ↔ swatches */}
@@ -1030,7 +1042,9 @@ export function SidebarThemeControls({
                     style={{
                       width: swatchSize, height: swatchSize, borderRadius: Math.round(6 * sc),
                       background: cssVar, border: 'none', cursor: 'pointer', padding: 0, userSelect: 'none' as const,
-                      outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : 'none',
+                      // Unselected: the same ring, transparent, so selecting fades only
+                      // its colour in (from 'none' it animated from currentColor at 3px: a white flash).
+                      outline: isActive ? `1.5px solid color-mix(in srgb, ${cssVar} 50%, transparent)` : '1.5px solid transparent',
                       outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                     }}
                   />
@@ -1056,6 +1070,8 @@ export function SidebarThemeControls({
                 style={{ pointerEvents: hovered ? 'auto' : 'none' }}
               >
                 <div
+                  className="rail-strip"
+                  data-dragging={isDragging || undefined}
                   aria-label="Background intensity"
                   role="slider"
                   aria-valuemin={0}
@@ -1089,30 +1105,34 @@ export function SidebarThemeControls({
                 >
                   {/* The visual gradient strip */}
                   <div
+                    className="rail-strip-track"
                     style={{
-                      width: Math.round(8 * sc),
+                      '--track-w': `${Math.round(8 * sc)}px`,
                       height: stripHeight,
-                      borderRadius: Math.round(4 * sc),
+                      borderRadius: 999,
                       background: `linear-gradient(to bottom, color-mix(in srgb, var(--swatch) 8%, transparent), color-mix(in srgb, var(--swatch) 55%, transparent))`,
-                      transition: 'background 500ms ease-in-out',
                       pointerEvents: 'none',
-                    }}
+                    } as React.CSSProperties}
                   />
                   {/* Active level indicator — thumb dot */}
                   <div
                     ref={thumbRef}
+                    className="rail-strip-thumb"
                     style={{
                       position: 'absolute',
-                      width: 11,
-                      height: 11,
+                      width: THUMB_SIZE,
+                      height: THUMB_SIZE,
                       borderRadius: '50%',
                       background: 'var(--swatch)',
-                      border: '1.5px solid color-mix(in srgb, var(--text-dark) 25%, transparent)',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                      // The edge is an inset ring, not a border: border widths snap
+                      // to whole device px, so a scaled-down thumb (proto.css) couldn't
+                      // keep it a true 1.5px.
+                      boxShadow: 'inset 0 0 0 var(--thumb-bw, 1.5px) color-mix(in srgb, var(--text-dark) 25%, transparent), 0 1px 3px rgba(0,0,0,0.25)',
+                      // Centred by margin, not a translate: proto.css's
+                      // `scale` would scale a translate too, pulling it off-axis.
                       left: '50%',
-                      transform: 'translateX(-50%)',
+                      marginLeft: -THUMB_SIZE / 2,
                       top: bgIntensity * thumbTravel,
-                      transition: isDragging ? 'none' : 'top 200ms ease-in-out, background 500ms ease-in-out',
                     }}
                   />
                 </div>
@@ -1162,7 +1182,7 @@ export function SidebarThemeControls({
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
-                        outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
+                        outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : '1.5px solid transparent',
                         outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                       }}
                     >
@@ -1221,7 +1241,7 @@ export function SidebarThemeControls({
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             width: iconBox, height: iconBox, borderRadius: Math.round(6 * sc),
-                            outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : 'none',
+                            outline: isActive ? '1.5px solid color-mix(in srgb, var(--text-dark) 20%, transparent)' : '1.5px solid transparent',
                             outlineOffset: 3, transition: 'outline 200ms ease-in-out',
                           }}
                         >

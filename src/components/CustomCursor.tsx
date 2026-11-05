@@ -11,6 +11,31 @@ const FIGPAL_SIZE = 72
 const FIGPAL_OFFSET_X = 24
 const FIGPAL_OFFSET_Y = 24
 const LERP_RATE = 0.12
+// Avoid zones: elements marked `data-figpal-avoid` (the contact icon row and
+// its open pop-outs). The figpal steps aside rather than covering them.
+const AVOID_SELECTOR = '[data-figpal-avoid]'
+const AVOID_MARGIN = 8 // breathing room round each zone
+const AVOID_RETURN = 12 // extra clearance before stepping back home (no flip-flop at the edge)
+const DIR_WINDOW_MS = 100 // approach direction: pointer travel over this window
+const RING_ANGLES = 16 // candidate spots round the pointer…
+const RING_GAPS = [32, 60, 88] // …at these gaps (pointer → figpal edge); home's is ~35
+const SPOT_HYSTERESIS = 24 // px of score a new spot must win by
+const ICON_PENALTY = 64 // px of score for sitting over a neighbouring icon
+// Stepping aside and back is its own motion, layered on the trailing lerp:
+// a critically damped spring on the figpal's offset from the pointer, so it
+// eases out and settles (no first-frame dart). Natural frequencies (rad/s):
+const STEP_ASIDE_W = 13 // out of the way: brisk, still ahead of a pop-out
+const STEP_HOME_W = 7 // back into place: unhurried
+const ESCAPE_W = 20 // caught inside a pop-out's space: hurry out
+const HOLD_MAX_MS = 400 // longest it waits for a closing pop-out before gliding through
+// The space a contact pop-out opens into, relative to the hovered icon: from
+// just left of it (the email sheet) out past the GitHub terminal (300px), and
+// down past the email sheet (~280px). Kept clear before anything opens.
+const POP_RESERVE = { left: -24, width: 344, height: 300 }
+// …and the "Email address copied" note, which appears beside the button on a
+// click: a strip along the row's centre line to the right of the icon.
+const NOTE_RESERVE = { width: 200, halfHeight: 12 }
+const FIGPAL_FADE = 'opacity 150ms ease'
 const MORPH_LEAVE_DELAY = 150
 const CIRCLE_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
@@ -95,6 +120,8 @@ export function CustomCursor() {
     document.querySelectorAll('[data-custom-cursor]').forEach(el => el.remove())
 
     const elements: HTMLElement[] = []
+    let figpalW = FIGPAL_SIZE * 192 / 222 // figpal.png's aspect until it loads
+    let figpalSpot = 0 // 0 = home, n > 0 = ring spot, -1 = nowhere clear (faded)
 
     if (cursorMode === 'invert') {
       injectCursorNoneStyle()
@@ -223,11 +250,16 @@ export function CustomCursor() {
         left: '0',
         willChange: 'transform',
         opacity: '0',
+        // A fade isn't motion: it stays under reduced motion too.
+        transition: FIGPAL_FADE,
       })
       const img = document.createElement('img')
       img.src = '/images/figpal.png'
       img.alt = ''
       img.draggable = false
+      img.onload = () => {
+        if (img.naturalHeight) figpalW = FIGPAL_SIZE * img.naturalWidth / img.naturalHeight
+      }
       Object.assign(img.style, {
         height: `${FIGPAL_SIZE}px`,
         width: 'auto',
@@ -237,6 +269,193 @@ export function CustomCursor() {
       document.body.appendChild(el)
       figpalRef.current = el
       elements.push(el)
+    }
+
+    // ── Figpal avoidance ──────────────────────────────────────────────
+    // Away from avoid zones the figpal sits at home (+24/+24). Near them it
+    // stays on the side the pointer came from, like a pet that was trailing:
+    // candidate spots on rings round the pointer are scored by distance to
+    // the point *behind* the pointer along its approach, and any spot that
+    // would cover an open pop-out (or the space one is about to take) is out.
+    type Box = { l: number; t: number; r: number; b: number }
+    let rows: Box[] = [] // the icon row(s): trigger the step-aside
+    let pops: Box[] = [] // open pop-outs: never covered
+    let rowItems: Box[] = [] // the row's icons, read only while the pointer is on a row
+    let zoneSig = ''
+    const toBox = (r: DOMRect): Box => ({ l: r.left, t: r.top, r: r.right, b: r.bottom })
+    const inside = (r: Box, x: number, y: number, m: number) =>
+      x > r.l - m && x < r.r + m && y > r.t - m && y < r.b + m
+    const overlaps = (a: Box, r: Box, m: number) =>
+      a.l < r.r + m && a.r > r.l - m && a.t < r.b + m && a.b > r.t - m
+    const boxAt = (c: { x: number; y: number }): Box =>
+      ({ l: c.x - figpalW / 2, t: c.y - FIGPAL_SIZE / 2, r: c.x + figpalW / 2, b: c.y + FIGPAL_SIZE / 2 })
+    const boxAtPos = (x: number, y: number): Box => ({ l: x, t: y, r: x + figpalW, b: y + FIGPAL_SIZE })
+    const ROW_SPAN = AVOID_MARGIN + AVOID_RETURN
+    // Beyond this from the row, nothing about it can reach the figpal (its
+    // farthest spot plus its own size, with room).
+    const ZONE_REACH = 320
+
+    // Zone rects, read once per frame (only when zones exist).
+    // Layout reads are skipped while nothing's open and the pointer is far
+    // from the row: its cached box can't have moved unless the DOM, the
+    // scroll or the window changed (which mark it stale).
+    let zonesStale = true
+    const readZones = (mx: number, my: number) => {
+      if (!zonesStale && !pops.length && rows.length && rows.every(r => !inside(r, mx, my, ZONE_REACH))) {
+        rowItems = []
+        return false
+      }
+      zonesStale = false
+      const els = document.querySelectorAll<HTMLElement>(AVOID_SELECTOR)
+      rows = []
+      pops = []
+      rowItems = []
+      let sig = ''
+      for (const el of els) {
+        let box: Box
+        const isRow = el.dataset.figpalAvoid === 'row'
+        if (isRow) {
+          // A row's span is its icons, not its (column-wide) box.
+          const items = Array.from(el.children, li => toBox(li.getBoundingClientRect()))
+          if (!items.length) continue
+          box = {
+            l: Math.min(...items.map(i => i.l)), t: Math.min(...items.map(i => i.t)),
+            r: Math.max(...items.map(i => i.r)), b: Math.max(...items.map(i => i.b)),
+          }
+          if (inside(box, mx, my, ROW_SPAN)) rowItems.push(...items)
+        } else {
+          box = toBox(el.getBoundingClientRect())
+        }
+        if (box.r - box.l < 1 || box.b - box.t < 1) continue
+        ;(isRow ? rows : pops).push(box)
+        sig += `${isRow ? 'r' : 'p'}${Math.round(box.l)},${Math.round(box.t)},${Math.round(box.r)},${Math.round(box.b)};`
+      }
+      const changed = sig !== zoneSig
+      zoneSig = sig
+      return changed
+    }
+
+    // Pointer history for a smoothed approach direction (the last ~100ms of
+    // moves, not one event).
+    const trail: { t: number; x: number; y: number }[] = []
+    let frozenDir: { x: number; y: number } | null = null
+    let figpalHidden = false
+    let holdSince: number | null = null
+    // The motion's two layers: `follow` trails the pointer (the lerp), and
+    // `off` is the figpal's centre relative to it, sprung toward the chosen
+    // spot. Set up from where the figpal is on its first frame.
+    let follow: { x: number; y: number } | null = null
+    const off = { x: 0, y: 0, vx: 0, vy: 0 }
+    let lastFrame = 0
+    const liveDir = (mx: number, my: number) => {
+      const now = performance.now()
+      const first = trail.find(p => now - p.t <= DIR_WINDOW_MS)
+      if (first) {
+        const dx = mx - first.x
+        const dy = my - first.y
+        const d = Math.hypot(dx, dy)
+        if (d >= 6) return { x: dx / d, y: dy / d }
+      }
+      // Pointer still (or the row arrived by scroll): keep the figpal on the
+      // side it's already on.
+      const dx = mx - (posRef.current.x + figpalW / 2)
+      const dy = my - (posRef.current.y + FIGPAL_SIZE / 2)
+      const d = Math.hypot(dx, dy) || 1
+      return { x: dx / d, y: dy / d }
+    }
+
+    // Centre of a spot in direction (ux, uy) with `gap` px between the pointer
+    // and the near edge of the figpal's box along that ray.
+    const ringCentre = (mx: number, my: number, ux: number, uy: number, gap: number) => {
+      const reach = Math.min(
+        Math.abs(ux) > 1e-6 ? figpalW / 2 / Math.abs(ux) : Infinity,
+        Math.abs(uy) > 1e-6 ? FIGPAL_SIZE / 2 / Math.abs(uy) : Infinity,
+      )
+      return { x: mx + ux * (gap + reach), y: my + uy * (gap + reach) }
+    }
+    const CANDIDATES = RING_ANGLES * RING_GAPS.length
+    const candidate = (i: number, mx: number, my: number) => {
+      const th = (Math.floor((i - 1) / RING_GAPS.length) / RING_ANGLES) * Math.PI * 2
+      return ringCentre(mx, my, Math.cos(th), Math.sin(th), RING_GAPS[(i - 1) % RING_GAPS.length]!)
+    }
+    const homeCentre = (mx: number, my: number) =>
+      ({ x: mx + FIGPAL_OFFSET_X + figpalW / 2, y: my + FIGPAL_OFFSET_Y + FIGPAL_SIZE / 2 })
+    const spotCentre = (i: number, mx: number, my: number) =>
+      i > 0 ? candidate(i, mx, my) : homeCentre(mx, my)
+
+    // What a spot must stay clear of: open pop-outs; and, while the pointer
+    // is on the row, the icon under it plus the space its pop-out opens into
+    // (so the figpal is already out of the way when it opens). Off the row,
+    // the row itself.
+    let obstacles: Box[] = []
+    let reserve: Box | null = null // the space the hovered icon's pop-out opens into
+    const buildObstacles = (mx: number, my: number, onRow: boolean) => {
+      obstacles = pops.slice()
+      reserve = null
+      if (!onRow) {
+        obstacles.push(...rows)
+        return
+      }
+      let item: Box | null = null
+      let nearest = Infinity
+      for (const it of rowItems) {
+        const d = mx < it.l ? it.l - mx : mx > it.r ? mx - it.r : 0
+        if (d < nearest) { nearest = d; item = it }
+      }
+      if (!item) return
+      const row = rows.find(r => inside(r, mx, my, ROW_SPAN))
+      const top = row ? row.b : item.b
+      reserve = {
+        l: item.l + POP_RESERVE.left, t: top,
+        r: item.l + POP_RESERVE.left + POP_RESERVE.width, b: top + POP_RESERVE.height,
+      }
+      const mid = (item.t + item.b) / 2
+      obstacles.push(item, reserve, { l: item.r, t: mid - NOTE_RESERVE.halfHeight, r: item.r + NOTE_RESERVE.width, b: mid + NOTE_RESERVE.halfHeight })
+    }
+    const isClear = (c: { x: number; y: number }) => {
+      const box = boxAt(c)
+      if (box.l < 0 || box.t < 0 || box.r > window.innerWidth || box.b > window.innerHeight) return false
+      for (const o of obstacles) if (overlaps(box, o, AVOID_MARGIN)) return false
+      return true
+    }
+
+    // The spot to head for: 0 = home, 1…CANDIDATES = a ring spot, -1 = none clear.
+    const pickSpot = (mx: number, my: number) => {
+      const cur = figpalSpot
+      if (!rows.length && !pops.length) { frozenDir = null; obstacles = []; reserve = null; return 0 }
+      // Stepping aside is immediate; coming back home needs extra clearance.
+      const m = AVOID_MARGIN + (cur === 0 ? 0 : AVOID_RETURN)
+      const inZone = rows.some(r => inside(r, mx, my, m)) || pops.some(r => inside(r, mx, my, m))
+      buildObstacles(mx, my, inZone && rows.some(r => inside(r, mx, my, ROW_SPAN)))
+      if (!inZone) {
+        frozenDir = null
+        const home = boxAt(homeCentre(mx, my))
+        if (!pops.some(o => overlaps(home, o, m)) && !rows.some(o => overlaps(home, o, m))) return 0
+      } else if (!frozenDir) {
+        // Entering: capture the approach and hold it while the pointer stays
+        // in the zone, so sliding along the row doesn't swing the figpal round.
+        frozenDir = liveDir(mx, my)
+      }
+      const dir = frozenDir ?? liveDir(mx, my)
+      const want = ringCentre(mx, my, -dir.x, -dir.y, RING_GAPS[0]!) // behind the pointer
+      // Distance from behind, plus a nudge off the neighbouring icons: it
+      // may sit over one, but takes a spot just past it when there's one near.
+      const score = (i: number) => {
+        const c = candidate(i, mx, my)
+        const box = boxAt(c)
+        const onIcon = rowItems.some(it => overlaps(box, it, 0))
+        return Math.hypot(c.x - want.x, c.y - want.y) + (onIcon ? ICON_PENALTY : 0)
+      }
+      let best = -1
+      let bestScore = Infinity
+      for (let i = 1; i <= CANDIDATES; i++) {
+        if (!isClear(candidate(i, mx, my))) continue
+        const sc = score(i)
+        if (sc < bestScore) { bestScore = sc; best = i }
+      }
+      // Don't hop between neighbours: stay unless the new best is clearly better.
+      if (cur > 0 && best > 0 && cur !== best && isClear(candidate(cur, mx, my)) && score(cur) <= bestScore + SPOT_HYSTERESIS) return cur
+      return best
     }
 
     // Preserve cursor position and visibility on tint-only switches
@@ -301,6 +520,11 @@ export function CustomCursor() {
     const handlePointerMove = (e: PointerEvent) => {
       mouseRef.current.x = e.clientX
       mouseRef.current.y = e.clientY
+      if (cursorMode === 'figpal') {
+        const now = performance.now()
+        trail.push({ t: now, x: e.clientX, y: e.clientY })
+        while (trail.length > 2 && now - trail[0]!.t > DIR_WINDOW_MS * 2) trail.shift()
+      }
 
       if (!initializedRef.current) {
         initializedRef.current = true
@@ -441,23 +665,84 @@ export function CustomCursor() {
         }
         settled = true // invert mode has no lerp — always settled after one frame
       } else {
-        targetX = mouseRef.current.x + FIGPAL_OFFSET_X
-        targetY = mouseRef.current.y + FIGPAL_OFFSET_Y
+        const mx = mouseRef.current.x
+        const my = mouseRef.current.y
+        const zonesChanged = readZones(mx, my)
+        const next = pickSpot(mx, my)
+        figpalSpot = next
+        // Nowhere clear: fade out where it is (keep following home, unseen).
+        const c = spotCentre(next, mx, my)
+        targetX = c.x - figpalW / 2
+        targetY = c.y - FIGPAL_SIZE / 2
         if (reducedMotion.current) {
           posRef.current.x = targetX
           posRef.current.y = targetY
           settled = true
+          follow = null
         } else {
-          posRef.current.x += (targetX - posRef.current.x) * LERP_RATE
-          posRef.current.y += (targetY - posRef.current.y) * LERP_RATE
-          settled =
-            Math.abs(posRef.current.x - targetX) < 0.5 &&
-            Math.abs(posRef.current.y - targetY) < 0.5
-          if (settled) {
-            posRef.current.x = targetX
-            posRef.current.y = targetY
+          const now = performance.now()
+          const dt = Math.min(0.032, lastFrame ? (now - lastFrame) / 1000 : 1 / 60)
+          lastFrame = now
+          const { x, y } = posRef.current
+          const tox = c.x - mx, toy = c.y - my // the spot, relative to the pointer
+          if (!follow) {
+            off.x = tox; off.y = toy; off.vx = off.vy = 0
+            follow = { x: x + figpalW / 2 - tox, y: y + FIGPAL_SIZE / 2 - toy }
+          }
+          // Caught inside a pop-out (or the space one is about to open into),
+          // e.g. trailing up from below: hurry out rather than drift across.
+          // Otherwise brisk stepping aside, unhurried coming home.
+          const inPop = pops.some(o => overlaps(boxAtPos(x, y), o, 0))
+          const w = inPop || (reserve && overlaps(boxAtPos(x, y), reserve, 0)) ? ESCAPE_W
+            : next <= 0 ? STEP_HOME_W : STEP_ASIDE_W
+          // Semi-implicit Euler on a critically damped spring.
+          const nvx = off.vx + (w * w * (tox - off.x) - 2 * w * off.vx) * dt
+          const nvy = off.vy + (w * w * (toy - off.y) - 2 * w * off.vy) * dt
+          const nox = off.x + nvx * dt, noy = off.y + nvy * dt
+          const nfx = follow.x + (mx - follow.x) * LERP_RATE
+          const nfy = follow.y + (my - follow.y) * LERP_RATE
+          const nx = nfx + nox - figpalW / 2
+          const ny = nfy + noy - FIGPAL_SIZE / 2
+          // Outside a pop-out but the next step would cross one (heading home
+          // as it closes, say): wait for it to go, then glide. Capped, so a
+          // pop-out that stays put can't strand the figpal; past the cap the
+          // dip below covers the crossing.
+          const ahead = !inPop && pops.some(o => overlaps(boxAtPos(nx, ny), o, 0))
+          if (!ahead) holdSince = null
+          else if (holdSince === null) holdSince = now
+          if (ahead && now - holdSince! < HOLD_MAX_MS) {
+            settled = false
+          } else {
+            off.x = nox; off.y = noy; off.vx = nvx; off.vy = nvy
+            follow.x = nfx; follow.y = nfy
+            posRef.current.x = nx
+            posRef.current.y = ny
+            settled = Math.abs(nx - targetX) < 0.5 && Math.abs(ny - targetY) < 0.5
+              && Math.hypot(off.vx, off.vy) < 2
+            if (settled) {
+              posRef.current.x = targetX
+              posRef.current.y = targetY
+              off.x = tox; off.y = toy; off.vx = off.vy = 0
+              follow.x = mx; follow.y = my
+              lastFrame = 0 // the loop stops: the next start begins a fresh step
+            }
           }
         }
+        // Never drawn over an open pop-out: if the glide still crosses one,
+        // it dips out for those frames.
+        const box = boxAtPos(posRef.current.x, posRef.current.y)
+        const over = pops.some(o => overlaps(box, o, 0))
+        const hidden = next === -1 || over
+        if (hidden !== figpalHidden && figpalRef.current) {
+          figpalHidden = hidden
+          // Over a pop-out it goes at once (a fade would be seen over it);
+          // nowhere clear, it fades; it always fades back in.
+          figpalRef.current.style.transition = hidden && over ? 'none' : FIGPAL_FADE
+          figpalRef.current.style.opacity = hidden ? '0' : '1'
+        }
+        // Zones still moving (a pop-out springing open, a note typing):
+        // keep checking until they're still too.
+        if (zonesChanged) settled = false
       }
 
       const t = `translate(${posRef.current.x}px, ${posRef.current.y}px)`
@@ -480,7 +765,30 @@ export function CustomCursor() {
     loopRunning = true
     rafRef.current = requestAnimationFrame(loop)
 
+    // Figpal: a pop-out can open (or a page scroll move the row) under a
+    // still pointer, so wake the loop when an avoid zone comes, goes or
+    // changes, or the page scrolls or resizes. Any DOM change marks the
+    // cached zones stale; only one that touches a zone wakes the loop (the
+    // rest of the page typing, flying or updating doesn't).
+    const touchesZone = (n: Node) => n instanceof Element && (n.matches(AVOID_SELECTOR) || !!n.querySelector(AVOID_SELECTOR))
+    const onMutations = (records: MutationRecord[]) => {
+      zonesStale = true
+      if (records.some(r => (r.target instanceof Element && r.target.closest(AVOID_SELECTOR))
+        || [...r.addedNodes].some(touchesZone) || [...r.removedNodes].some(touchesZone))) startLoop()
+    }
+    const onLayout = () => { zonesStale = true; startLoop() }
+    let observer: MutationObserver | null = null
+    if (cursorMode === 'figpal') {
+      observer = new MutationObserver(onMutations)
+      observer.observe(document.body, { childList: true, subtree: true })
+      window.addEventListener('scroll', onLayout, { passive: true, capture: true })
+      window.addEventListener('resize', onLayout)
+    }
+
     return () => {
+      observer?.disconnect()
+      window.removeEventListener('scroll', onLayout, { capture: true })
+      window.removeEventListener('resize', onLayout)
       document.removeEventListener('pointermove', handlePointerMoveAndLoop)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       removeCursorNoneStyle()

@@ -26,3 +26,9 @@ export function useIsWide(): boolean {
 export function useIsCompactTwoColumn(): boolean {
   return useMediaQuery('(min-width: 900px) and (max-width: 1199px)')
 }
+
+/** True while the OS asks for reduced motion — live: it follows the setting
+ *  when it changes mid-session (framer-motion's useReducedMotion reads once). */
+export function usePrefersReducedMotion(): boolean {
+  return useMediaQuery('(prefers-reduced-motion: reduce)')
+}
