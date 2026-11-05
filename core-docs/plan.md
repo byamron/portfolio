@@ -100,6 +100,7 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
   - [ ] No focus ring in the settings rail is clipped.
   - [ ] When there's no room for another flight, a held revisit shows `airspace full` and Return launches nothing. (Added by Ben at the merge gate, 2026-11-04.)
   - [ ] Switching on reduced motion makes any flight leave at once, and a held run is grounded, not launched. (Added by Ben at the merge gate, 2026-11-04.)
+  - [ ] Selecting an option in the settings rail fades its selection ring in at its final width, with no thick or white flash. (Added by Ben at the merge gate, 2026-11-05.)
 
   **Visual-walk:**
   - [ ] [state: held] The GitHub terminal shows the held run with `return to override` under it, and no empty line.
