@@ -21,7 +21,7 @@ Branch `naypyidaw`, PR against `main` (Ben chose `main`; `next-update` is still 
   - It vanishes at once over a pop-out. Its loop only wakes for zone changes.
 - **The rail record prints a label** (option B of 4 mockups, Ben): the title curved over the top, set in from the edge, inside a faint ring. It shows the record is turning and is legible zoomed in.
   - Below `COMPACT_K` the record paints without its own layer, so the ~10px print stays crisp.
-- **Selection rings fade in rather than flash** (Ben flagged it; it predates the branch). Unselected options carry a transparent ring of the same width.
+- **Selection rings fade in rather than flash** (Ben flagged it; it predates the branch, and he approved it as criterion 14). Unselected options carry a transparent ring of the same width. Under forced colours that resting ring is dropped, including an inner ring while its button has focus (a regression judge caught that one), so only the selected option shows a ring there.
 - **The rail's non-buttons take no glass** (Ben: they aren't buttons).
   - The intensity strip rests slim and grows, centred, on hover, drag or focus. It grows on the press spring and settles smoothly.
   - While off, the record rests at `brightness(0.88)` and comes up to full on hover or focus, and stays at full while playing.
@@ -31,7 +31,7 @@ Branch `naypyidaw`, PR against `main` (Ben chose `main`; `next-update` is still 
   - Staff review: caught first launches crossing the intro on short windows (3 of 12 at 1280×600, now 0) and doc drift.
   - Security: clean.
   - Accessibility: the grounding rule, flights leaving on reduced motion (a live `usePrefersReducedMotion`), and the thumb's true 1.5px edge as an inset ring.
-- **Verification:** `/flow:verify-build` ran in full mode against a Spec-walk written at ship time from Ben's stated requirements (11 criteria + 6 visual states). A fresh agent wrote 21 adversarial cases. Probes ran on the production build at 8 viewport sizes, and four fresh judges returned PASS on every criterion.
+- **Verification:** `/flow:verify-build` ran in full mode against a Spec-walk written at ship time from Ben's stated requirements (11 criteria + 6 visual states). Ben added 3 more at the merge gate (airspace full, reduced motion mid-session, the selection ring): 14 in all, every one PASS on the final source. A fresh agent wrote 21 adversarial cases. Probes ran on the production build at 8 viewport sizes, and four fresh judges returned PASS on every criterion.
   - The regression judge's first pass returned Unknown on paths that hadn't been observed. They were then observed: reduced motion, keyboard focus, the cleared path, mid-override timing, the large record, the rail against `main`'s build, and the strip drag.
   - Doing that turned up a real bug: a held run cleared under reduced motion still launched. Fixed.
   - The frame-integrity judge's one FAIL was the glide pill caught mid-glide; the settled frame passed.
