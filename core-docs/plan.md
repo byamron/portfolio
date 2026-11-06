@@ -31,6 +31,43 @@ The site is not a showcase of process — it's a design artifact that demonstrat
   - To tune again: branch from `main`, restore `src/proto/ProtoTuner.tsx` from the tag, re-add the settings context (`ProtoSettingsContext` in `protoSettings.ts` at the tag) and the `dialkit` devDependency, mount it in `SimpleSite`, then strip it all before merging (dev-panel policy).
   - Tag names are git-only. Ben doesn't want versioning ("v1") anywhere user-visible.
 
+**Recently shipped** (newest first; keep about 5):
+
+- [x] **Contact and record batch: merged (#214)** @ `8e7da1f`, 2026-11-05. Branch `naypyidaw`. The worker briefs lived in that (now archived) workspace; their outcomes are in `history.md` (2026-11-04) and in the Spec-walk below.
+  - **GitHub terminal, "press return to override":** while a run is held for air traffic control, Return sends another vehicle at once. Flights become a list with their own lanes and a cap.
+  - **More flying vehicles:** biplane (banner tow), hot-air balloon and helicopter join the blimp (Ben approved the set). One is picked at random each time the terminal opens, and the typed program names the vehicle that flies.
+  - **Override sends what's written (Ben, 2026-11-04):** Return sends the held program as written. The held line updates in place to `override · <vehicle> launched`, with no clearing or retyping. This replaces "override picks fresh" (2026-11-01), which rewrote hi.js with a new vehicle and greeting.
+  - **Return only past a hold (Ben, 2026-11-03):** a launch on the first visit shows no hint, and Return does nothing then. Only a revisit while something's flying is held (`waiting for air traffic control`) and offers `return to override` (or `airspace full`). After the override flies, nothing more is offered; come back for another hold. Ben: rarer to find, "that's the point of an Easter egg". This replaces a short-lived "return for another" after every launch.
+  - **Record label text:** the compact rail record (`K < 36`) drops the playground's printed label. Bring back a print that reads at rail size.
+  - **No glass on the rail's non-buttons (Ben, 2026-11-02):** the intensity strip and the record aren't buttons, so the glide pill fades while the pointer is over them. The strip rests slim (track 70%, thumb 0.8) and grows to full size on hover, drag or focus (the trigger's press spring; the thumb is centred by margin so the scale stays on-axis). While off, the record rests a shade darker (`brightness(0.88)`) and comes up to full on hover or focus; playing, it stays at full. The page's cursor glow now stays on under both. The strip has its own focus ring, because the pill had been its only keyboard indicator.
+  - **Figpal vs the pop-outs:** the figpal trails at +24/+24, right where the pop-outs open. Ben offered avoid-or-remove; the recommendation is avoid: it steps aside, up and left, from `data-figpal-avoid` zones (the icon row and open pop-outs). Removing it would empty the rail's cursor section.
+
+  **Spec-walk (merged #214):** (written at ship time, 2026-11-04, from Ben's requests and decisions in the session; each was approved on the live preview)
+  - [ ] Each GitHub hover visit types a randomly chosen vehicle (blimp, biplane, hot-air balloon or helicopter) and greeting into hi.js. What's typed is what flies, and the same vehicle isn't picked twice running.
+  - [ ] On a first visit with an empty sky, the run launches and shows no override hint, and Return does nothing.
+  - [ ] Revisiting while something is still flying holds the run (`waiting for air traffic control`), then prints `return to override` as a new line. No blank line is reserved before it appears.
+  - [ ] Pressing Return on a held run, with nothing focused, sends the program already written. The terminal isn't cleared or retyped; the held line updates in place to `override · <vehicle> launched`, and that vehicle and greeting fly. After that no hint shows, and Return does nothing. (Ben, 2026-11-04: send what's already written, rather than the earlier "new random vehicle and greeting".)
+  - [ ] When a control has focus (e.g. the record after being clicked), the override hint doesn't show and Return goes to that control. Focus is never moved or taken.
+  - [ ] No flight ever crosses the intro text. When no vehicle fits above it, the run reports `<vehicle> grounded` and nothing flies.
+  - [ ] The greetings never include "Hiya".
+  - [ ] The figpal cursor steps aside on the side the pointer approached from, never covers an open pop-out, and eases back into place rather than darting.
+  - [ ] The rail record's label shows one curved line of the track title, set in from the edge inside a faint ring, visible while the record plays.
+  - [ ] In the settings rail, the glide pill doesn't cover the intensity slider or the record. The slider rests slim and grows, centred on its track, on hover. The idle record rests darker and brightens on hover, and stays at full brightness while playing.
+  - [ ] No focus ring in the settings rail is clipped.
+  - [ ] When there's no room for another flight, a held revisit shows `airspace full` and Return launches nothing. (Added by Ben at the merge gate, 2026-11-04.)
+  - [ ] Switching on reduced motion makes any flight leave at once, and a held run is grounded, not launched. (Added by Ben at the merge gate, 2026-11-04.)
+  - [ ] Selecting an option in the settings rail fades its selection ring in at its final width, with no thick or white flash. (Added by Ben at the merge gate, 2026-11-05.)
+
+  **Visual-walk (merged #214):**
+  - [ ] [state: held] The GitHub terminal shows the held run with `return to override` under it, and no empty line.
+  - [ ] [state: flight] A vehicle with its greeting banner crosses the top of the page, above the intro.
+  - [ ] [interaction / a11y: figpal] With the figpal on, it rests clear of the open GitHub terminal.
+  - [ ] [state: rail] The rail is open with the slider hovered (grown, centred) and the glass pill absent from it.
+  - [ ] [state: record] The playing rail record shows the curved title inside a faint ring.
+  - [ ] [interaction / a11y: focus] The figpal cursor button's focus ring is fully visible above the record.
+
+  **(End of this batch's walks.)**
+
 **Deploy.** Any push to `main` runs `.github/workflows/deploy.yml`: `npm ci`, then `npx vite build`, then `cp dist/index.html dist/404.html`, then GitHub Pages. It does not run `tsc` or the sitemap script.
 - `public/sitemap.xml` is committed. Regenerate it with `npx tsx scripts/generate-sitemap.ts` when routes change.
 - `update-contributions.yml` commits fresh GitHub contribution data to `main` daily, and each of those commits deploys.
@@ -76,41 +113,6 @@ The site is not a showcase of process — it's a design artifact that demonstrat
 Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[ready]** is scoped and can be picked up. **[cleanup]** removes or restructures without visible change.
 
 #### 1. Next up (Ben has raised these)
-
-- [ ] **[at PR, 2026-11-04] Contact and record batch** (branch `naypyidaw`; plan and worker briefs in that workspace's `.context/feature-plan.md`):
-  - **GitHub terminal, "press return to override":** while a run is held for air traffic control, Return sends another vehicle at once. Flights become a list with their own lanes and a cap.
-  - **More flying vehicles:** biplane (banner tow), hot-air balloon and helicopter join the blimp (Ben approved the set). One is picked at random each time the terminal opens, and the typed program names the vehicle that flies.
-  - **Override sends what's written (Ben, 2026-11-04):** Return sends the held program as written. The held line updates in place to `override · <vehicle> launched`, with no clearing or retyping. This replaces "override picks fresh" (2026-11-01), which rewrote hi.js with a new vehicle and greeting.
-  - **Return only past a hold (Ben, 2026-11-03):** a launch on the first visit shows no hint, and Return does nothing then. Only a revisit while something's flying is held (`waiting for air traffic control`) and offers `return to override` (or `airspace full`). After the override flies, nothing more is offered; come back for another hold. Ben: rarer to find, "that's the point of an Easter egg". This replaces a short-lived "return for another" after every launch.
-  - **Record label text:** the compact rail record (`K < 36`) drops the playground's printed label. Bring back a print that reads at rail size.
-  - **No glass on the rail's non-buttons (Ben, 2026-11-02):** the intensity strip and the record aren't buttons, so the glide pill fades while the pointer is over them. The strip rests slim (track 70%, thumb 0.8) and grows to full size on hover, drag or focus (the trigger's press spring; the thumb is centred by margin so the scale stays on-axis). While off, the record rests a shade darker (`brightness(0.88)`) and comes up to full on hover or focus; playing, it stays at full. The page's cursor glow now stays on under both. The strip has its own focus ring, because the pill had been its only keyboard indicator.
-  - **Figpal vs the pop-outs:** the figpal trails at +24/+24, right where the pop-outs open. Ben offered avoid-or-remove; the recommendation is avoid: it steps aside, up and left, from `data-figpal-avoid` zones (the icon row and open pop-outs). Removing it would empty the rail's cursor section.
-
-  **Spec-walk:** (written at ship time, 2026-11-04, from Ben's requests and decisions in the session; each was approved on the live preview)
-  - [ ] Each GitHub hover visit types a randomly chosen vehicle (blimp, biplane, hot-air balloon or helicopter) and greeting into hi.js. What's typed is what flies, and the same vehicle isn't picked twice running.
-  - [ ] On a first visit with an empty sky, the run launches and shows no override hint, and Return does nothing.
-  - [ ] Revisiting while something is still flying holds the run (`waiting for air traffic control`), then prints `return to override` as a new line. No blank line is reserved before it appears.
-  - [ ] Pressing Return on a held run, with nothing focused, sends the program already written. The terminal isn't cleared or retyped; the held line updates in place to `override · <vehicle> launched`, and that vehicle and greeting fly. After that no hint shows, and Return does nothing. (Ben, 2026-11-04: send what's already written, rather than the earlier "new random vehicle and greeting".)
-  - [ ] When a control has focus (e.g. the record after being clicked), the override hint doesn't show and Return goes to that control. Focus is never moved or taken.
-  - [ ] No flight ever crosses the intro text. When no vehicle fits above it, the run reports `<vehicle> grounded` and nothing flies.
-  - [ ] The greetings never include "Hiya".
-  - [ ] The figpal cursor steps aside on the side the pointer approached from, never covers an open pop-out, and eases back into place rather than darting.
-  - [ ] The rail record's label shows one curved line of the track title, set in from the edge inside a faint ring, visible while the record plays.
-  - [ ] In the settings rail, the glide pill doesn't cover the intensity slider or the record. The slider rests slim and grows, centred on its track, on hover. The idle record rests darker and brightens on hover, and stays at full brightness while playing.
-  - [ ] No focus ring in the settings rail is clipped.
-  - [ ] When there's no room for another flight, a held revisit shows `airspace full` and Return launches nothing. (Added by Ben at the merge gate, 2026-11-04.)
-  - [ ] Switching on reduced motion makes any flight leave at once, and a held run is grounded, not launched. (Added by Ben at the merge gate, 2026-11-04.)
-  - [ ] Selecting an option in the settings rail fades its selection ring in at its final width, with no thick or white flash. (Added by Ben at the merge gate, 2026-11-05.)
-
-  **Visual-walk:**
-  - [ ] [state: held] The GitHub terminal shows the held run with `return to override` under it, and no empty line.
-  - [ ] [state: flight] A vehicle with its greeting banner crosses the top of the page, above the intro.
-  - [ ] [interaction / a11y: figpal] With the figpal on, it rests clear of the open GitHub terminal.
-  - [ ] [state: rail] The rail is open with the slider hovered (grown, centred) and the glass pill absent from it.
-  - [ ] [state: record] The playing rail record shows the curved title inside a faint ring.
-  - [ ] [interaction / a11y: focus] The figpal cursor button's focus ring is fully visible above the record.
-
-  **(End of this batch's walks.)**
 
 - [ ] **[ready] Settings glyph onto the 24px phone margin.** Measured live on a 393px phone: the glyph is 32px from the top and 34px from the right, while the text, icons and strip label are at 24px. Ben asked for 24px margins on phones; this one wasn't moved yet. Files: `SIMPLE_TRIGGER_TOP` in `SimpleSite.tsx`, and the trigger's `right: 16` plus box inset in `SidebarThemeControls.tsx`. Keep the desktop placement, which is glyph 32px from the top and about 29px from the right, unless Ben says otherwise.
 - [ ] **[Ben] Case studies.** Ben: "i don't need the case studies reachable (we'll come back to this)". The old renderer is still in `src/`, unrouted: `CaseStudyPage`, `CaseStudyLayoutA` and `data/case-study-content.ts`. The data is in `src/data/projects.ts`, and the preview media is still in `public/`. The options to put to Ben are:
@@ -230,6 +232,12 @@ Legend: **[Ben]** needs Ben's decision first; don't implement it unprompted. **[
 
 #### 6. Process and infrastructure
 
+- [ ] **[ready] Flow plugin tooling issues hit during #214** (flow 1.29.0, in a Conductor cloud workspace). These were queued for the flow repo in that workspace's local contribution queue, which didn't survive the archive, so they're recorded here:
+  - `/flow:audit-coverage` returned "No issues flagged" on a diff it had truncated at about 60KB. Split large diffs yourself, and audit the unread part with a fresh auditor.
+  - `/flow:audit-skips` (stamp checker) and the ship read-back helpers (`verify-pr-body.sh`) look for `plugins/flow/...`, which only exists in the flow repo. Here that gave "stamp unverifiable" or a failed read-back. Workaround: `export CLAUDE_PLUGIN_ROOT=~/.claude/plugins/cache/flow/flow/<version>`, and for audit-skips a temporary `plugins/flow` symlink to that root (remove it afterwards).
+  - verify-build §5a: capture a frame only after the motion that reaches it has settled. A glide pill caught mid-slide produced a false frame-integrity FAIL.
+  - Report these upstream to the flow plugin, or re-queue them with `/flow:contribute`.
+- [ ] **[Ben] Daily contribution commits make every open branch stale once a day.** `update-contributions.yml` pushes to `main` daily, and Flow's stale-base gate then blocks until a rebase (it did so 4 times during #214). Options: accept it, exempt `src/data/contributions.json` from the gate, or move the data out of the source tree.
 - [ ] **[Ben] Branching.** CLAUDE.md and `core-docs/workflow.md` say feature branches merge into `next-update`. But `next-update` is 213 commits behind `main` (2026-10-31), and the launch merged straight to `main` with Ben's approval (#210). Ask Ben whether to retire `next-update` or reset it to `main`. Until he answers, ask him for the PR base each time.
 - [ ] **[ready] GitHub Actions maintenance.**
   - The deploy runs on Node 20 actions (`actions/checkout@v4`, `setup-node@v4`, `upload-artifact@v4`). These are now forced onto Node 24 with a deprecation warning, and `node-version: 20` is set in both workflows.
