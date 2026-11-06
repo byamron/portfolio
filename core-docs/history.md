@@ -4,7 +4,7 @@ Decision log and completed work, in reverse chronological order.
 
 ## 2026-11-04 — Contact and record batch: air traffic for the GitHub terminal, a figpal that steps aside, a printed record label, quieter rail hovers
 
-Branch `naypyidaw`, PR against `main` (Ben chose `main`; `next-update` is still unsettled). Ben asked for these four things in one session (2026-11-01 → 11-04), then tuned each on a live preview. The first versions came from three parallel worker agents; the orchestrator merged them and handled every revision after that.
+Branch `naypyidaw`, merged #214 @ `8e7da1f` (2026-11-05) into `main` (Ben chose `main`; `next-update` is still unsettled). Ben asked for these four things in one session (2026-11-01 → 11-04), then tuned each on a live preview. The first versions came from three parallel worker agents; the orchestrator merged them and handled every revision after that.
 
 - **The GitHub terminal flies four machines** (blimp, biplane towing a banner, hot-air balloon, helicopter).
   - Each visit picks one at random, with a random greeting, and never the same machine twice running. What's typed is what flies.
@@ -35,7 +35,25 @@ Branch `naypyidaw`, PR against `main` (Ben chose `main`; `next-update` is still 
   - The regression judge's first pass returned Unknown on paths that hadn't been observed. They were then observed: reduced motion, keyboard focus, the cleared path, mid-override timing, the large record, the rail against `main`'s build, and the strip drag.
   - Doing that turned up a real bug: a held run cleared under reduced motion still launched. Fixed.
   - The frame-integrity judge's one FAIL was the glide pill caught mid-glide; the settled frame passed.
-- **Left for Ben:** two coverage gaps, airspace full and reduced motion mid-session, routed as decisions; follow-ups in `core-docs/plan.md`.
+- **Left for Ben:** follow-ups and [Ben] questions in `core-docs/plan.md` (§ START HERE → "Follow-ups from the batch's reviews"). Three coverage gaps went to him as decisions; he approved all three as criteria 12–14.
+
+**Retro (2026-11-06, after the merge):**
+- **What went well.**
+  - **Parallel workers:** three workers in isolated worktrees, each on one feature with a written brief, got first versions up quickly. Their changes merged without conflicts, because the brief kept the figpal worker's `ContactFx.tsx` edits attribute-only.
+  - **The live preview loop:** about 20 rounds of feedback from Ben on a live preview turned rough first versions into the final feel. Examples: the figpal dart, the label (four mockups, then B), the strip and record hovers, the hint timing.
+  - **Fresh-context judging:** it caught real bugs that probes written by the implementer didn't. Treating every Unknown as "go observe more" found three regressions: a held run launching under reduced motion, a reduced-motion toggle re-running a launch, and a false selection ring under forced colours. Arguing with the Unknowns wouldn't have.
+- **What cost time.**
+  - **Pipeline churn:** each fix after the staff review moved the source, so the rigor marker, judges and coverage audit re-ran 4 more times. Several of those fixes came from the previous round's reviewers. Batching fixes before re-judging, and fixing the cheap reviewer nits first, would have cut this roughly in half.
+  - **A reversed decision:** Ben's 2026-11-01 answer on what an override sends was reversed once he used it (see feedback.md 2026-11-04). The rewrite path cost a build, a review cycle and its removal.
+  - **Self-inflicted regressions:** reading reduced motion live put it in an effect's dependencies, and a forced-colours rule exempted an element whose focus ring lived elsewhere. Both were caught by judges, not by me.
+  - **Environment:** all three workers hit an API session limit mid-run and were resumed with their context intact. Flow tooling assumed a flow-repo checkout (see plan.md § 6). The daily contribution commits forced 4 rebases.
+- **Process slips, both corrected.** A first Return fix blurred focus, a workaround Ben rejected; it was replaced by "Return goes to whatever has focus". I also added a criterion for my own fix (the ring) without Ben's yes; it was reverted and routed to him, and he approved it.
+- **Carry forward.**
+  - Batch the reviewers' fixes before re-running judges.
+  - For any interaction choice, show both options on the preview before treating an answer as settled.
+  - Test any live media-query or forced-colours change by toggling it mid-session, not only from page load.
+  - Keep Spec-walks honest: written from the user's stated requirements, never self-declared for the agent's own fixes.
+
 
 ## 2026-11-01 — Flow configured for this repo
 
